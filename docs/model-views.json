@@ -616,6 +616,17 @@
         "SpaceAttack",
         "ShipDamage"
       ]
+    },
+    {
+      "id": "2026-11-23a",
+      "file": "2026-11-23a-raumkampf-interface",
+      "title": "Raumkampf-Interface: die Raumrunde mit zwei Phasen (SystemFlight.phase mit BattlePhase) – „Bewegen“ lässt die Raumrunde stehen, „End Turn“ feuert die Fremden und rückt weiter; gefeuert wird je Hardpoint (SpaceUnit.fired entfällt, dafür firedTurrets); Zielwahl und Hardpoint-Leiste im Blatt sind Anzeige, kein Spielstand",
+      "approved": false,
+      "show": [
+        "SpaceAttack",
+        "Ship",
+        "Turret"
+      ]
     }
   ]
 }

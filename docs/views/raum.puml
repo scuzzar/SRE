@@ -88,6 +88,7 @@ hide <<browser>> stereotype
   class SystemFlight $raum {
     startedAt: datetime
     round: number
+    $new("2026-11-23a", "phase: BattlePhase")
     /elapsed: number
   }
   class StarSystem $raum {
@@ -170,6 +171,10 @@ hide <<browser>> stereotype
     flee
     ignore
   }
+  enum BattlePhase <<value>> $raum {
+    thrust
+    fire
+  }
   class SpaceBattle $raum {
     foe: string
     intent: Intent
@@ -224,7 +229,8 @@ hide <<browser>> stereotype
     crashed: boolean
     name: string [0..1]
     intent: Intent [0..1]
-    fired: boolean
+    $gone("2026-11-23a", "fired: boolean")
+    $new("2026-11-23a", "firedTurrets: number [0..*]")
     returned: boolean
     /maxG: number
     /evading: boolean
@@ -272,6 +278,7 @@ hide <<browser>> stereotype
 Campaign "1" *-- "0..1" SystemFlight : flight
 SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
+SystemFlight -$newArrow("2026-11-23a")-> BattlePhase : phase
 SpaceUnit "*" --> "0..1" Ship : ship
 SpaceUnit "*" --> "0..1" ShipDesign : design
 SpaceUnit "1" *-- "0..1" ShipDamage : damage
@@ -338,4 +345,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class SystemFlight #line:d0021b;line.bold
+class SpaceUnit #line:d0021b;line.bold
 @enduml

@@ -5,7 +5,11 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, Runde ausführen, beenden', async ({ page }) => {
+// Die Raumkarte rechnet und zeichnet viel (Schubringe, Bahnen, Salven); zwei Tester nebeneinander
+// brauchen schon mal das Doppelte der Zeit, darum hier mehr Luft als die 30 Sekunden Grundzeit.
+test.setTimeout(90_000);
+
+test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, bewegen, beenden', async ({ page }) => {
   // Die Demo-Kampagne hat eine Yacht im Hafen von Kessra (2026-11-21b; vorher ein Scout).
   await openHomeGlobe(page);
   await page.getByRole('button', { name: 'Raumkarte' }).click();
@@ -25,7 +29,7 @@ test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, Runde ausführe
   await expect(card).toContainText(/\d,\d G/);
   await expect(card).not.toContainText('kein Schub');
 
-  await page.getByRole('button', { name: 'Runde ausführen' }).click();
+  await page.getByRole('button', { name: 'Bewegen' }).click();
   await expect(card).toContainText('Raumrunde 2');
   await expect(card).toContainText('kein Schub');
 
@@ -56,7 +60,7 @@ test('Systemflug aus dem Reiter Schiff: „Starten“ öffnet die Raumkarte, die
   const card = page.getByRole('region', { name: 'Systemflug' });
   await expect(card).toContainText('Raumrunde 1');
   await expect(page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Schiff' })).toHaveAttribute('aria-current', 'page');
-  await page.getByRole('button', { name: 'Runde ausführen' }).click();
+  await page.getByRole('button', { name: 'Bewegen' }).click();
   await expect(card).toContainText('Raumrunde 2');
   // Raumkarte zu: Der Flug läuft weiter, „Zum Flug“ holt ihn zurück.
   await page.getByRole('button', { name: 'Raumkarte schließen' }).first().click();
@@ -78,7 +82,7 @@ test('Raumkarte am Gasriesen: Kessra ist Mond eines Gasriesen; seine Raumkarte h
   const card = page.getByRole('region', { name: 'Systemflug' });
   await expect(card).toContainText('Raumrunde 1');
   await expect(card).toContainText('Kleiner Gasriese');
-  await page.getByRole('button', { name: 'Runde ausführen' }).click();
+  await page.getByRole('button', { name: 'Bewegen' }).click();
   await expect(card).toContainText('Raumrunde 2');
   await card.getByRole('button', { name: 'Systemflug beenden' }).click();
   await expect(page.getByRole('group', { name: 'Raumkarte von' })).toBeVisible();
@@ -101,17 +105,25 @@ test('Werft und Raumkampf: der Beam Laser der Demo-Yacht, ein fremdes Schiff von
   await card.getByRole('combobox', { name: 'Entwurf des fremden Schiffs' }).selectOption('A');
   await card.getByRole('combobox', { name: 'Absicht' }).selectOption('ignore');
   await card.getByRole('button', { name: 'Auftauchen lassen' }).click();
-  await expect(card).toContainText('Free Trader');
-  // Feuer wird ausgelöst, sofort, und die Würfe rollen im Vordergrund (2026-11-21i).
-  await page.getByRole('button', { name: 'Feuer auf Free Trader' }).click();
+  await expect(card).toContainText('F1 Free Trader');
+  // 2026-11-23: Erst die Schubphase mit „Bewegen“, dann die Feuerphase mit den Hardpoints.
+  const chip = page.getByRole('group', { name: 'Hardpoints' }).getByRole('button', { name: /Beam Laser/ });
+  await expect(chip).toBeDisabled();
+  await page.getByRole('button', { name: 'Bewegen' }).click();
+  await expect(card).toContainText('· Feuer');
+  await expect(chip).toBeEnabled();
+  // Ein Tipp feuert sofort, die Würfe rollen im Vordergrund (2026-11-21i).
+  await chip.click();
   const volley = page.locator('.space-volley');
   await expect(volley).toBeVisible();
   await expect(volley).toContainText('Beam Laser');
   while (await volley.isVisible()) await volley.click();
   await expect(card).toContainText('Raumrunde 1');
-  // Einmal je Raumrunde: Der Knopf ist aus (oder das Schiff ist schon zerstört).
-  const fire = page.getByRole('button', { name: 'Feuer auf Free Trader' });
-  if ((await fire.count()) > 0) await expect(fire).toBeDisabled();
-  await page.getByRole('button', { name: 'Runde ausführen' }).click();
+  // Jeder Hardpoint feuert einmal je Raumrunde.
+  await expect(chip).toBeDisabled();
+  await expect(chip).toHaveAttribute('title', /schon gefeuert/);
+  // „End Turn“: die fremden Schiffe feuern, dann rückt die Raumrunde weiter.
+  await page.getByRole('button', { name: 'End Turn' }).click();
+  while (await volley.isVisible().catch(() => false)) await volley.click();
   await expect(card).toContainText('Raumrunde 2');
 });

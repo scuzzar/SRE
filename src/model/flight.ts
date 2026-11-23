@@ -9,7 +9,7 @@ import { passTime, START_DAY } from './time';
 import { placeGroup } from './upkeep';
 import { needsLanding, shipArrives, shipDepartureBlocker } from './landing';
 import type { Random } from './ports';
-import { breakOffBattle, checkDamage, foesFire, foesWillFire, planFoe, settleBattle, unitMaxG, type Intent, type ShipDamage } from './space-combat';
+import { battleRunning, breakOffBattle, checkDamage, foesFire, foesWillFire, planFoe, settleBattle, unitMaxG, type Intent, type ShipDamage } from './space-combat';
 import { worldPlace } from './place';
 
 // Systemflug (Domänenmodell 2026-11-18c, Stufe 1 des Raumkampfs; Konzept: docs/konzept-raumkampf.md).
@@ -36,8 +36,17 @@ export interface SpaceUnit {
   readonly name?: string;
   readonly intent?: Intent;
   readonly damage?: ShipDamage;
-  /** Hat in dieser Raumrunde schon gefeuert (2026-11-21i). */
-  readonly fired: boolean;
+  /**
+   * Die Hardpoints, die in dieser Raumrunde schon gefeuert haben (2026-11-23, Raumkampf-Interface):
+   * die Stellen in `Ship.turrets`. Fehlt er, hat keiner gefeuert (ein Hardpoint feuert je Raumrunde
+   * einmal; SR 32).
+   */
+  readonly firedTurrets?: readonly number[];
+  /**
+   * Hat in dieser Raumrunde schon zurückgefeuert (2026-11-23): Mit dem Programm *Return Fire* feuert
+   * eine beschossene Einheit einmal je Raumrunde zurück, auch wenn sie schon gefeuert hat.
+   */
+  readonly returned?: boolean;
   readonly position: Vec;
   readonly velocity: Vec;
   /** Der Schubvektor der laufenden Raumrunde in G; fehlt er, fliegt die Einheit ballistisch. */
@@ -55,6 +64,12 @@ export interface SystemFlight {
   readonly startedAt: string;
   /** Die laufende Raumrunde, ab 1. */
   readonly round: number;
+  /**
+   * Phase der laufenden Raumrunde (2026-11-23, Raumkampf-Interface): `thrust` = Schub wählen,
+   * `fire` = feuern. Im Raumkampf rückt die Raumrunde erst nach dem Feuer weiter; fehlt sie,
+   * steht das Blatt in der Schubphase (alte Speicherstände).
+   */
+  readonly phase?: BattlePhase;
   /** Die Einheit der Gruppe, als Id ihres Schiffs (2026-11-21b): Nur sie landet. */
   readonly party: string;
   /**
@@ -64,6 +79,15 @@ export interface SystemFlight {
    */
   readonly departure?: Departure;
   readonly units: readonly SpaceUnit[];
+}
+
+/** Phase der Raumrunde im Raumkampf (2026-11-23): Schub wählen oder feuern. */
+export type BattlePhase = 'thrust' | 'fire';
+export const battlePhases = ['thrust', 'fire'] as const;
+
+/** Die Phase der laufenden Raumrunde; ohne Angabe die Schubphase. */
+export function phaseOf(flight: SystemFlight): BattlePhase {
+  return flight.phase ?? 'thrust';
 }
 
 /** Das Ziel einer unterbrochenen Reise (2026-11-22b): genau eins von beiden. */
@@ -217,9 +241,13 @@ export function streamlinedOf(campaign: Campaign, unit: SpaceUnit): boolean {
   return unit.ship !== undefined && shipDesignOf(shipById(campaign, unit.ship).design).streamlined;
 }
 
-/** `/elapsed`: Sekunden seit Beginn des Systemflugs. */
+/**
+ * `/elapsed`: Sekunden seit Beginn des Systemflugs. In der Feuerphase (2026-11-23) ist die Bewegung
+ * der Raumrunde schon gelaufen, die Raumrunde aber noch nicht weitergerückt – die Sekunde zählt die
+ * Feuerphase dazu, damit Ort und Schwerkraft für alle nach dem Feuer rechnen.
+ */
 export function elapsedOf(flight: SystemFlight): number {
-  return (flight.round - 1) * ROUND_SECONDS;
+  return (flight.round - 1) * ROUND_SECONDS + (phaseOf(flight) === 'fire' ? ROUND_SECONDS : 0);
 }
 
 const add = (a: Vec, b: Vec): Vec => ({ x: a.x + b.x, y: a.y + b.y });
@@ -435,10 +463,10 @@ export function startFlight(campaign: Campaign, world: string, clock: Clock): Ca
   if (blocker) throw new DomainError(blocker);
   const vessel = groupVessel(campaign)!;
   const t = dayStart(campaign.day);
-  const units: SpaceUnit[] = [{ ship: vessel.id, ...startOrbit(campaign.hexes, world, t), crashed: false, fired: false, track: [] }];
+  const units: SpaceUnit[] = [{ ship: vessel.id, ...startOrbit(campaign.hexes, world, t), crashed: false, track: [] }];
   vesselsOf(campaign)
     .filter((v) => v.inOrbit && v.place?.world === world)
-    .forEach((v, i) => units.push({ ship: v.id, ...startOrbit(campaign.hexes, world, t, 3 + i / 2), crashed: false, fired: false, track: [] }));
+    .forEach((v, i) => units.push({ ship: v.id, ...startOrbit(campaign.hexes, world, t, 3 + i / 2), crashed: false, track: [] }));
   return { ...campaign, flight: { world, startedAt: clock.now(), round: 1, party: vessel.id, units } };
 }
 
@@ -502,7 +530,7 @@ export function startArrivalFlight(campaign: Campaign, world: string, angle: num
   if (campaign.flight !== undefined) throw new DomainError('Es läuft schon ein Systemflug.');
   const ship = shipOf(campaign);
   if (ship === undefined) throw new DomainError('Die Gruppe hat kein Schiff.');
-  const unit: SpaceUnit = { ship: ship.id, ...arrivalPoint(campaign.hexes, world, dayStart(campaign.day), angle), crashed: false, fired: false, track: [] };
+  const unit: SpaceUnit = { ship: ship.id, ...arrivalPoint(campaign.hexes, world, dayStart(campaign.day), angle), crashed: false, track: [] };
   return { ...campaign, flight: { world, startedAt: clock.now(), round: 1, party: ship.id, units: [unit] } };
 }
 
@@ -558,12 +586,15 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
   );
   const units = flight.units.map((u, i): SpaceUnit => {
     const end = runs[i]!.at(-1)!;
-    // Die Bewegung leert den Schub; in der neuen Raumrunde darf jede Einheit wieder feuern (2026-11-21i).
+    // Die Bewegung leert den Schub; in der neuen Feuerphase darf jede Einheit wieder feuern (2026-11-21i).
     const rest = without(u, 'thrust');
     const crashed = end.crashed || (u.ship === undefined && end.landedOn !== undefined);
-    return { ...rest, fired: false, position: end.position, velocity: end.velocity, crashed, track: [...u.track, { position: u.position, velocity: u.velocity }] };
+    return { ...rest, firedTurrets: [], returned: false, position: end.position, velocity: end.velocity, crashed, track: [...u.track, { position: u.position, velocity: u.velocity }] };
   });
-  const next: SystemFlight = { ...flight, round: flight.round + 1, units };
+  // Im Raumkampf (2026-11-23) bleibt die Raumrunde stehen: erst die Schubphase, dann das Feuer,
+  // und „End Turn“ rückt sie weiter. Ohne Raumkampf ist die Runde mit der Bewegung zu Ende.
+  const battle = battleRunning(campaign);
+  const next: SystemFlight = battle ? { ...flight, units, phase: 'fire' } : { ...flight, round: flight.round + 1, units, phase: 'thrust' };
   let result: Campaign = { ...campaign, flight: next };
   const daysBefore = Math.floor(elapsedOf(flight) / DAY_SECONDS);
   const daysAfter = Math.floor(elapsedOf(next) / DAY_SECONDS);
@@ -577,14 +608,30 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
   // Gelandet: Der Systemflug endet, die Gruppe ist auf dieser Welt (Owner, 21. November 2026).
   const landed = runs.map((r) => r.at(-1)!).find((s) => s.landedOn !== undefined && !s.skims)?.landedOn;
   if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result, clock), landed, flight.party), landed, clock, flight.party), frames, landed };
-  // Nach der Bewegung feuern angreifende fremde Schiffe, dann das Ende des Raumkampfs (2026-11-21i).
-  if (foesWillFire(result)) {
+  // Ohne Raumkampf (2026-11-23) ist die Raumrunde mit der Bewegung zu Ende, wie bisher. Im Raumkampf
+  // folgt erst die Feuerphase; fremde Schiffe feuern am Ende der Raumrunde (`endFirePhase`).
+  if (!battle && foesWillFire(result)) {
     if (random === undefined) throw new DomainError('Für das Feuer braucht es Würfel.');
     result = foesFire(result, random, clock);
   }
   const settled = settleBattle(result, clock);
   if (settled.lost) return { campaign: settled.campaign, frames, lost: true };
   return { campaign: settled.campaign, frames, ...(runs.some((r) => r.at(-1)!.skims) ? { skimmed: true } : {}) };
+}
+
+/**
+ * „End Turn“ im Raumkampf (2026-11-23, SR 32): Am Ende der Raumrunde feuern die fremden Schiffe, die
+ * können und noch nicht gefeuert haben (Retourvente), dann endet der Raumkampf, wo ein Schiff zerstört,
+ * kampfunfähig oder entkommen ist. Danach ist die nächste Raumrunde da: Raumrunde eins weiter,
+ * Schubphase.
+ */
+export function endFirePhase(campaign: Campaign, clock: Clock, random: Random): RoundRun {
+  let result = campaign;
+  if (foesWillFire(result)) result = foesFire(result, random, clock);
+  const settled = settleBattle(result, clock);
+  if (settled.lost) return { campaign: settled.campaign, frames: [], lost: true };
+  const now = activeFlight(settled.campaign);
+  return { campaign: { ...settled.campaign, flight: { ...now, round: now.round + 1, phase: 'thrust' } }, frames: [] };
 }
 
 /** Die Orte aller Einheiten alle `every` Schritte, für die Wiedergabe. */
@@ -685,7 +732,7 @@ export function launchCraft(campaign: Campaign, id: string): Campaign {
   const flight = activeFlight(campaign);
   if (!launchableCraft(campaign).some((c) => c.id === id)) throw new DomainError('Dieses Beiboot lässt sich jetzt nicht aussetzen.');
   const mother = flight.units.find((u) => u.ship === flight.party)!;
-  const unit: SpaceUnit = { ship: id, position: mother.position, velocity: mother.velocity, crashed: false, fired: false, track: mother.track };
+  const unit: SpaceUnit = { ship: id, position: mother.position, velocity: mother.velocity, crashed: false, track: mother.track };
   return { ...changeShip(campaign, id, (s) => without(s, 'aboard')), flight: { ...flight, party: id, units: [...flight.units, unit] } };
 }
 

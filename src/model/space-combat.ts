@@ -1,12 +1,13 @@
 import type { Campaign } from './campaign';
 import { DomainError } from './errors';
 import type { Clock, Random } from './ports';
-import { ref, shipDesignOf } from './reference';
+import { ref, shipDesignOf, softwareOf } from './reference';
 import { roll2d6, sum, type Dice } from './rules';
 import { hexById, hexIdOfWorld, worldById } from './sector';
 import { starportLetter } from './surface-map';
 import { craftOf, shipById, shipOf, type Ship, type Turret } from './ship';
-import { slotOfProgram, type SoftwareSlot } from './software';
+import { evadeDmOf, evades, hasTarget, hasThrust, predictDm, returnsFire, slotOfProgram, TARGET_PROGRAM, usesGunner, type SoftwareSlot } from './software';
+import { gunnerPost, postSkill, postsOf } from './crew';
 import { bookShip, fundsOf } from './shop';
 import { shipyardBlocker } from './armament';
 import type { SpaceAttack, SpaceBattle, SpaceBattleEnd } from './log';
@@ -189,7 +190,7 @@ export function plugBlocker(campaign: Campaign, shipId: string, program: string,
   if (from === undefined || from === to) return undefined;
   if (!battleRunning(campaign)) return undefined;
   const unit = campaign.flight?.units.find((u) => u.ship === shipId);
-  if (unit !== undefined && unit.fired) return 'Nach dem eigenen Schuss wird in dieser Raumrunde nichts mehr umgesteckt.';
+  if (unit !== undefined && (unit.firedTurrets?.length ?? 0) > 0) return 'Nach dem eigenen Schuss wird in dieser Raumrunde nichts mehr umgesteckt.';
   if (from === 'archive' || to === 'archive') return 'Im Raumkampf wird nur zwischen CPU und Speicher umgesteckt.';
   return undefined;
 }
@@ -366,16 +367,13 @@ export function placeFoe(campaign: Campaign, design: string, intent: Intent, clo
   const position = { x: own.position.x + km * Math.cos(angle), y: own.position.y + km * Math.sin(angle) };
   const ownName = shipOf(campaign)?.name;
   const name = plan.name === ownName ? `${plan.name} (fremd)` : plan.name;
-  const foe: SpaceUnit = { design: plan.id, name, intent, fired: false, position, velocity: own.velocity, crashed: false, track: own.track.map(() => ({ position, velocity: own.velocity })) };
+  const foe: SpaceUnit = { design: plan.id, name, intent, position, velocity: own.velocity, crashed: false, track: own.track.map(() => ({ position, velocity: own.velocity })) };
   const entry: SpaceBattle = { kind: 'spaceBattle', at: clock.now(), day: campaign.day, foe: name, design: plan.id, intent, ...extra };
   return { ...campaign, flight: { ...flight, units: [...flight.units, foe] }, log: [...campaign.log, entry] };
 }
 
-/**
- * Warum die Einheit `index` jetzt nicht auf `target` feuern kann (2026-11-21i); `undefined`, wenn sie
- * kann. Jede Einheit feuert höchstens einmal je Raumrunde.
- */
-export function fireBlocker(campaign: Campaign, index: number, target: number): string | undefined {
+/** Warum eine Einheit gar nicht feuern kann: Ziel, Aufschlag, Entfernung und Sichtlinie. */
+function shotBaseBlocker(campaign: Campaign, index: number, target: number): string | undefined {
   const flight = activeFlight(campaign);
   const unit = flight.units[index];
   const other = flight.units[target];
@@ -383,8 +381,6 @@ export function fireBlocker(campaign: Campaign, index: number, target: number): 
   const name = nameOfUnit(campaign, unit);
   if (unit.crashed) return `${name} ist aufgeschlagen.`;
   if (other.crashed) return `${nameOfUnit(campaign, other)} ist aufgeschlagen.`;
-  if (unit.fired) return `${name} hat in dieser Raumrunde schon gefeuert.`;
-  if (lasersOfUnit(campaign, unit).length === 0) return `${name} hat keinen Laser, der feuern kann.`;
   const bands = bandOf(lengthOf({ x: unit.position.x - other.position.x, y: unit.position.y - other.position.y }));
   if (bands > TRACKING_BANDS) return `${nameOfUnit(campaign, other)} ist ${bands} Raumbänder entfernt, zu weit (höchstens ${TRACKING_BANDS}).`;
   const scene = sceneOf(campaign.hexes, flight.world);
@@ -392,9 +388,111 @@ export function fireBlocker(campaign: Campaign, index: number, target: number): 
   return undefined;
 }
 
-/** Die höchste G einer Einheit nach Schaden (fremde Schiffe ohne Absicht treiben). */
+/** Das Schiff einer eigenen Einheit; ein fremdes Schiff hat keins (Domänenmodell 2026-11-22d). */
+function shipOfUnit(campaign: Campaign, unit: SpaceUnit): Ship | undefined {
+  return unit.ship === undefined ? undefined : shipById(campaign, unit.ship);
+}
+
+/** Die Fertigkeit des Piloten der Einheit (0 ohne Pilot, 0 bei einem fremden Schiff). */
+export function pilotSkillOf(campaign: Campaign, unit: SpaceUnit): number {
+  const ship = shipOfUnit(campaign, unit);
+  if (ship === undefined) return 0;
+  const at = postsOf(ship).findIndex((p) => p.post === 'pilot');
+  return at < 0 ? 0 : postSkill(campaign, ship, at);
+}
+
+/**
+ * Warum der Hardpoint `turret` der Einheit `index` jetzt nicht auf `target` feuert (2026-11-23):
+ * Aufschlag, ausgefallener Hardpoint, Laser und das Pflichtprogramm *Target*; dazu, wenn `target`
+ * gegeben ist, Ziel, Entfernung, Sichtlinie und ob der Hardpoint in dieser Raumrunde schon gefeuert
+ * hat. Das Blatt fragt ohne `target`, um den Hardpoint selbst zu erklären.
+ */
+export function hardpointBlocker(campaign: Campaign, index: number, target: number | undefined, turret: number): string | undefined {
+  const flight = activeFlight(campaign);
+  const unit = flight.units[index];
+  if (unit === undefined) return 'Diese Einheit gibt es nicht.';
+  const name = nameOfUnit(campaign, unit);
+  if (unit.crashed) return `${name} ist aufgeschlagen.`;
+  const turrets = turretsOfUnit(campaign, unit);
+  if (turrets[turret] === undefined) return 'Diesen Hardpoint gibt es nicht.';
+  if (turrets[turret].weapons.filter((w) => w.endsWith('laser')).length === 0) return `${name}: kein Laser auf Hardpoint ${turret + 1}.`;
+  if (damageOfUnit(campaign, unit)?.turretsOut.includes(turret) === true) return `Hardpoint ${turret + 1} von ${name} ist ausgefallen.`;
+  const ship = shipOfUnit(campaign, unit);
+  if (ship !== undefined && !hasTarget(ship)) return `Ohne ${softwareOf(TARGET_PROGRAM).name} in der CPU feuert kein Turret (SE 13).`;
+  if (target === undefined) return undefined;
+  const base = shotBaseBlocker(campaign, index, target);
+  if (base !== undefined) return base;
+  if ((unit.firedTurrets ?? []).includes(turret)) return `${name} hat Hardpoint ${turret + 1} in dieser Raumrunde schon gefeuert.`;
+  if (shotsOf(campaign, flight, sceneOf(campaign.hexes, flight.world), index, target, flightTime(campaign, flight), turret).length === 0) return `${name}: Hardpoint ${turret + 1} hat keinen freien Laser.`;
+  return undefined;
+}
+
+/** Ein Hardpoint im Blatt (2026-11-23): welche Waffen dort sitzen und warum er jetzt nicht feuert. */
+export interface Hardpoint {
+  readonly turret: number;
+  readonly name: string;
+  readonly weapons: readonly string[];
+  /** Wie viele Laser dieses Hardpoints jetzt feuern können (ein Wurf je Laser). */
+  readonly lasers: number;
+  readonly out: boolean;
+  readonly fired: boolean;
+  readonly blocker: string | undefined;
+}
+
+/** Die Hardpoints der Einheit `index`, die Bewaffnung tragen, mit ihrem Stand (2026-11-23). */
+export function hardpointsOf(campaign: Campaign, index: number): readonly Hardpoint[] {
+  const flight = activeFlight(campaign);
+  const unit = flight.units[index];
+  if (unit === undefined) return [];
+  const damage = damageOfUnit(campaign, unit);
+  const lasers = lasersOfUnit(campaign, unit);
+  const onlyOne = withoutComputer(designOfUnit(campaign, unit));
+  return turretsOfUnit(campaign, unit)
+    .map((turret, at) => {
+      const guns = turret.weapons.filter((w) => w.endsWith('laser'));
+      // Ohne Computer arbeitet nur der erste Laser des Schiffs, der im ersten Hardpoint steht (SE 13).
+      const usable = lasers.filter((l) => l.turret === at && (!onlyOne || at === 0));
+      return {
+        turret: at,
+        name: `Hardpoint ${at + 1}`,
+        weapons: guns,
+        lasers: usable.length,
+        out: damage?.turretsOut.includes(at) ?? false,
+        fired: (unit.firedTurrets ?? []).includes(at),
+        blocker: hardpointBlocker(campaign, index, undefined, at),
+      };
+    })
+    .filter((h) => h.weapons.length > 0);
+}
+
+/**
+ * Warum die Einheit `index` jetzt nicht auf `target` feuern kann (2026-11-21i); `undefined`, wenn sie
+ * kann. Jeder Hardpoint feuert höchstens einmal je Raumrunde.
+ */
+export function fireBlocker(campaign: Campaign, index: number, target: number): string | undefined {
+  const flight = activeFlight(campaign);
+  const unit = flight.units[index];
+  if (unit === undefined) return 'Diese Einheit gibt es nicht.';
+  const base = shotBaseBlocker(campaign, index, target);
+  if (base !== undefined) return base;
+  const ship = shipOfUnit(campaign, unit);
+  if (ship !== undefined && !hasTarget(ship)) return `Ohne ${softwareOf(TARGET_PROGRAM).name} in der CPU feuert kein Turret (SE 13).`;
+  if (lasersOfUnit(campaign, unit).length === 0) return `${nameOfUnit(campaign, unit)} hat keinen Laser, der feuern kann.`;
+  if (hardpointsOf(campaign, index).every((h) => h.fired || h.out || h.lasers === 0)) return `${nameOfUnit(campaign, unit)} hat in dieser Raumrunde schon gefeuert.`;
+  return undefined;
+}
+
+/**
+ * Die höchste G einer Einheit nach Schaden (fremde Schiffe ohne Absicht treiben). Eigene Schiffe
+ * stehen ohne *Maneuver* in der CPU still; läuft ein Ausweichprogramm, kostet das 1 G
+ * (Domänenmodell 2026-11-22d). Fremde Schiffe haben Maneuver und Target in der CPU, sonst nichts.
+ */
 export function unitMaxG(campaign: Campaign, unit: SpaceUnit): number {
-  return maneuverAfter(designOfUnit(campaign, unit), damageOfUnit(campaign, unit));
+  const base = maneuverAfter(designOfUnit(campaign, unit), damageOfUnit(campaign, unit));
+  const ship = shipOfUnit(campaign, unit);
+  if (ship === undefined) return base;
+  if (!hasThrust(ship)) return 0;
+  return Math.max(0, base - (evades(ship) ? 1 : 0));
 }
 
 /**
@@ -447,10 +545,18 @@ interface Shot {
   readonly bands: number;
   readonly computerHits: number;
   readonly noComputer: boolean;
+  /** Die DM der Programme (2026-11-23): Predict und der Gunner beim Schützen, Ausweichen beim Ziel. */
+  readonly predict: number;
+  readonly gunnery: number;
+  readonly evade: number;
 }
 
-/** Die Schüsse einer Einheit auf `to`: jeder arbeitende Laser einzeln, mit Sichtlinie und höchstens 90 Raumbändern. */
-function shotsOf(campaign: Campaign, flight: SystemFlight, scene: Scene, from: number, to: number, t: number): readonly Shot[] {
+/**
+ * Die Schüsse einer Einheit auf `to`: jeder arbeitende Laser einzeln, mit Sichtlinie und höchstens
+ * 90 Raumbändern. `turret` gibt vor, dass nur dieser Hardpoint feuert, `skip` lässt die Hardpoints
+ * aus, die in dieser Raumrunde schon gefeuert haben (2026-11-23).
+ */
+function shotsOf(campaign: Campaign, flight: SystemFlight, scene: Scene, from: number, to: number, t: number, turret?: number, skip: readonly number[] = []): readonly Shot[] {
   const a = flight.units[from]!;
   const b = flight.units[to]!;
   if (a.crashed || b.crashed) return [];
@@ -459,35 +565,65 @@ function shotsOf(campaign: Campaign, flight: SystemFlight, scene: Scene, from: n
   if (bands > TRACKING_BANDS || !lineOfSight(scene, a.position, b.position, t)) return [];
   const computerHits = count(damage, 'computer');
   const noComputer = withoutComputer(designOfUnit(campaign, a));
-  return lasersOfUnit(campaign, a).map(({ turret, weapon }) => ({ from, to, turret, weapon, bands, computerHits, noComputer, dm: sumDms(dmPartsOf(weapon, bands, computerHits, noComputer)) }));
+  // Die Programme in der CPU des Schützen (2026-11-23): Predict und, mit Gunner Interact, die
+  // Fertigkeit des Gunners dieses Hardpoints; die des Ziels: sein Ausweich-DM.
+  const shooter = shipOfUnit(campaign, a);
+  const predict = shooter === undefined ? 0 : predictDm(shooter);
+  const target = shipOfUnit(campaign, b);
+  const evade = target === undefined ? 0 : evadeDmOf(target, pilotSkillOf(campaign, b));
+  return lasersOfUnit(campaign, a)
+    .filter(({ turret: at }) => (turret === undefined || at === turret) && !skip.includes(at))
+    .map(({ turret: at, weapon }) => {
+      const gunnery = shooter !== undefined && usesGunner(shooter) ? gunnerSkillOf(campaign, shooter, at) : 0;
+      const parts = dmPartsOf(weapon, bands, computerHits, noComputer, { predict, gunnery, evade });
+      return { from, to, turret: at, weapon, bands, computerHits, noComputer, predict, gunnery, evade, dm: sumDms(parts) };
+    });
 }
 
 /** Ein Teil des DM eines Laserschusses (2026-11-21i): wofür und wie viel. */
 export interface SpaceDmPart {
-  readonly reason: 'range' | 'pulse' | 'computer' | 'noComputer';
+  readonly reason: 'range' | 'pulse' | 'computer' | 'noComputer' | 'predict' | 'gunnery' | 'evade';
   readonly dm: number;
 }
 
-/** Die DMs eines Laserschusses (SE 12, Hausregel Computer): Entfernung über 25 bzw. 50 Raumbänder, Pulse Laser, je Computer-Treffer −1, Small Craft ohne Computer −1 (SE 13); nur die, die zählen. */
-export function dmPartsOf(weapon: string, bands: number, computerHits: number, noComputer = false): readonly SpaceDmPart[] {
+/**
+ * Die DMs eines Laserschusses (SE 12, Hausregel Computer, Domänenmodell 2026-11-22d): Entfernung über
+ * 25 bzw. 50 Raumbänder, Pulse Laser, je Computer-Treffer −1, Small Craft ohne Computer −1 (SE 13);
+ * dazu die Programme in der CPU: `predict`, die Fertigkeit des `gunnery` und das `evade` des Ziels;
+ * nur die, die zählen.
+ */
+export function dmPartsOf(
+  weapon: string,
+  bands: number,
+  computerHits: number,
+  noComputer = false,
+  program: { readonly predict?: number; readonly gunnery?: number; readonly evade?: number } = {},
+): readonly SpaceDmPart[] {
   const parts: SpaceDmPart[] = [];
   if (spaceRangeDm(bands) !== 0) parts.push({ reason: 'range', dm: spaceRangeDm(bands) });
   if (weapon === 'pulse-laser') parts.push({ reason: 'pulse', dm: -1 });
   if (computerHits > 0) parts.push({ reason: 'computer', dm: -computerHits });
   if (noComputer) parts.push({ reason: 'noComputer', dm: -1 });
+  if ((program.predict ?? 0) !== 0) parts.push({ reason: 'predict', dm: program.predict! });
+  if ((program.gunnery ?? 0) !== 0) parts.push({ reason: 'gunnery', dm: program.gunnery! });
+  if ((program.evade ?? 0) !== 0) parts.push({ reason: 'evade', dm: program.evade! });
   return parts;
 }
 
 const sumDms = (parts: readonly SpaceDmPart[]) => parts.reduce((n, p) => n + p.dm, 0);
 
-/** Was ein Schuss von `from` auf `to` jetzt bräuchte (2026-11-21i): Entfernung, Computer-Treffer und je Waffe Anzahl, DMs und der nötige Wurf auf 2W6. */
+/** Was ein Schuss von `from` auf `to` jetzt bräuchte (2026-11-21i): Entfernung, Computer-Treffer und je Waffe Anzahl, DMs und der nötige Wurf auf 2W6. `turret` beschränkt es auf einen Hardpoint (2026-11-23). */
 export interface FirePreview {
   readonly bands: number;
   readonly computerHits: number;
+  /** Die DM der Programme in der CPU (2026-11-23): Predict, der Gunner und das Ausweichen des Ziels. */
+  readonly predict: number;
+  readonly gunner: number;
+  readonly evade: number;
   readonly weapons: readonly { readonly weapon: string; readonly count: number; readonly parts: readonly SpaceDmPart[]; readonly dm: number; readonly need: number }[];
 }
 
-export function firePreview(campaign: Campaign, from: number, to: number): FirePreview | undefined {
+export function firePreview(campaign: Campaign, from: number, to: number, turret?: number): FirePreview | undefined {
   const flight = activeFlight(campaign);
   const a = flight.units[from];
   const b = flight.units[to];
@@ -496,16 +632,34 @@ export function firePreview(campaign: Campaign, from: number, to: number): FireP
   const bands = bandOf(lengthOf({ x: a.position.x - b.position.x, y: a.position.y - b.position.y }));
   const computerHits = count(damage, 'computer');
   const noComputer = withoutComputer(designOfUnit(campaign, a));
+  const shooter = shipOfUnit(campaign, a);
+  const predict = shooter === undefined ? 0 : predictDm(shooter);
+  const targetShip = shipOfUnit(campaign, b);
+  const evade = targetShip === undefined ? 0 : evadeDmOf(targetShip, pilotSkillOf(campaign, b));
+  // Gunner Interact: die Fertigkeit des Gunners des Hardpoints, der feuert (ohne Gunner 0).
+  const gunner = shooter === undefined || !usesGunner(shooter) ? 0 : gunnerSkillOf(campaign, shooter, turret ?? 0);
   const weapons = new Map<string, number>();
-  for (const { weapon } of lasersOfUnit(campaign, a)) weapons.set(weapon, (weapons.get(weapon) ?? 0) + 1);
+  for (const { weapon, turret: at } of lasersOfUnit(campaign, a)) {
+    if (turret !== undefined && at !== turret) continue;
+    weapons.set(weapon, (weapons.get(weapon) ?? 0) + 1);
+  }
   return {
     bands,
     computerHits,
+    predict,
+    gunner,
+    evade,
     weapons: [...weapons].map(([weapon, n]) => {
-      const parts = dmPartsOf(weapon, bands, computerHits, noComputer);
+      const parts = dmPartsOf(weapon, bands, computerHits, noComputer, { predict, gunnery: gunner, evade });
       return { weapon, count: n, parts, dm: sumDms(parts), need: HIT_TARGET - sumDms(parts) };
     }),
   };
+}
+
+/** Die Fertigkeit des Gunners dieses Hardpoints (0 ohne Gunner-Posten oder ohne Gunner dahinter, 2026-11-23). */
+export function gunnerSkillOf(campaign: Campaign, ship: Ship, turret: number): number {
+  const at = gunnerPost(ship, turret);
+  return at < 0 ? 0 : postSkill(campaign, ship, at);
 }
 
 /**
@@ -564,8 +718,8 @@ function applyHits(campaign: Campaign, index: number, zones: readonly HitZone[],
   return { ...campaign, flight: { ...flight, units: flight.units.map((u, i) => (i === index ? { ...u, damage } : u)) } };
 }
 
-/** Würfelt Schüsse und hängt sie ans Log; gibt die Treffer je Ziel zurück. */
-function fire(campaign: Campaign, shots: readonly Shot[], random: Random, clock: Clock): { campaign: Campaign; hits: Map<number, HitZone[]> } {
+/** Würfelt Schüsse und hängt sie ans Log; gibt die Treffer je Ziel zurück. `returnFire`: der Schuss ist ein Rückfeuer (2026-11-23). */
+function fire(campaign: Campaign, shots: readonly Shot[], random: Random, clock: Clock, returnFire = false): { campaign: Campaign; hits: Map<number, HitZone[]> } {
   const flight = activeFlight(campaign);
   const hits = new Map<number, HitZone[]>();
   const log = [...campaign.log];
@@ -588,6 +742,10 @@ function fire(campaign: Campaign, shots: readonly Shot[], random: Random, clock:
       bands: shot.bands,
       computerHits: shot.computerHits,
       ...(shot.noComputer ? { noComputer: true } : {}),
+      ...(shot.predict !== 0 ? { predict: shot.predict } : {}),
+      ...(shot.gunnery !== 0 ? { gunnery: shot.gunnery } : {}),
+      ...(shot.evade !== 0 ? { evade: shot.evade } : {}),
+      ...(returnFire ? { returnFire: true } : {}),
       hits: zones,
     };
     log.push(entry);
@@ -595,44 +753,94 @@ function fire(campaign: Campaign, shots: readonly Shot[], random: Random, clock:
   return { campaign: { ...campaign, log }, hits };
 }
 
-/** Eine Salve: alle arbeitenden Laser von `from` auf `to`, Schaden nach allen Würfen; `from` hat gefeuert. */
-function volley(campaign: Campaign, from: number, to: number, random: Random, clock: Clock): Campaign {
+/**
+ * Eine Salve: die Laser von `from` auf `to` – nur die des Hardpoints `turret`, sonst alle noch freien
+ * –, Schaden nach allen Würfen, danach `firedTurrets` von `from` erweitert. `all` ignoriert die
+ * Hardpoints, die schon gefeuert haben (das Rückfeuer des Programms Return Fire, 2026-11-23).
+ */
+function volley(campaign: Campaign, from: number, to: number, random: Random, clock: Clock, opts: { readonly turret?: number; readonly all?: boolean; readonly returnFire?: boolean } = {}): Campaign {
   const flight = activeFlight(campaign);
   const scene = sceneOf(campaign.hexes, flight.world);
-  const shots = shotsOf(campaign, flight, scene, from, to, flightTime(campaign, flight));
-  const fired = fire(campaign, shots, random, clock);
+  const skip = opts.all === true || opts.turret !== undefined ? [] : (flight.units[from]?.firedTurrets ?? []);
+  const shots = shotsOf(campaign, flight, scene, from, to, flightTime(campaign, flight), opts.turret, skip);
+  const fired = fire(campaign, shots, random, clock, opts.returnFire === true);
   let after = fired.campaign;
   for (const [target, zones] of fired.hits) after = applyHits(after, target, zones, random);
   const now = activeFlight(after);
-  return { ...after, flight: { ...now, units: now.units.map((u, i) => (i === from ? { ...u, fired: true } : u)) } };
+  const used = [...new Set(shots.map((s) => s.turret))];
+  return {
+    ...after,
+    flight: {
+      ...now,
+      units: now.units.map((u, i) => (i === from ? { ...u, firedTurrets: [...new Set([...(u.firedTurrets ?? []), ...used])], ...(opts.returnFire === true ? { returned: true } : {}) } : u)),
+    },
+  };
 }
 
 /**
- * Die Einheit `index` feuert auf `target` (2026-11-21i): sofort, ihre Salve, dann das Rückfeuer des
- * Ziels, wenn es in dieser Raumrunde noch nicht gefeuert hat und kann (SR 40). Ein beschossenes
- * fremdes Schiff, das nicht angriff, greift danach an (mit Laser) oder flieht. Danach das Ende des
- * Raumkampfs (`settleBattle`).
+ * Nach einem Schuss von `from` auf `to`: das Rückfeuer des Ziels (SR 40), solange es in dieser
+ * Raumrunde noch nicht gefeuert hat. Ein eigenes Schiff feuert nur von selbst zurück, wenn *Return
+ * Fire* in seiner CPU liegt – dann auch, wenn es schon gefeuert hat, aber einmal je Raumrunde
+ * (Domänenmodell 2026-11-22d, 2026-11-23); ohne das Programm darf die Gruppe selbst feuern.
+ */
+function returnFireOf(campaign: Campaign, from: number, to: number, random: Random, clock: Clock): Campaign {
+  const unit = activeFlight(campaign).units[to];
+  if (unit === undefined) return campaign;
+  const ship = shipOfUnit(campaign, unit);
+  if (ship === undefined) {
+    if (fireBlocker(campaign, to, from) === undefined) return volley(campaign, to, from, random, clock);
+    return campaign;
+  }
+  if (!returnsFire(ship) || unit.returned === true) return campaign;
+  if (shotBaseBlocker(campaign, to, from) !== undefined || lasersOfUnit(campaign, unit).length === 0) return campaign;
+  return volley(campaign, to, from, random, clock, { all: true, returnFire: true });
+}
+
+/** Ein beschossenes fremdes Schiff, das nicht angriff, greift danach an (mit Laser) oder flieht; dann das Ende des Raumkampfs. */
+function reactAndSettle(campaign: Campaign, target: number, clock: Clock): { readonly campaign: Campaign; readonly lost: boolean } {
+  const flight = activeFlight(campaign);
+  const units = flight.units.map((u, i) => {
+    if (i !== target || u.ship !== undefined || u.intent === undefined || u.intent === 'attack') return u;
+    return { ...u, intent: (lasersOfUnit(campaign, u).length > 0 ? 'attack' : 'flee') as Intent };
+  });
+  return settleBattle({ ...campaign, flight: { ...flight, units } }, clock);
+}
+
+/**
+ * Der Hardpoint `turret` der Einheit `index` feuert auf `target` – ein Tipp im Blatt (2026-11-23):
+ * sofort seine Laser, dann das Rückfeuer des Ziels, dann das Ende des Raumkampfs.
+ */
+export function fireHardpoint(campaign: Campaign, index: number, target: number, turret: number, random: Random, clock: Clock): { readonly campaign: Campaign; readonly lost: boolean } {
+  const blocker = hardpointBlocker(campaign, index, target, turret);
+  if (blocker) throw new DomainError(blocker);
+  let after = volley(campaign, index, target, random, clock, { turret });
+  after = returnFireOf(after, index, target, random, clock);
+  return reactAndSettle(after, target, clock);
+}
+
+/**
+ * Die Einheit `index` feuert auf `target` (2026-11-21i): sofort, alle noch freien Hardpoints, dann das
+ * Rückfeuer des Ziels, wenn es in dieser Raumrunde noch nicht gefeuert hat und kann (SR 40) oder wenn
+ * *Return Fire* in seiner CPU läuft. Danach das Ende des Raumkampfs (`settleBattle`).
  */
 export function fireAt(campaign: Campaign, index: number, target: number, random: Random, clock: Clock): { readonly campaign: Campaign; readonly lost: boolean } {
   const blocker = fireBlocker(campaign, index, target);
   if (blocker) throw new DomainError(blocker);
   let after = volley(campaign, index, target, random, clock);
-  if (fireBlocker(after, target, index) === undefined) after = volley(after, target, index, random, clock);
-  const flight = activeFlight(after);
-  const units = flight.units.map((u, i) => {
-    if (i !== target || u.ship !== undefined || u.intent === undefined || u.intent === 'attack') return u;
-    return { ...u, intent: (lasersOfUnit(after, u).length > 0 ? 'attack' : 'flee') as Intent };
-  });
-  return settleBattle({ ...after, flight: { ...flight, units } }, clock);
+  after = returnFireOf(after, index, target, random, clock);
+  return reactAndSettle(after, target, clock);
 }
 
-/** Nach der Bewegung (2026-11-21i): Angreifende fremde Schiffe feuern auf das eigene Schiff, wenn sie können. */
+/** Nach der Bewegung (2026-11-21i): Angreifende fremde Schiffe feuern auf das eigene Schiff, wenn sie können; mit *Return Fire* antwortet das eigene Schiff von selbst (2026-11-23). */
 export function foesFire(campaign: Campaign, random: Random, clock: Clock): Campaign {
   let after = campaign;
   for (const [i, u] of activeFlight(campaign).units.entries()) {
     const party = partyIndexOf(activeFlight(after));
     if (u.ship !== undefined || u.intent !== 'attack') continue;
-    if (fireBlocker(after, i, party) === undefined) after = volley(after, i, party, random, clock);
+    if (fireBlocker(after, i, party) === undefined) {
+      after = volley(after, i, party, random, clock);
+      after = returnFireOf(after, i, party, random, clock);
+    }
   }
   return after;
 }

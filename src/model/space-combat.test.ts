@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  endFirePhase,
+  fireHardpoint,
+  hardpointBlocker,
+  hardpointsOf,
+  gunnerSkillOf,
+  shipById,
   addShip,
   battleRunning,
   book,
@@ -74,25 +80,31 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21h)', () => {
     expect(log.find((e) => e.kind === 'spaceAttack')).toMatchObject({ attacker: c.ships[0]!.name, target: 'Free Trader', weapon: 'beam-laser', dice: [6, 6], hits: ['explode'] });
     expect(log.at(-1)).toMatchObject({ kind: 'spaceBattleEnd', foe: 'Free Trader', outcome: 'destroyed' });
     expect(run.campaign.flight!.units).toHaveLength(1);
-    expect(run.campaign.flight!.units[0]!.fired).toBe(true);
+    expect(run.campaign.flight!.units[0]!.firedTurrets).toContain(0);
     expect(run.campaign.flight!.round).toBe(1);
   });
 
-  it('jede Einheit feuert einmal je Raumrunde; das Ziel feuert zurück und greift dann an (2026-11-21i)', () => {
+  it('jeder Hardpoint feuert einmal je Raumrunde; das Ziel feuert zurück und greift dann an (2026-11-21i)', () => {
     let c = placeFoe(flying(), 'T', 'ignore', clock);
     // Alle Würfe 2: 2 + 2 = 4 verfehlt immer.
     const shot = fireAt(c, 0, 1, always(2), clock);
     c = shot.campaign;
     const attackers = c.log.filter((e) => e.kind === 'spaceAttack').map((e) => (e.kind === 'spaceAttack' ? e.attacker : ''));
     expect(attackers).toEqual([c.ships[0]!.name, 'Patrol Cruiser', 'Patrol Cruiser', 'Patrol Cruiser', 'Patrol Cruiser']);
-    expect(c.flight!.units[1]).toMatchObject({ fired: true, intent: 'attack' });
+    expect((c.flight!.units[1]!.firedTurrets ?? []).length).toBeGreaterThan(0);
     expect(fireBlocker(c, 0, 1)).toMatch(/schon gefeuert/);
     expect(() => fireAt(c, 0, 1, always(2), clock)).toThrow(/schon gefeuert/);
-    // Die nächste Raumrunde: Der Kreuzer feuert nach der Bewegung von selbst, das eigene Schiff darf wieder.
-    const next = runRound(c, clock, always(2)).campaign;
-    expect(next.flight!.units[0]!.fired).toBe(false);
-    expect(next.flight!.units[1]!.fired).toBe(true);
-    expect(fireBlocker(next, 0, 1)).toBeUndefined();
+    // Die Bewegung (2026-11-23): die Raumrunde bleibt, das Feuer folgt, jede Einheit darf wieder.
+    const moved = runRound(c, clock, always(2)).campaign;
+    expect(moved.flight!.round).toBe(1);
+    expect(moved.flight!.phase).toBe('fire');
+    expect(moved.flight!.units[0]!.firedTurrets).toEqual([]);
+    expect(fireBlocker(moved, 0, 1)).toBeUndefined();
+    // „End Turn“: der Kreuzer feuert von selbst, dann rückt die Raumrunde weiter.
+    const end = endFirePhase(moved, clock, always(2)).campaign;
+    expect(end.flight!.units[1]!.firedTurrets!.length).toBeGreaterThan(0);
+    expect(end.flight!.round).toBe(2);
+    expect(end.flight!.phase).toBe('thrust');
   });
 
   it('ohne Laser kein Ziel', () => {
@@ -105,8 +117,8 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21h)', () => {
   it('ein angreifendes Schiff feuert von selbst; Treffer bleiben am eigenen Schiff', () => {
     let c = placeFoe(flying(), 'T', 'attack', clock);
     // Alle Würfe 4: 4 + 4 = 8 trifft (bis 25 Raumbänder ohne DM), Trefferzone 8 ist Hold.
-    const run = runRound(c, clock, always(4));
-    c = run.campaign;
+    // 2026-11-23: Die Bewegung lässt die Raumrunde stehen; die Fremden feuern am Ende der Runde.
+    c = endFirePhase(runRound(c, clock, always(4)).campaign, clock, always(4)).campaign;
     const shots = c.log.filter((e) => e.kind === 'spaceAttack');
     expect(shots.every((s) => s.kind === 'spaceAttack' && s.attacker === 'Patrol Cruiser')).toBe(true);
     expect(shots).toHaveLength(4);
@@ -145,7 +157,7 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21h)', () => {
 
   it('wird das eigene Schiff zerstört, endet der Systemflug und das Schiff ist ausgeblendet', () => {
     const c = placeFoe(flying(), 'T', 'attack', clock);
-    const run = runRound(c, clock, always(6));
+    const run = endFirePhase(runRound(c, clock, always(6)).campaign, clock, always(6));
     expect(run.lost).toBe(true);
     expect(run.campaign.flight).toBeUndefined();
     expect(run.campaign.ships.every((s) => s.retired)).toBe(true);
@@ -168,9 +180,93 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21h)', () => {
     ]);
     expect(dmPartsOf('beam-laser', 51, 0)).toEqual([{ reason: 'range', dm: -5 }]);
     const c = placeFoe(flying(), 'A', 'ignore', clock);
-    expect(firePreview(c, 0, 1)).toEqual({ bands: 7, computerHits: 0, weapons: [{ weapon: 'beam-laser', count: 1, parts: [], dm: 0, need: 8 }] });
+    expect(firePreview(c, 0, 1)).toEqual({ bands: 7, computerHits: 0, predict: 0, gunner: 0, evade: 0, weapons: [{ weapon: 'beam-laser', count: 1, parts: [], dm: 0, need: 8 }] });
     // Der Schuss hält fest, woraus sein DM kam.
     const shot = fireAt(c, 0, 1, always(2), clock).campaign.log.find((e) => e.kind === 'spaceAttack');
     expect(shot).toMatchObject({ bands: 7, computerHits: 0, dm: 0 });
+  });
+});
+
+describe('Das Raumkampf-Interface: Phasen, Hardpoints und Programme (2026-11-23)', () => {
+  // Der Kreuzer T feuert mit vier Lasern; der Free Trader A hat keine Bewaffnung.
+  const withFoe = (intent: 'attack' | 'ignore' = 'attack', design = 'T'): Campaign => placeFoe(flying(), design, intent, clock);
+  /** Das eigene Schiff mit anderem Programmstand (die Prüfung der CPU-Größe liegt beim Umstecken). */
+  const cpu = (c: Campaign, ...programs: string[]): Campaign => ({
+    ...c,
+    ships: c.ships.map((s) => (s.id === c.flight!.party ? { ...s, software: [...(s.software ?? []).filter((p) => p.slot !== 'cpu'), ...programs.map((program) => ({ program, slot: 'cpu' as const }))] } : s)),
+  });
+  const shots = (c: Campaign) => c.log.filter((e) => e.kind === 'spaceAttack');
+
+  it('die Bewegung lässt die Raumrunde stehen, „End Turn“ feuert die Fremden und rückt weiter', () => {
+    const moved = runRound(withFoe(), clock, always(2));
+    expect(moved.campaign.flight!.round).toBe(1);
+    expect(moved.campaign.flight!.phase).toBe('fire');
+    expect(shots(moved.campaign)).toHaveLength(0);
+    const end = endFirePhase(moved.campaign, clock, always(2));
+    expect(shots(end.campaign).length).toBeGreaterThan(0);
+    expect(end.campaign.flight!.round).toBe(2);
+    expect(end.campaign.flight!.phase).toBe('thrust');
+  });
+
+  it('ein Tipp auf den Hardpoint feuert nur diesen, der andere darf noch', () => {
+    let c = withFoe('ignore');
+    c = { ...c, ships: c.ships.map((s) => (s.id === c.flight!.party ? { ...s, turrets: [{ type: 'double', weapons: ['pulse-laser'] }, { type: 'single', weapons: ['beam-laser'] }] } : s)) };
+    expect(hardpointsOf(c, 0).map((h) => h.turret)).toEqual([0, 1]);
+    const first = fireHardpoint(c, 0, 1, 1, always(2), clock).campaign;
+    expect(shots(first).filter((e) => e.attacker === c.ships[0]!.name).map((e) => (e.kind === 'spaceAttack' ? e.turret : 0))).toEqual([1]);
+    expect(first.flight!.units[0]!.firedTurrets).toEqual([1]);
+    expect(hardpointBlocker(first, 0, 1, 1)).toMatch(/schon gefeuert/);
+    expect(hardpointBlocker(first, 0, 1, 0)).toBeUndefined();
+    // Die Salve des ganzen Schiffs nimmt nur den noch freien Hardpoint (2026-11-23).
+    const rest = fireAt(first, 0, 1, always(2), clock).campaign;
+    expect(shots(rest).filter((e) => e.kind === 'spaceAttack' && e.attacker === rest.ships[0]!.name && e.turret === 1)).toHaveLength(1);
+  });
+
+  it('ohne Target in der CPU feuert kein Turret, ohne Maneuver steht das Schiff still', () => {
+    const c = cpu(withFoe('ignore')); // nur Speicher, keine Pflichtprogramme in der CPU
+    expect(hardpointBlocker(c, 0, 1, 0)).toMatch(/Target/);
+    expect(fireBlocker(c, 0, 1)).toMatch(/Target/);
+    expect(maxGOf(c, c.flight!.units[0]!)).toBe(0);
+    expect(() => fireHardpoint(c, 0, 1, 0, always(6), clock)).toThrow(/Target/);
+  });
+
+  it('Predict und der Gunner werden DM des Schusses und stehen im Log', () => {
+    let c = cpu(withFoe('ignore'), 'maneuver', 'target', 'predict-1', 'gunner-interact');
+    // Jonas Reyl hat keine Gunnery-Fertigkeit; für den Versuch des Gunner-DMs gibt sie ihm der Test.
+    expect(gunnerSkillOf(c, shipById(c, c.flight!.party), 0)).toBe(0);
+    c = { ...c, characters: c.characters.map((p) => (p.name === 'Jonas Reyl' ? { ...p, skills: [...p.skills, { of: 'gunnery', level: 2, retired: false }] } : p)) };
+    const preview = firePreview(c, 0, 1, 0)!;
+    expect(preview.predict).toBe(1);
+    expect(preview.gunner).toBe(2);
+    expect(preview.weapons[0]!.parts.map((p) => p.reason)).toEqual(expect.arrayContaining(['predict', 'gunnery']));
+    const after = fireHardpoint(c, 0, 1, 0, always(2), clock).campaign;
+    expect(shots(after)[0]).toMatchObject({ predict: 1, gunnery: 2, dm: 3 });
+  });
+
+  it('ein Ausweichprogramm gibt dem Ziel DM − und kostet 1 G Schub', () => {
+    const c = cpu(withFoe(), 'maneuver', 'target', 'auto-evade');
+    expect(maxGOf(c, c.flight!.units[0]!)).toBe(maxGOf(withFoe(), withFoe().flight!.units[0]!) - 1);
+    const end = endFirePhase(runRound(c, clock, always(2)).campaign, clock, always(2)).campaign;
+    const atUs = shots(end).find((e) => e.kind === 'spaceAttack' && e.target === end.ships[0]!.name);
+    expect(atUs).toMatchObject({ evade: -2 });
+  });
+
+  it('mit Return Fire feuert das eigene Schiff am Ende der Runde von selbst zurück', () => {
+    const c = cpu(withFoe('ignore'), 'maneuver', 'target', 'return-fire');
+    const first = fireHardpoint(c, 0, 1, 0, always(2), clock).campaign;
+    // Das Ziel feuert wie bisher zurück; das eigene Schiff hat noch nicht zurückgefeuert.
+    expect(first.flight!.units[0]!.returned).toBeUndefined();
+    // Am Ende der Raumrunde schießt der Kreuzer, und die Yacht antwortet von selbst – einmal.
+    const end = endFirePhase(runRound(first, clock, always(2)).campaign, clock, always(2)).campaign;
+    const mine = shots(end).filter((e) => e.kind === 'spaceAttack' && e.attacker === end.ships[0]!.name);
+    expect(mine.some((e) => e.kind === 'spaceAttack' && e.returnFire === true)).toBe(true);
+    expect(end.flight!.units.find((u) => u.ship !== undefined)!.returned).toBe(true);
+  });
+
+  it('ohne Return Fire bleibt das eigene Schiff stumm, auch wenn es beschossen wird', () => {
+    const c = withFoe('ignore');
+    const first = fireHardpoint(c, 0, 1, 0, always(2), clock).campaign;
+    const end = endFirePhase(runRound(first, clock, always(2)).campaign, clock, always(2)).campaign;
+    expect(shots(end).some((e) => e.kind === 'spaceAttack' && e.attacker === end.ships[0]!.name && e.returnFire === true)).toBe(false);
   });
 });

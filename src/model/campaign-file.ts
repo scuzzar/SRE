@@ -27,7 +27,7 @@ import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop'
 import type { Ship } from './ship';
 import { storedTurrets } from './ship';
 import { checkTrip } from './trip';
-import { checkFlight, type Departure, type SystemFlight } from './flight';
+import { battlePhases, checkFlight, type Departure, type SystemFlight } from './flight';
 import { checkVoyage } from './voyage';
 import { vehicleOfItem } from './vehicle';
 import { settleStash } from './stash';
@@ -156,7 +156,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   }),
   z.object({ kind: z.literal('skimming'), at, day, place, giant: z.string().min(1), ship: z.string().min(1), tons: z.number().positive() }),
   z.object({ kind: z.literal('spaceBattle'), at, day, place, foe: z.string().min(1), design: z.string().min(1), intent: z.enum(intents), encounter: dice.optional(), reaction: dice.optional(), attack: dice.optional(), occasion: z.enum(['departure', 'arrival']).optional(), jumpTo: z.string().min(1).optional(), travelTo: z.string().min(1).optional() }),
-  z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), bands: z.number().int().min(1).optional(), computerHits: z.number().int().min(0).optional(), noComputer: z.boolean().optional(), hits: z.array(z.enum(hitZones)).max(4) }),
+  z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), bands: z.number().int().min(1).optional(), computerHits: z.number().int().min(0).optional(), noComputer: z.boolean().optional(), predict: z.number().int().optional(), gunnery: z.number().int().optional(), evade: z.number().int().optional(), returnFire: z.boolean().optional(), hits: z.array(z.enum(hitZones)).max(4) }),
   z.object({ kind: z.literal('spaceBattleEnd'), at, day, place, foe: z.string().min(1), outcome: z.enum(battleOutcomes) }),
   z.object({ kind: z.literal('systemJourney'), at, day, place, from: z.string().min(1), to: z.string().min(1), hours: z.number().int(), travellers: z.array(z.string().min(1)), ship: z.string().min(1).optional(), departureRoll: dice.optional(), arrivalRoll: dice.optional() }),
 ]);
@@ -329,6 +329,8 @@ const FlightSchema = z.object({
   world: z.string().min(1),
   startedAt: at,
   round: z.number().int().min(1),
+  /** Phase der Raumrunde im Raumkampf (2026-11-23); fehlt in Dateien von vorher: Schubphase. */
+  phase: z.enum(battlePhases).optional(),
   /** Die Einheit der Gruppe, als Schiffs-Id (2026-11-21b); fehlt in Ständen von vorher: die erste Einheit. */
   party: z.string().min(1).optional(),
   /** Die Reise, die eine Begegnung beim Start unterbrach (2026-11-22b). */
@@ -341,8 +343,11 @@ const FlightSchema = z.object({
         name: z.string().min(1).optional(),
         intent: z.enum(intents).optional(),
         damage: DamageSchema.optional(),
-        /** Gefeuert in dieser Raumrunde (2026-11-21i); fehlt in Dateien von vorher. */
-        fired: z.boolean().default(false),
+        /** Die Hardpoints, die in dieser Raumrunde schon gefeuert haben (2026-11-23); `fired` ist die alte Angabe. */
+        firedTurrets: z.array(z.number().int().min(0)).optional(),
+        fired: z.boolean().optional(),
+        /** Hat in dieser Raumrunde schon zurückgefeuert (2026-11-23). */
+        returned: z.boolean().optional(),
         position: VecSchema,
         velocity: VecSchema,
         thrust: VecSchema.optional(),
@@ -739,6 +744,7 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
     world: flight.world,
     startedAt: flight.startedAt,
     round: flight.round,
+    ...(flight.phase === undefined ? {} : { phase: flight.phase }),
     party: flight.party ?? flight.units[0]!.ship!,
     ...(flight.departure === undefined ? {} : { departure: stripped(flight.departure) as Departure }),
     units: flight.units.map((u) => ({
@@ -747,7 +753,10 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
       ...(u.name === undefined ? {} : { name: u.name }),
       ...(u.intent === undefined ? {} : { intent: u.intent }),
       ...(u.damage === undefined ? {} : { damage: { hits: [...u.damage.hits], turretsOut: [...u.damage.turretsOut] } }),
-      fired: u.fired,
+      // Die Hardpoints, die in dieser Raumrunde schon gefeuert haben (2026-11-23). Dateien von vorher
+      // kannten nur `fired`; beim Laden darf jede Einheit wieder feuern.
+      ...(u.firedTurrets === undefined ? {} : { firedTurrets: [...u.firedTurrets] }),
+      ...(u.returned === undefined ? {} : { returned: u.returned }),
       position: vec(u.position),
       velocity: vec(u.velocity),
       ...(u.thrust === undefined ? {} : { thrust: vec(u.thrust) }),

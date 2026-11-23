@@ -260,8 +260,8 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
           trail = [...trailOf({ ...unit, track: unit.track.slice(0, -1), position: unit.track.at(-1)?.position ?? unit.position, velocity: unit.track.at(-1)?.velocity ?? unit.velocity }), ...frames.slice(0, i + 1).map((f) => f[unit.index]!), at];
         }
         path(trail, unit.foe ? 'rgba(255, 107, 107, 0.35)' : 'rgba(79, 209, 255, 0.35)', 1.2);
-        // Raumkampf (2026-11-21i): die Sichtlinie zum fremden Schiff, rot gestrichelt, wenn frei.
-        if (!playing && unit.foe && !unit.wreck && unit.sight && flight?.units[flight.party]) path([flight.units[flight.party]!.position, unit.position], 'rgba(255, 107, 107, 0.45)', 1, [4, 6]);
+        // Raumkampf (2026-11-21i, Ziel 2026-11-23): die Sichtlinie zum gewählten Ziel, rot gestrichelt, wenn frei.
+        if (!playing && unit.foe && !unit.wreck && unit.sight && flight?.units[flight.party] && flight.target === unit.index) path([flight.units[flight.party]!.position, unit.position], 'rgba(255, 107, 107, 0.45)', 1, [4, 6]);
         if (!playing && !unit.crashed && !unit.foe) {
           path(unit.preview.after, 'rgba(79, 209, 255, 0.75)', 1.4, [6, 5]);
           path(unit.preview.now, OWN, 2.4);
@@ -382,7 +382,19 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
         ctx.restore();
         ctx.fillStyle = tone;
         ctx.font = '12px system-ui, sans-serif';
-        ctx.fillText(unit.crashed ? `${unit.name} (Aufschlag)` : unit.foe ? `${unit.name} · ${unit.wreck ? 'Wrack' : unit.intent} · ${unit.bands} RB` : unit.name, sx(at.x) + 12, sy(at.y) + (unit.craft ? 18 : -10));
+        // Das gewählte Ziel (2026-11-23): ein roter Ring, dazu die Nummer der Einheit wie im Blatt.
+        if (flight?.target === unit.index) {
+          ctx.beginPath();
+          ctx.arc(sx(at.x), sy(at.y), 15, 0, Math.PI * 2);
+          ctx.strokeStyle = FOE;
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+        }
+        ctx.fillText(
+          `${unit.foe || flight?.units.some((u) => !u.foe) ? `${unit.mark} ` : ''}${unit.crashed ? `${unit.name} (Aufschlag)` : unit.foe ? `${unit.name} · ${unit.wreck ? 'Wrack' : unit.intent} · ${unit.bands} RB` : unit.name}`,
+          sx(at.x) + 12,
+          sy(at.y) + (unit.craft ? 18 : -10),
+        );
         ctx.font = '11px system-ui, sans-serif';
         seen.current.set(unit.name, at);
       }
@@ -489,6 +501,23 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
     return { x: e.clientX - r.left, y: e.clientY - r.top };
   };
 
+  /** Das fremde Schiff unter dem Finger (2026-11-23): ein Tipp darauf wählt es als Ziel der Hardpoints. */
+  const foeAt = (x: number, y: number): SpaceUnitView | undefined => {
+    const el = canvas.current;
+    const cam = camera.current;
+    const flight = latest.current.flight;
+    if (!el || !cam || !flight || play.current) return undefined;
+    const w = el.clientWidth;
+    const h = el.clientHeight;
+    let best: { unit: SpaceUnitView; d: number } | undefined;
+    for (const unit of flight.units) {
+      if (!unit.foe) continue;
+      const d = Math.hypot(x - (w / 2 + (unit.position.x - cam.cx) * cam.scale), y - (h / 2 - (unit.position.y - cam.cy) * cam.scale));
+      if (d <= 22 && (!best || d < best.d)) best = { unit, d };
+    }
+    return best?.unit;
+  };
+
   const onPointerDown = (e: React.PointerEvent) => {
     canvas.current?.setPointerCapture(e.pointerId);
     const p = local(e);
@@ -496,8 +525,12 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
     const cam = camera.current;
     if (!cam) return;
     if (pointers.current.size === 1) {
+      const foe = foeAt(p.x, p.y);
       const unit = unitAt(p.x, p.y);
-      if (unit) {
+      if (foe) {
+        game.spaceTarget(foe.index);
+        drag.current = { kind: 'pan', x: p.x, y: p.y, cx: cam.cx, cy: cam.cy };
+      } else if (unit && latest.current.flight?.phase !== 'fire') {
         drag.current = { kind: 'thrust', unit: unit.index };
         game.aimAt(unit.index, pointAt(unit, p.x, p.y));
       } else drag.current = { kind: 'pan', x: p.x, y: p.y, cx: cam.cx, cy: cam.cy };

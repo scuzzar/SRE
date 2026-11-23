@@ -80,7 +80,8 @@ import {
   manualEncounterBlocker,
   departFromFlight,
   placeFoe,
-  fireAt,
+  endFirePhase,
+  fireHardpoint,
   repairShip,
   type Intent,
   installWeapon,
@@ -107,7 +108,6 @@ import {
   hexId,
   isWorld,
   activeFlight,
-  partyIndexOf,
   thrustToward,
   sceneOf,
   originAt,
@@ -299,7 +299,7 @@ import {
   type ShipEncounterCheck,
 } from '../model/draft';
 import { buildSnapshot, openWorldId, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
-import { spaceChoices, type OpenSpace } from './space-view';
+import { spaceChoices, targetIndex, type OpenSpace } from './space-view';
 import type { JourneyMode } from './time-view';
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
@@ -2795,18 +2795,43 @@ export class GameController {
     this.change(placeFoe(this.campaign, design, intent, this.deps.clock), { space: without(space, 'aim') });
   }
 
-  /** Das eigene Schiff feuert jetzt auf eine Einheit (2026-11-21i); die Würfe rollen im Vordergrund. */
-  fireAt(target: number): void {
+  /** Tippt ein fremdes Schiff an: es wird das Ziel der Hardpoints (2026-11-23). */
+  spaceTarget(unit: number): void {
     const space = this.openSpaceState();
+    this.update({ space: { ...space, target: unit } });
+  }
+
+  /**
+   * Der Hardpoint `turret` des eigenen Schiffs `ship` feuert auf das gewählte Ziel – ein Tipp im Blatt
+   * (2026-11-23); die Würfe rollen im Vordergrund.
+   */
+  fireHardpoint(ship: number, turret: number): void {
+    const space = this.openSpaceState();
+    const target = targetIndex(this.campaign, space);
+    if (target === undefined) return this.update({ notice: 'Kein Ziel gewählt.' });
     const before = this.campaign.log.length;
     try {
-      const shot = fireAt(this.campaign, partyIndexOf(activeFlight(this.campaign)), target, this.deps.random, this.deps.clock);
+      const shot = fireHardpoint(this.campaign, ship, target, turret, this.deps.random, this.deps.clock);
       const lost = shot.lost ? { notice: `${shipById(this.campaign, activeFlight(this.campaign).party).name} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` } : {};
       this.change(shot.campaign, { space: without(space, 'run'), volley: { from: before, delay: 0 }, ...lost });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ notice: error.message });
     }
+  }
+
+  /**
+   * „End Turn“ (2026-11-23): Die fremden Schiffe feuern, die noch nicht gefeuert haben, dann rückt die
+   * Raumrunde weiter.
+   */
+  endTurn(): void {
+    const space = this.openSpaceState();
+    const ship = shipById(this.campaign, activeFlight(this.campaign).party).name;
+    const before = this.campaign.log.length;
+    const run = endFirePhase(this.campaign, this.deps.clock, this.deps.random);
+    const volley = run.campaign.log.length > before ? { volley: { from: before, delay: 0 } } : {};
+    if (run.lost) return this.change(run.campaign, { space: { world: space.world }, ...volley, notice: `${ship} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` });
+    this.change(run.campaign, { space: { world: space.world }, ...volley });
   }
 
   /** Die Würfe der Salven sind abgespielt (oder übersprungen). */
