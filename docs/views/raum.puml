@@ -138,7 +138,7 @@ hide <<browser>> stereotype
   }
   class ShipDamage <<value>> $raum {
     hits: HitZone [*]
-    $new("2026-11-22d", "patched: number [*]")
+    patched: number [*]
     turretsOut: number [*]
     /maneuver: number
     /jump: number
@@ -198,10 +198,10 @@ hide <<browser>> stereotype
     bands: number
     computerHits: number
     noComputer: boolean
-    $new("2026-11-22d", "predict: number")
-    $new("2026-11-22d", "gunnery: number")
-    $new("2026-11-22d", "evade: number")
-    $new("2026-11-22d", "returnFire: boolean")
+    predict: number
+    gunnery: number
+    evade: number
+    returnFire: boolean
     /hit: boolean
     hits: HitZone [*]
   }
@@ -225,11 +225,11 @@ hide <<browser>> stereotype
     name: string [0..1]
     intent: Intent [0..1]
     fired: boolean
-    $new("2026-11-22d", "returned: boolean")
+    returned: boolean
     /maxG: number
-    $new("2026-11-22d", "/evading: boolean")
+    /evading: boolean
   }
-  class DamageControl $raum $newClass("2026-11-22d") {
+  class DamageControl $raum {
     round: number
     unit: string
     dice: number[2]
@@ -283,10 +283,10 @@ LogEntry <|-- SpaceAttack
 LogEntry <|-- SpaceBattleEnd
 SpaceBattle "*" --> "1" ShipDesign : design
 SpaceAttack "*" --> "1" ShipWeapon : weapon
-SpaceAttack "*" -$newArrow("2026-11-22d")-> "0..1" Character : gunner
-LogEntry <|-$newArrow("2026-11-22d")- DamageControl
-DamageControl -$newArrow("2026-11-22d")-> HitZone
-DamageControl "*" -$newArrow("2026-11-22d")-> "0..1" Character : by
+SpaceAttack "*" --> "0..1" Character : gunner
+LogEntry <|-- DamageControl
+DamageControl --> HitZone
+DamageControl "*" --> "0..1" Character : by
 SpaceAttack --> HitZone
 SpaceBattleEnd --> BattleOutcome
 SpaceBattle --> EncounterOccasion
@@ -338,8 +338,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class ShipDesign #line:d0021b;line.bold
-class ShipDamage #line:d0021b;line.bold
-class SpaceAttack #line:d0021b;line.bold
-class SpaceUnit #line:d0021b;line.bold
 @enduml

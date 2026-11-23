@@ -105,22 +105,22 @@ hide <<browser>> stereotype
     lifeSupport
     armament
     repair
-    $new("2026-11-22d", "software")
+    software
   }
   class ShipSoftware $schiffe {
-    $new("2026-11-22d", "slot: SoftwareSlot")
+    slot: SoftwareSlot
   }
-  enum SoftwareSlot <<value>> $schiffe $newClass("2026-11-22d") {
+  enum SoftwareSlot <<value>> $schiffe {
     cpu
     storage
     archive
   }
-  class CrewPost $schiffe $newClass("2026-11-22d") {
+  class CrewPost $schiffe {
     post: CrewRole
     turret: number [0..1]
     /skill: number
   }
-  enum CrewRole <<value>> $schiffe $newClass("2026-11-22d") {
+  enum CrewRole <<value>> $schiffe {
     pilot
     navigator
     engineer
@@ -128,7 +128,7 @@ hide <<browser>> stereotype
     medic
     gunner
   }
-  class DrivePotential <<reference>> $schiffe $newClass("2026-11-22d") {
+  class DrivePotential <<reference>> $schiffe {
     hull: number
     letter: string
     rating: number
@@ -165,9 +165,9 @@ hide <<browser>> stereotype
     months: number [0..1]
     streamlined: boolean
     lasers: number [0..1]
-    $new("2026-11-22d", "maneuverDrive: string [0..1]")
-    $new("2026-11-22d", "jumpDrive: string [0..1]")
-    $new("2026-11-22d", "powerPlant: string [0..1]")
+    maneuverDrive: string [0..1]
+    jumpDrive: string [0..1]
+    powerPlant: string [0..1]
   }
   enum ShipKind <<value>> $schiffe {
     starship
@@ -236,10 +236,10 @@ Ship "*" --> "1" ShipDesign : design
 Ship "1" *-- "0..*" ShipSoftware : software
 Ship "1" *-- "0..1" Place : place
 ShipSoftware "*" --> "1" Software : program
-ShipSoftware -$newArrow("2026-11-22d")-> SoftwareSlot
-Ship "1" *-$newArrow("2026-11-22d")- "0..*" CrewPost : crew
-CrewPost "*" -$newArrow("2026-11-22d")-> "1" Character : who
-CrewPost -$newArrow("2026-11-22d")-> CrewRole
+ShipSoftware --> SoftwareSlot
+Ship "1" *-- "0..*" CrewPost : crew
+CrewPost "*" --> "1" Character : who
+CrewPost --> CrewRole
 Ship "1" *-- "0..*" Turret : turrets {ordered}
 Turret "*" --> "1" TurretType : type
 Turret "*" --> "0..3" ShipWeapon : weapons {ordered}
@@ -296,10 +296,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class ShipCost #line:d0021b;line.bold
-class ShipSoftware #line:d0021b;line.bold
-class ShipDesign #line:d0021b;line.bold
-class ShipDamage #line:d0021b;line.bold
-class SpaceAttack #line:d0021b;line.bold
-class SpaceUnit #line:d0021b;line.bold
 @enduml

@@ -609,7 +609,7 @@
       "id": "2026-11-22d",
       "file": "2026-11-22d-crew-und-programme",
       "title": "Raumkampf, Stufe 2b: Crew und Programme. Schiffspositionen nach SR 33 mit SC und NSC (CrewPost), Programme in CPU, Speicher oder Archiv (ShipSoftware.slot) mit Pflicht für Target und Maneuver, Software kaufen in der Werft, Antriebsbuchstaben mit Drive Potential, Schadenskontrolle (DamageControl), DMs der Programme und Fertigkeiten am Schuss",
-      "approved": false,
+      "approved": true,
       "show": [
         "Character",
         "SpaceUnit",

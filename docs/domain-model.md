@@ -578,7 +578,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-22c-reise-tag-fuer-tag.png`](changes/2026-11-22c-reise-tag-fuer-tag.png).
 >
-> **Wartet auf Freigabe** (Kennzeichen 2026-11-22d): **Raumkampf, Stufe 2b: Crew und Programme** (Owner,
+> Am 23. November 2026 freigegeben (Kennzeichen 2026-11-22d): **Raumkampf, Stufe 2b: Crew und Programme** (Owner,
 > 22. November 2026: „Ja, crew und Programme. Wir müssen da auch auf jeden Fall dann ein ui für die
 > Zuweisung der crew und eines für die Software entwerfen.“). SC und NSC besetzen die
 > Schiffspositionen aus SR 33, ihre Fertigkeiten werden DMs. Jedes Programm an Bord liegt in CPU,
@@ -624,7 +624,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
-2026-11-22d (Crew und Programme).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -3486,7 +3486,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     kritischem Treffer, alles auf einmal (Buchung mit `shipCost` repair); danach ist `Ship.damage`
     leer. Ausgefallene Turrets arbeiten wieder.
 
-- **Crew und Programme** (Stufe 2b des Raumkampfs; wartet auf Freigabe, Kennzeichen 2026-11-22d; Owner,
+- **Crew und Programme** (Stufe 2b des Raumkampfs; freigegeben am 23. November 2026, Kennzeichen 2026-11-22d; Owner,
   22. November 2026). Bis hierhin vereinfachte Stufe 2 den Laserkampf (keine Programme, keine
   Schiffspositionen, Antriebsschaden als −1 G). Jetzt gelten die SR (SR 33, 38–42; SE 10–13,
   zusammengefasst in [`regeln-schiffe.md`](regeln-schiffe.md)). Entscheidungen des Owners vom
@@ -3544,6 +3544,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **DMs am Schuss**. Jeder Schuss hält fest, woraus sein DM kam (wie `bands` und `computerHits`
     seit 2026-11-21i): `predict`, `gunnery`, `evade` und ob es Rückfeuer war. Blatt, Würfe und Log
     erklären den DM damit auch später noch.
+  - **Oberflächen** (Owner, 22. und 23. November 2026: „Wir müssen da auch auf jeden Fall dann ein ui
+    für die Zuweisung der crew und eines für die Software entwerfen.“). Zwei neue Reiter im Reiter
+    Schiff, neben Deckplan und Details: **Crew** und **Computer**. Crew zeigt die Posten als Felder,
+    Zuweisung über das Blatt am Feld, Umziehen und Tauschen durch Ziehen zwischen den Feldern, oben
+    die besetzten Posten, darunter die freien als schmale Zeile, zuunterst die ohne Posten. Computer
+    zeigt CPU, Speicher und Archiv als drei Ablagen über der Rechnerzeile; Umstecken durch Ziehen
+    oder im Blatt, Werfen ebenda. Modelle: [`mock/crew-zuweisen.html`](mock/crew-zuweisen.html) und
+    [`mock/computer-programme.html`](mock/computer-programme.html).
   - **Software kaufen** (Owner: ein UI für die Software). In der Werft an einem Raumhafen A oder B,
     wie die Bewaffnung: jedes Programm der Software-Liste zum Listenpreis (SE 13), bar aus der
     Kasse (Buchung `ship` mit `shipCost` software). Ein gekauftes Programm kommt in den Speicher,
