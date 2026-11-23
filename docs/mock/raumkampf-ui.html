@@ -66,7 +66,6 @@
   /* Karte */
   .rk-map { flex: 0 0 auto; position: relative; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #05070d; }
   .rk-map canvas { display: block; width: 100%; height: 268px; touch-action: none; }
-  .rk-map .hint { position: absolute; left: 10px; bottom: 8px; font-size: 11px; color: #77809a; letter-spacing: .03em; }
 
   /* Karten */
   .rk-cards { flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 16px 0; }
@@ -81,12 +80,7 @@
   .rk-page { position: absolute; right: 4px; top: 4px; appearance: none; border: 0; background: none; color: var(--text-muted); cursor: pointer; padding: 2px 6px; font-size: 11px; line-height: 1; }
   .rk-page.down { top: auto; bottom: 4px; }
   .rk-page:disabled { color: #3a4052; cursor: default; }
-  .rk-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
-  .rk-actions button {
-    appearance: none; cursor: pointer; padding: 4px 8px; font: inherit; font-size: 11.5px;
-    border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface-raised); color: var(--text);
-  }
-  .rk-actions button:disabled { color: #5c6478; border-color: var(--line); cursor: default; }
+  .rk-card { padding-bottom: 6px; }
 
   /* Hardpoints */
   .rk-section { padding: 12px 16px 0; font-size: 11.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
@@ -112,13 +106,20 @@
   .rk-log p.round { color: var(--accent-text); }
 
   /* Phasenknopf */
-  .rk-foot { flex: 0 0 auto; display: flex; gap: 8px; align-items: center; padding: 10px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); margin-top: 10px; }
+  .rk-foot { flex: 0 0 auto; display: flex; flex-direction: column; gap: 7px; padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); margin-top: 10px; }
+  .rk-foot-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .rk-foot-row .spacer { flex: 1 1 auto; }
+  .rk-act {
+    appearance: none; cursor: pointer; font: inherit; font-size: 11.5px; padding: 4px 9px;
+    border: 1px solid var(--line-strong); border-radius: 7px; background: none; color: var(--text);
+  }
+  .rk-act:disabled { color: #5c6478; border-color: var(--line); cursor: default; }
+  .rk-act.wide { border-color: var(--line); color: var(--text-muted); }
   .rk-next {
-    flex: 1 1 auto; appearance: none; cursor: pointer; font: inherit; font-size: 16px; font-weight: 600;
-    padding: 12px 14px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent-text);
+    appearance: none; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600;
+    padding: 8px 14px; border-radius: 9px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent-text);
   }
   .rk-next:disabled { border-color: var(--line); background: none; color: #5c6478; cursor: default; }
-  .rk-end { appearance: none; cursor: pointer; font: inherit; font-size: 13px; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line-strong); background: none; color: var(--text-muted); }
 </style>
 </head>
 <body>
@@ -128,13 +129,15 @@
       <h1 id="title">Raumrunde 1</h1>
       <div class="sub" id="where">Kessra · Systemflug</div>
     </div>
-    <div class="sub" id="clock">00:16:40</div>
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <div class="sub" id="clock">00:16:40</div>
+      <button id="close" aria-label="Raumkampf schließen" style="appearance:none;border:0;background:none;color:#9ba1b0;font-size:17px;cursor:pointer;padding:0">✕</button>
+    </div>
   </div>
   <p class="phase-note" id="note"></p>
 
   <div class="rk-map">
     <canvas id="map" width="860" height="536"></canvas>
-    <div class="hint">Fremdes Schiff antippen = Ziel · im gestrichelten Ring ziehen = Schub dieses Schiff</div>
   </div>
 
   <div class="rk-cards">
@@ -143,7 +146,6 @@
       <div class="name" id="ownName">Kestrel</div>
       <div class="stats" id="ownStats"></div>
       <div class="hits" id="ownHits"></div>
-      <div class="rk-actions" id="ownActions"></div>
       <button class="rk-page" id="ownUp" aria-label="Vorheriges eigenes Schiff">▲</button>
       <button class="rk-page down" id="ownDown" aria-label="Nächstes eigenes Schiff">▼</button>
     </div>
@@ -163,8 +165,12 @@
   <div class="rk-log" id="log" aria-live="polite"></div>
 
   <div class="rk-foot">
-    <button class="rk-next" id="next"></button>
-    <button class="rk-end">Kampf beenden</button>
+    <div class="rk-foot-row" id="shipActions"></div>
+    <div class="rk-foot-row">
+      <button class="rk-next" id="next"></button>
+      <span class="spacer"></span>
+      <button class="rk-act wide" id="endTurn">Ende Turn</button>
+    </div>
   </div>
 </div>
 
@@ -192,7 +198,7 @@ const pos = {
   yacht: { x: -90, y: 40, coast: { x: -90, y: 40 } },
   boat: { x: -40, y: 95, coast: { x: -40, y: 95 } },
   raider: { x: 95, y: -35, coast: { x: 120, y: -60 } },
-  skirm: { x: 30, y: -110, coast: { x: 55, y: -130 } },
+  skirm: { x: -20, y: -86, coast: { x: 10, y: -104 } },
 };
 const thrust = { yacht: undefined, boat: undefined }; // Vektor in km, von den Gegnern gesetzt das Programm
 
@@ -234,22 +240,28 @@ function render() {
   $('foeUp').disabled = foe.length < 2;
   $('foeDown').disabled = foe.length < 2;
 
-  // Aktionen am eigenen Schiff: Launch setzt Beiboote frei, Anlanden und Entern kommen mit Stufe 4b.
+  // Aktionen ganz unten wie in den anderen Blättern: Launch, Anlanden, Entern – klein.
   const launchable = me.id === 'yacht' ? 2 : 0;
-  $('ownActions').innerHTML = '';
+  const acts = $('shipActions');
+  acts.innerHTML = '';
   const launch = document.createElement('button');
-  launch.textContent = launchable ? `Launch · Beiboot (${launchable})` : 'Launch · kein Beiboot';
+  launch.className = 'rk-act';
+  launch.textContent = launchable ? `Launch (${launchable})` : 'Launch';
   launch.disabled = state.phase !== 'thrust' || launchable === 0;
-  launch.title = state.phase === 'thrust' ? 'Setzt das nächste Beiboot aus dem Stapel frei' : 'Beiboote startet man vor der Bewegung';
+  launch.title = state.phase === 'thrust' ? `Nächstes Beiboot von ${me.name} aus dem Stapel frei` : 'Beiboote startet man vor der Bewegung';
   launch.onclick = () => log(`M${me.no} ${me.name}: Beiboot 2 startet und ist eine eigene Einheit auf der Karte.`, 'round');
-  $('ownActions').append(launch);
+  acts.append(launch);
   for (const [label, why] of [['Anlanden', 'Stufe 4b'], ['Entern', 'Stufe 4b']]) {
     const b = document.createElement('button');
+    b.className = 'rk-act';
     b.textContent = label;
     b.disabled = true;
     b.title = why;
-    $('ownActions').append(b);
+    acts.append(b);
   }
+  const end = $('endTurn');
+  end.disabled = state.phase === 'thrust';
+  end.title = state.phase === 'thrust' ? 'Erst bewegen' : 'Zug beenden: zum Feuer des Gegners, bzw. zur nächsten Raumrunde';
 
   // Hardpoints über alle eigenen Schiffe: Nummer, Waffen, Trefferzahl, bei Raketen Schub und Anzahl.
   const hp = $('hardpoints');
@@ -468,6 +480,19 @@ function setThrust(p) {
   thrust[s.id] = d < 6 ? undefined : { x: (dx / (d || 1)) * g * 1000 * 1000, y: (dy / (d || 1)) * g * 1000 * 1000, dir };
   render();
 }
+
+$('endTurn').onclick = () => {
+  if (state.phase === 'own') { log('Zug beendet – keine eigene Salve.', 'round'); state.phase = 'foe'; }
+  else {
+    state.round += 1;
+    state.phase = 'thrust';
+    state.time += 1000;
+    for (const s of own) { s.firedRound = undefined; thrust[s.id] = undefined; }
+    log(`Raumrunde ${state.round}`, 'round');
+  }
+  render();
+};
+$('close').onclick = () => log('Raumkampf beenden (in der App: das Blatt schließen).', 'round');
 
 log('Raumrunde 1', 'round');
 log('F1 Suleiman taucht auf: 6 RB, Absicht „greift an".');
