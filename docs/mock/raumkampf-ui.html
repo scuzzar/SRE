@@ -108,7 +108,7 @@
   .rk-log p.round { color: var(--accent-text); }
 
   /* Phasenknopf */
-  .rk-foot { flex: 0 0 auto; display: flex; flex-direction: column; gap: 7px; padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+  .rk-foot { flex: 0 0 auto; padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
   .rk-foot-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .rk-foot-row .spacer { flex: 1 1 auto; }
   .rk-act {
@@ -116,12 +116,7 @@
     border: 1px solid var(--line-strong); border-radius: 7px; background: none; color: var(--text);
   }
   .rk-act:disabled { color: #5c6478; border-color: var(--line); cursor: default; }
-  .rk-act.wide { border-color: var(--line); color: var(--text-muted); }
-  .rk-next {
-    appearance: none; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600;
-    padding: 8px 14px; border-radius: 9px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent-text);
-  }
-  .rk-next:disabled { border-color: var(--line); background: none; color: #5c6478; cursor: default; }
+  .rk-act.next { font-weight: 600; border-color: var(--accent); background: var(--accent-soft); color: var(--accent-text); }
 </style>
 </head>
 <body>
@@ -170,11 +165,6 @@
 
   <div class="rk-foot">
     <div class="rk-foot-row" id="shipActions"></div>
-    <div class="rk-foot-row">
-      <button class="rk-next" id="next"></button>
-      <span class="spacer"></span>
-      <button class="rk-act wide" id="endTurn">Ende Turn</button>
-    </div>
   </div>
 </div>
 
@@ -206,7 +196,7 @@ const pos = {
 };
 const thrust = { yacht: undefined, boat: undefined }; // Vektor in km, von den Gegnern gesetzt das Programm
 
-const phaseLabels = { thrust: 'Bewegung', own: 'Mein Feuer', foe: 'Feuer des Gegners' };
+const stepLabel = (phase) => (phase === 'thrust' ? 'Bewegen' : 'End Turn');
 const state = { round: 1, phase: 'thrust', mine: 0, target: 0, shown: 0, fired: {}, time: 1000 };
 
 // ── Ausgabe ────────────────────────────────────────────────────────────────────
@@ -248,6 +238,10 @@ function render() {
   const launchable = me.id === 'yacht' ? 2 : 0;
   const acts = $('shipActions');
   acts.innerHTML = '';
+  const next = document.createElement('button');
+  next.className = 'rk-act next';
+  next.id = 'next';
+  next.onclick = step;
   const launch = document.createElement('button');
   launch.className = 'rk-act';
   launch.textContent = launchable ? `Launch (${launchable})` : 'Launch';
@@ -263,9 +257,7 @@ function render() {
     b.title = why;
     acts.append(b);
   }
-  const end = $('endTurn');
-  end.disabled = state.phase === 'thrust';
-  end.title = state.phase === 'thrust' ? 'Erst bewegen' : 'Zug beenden: zum Feuer des Gegners, bzw. zur nächsten Raumrunde';
+  next.title = { thrust: 'Schub der Runde ausführen', own: 'Meine Salve schließen: Retourvente des Gegners', foe: 'Meine Retourvente, dann neue Raumrunde' }[state.phase];
 
   // Hardpoints über alle eigenen Schiffe: Nummer, Waffen, Trefferzahl, bei Raketen Schub und Anzahl.
   const hp = $('hardpoints');
@@ -285,11 +277,12 @@ function render() {
   }
 
   $('note').innerHTML = {
-    thrust: `Schub wählen – <b>${own.length} eigene Schiffe</b> im Schubring setzen, die Gegner zieht das Programm. Dann bewegen.`,
-    own: `<b>${target.name}</b> ist das Ziel. Jetzt feuern (ein Tipp auf den Hardpoint), oder weiter.`,
-    foe: `Der Gegner feuert – danach kannst du Retourvente antippen.`,
+    thrust: `Schub wählen – <b>${own.length} eigene Schiffe</b> im Schubring, die Gegner zieht das Programm. <b>Bewegen</b> führt die Raumrunde aus.`,
+    own: `<b>${target.name}</b> ist das Ziel. Ein Tipp auf den Hardpoint feuert. <b>End Turn</b> schließt die Salve und bringt die Retourvente des Gegners.`,
+    foe: `${target.name} erwidert das Feuer. <b>End Turn</b> bringt meine Retourvente und die nächste Raumrunde.`,
   }[state.phase];
-  $('next').textContent = phaseLabels[state.phase];
+  acts.append(next);
+  next.textContent = stepLabel(state.phase);
   draw();
 }
 
@@ -307,7 +300,7 @@ $('ownDown').onclick = () => { state.shown = (state.shown + 1) % own.length; ren
 $('foeUp').onclick = () => { state.target = (state.target + foe.length - 1) % foe.length; render(); };
 $('foeDown').onclick = () => { state.target = (state.target + 1) % foe.length; render(); };
 
-$('next').onclick = () => {
+function step() {
   if (state.phase === 'thrust') {
     state.phase = 'own';
     state.time += 1000;
@@ -336,7 +329,7 @@ $('next').onclick = () => {
     log(`Raumrunde ${state.round}`, 'round');
   }
   render();
-};
+}
 
 /** Ein Tipp auf den Hardpoint: sofortiges Feuer auf das Ziel rechts. */
 function fire(ship, point) {
@@ -485,17 +478,6 @@ function setThrust(p) {
   render();
 }
 
-$('endTurn').onclick = () => {
-  if (state.phase === 'own') { log('Zug beendet – keine eigene Salve.', 'round'); state.phase = 'foe'; }
-  else {
-    state.round += 1;
-    state.phase = 'thrust';
-    state.time += 1000;
-    for (const s of own) { s.firedRound = undefined; thrust[s.id] = undefined; }
-    log(`Raumrunde ${state.round}`, 'round');
-  }
-  render();
-};
 $('close').onclick = () => log('Raumkampf beenden (in der App: das Blatt schließen).', 'round');
 
 log('Raumrunde 1', 'round');
