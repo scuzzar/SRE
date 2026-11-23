@@ -354,15 +354,15 @@
       const frei = all.filter((x) => !posts[key(s.id, x)] && hasSystem(s, x));
       const defekt = all.filter((x) => !hasSystem(s, x));
       const idle = chars.filter((c) => countOf(c.id) === 0);
-      // Erst, wer steht, dann wer frei ist, dann die leeren Posten.
+      // Erst, wer steht, dann die leeren Posten, zuunterst wer ohne Posten ist.
       scroll.innerHTML = `
         ${besetzt.length ? `<div class="posts">${besetzt.map(row).join('')}</div>` : ''}
+        ${frei.length || defekt.length ? `<h2 class="section-title">Freie Posten · <span>${frei.length}</span></h2>
+        <div class="free">${frei.map((x) => arow(x, false)).join('')}${defekt.map((x) => arow(x, true)).join('')}</div>` : ''}
         <h2 class="section-title">Ohne Posten · <span>${idle.length}</span></h2>
         <div class="freezone" data-drop="1" data-free="1"${idle.length ? '' : ' style="min-height:34px"'}>
           ${idle.map((c) => `<span class="who">${esc(c.name)}</span>`).join('')}
-        </div>
-        ${frei.length || defekt.length ? `<h2 class="section-title">Freie Posten · <span>${frei.length}</span></h2>
-        <div class="free">${frei.map((x) => arow(x, false)).join('')}${defekt.map((x) => arow(x, true)).join('')}</div>` : ''}`;
+        </div>`;
     }
 
     dock.innerHTML = `<nav class="nav">${['Log', 'Begegnung', 'Kampf', 'Shop', 'Schiff', 'Charaktere', 'NSC']
