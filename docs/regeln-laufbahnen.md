@@ -158,8 +158,12 @@ Weiterverpflichtung würfeln, um vor dem Ruhestand ausscheiden zu dürfen.
 | 5 | Chief | Executive | — | F Duke | — | — |
 | 6 | — | Director | — | — | — | — |
 
-Die Buchstaben beim Adel sind die **Standswerte** (B1/Book 3): Stand B = Knight, C = Baron,
-D = Marquis, E = Count, F = Duke.
+Die Buchstaben beim Adel sind die **Standswerte**: Stand B = Knight, C = Baron, D = Marquis,
+E = Count, F = Duke (The Traveller Book S. 27 „Noble Ranks": B 11, C 12, D 13, E 14, F 15; B1 S. 10
+nennt davon Knight und Baron). **Damit ist oben Schluss**: Stand 15 ist der höchste Stand eines
+Spielfigurwerts (B1 S. 9), die Tafel der Adelstitel endet mit F, und die Rangtafel des Adels lässt
+Rang 6 leer. Ein Duke steigt nicht weiter – und ein Stand, der 15 erreicht hat, steigt mit
+(Kennzeichen **2026-11-24d**: Beförderung auf einen Rang mit Standesrang gibt +1 Stand, höchstens 15).
 
 ## Fertigkeitstabellen und Automatik-Fertigkeiten
 
