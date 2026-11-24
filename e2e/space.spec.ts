@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openHomeGlobe, openTab } from './layout';
+import { schwererLauf, openHomeGlobe, openTab } from './layout';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 // Die Raumkarte rechnet und zeichnet viel (Schubringe, Bahnen, Salven); zwei Tester nebeneinander
 // brauchen schon mal das Doppelte der Zeit, darum hier mehr Luft als die 30 Sekunden Grundzeit.
-test.setTimeout(90_000);
+schwererLauf(90_000);
 
 test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, bewegen, beenden', async ({ page }) => {
   // Die Demo-Kampagne hat eine Yacht im Hafen von Kessra (2026-11-21b; vorher ein Scout).

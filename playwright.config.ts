@@ -20,6 +20,10 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'retain-on-failure',
+    // Auf den Runern ist /dev/shm klein (64 MB); die App als ein Bundle sprengt das, und der
+    // Renderer stirbt mitten im Test ("Protocol error … session closed"). Ohne /dev/shm
+    // weicht Chromium auf die Festplatte aus. Lokal nicht nötig, darum nur auf dem Runner.
+    launchOptions: { args: ci ? ['--disable-dev-shm-usage'] : [] },
   },
   projects: [
     {
