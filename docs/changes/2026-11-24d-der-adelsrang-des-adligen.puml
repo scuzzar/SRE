@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-24d: Der Adelsrang des Adligen: ein Rang kann einen Stand nennen (Rank.standing); bei der Musterung steht die Person sofort auf dem höchsten Rang, den ihr Stand erreicht, der Rangwurf entfällt, und die Beförderung auf einen Rang hebt den Stand auf mindestens den Stand dieses Rangs
+title Änderung 2026-11-24d: Der Adelsrang des Adligen: ein Rang kann einen Stand nennen (Rank.standing); bei der Musterung steht die Person sofort auf dem höchsten Rang, den ihr Stand erreicht, der Rangwurf entfällt, und jede Beförderung auf so einen Rang gibt +1 Stand (höchstens 15)
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
