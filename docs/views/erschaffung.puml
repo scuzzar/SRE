@@ -122,26 +122,24 @@ hide <<browser>> stereotype
   class Skill <<reference>> $charakter
   class Service <<reference>> $erschaffung {
     name: string
-    $gone("2026-11-24a", "draft: number")
-    $new("2026-11-24a", "draft: number [0..1]")
+    draft: number [0..1]
     reenlist: number
     skillsPerTerm: number [0..1]
-    $new("2026-11-24a", "startAge: number [0..1]")
-    $new("2026-11-24a", "retirement: boolean")
-    $new("2026-11-24a", "freeExit: boolean")
-    $new("2026-11-24a", "naturalGunSkill: boolean")
+    startAge: number [0..1]
+    retirement: boolean
+    freeExit: boolean
+    naturalGunSkill: boolean
   }
   class Throw <<value>> $erschaffung {
     target: number
-    $new("2026-11-24a", "dmPerTerm: number [0..1]")
+    dmPerTerm: number [0..1]
   }
   class ThrowDm <<value>> $erschaffung {
-    $gone("2026-11-24a", "atLeast: number")
-    $new("2026-11-24a", "atLeast: number [0..1]")
-    $new("2026-11-24a", "atMost: number [0..1]")
+    atLeast: number [0..1]
+    atMost: number [0..1]
     dm: number
   }
-  class Qualification <<value>> $erschaffung $newClass("2026-11-24a") {
+  class Qualification <<value>> $erschaffung {
     atLeast: number
   }
   class Rank <<reference>> $erschaffung {
@@ -246,8 +244,8 @@ Service "1" *-- "4" Table : skills {ordered}
 Service "1" *-- "1" Table : benefits
 Service "1" *-- "1" Table : cash
 Service "1" *-- "0..1" Gain : onEnlistment
-  Service "1" *--[#d0021b,bold] "0..1" Qualification : needs
-  Qualification "1" -[#d0021b,bold]-> "1" Characteristic : of
+  Service "1" *-- "0..1" Qualification : needs
+  Qualification "1" --> "1" Characteristic : of
 Rank "1" *-- "0..1" Gain : grants
 Table "1" *-- "6..7" Gain : rows {ordered}
 Gain "*" --> "0..1" Skill : skill
@@ -282,7 +280,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Service #line:d0021b;line.bold
-class Throw #line:d0021b;line.bold
-class ThrowDm #line:d0021b;line.bold
 @enduml

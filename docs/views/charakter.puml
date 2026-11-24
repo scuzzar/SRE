@@ -167,7 +167,7 @@ hide <<browser>> stereotype
     short: string
   }
   class ThrowDm <<value>> $erschaffung
-  class Qualification <<value>> $erschaffung $newClass("2026-11-24a")
+  class Qualification <<value>> $erschaffung
   class Gain <<reference>> $erschaffung
   class Item <<reference>> $shop
   class Weapon <<reference>> $kampf
@@ -215,7 +215,7 @@ CareerRoll "*" --> "0..1" Skill : chosen
 
 ' Laufbahnen (Referenzdaten)
 ThrowDm --> "1" Characteristic : if
-  Qualification "1" -[#d0021b,bold]-> "1" Characteristic : of
+  Qualification "1" --> "1" Characteristic : of
 Gain "*" --> "0..1" Skill : skill
 Gain --> "0..1" Characteristic : changes
 Cascade "*" --> "1..*" Skill : options
@@ -278,5 +278,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class ThrowDm #line:d0021b;line.bold
 @enduml

@@ -613,7 +613,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Blatts am Platz von **Launch**. Siehe *Andocken* und *Andockflug* unter *Systemflug*. Der Ausschnitt
 > dazu liegt unter [`changes/2026-11-23c-andockflug.png`](changes/2026-11-23c-andockflug.png).
 >
-> Noch nicht freigegeben (Kennzeichen 2026-11-24a): **Laufbahnen des Bürgers** – die zwölf
+> Am 24. November 2026 freigegeben (Kennzeichen 2026-11-24a): **Laufbahnen des Bürgers** – die zwölf
 > Laufbahnen aus Supplement 4 *Citizens of the Imperium* (Regeln und Tabellen in
 > [`regeln-laufbahnen.md`](regeln-laufbahnen.md)). Sie bringen keine neue Schicht, nur Felder an den
 > Referenzdaten: `Service` bekommt `startAge` (Belterer und Barbar beginnen mit 14), `retirement`
