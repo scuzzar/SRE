@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addCharacter, createCampaign } from './campaign';
-import { ageOf, replay, termDmOf, throwConditions, throwDm, type TermDm } from './career';
+import { ageOf, replay, standingRank, termDmOf, throwConditions, throwDm, type TermDm } from './career';
 import {
   cascadeOptions,
   careerInput,
@@ -222,5 +222,58 @@ describe('Rangstufen und Automatikgaben (2026-11-24c)', () => {
       expect(serviceOf(id).commission, id).toBeUndefined();
       expect(serviceOf(id).ranks, id).toEqual([]);
     }
+  });
+});
+
+describe('Standesränge des Adels (2026-11-24d)', () => {
+  /** Kira mit anderem Stand: die letzten beiden Würfe sind SOC. */
+  const kiraMit = (soc: [number, number]): Generation =>
+    kira([[3, 4], [5, 5], [4, 4], [4, 5], [3, 4], soc]);
+
+  it('nennt nur der Adel Standesränge, aufsteigend von B (11) bis F (15)', () => {
+    expect(serviceOf('noble').ranks.map((r) => `${r.title}:${r.standing}`)).toEqual([
+      'B Knight:11', 'C Baron:12', 'D Marquis:13', 'E Count:14', 'F Duke:15',
+    ]);
+    expect(ref.services.filter((sv) => sv.ranks.some((r) => r.standing !== undefined)).map((sv) => sv.id)).toEqual(['noble']);
+    expect(standingRank(serviceOf('noble'), 10)).toBeUndefined();
+    expect(standingRank(serviceOf('noble'), 11)?.title).toBe('B Knight');
+    expect(standingRank(serviceOf('noble'), 12)?.title).toBe('C Baron');
+    expect(standingRank(serviceOf('noble'), 15)?.title).toBe('F Duke');
+    expect(standingRank(serviceOf('navy'), 15)?.title).toBeUndefined();
+  });
+
+  it('setzt die Musterung den Adligen auf den Rang seines Stands, ohne Rangwurf (Stand 11 ist Knight)', () => {
+    let g = enlist(kiraMit([5, 6]), 'noble', fixedRandom(1, 1));
+    const state = stateOf(g);
+    expect(state).toMatchObject({ service: { id: 'noble' }, rank: 1, step: 'survival' });
+    expect(state.upp.soc).toBe(11);
+    // Der Eintrag hält den Rang fest, und es folgt keine Offizierstelle, sondern die Beförderung.
+    // Der siebte Wurf ist die Musterung: sie hält Musterung und Rang fest.
+    expect(replay(g.career).outcomes[6]!.effects.filter((e) => e.kind === 'rank')).toEqual([{ kind: 'rank', level: 1, title: 'B Knight' }]);
+    g = rollNext(g, fixedRandom(3, 3));
+    expect(stateOf(g).step).toBe('promotion');
+  });
+
+  it('lässt den Adligen mit Stand 10 den Rangwurf würfeln, ohne dass der Stand steigt', () => {
+    let g = enlist(kiraMit([5, 5]), 'noble', fixedRandom(1, 1));
+    expect(stateOf(g).rank).toBe(0);
+    g = rollNext(g, fixedRandom(3, 3));
+    expect(stateOf(g).step).toBe('commission');
+    g = rollNext(g, fixedRandom(1, 5));
+    const state = stateOf(g);
+    expect(state.rank).toBe(1);
+    expect(state.upp.soc).toBe(10);
+  });
+
+  it('gibt jede Beförderung auf einen Standesrang +1 Stand (Baron mit 12 wird Marquis mit 13)', () => {
+    let g = enlist(kiraMit([6, 6]), 'noble', fixedRandom(1, 1));
+    expect(stateOf(g).rank).toBe(2);
+    g = rollNext(g, fixedRandom(3, 3));
+    // Beförderung 12+ (Kira hat INT 9, kein DM): 6+6 gelingt.
+    g = rollNext(g, fixedRandom(6, 6));
+    const state = stateOf(g);
+    expect(state.rank).toBe(3);
+    expect(state.upp.soc).toBe(13);
+    expect(replay(g.career).outcomes.at(-1)!.effects.some((e) => e.kind === 'characteristic' && e.characteristic === 'SOC' && e.change === 1)).toBe(true);
   });
 });

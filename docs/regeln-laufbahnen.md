@@ -133,7 +133,10 @@ zweiter +2, …, siebenter +7).
 | Weiterverpflichtung | 6+ | 3+\* | 5+ | 4+ | 5+ | 5+ |
 
 Adlige stehen **nur** Menschen mit Stand 10+ offen, und zwar automatisch (kein Wurf); ihr Rang folgt
-dem Adelsrang des Stands, sobald sie eine Position erreicht haben. \* Bürokraten müssen ihre
+dem Adelsrang des Stands: mit Stand 11 oder höher steht die Person **gleich bei der Musterung** auf
+dem Rang des Stands, der **Rangwurf entfällt**; mit Stand 10 wird er gewürfelt und gibt Knight. Jede
+Beförderung auf so einen Rang gibt **+1 Stand** (✱ Hausregel der App, höchstens 15; Kennzeichen
+**2026-11-24d**). \* Bürokraten müssen ihre
 Weiterverpflichtung würfeln, um vor dem Ruhestand ausscheiden zu dürfen.
 
 ## Ränge der zwölf Laufbahnen
@@ -163,7 +166,8 @@ E = Count, F = Duke (The Traveller Book S. 27 „Noble Ranks": B 11, C 12, D 13,
 nennt davon Knight und Baron). **Damit ist oben Schluss**: Stand 15 ist der höchste Stand eines
 Spielfigurwerts (B1 S. 9), die Tafel der Adelstitel endet mit F, und die Rangtafel des Adels lässt
 Rang 6 leer. Ein Duke steigt nicht weiter – und ein Stand, der 15 erreicht hat, steigt mit
-(Kennzeichen **2026-11-24d**: Beförderung auf einen Rang mit Standesrang gibt +1 Stand, höchstens 15).
+(Kennzeichen **2026-11-24d**, gebaut: Beförderung auf einen Rang mit Standesrang gibt +1 Stand,
+höchstens 15).
 
 ## Fertigkeitstabellen und Automatik-Fertigkeiten
 
@@ -217,7 +221,7 @@ Fertigkeit darin genommen werden. Neu sind die Sachwerte der Laufbahn selbst:
 |---|---|---|
 | **Belterer**, **Barbar** | beginnen mit **14** statt 18 | B4 2 |
 | **Belter** | Überleben-DM **+1 je Term** statt fester DM | B4 6 |
-| **Adliger** | nur für Stand 10+, automatisch; Rang aus dem Stand (ab Position) | B4 8 |
+| **Adliger** | nur für Stand 10+, automatisch; der Rang folgt dem Stand (B 11 … F 15) und der Rangwurf entfällt; ✱ je Beförderung auf so einen Rang **+1 Stand**, höchstens 15 | B4 8, The Traveller Book S. 27 |
 | **Barbar** | kann **nicht in den Ruhestand** | B4 9 |
 | **Bürokrat** | muss die **Weiterverpflichtung würfeln**, um vor dem Ruhestand wegzudürfen | B4 8 |
 | **Barbar, Bürokrat, Arzt** | haben **keine natürliche Waffenkunde** an Schusswaffen: gelten als völlig ungebildet (DM −5 beim Schießen, B1 30) | B4 11 |

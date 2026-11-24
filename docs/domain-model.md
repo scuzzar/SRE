@@ -4322,7 +4322,6 @@ Diagramm mit diesen Ausnahmen:
 - **Laufbahnen** (2026-11-24a, 2026-11-24c) folgen dem Modell (`model/career.ts`,
   `model/generation.ts`, `data/schema.ts`, Daten in `src/data/services.json`): die sechs des
   Regelwerks und die zwölf aus Supplement 4.
-- **Der Rang des Adligen aus dem Stand** (B4 S. 8: „Rank corresponds to noble rank (taken from
-  Social Standing) once position is achieved“, die Buchstaben B bis F = Stand 11 bis 15) fehlt im
-  Code: jeder Adlige beginnt auf der untersten Stufe und steigt nur durch Beförderung. Das Modell
-  sagt es seit Kennzeichen **2026-11-24d** (`Rank.standing`), das noch nicht freigegeben ist.
+- **Der Rang des Adligen aus dem Stand** (2026-11-24d) folgt dem Modell: `Rank.standing` in den
+  Daten, `standingRank()` setzt die Person bei der Musterung auf den Rang des Stands, und die
+  Beförderung auf so einen Rang gibt +1 Stand (`model/career.ts`).

@@ -456,9 +456,14 @@ export const ThrowSchema = z.object({
 /** Der Einstieg ohne Wurf: nur, wer das Attribut mindestens `atLeast` hat (der Adlige: Stand 10+). */
 export const QualificationSchema = z.object({ characteristic: CharacteristicSchema, atLeast: z.number().int() });
 
+/** Der höchste Stand eines Charakters (B1 S. 9: Werte der Spielfigur übersteigen nie 15). */
+export const MAX_CHARACTERISTIC = 15;
+
 export const RankSchema = z.object({
   level: z.number().int().min(1).max(6),
   title: z.string().min(1),
+  /** Der Stand, ab dem dieser Rang gilt (2026-11-24d): nur der Adel nennt ihn, B (11) … F (15). */
+  standing: z.number().int().min(1).max(MAX_CHARACTERISTIC).optional(),
   grants: GainSchema.optional(),
 });
 
@@ -503,7 +508,7 @@ export const AgingSchema = z.object({
 });
 
 const level = z.number().int().min(0);
-const characteristicValue = z.number().int().min(0).max(15);
+const characteristicValue = z.number().int().min(0).max(MAX_CHARACTERISTIC);
 
 export const UppSchema = z.object({
   str: characteristicValue,
@@ -784,6 +789,10 @@ function checkCareerData(data: CareerData, skillIds: ReadonlySet<string>, ctx: z
     // Die Rangstufen einer Laufbahn steigen, müssen aber nicht durchlaufen (der Barbar kennt nur 2 und 5, 2026-11-24c).
     if (service.ranks.some((r) => r.level < 1 || r.level > 6)) issue(`Die Ränge von ${service.id} stehen nicht auf Stufe 1 bis 6`);
     if (service.ranks.some((r, i) => i > 0 && r.level <= service.ranks[i - 1]!.level)) issue(`Die Ränge von ${service.id} steigen nicht`);
+    // Standesränge (2026-11-24d) nennt eine Laufbahn für alle ihre Ränge oder für keinen; sie steigen mit den Stufen.
+    const standings = service.ranks.filter((r) => r.standing !== undefined);
+    if (standings.length > 0 && standings.length !== service.ranks.length) issue(`${service.id}: Standesränge nur für alle Ränge oder für keinen`);
+    if (standings.some((r, i) => i > 0 && r.standing! <= standings[i - 1]!.standing!)) issue(`Die Standesränge von ${service.id} steigen nicht`);
     if ((service.commission === undefined) !== (service.ranks.length === 0)) issue(`${service.id}: Patent nur mit Rängen`);
     if ((service.commission === undefined) !== (service.promotion === undefined)) issue(`${service.id}: Patent und Beförderung nur zusammen`);
   }

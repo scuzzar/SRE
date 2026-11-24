@@ -245,6 +245,15 @@ export function nextRankLevel(service: Service, level: number): number | undefin
   return rankLevels(service).find((l) => l > level);
 }
 
+/**
+ * Der höchste Rang einer Laufbahn, dessen Stand der eigene erreicht (2026-11-24d); `undefined`,
+ * wenn die Laufbahn keine Standesränge kennt oder der Stand für den untersten nicht reicht.
+ */
+export function standingRank(service: Service, soc: number): Rank | undefined {
+  const fitting = service.ranks.filter((r) => r.standing !== undefined && r.standing <= soc);
+  return fitting.sort((a, b) => a.level - b.level).at(-1);
+}
+
 /** Die Zeilen der Aging Table für einen Term: je Attribut die mit dem größten `fromTerm` ≤ Term. */
 export function agingFor(term: number): readonly Aging[] {
   return characteristics.flatMap((c) => {
@@ -511,6 +520,13 @@ class Replay {
     this.service = service;
     this.drafted = drafted;
     this.effects.push({ kind: 'service', service: service.id, drafted });
+    // Standesränge (2026-11-24d): nennt die Rangtafel Stände, steht die Person gleich bei der
+    // Musterung auf dem höchsten Rang, den ihr Stand erreicht; der Rangwurf entfällt für sie.
+    const standing = standingRank(service, this.value('SOC'));
+    if (standing !== undefined) {
+      this.rank = standing.level;
+      this.effects.push({ kind: 'rank', level: standing.level, title: standing.title });
+    }
     // Die Automatik-Fertigkeit einer Kaskade (der Flyer: Air Craft-1) fragt nach der genauen Fertigkeit.
     if (service.onEnlistment && !this.gain(service.onEnlistment, chosen, last, false)) return;
     this.beginTerm();
@@ -538,9 +554,13 @@ class Replay {
 
   private promote(level: number, chosen: string | undefined, last: boolean): boolean {
     const rank = rankAt(this.service!, level)!;
+    // Der Rangwurf gibt den ersten Rang; alles Danach ist Beförderung.
+    const wasPromotion = this.rank > 0;
     this.rank = level;
     this.skillsLeft++;
     this.effects.push({ kind: 'rank', level, title: rank.title });
+    // Standesränge: jede Beförderung auf so einen Rang gibt +1 Stand (2026-11-24d), über 15 hinaus nicht.
+    if (wasPromotion && rank.standing !== undefined && this.value('SOC') < MAX_VALUE) this.set('SOC', this.value('SOC') + 1, 1);
     // Auch die Rang-Gabe kann eine Kaskade sein (der Barbar als Warrior: Blade Combat-1).
     return rank.grants === undefined ? true : this.gain(rank.grants, chosen, last, false);
   }

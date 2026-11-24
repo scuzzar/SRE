@@ -3968,23 +3968,28 @@
       "ranks": [
         {
           "level": 1,
-          "title": "B Knight"
+          "title": "B Knight",
+          "standing": 11
         },
         {
           "level": 2,
-          "title": "C Baron"
+          "title": "C Baron",
+          "standing": 12
         },
         {
           "level": 3,
-          "title": "D Marquis"
+          "title": "D Marquis",
+          "standing": 13
         },
         {
           "level": 4,
-          "title": "E Count"
+          "title": "E Count",
+          "standing": 14
         },
         {
           "level": 5,
-          "title": "F Duke"
+          "title": "F Duke",
+          "standing": 15
         }
       ],
       "skills": [

@@ -228,10 +228,13 @@ test('Laufbahnen aus Supplement 4: Pirate und Bureaucrat in der Wahl, der Bürok
   for (const [i, name] of [[6, 'Pirate'], [7, 'Bureaucrat'], [8, 'Belter'], [9, 'Sailor'], [10, 'Diplomat'], [11, 'Doctor'], [12, 'Flyer'], [13, 'Barbarian'], [14, 'Rogue'], [15, 'Noble'], [16, 'Scientist'], [17, 'Hunter']] as const) {
     await expect(services.nth(i)).toContainText(name);
   }
-  // Der Adlige will Stand 10+: mit Stand 5 ist er gesperrt und zeigt seine Qualifikation.
+  // Der Adlige will Stand 10+: gesperrt ist er nur, wenn der gewürfelte Stand darunter bleibt.
+  const socText = await dialog.locator('.upp-cell', { hasText: 'SOC' }).locator('.upp-code').innerText();
+  const soc = parseInt(socText, 16);
   const noble = services.nth(15);
-  await expect(noble).toBeDisabled();
   await expect(noble).toContainText('SOC 10+');
+  if (soc < 10) await expect(noble).toBeDisabled();
+  else await expect(noble).toBeEnabled();
 
   /** Das Ergebnis des letzten Wurfs wegklicken, sonst der nächste mögliche Knopf. */
   async function weiter() {
