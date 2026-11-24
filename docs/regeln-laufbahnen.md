@@ -29,14 +29,14 @@ Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst in
 | Regel | Quelle | App |
 |---|---|---|
 | [Die sechs gebauten Laufbahnen](#die-sechs-gebauten-laufbahnen) | SE Charts 2–3 | ✔ |
-| [Die zwölf Laufbahnen von B4](#die-zwölf-laufbahnen-von-b4) | B4 1–9 | ○ |
+| [Die zwölf Laufbahnen von B4](#die-zwölf-laufbahnen-von-b4) | B4 1–9 | ✔ |
 | [Ablauf nach B4](#ablauf-nach-b4) | B4 2–5 | ◐ (Ablauf gebaut, vier Abweichungen) |
-| [Würfe der zwölf Laufbahnen](#würfe-der-zwölf-laufbahnen) | B4 6, 8 | ○ |
-| [Ränge der zwölf Laufbahnen](#ränge-der-zwölf-laufbahnen) | B4 6, 8 | ○ |
-| [Fertigkeitstabellen und Automatik-Fertigkeiten](#fertigkeitstabellen-und-automatik-fertigkeiten) | B4 6–7, 8–9 | ○ (Tabellenform ✔: vierte Tabelle mit EDU-Schwelle) |
-| [Sachwerte und Geld der zwölf](#sachwerte-und-geld-der-zwölf) | B4 6–7, 8–9 | ○ |
-| [Sonderregeln einzelner Laufbahnen](#sonderregeln-einzelner-laufbahnen) | B4 2, 6, 8, 12 | ○ |
-| [Neue Fertigkeiten und Waffen](#neue-fertigkeiten-und-waffen) | B4 10–12, 16–17 | ◐ |
+| [Würfe der zwölf Laufbahnen](#würfe-der-zwölf-laufbahnen) | B4 6, 8 | ✔ |
+| [Ränge der zwölf Laufbahnen](#ränge-der-zwölf-laufbahnen) | B4 6, 8 | ✔ |
+| [Fertigkeitstabellen und Automatik-Fertigkeiten](#fertigkeitstabellen-und-automatik-fertigkeiten) | B4 6–7, 8–9 | ✔ |
+| [Sachwerte und Geld der zwölf](#sachwerte-und-geld-der-zwölf) | B4 6–7, 8–9 | ✔ |
+| [Sonderregeln einzelner Laufbahnen](#sonderregeln-einzelner-laufbahnen) | B4 2, 6, 8, 12 | ✔ |
+| [Neue Fertigkeiten und Waffen](#neue-fertigkeiten-und-waffen) | B4 10–12, 16–17 | ✔ (Heavy Weapons fehlt, keine Tabelle braucht ihn) |
 | [Fertig gewürfelte NSC](#fertig-gewürfelte-nsc) | B4 18–41 | ○ |
 | [Helden und Schurken](#helden-und-schurken) | B4 42–43 | ○ |
 
@@ -54,7 +54,12 @@ unter genau diesen sechs (1W6, je Laufbahn eine Zahl).
 ## Die zwölf Laufbahnen von B4
 
 B4 bringt zwölf **Charaktertypen** (B4 5) – je eine eigene Laufbahn mit denselben Würfen wie die
-sechs gebauten, aber ohne Einberufungszahl:
+sechs gebauten, aber ohne Einberufungszahl. **Alle zwölf stehen in `src/data/services.json`**
+(Kennzeichen **2026-11-24a** und **2026-11-24c**): Musterung, Überleben, Rangwurf und Beförderung
+mit den DMs der Tabellen, Ränge mit ihren Gaben, die vier Fertigkeitstabellen, Sachwerte und Geld,
+dazu die neue Bogenwaffengruppe, die Luft- und Wasserfahrzeuge-Gruppen und der Seeker als Entwurf.
+Zusammen mit den sechs des Regelwerks sind es **18 Laufbahnen** in der Wahl; die Einberufung
+würfelt weiterhin nur die sechs mit Einberufungszahl, die zwölf anderen lassen weiterbewerben.
 
 | Laufbahn | B4 | Wer das ist |
 |---|---|---|
@@ -81,8 +86,8 @@ Der Ablauf ist der bekannte (B1, SE Charts) mit vier Abweichungen:
 | Schritt | B4 | App |
 |---|---|---|
 | Attribute | 2W6 je Attribut: Stärke, Gewandtheit, Ausdauer, Intelligenz, **Bildung**, Stand | ✔ (dieselben sechs, `EDU` schon dabei) |
-| Alter zu Beginn | 18; **Belterer und Barbar 14** | ○ (immer 18) |
-| Musterung misslingt | *Rejection*: die Person **sucht eine andere Laufbahn** und bewirbt sich dort | ◐ (✱ heute: Einberufung 1W6 entscheidet; hat die zwölf neuen Laufbahnen keine Zahl, braucht das eine Entscheidung) |
+| Alter zu Beginn | 18; **Belterer und Barbar 14** | ✔ (`Service.startAge`, 2026-11-24a) |
+| Musterung misslingt | *Rejection*: die Person **sucht eine andere Laufbahn** und bewirbt sich dort | ✔ bei den zwölf ohne Einberufungszahl (✱ weiterbewerben); bei den sechs des Regelwerks entscheidet weiterhin die **Einberufung** (2026-11-24a) |
 | Fertigkeiten je Term | erster Term 2, jeder weitere 1, +1 bei Position, +1 bei Beförderung; aus **vier Tabellen**, die vierte nur bei **Bildung 8+** | ✔ (`skillsPerTerm`, vierte Tabelle mit `minEdu`) |
 | Weiterverpflichtung | jeder Term; 12 genau → ein Term Zwangsdienst; misslingt sie → Ende | ✔ |
 | Retirement | Dienst bis 7 Terme; **Ruhestand ab dem 5. Term möglich, nach dem 7. Pflicht**; Rentenzahlung je nach Dienstzeit und Laufbahn | ○ (die App kennt `MAX_TERMS = 7`, aber keinen Ruhestand und keine Rentenzahlung) |
@@ -218,25 +223,39 @@ Fertigkeit darin genommen werden. Neu sind die Sachwerte der Laufbahn selbst:
 ## Neue Fertigkeiten und Waffen
 
 B4 benutzt **Waffen-Gruppen** statt einzelner Waffen: *Blade Combat*, *Gun Combat*, *Bow Combat*
-(je mit sofortiger Festlegung auf ein Stück), *Brawling* und *Gunnery* ohne Festlegung. Die Gruppen
-`blade-combat` und `gun-combat` mit ihren Kaskaden gibt es in der App schon; dazu kämen:
+(je mit sofortiger Festlegung auf ein Stück), *Brawling* und *Gunnery* ohne Festlegung. Die App
+kennt dafür **Kaskaden**; seit **2026-11-24c** sind alle gebraichten Gruppen da:
 
-- **Bow Combat** als dritte Gruppe – mit den Bogenwaffen (B4 16–17: Tabelle mit Schaden,
-  Reichweiten und Nachziehen; 10 Bolzen im Magazin).
-- Fehlende Fertigkeiten: **Interrogation, Instruction, Recruiting, Liaison, Prospecting, Hunting,
-  Survival, Recon, Demolition, Gravitics, Zero-G Combat, Battle Dress, Ship Tactics, Heavy Weapons**.
-- Fehlende **Fahrzeug- und Luftgruppen**: *Air Craft* (die App hat Air/Raft, Helicopter, Hovercraft,
-  Prop- und Jet-getriebene Starrflügler als Einzelfertigkeiten) und *Water Craft* (die App hat
-  Small/Large Watercraft, Submersible als Einzelfertigkeiten). Buch 4 fasst sie zu Gruppen mit
-  Fahrzeugtyp und Technologie-Level zusammen (B4 12–13).
-- Vorhanden und in den Tabellen benutzt: Brawling, Gambling, Carousing, Vacc Suit, Streetwise,
-  Electronics, Computer, Mechanical, Engineering, Navigation, Pilot, Ship's Boat, Vehicle, Gunnery,
-  Leader, Jack-of-all-Trades, Medical, Administration, Bribery, Forgery, Forward Observer, Steward,
-  Tactics.
+| Gruppe | Quelle | Optionen |
+|---|---|---|
+| **Bow Combat** (`bow-combat`) | B4 16–17 | Sling, Short Bow, Long Bow, Sporting Crossbow, Military Crossbow, Repeating Crossbow |
+| **Air Craft** (`air-craft`) | B4 12–13 | Prop Fixed Wing, Jet Fixed Wing, Helicopter (die Einzelfertigkeiten gab es schon) |
+| **Water Craft** (`water-craft`) | B4 12–13 | Large Watercraft, Small Watercraft, Hovercraft, Submersible |
+
+**Neue Fertigkeiten** in `skills.json`: Interrogation, Instruction, Recruiting, Liaison, Ship
+Tactics, Zero-G Combat (schon zu **2026-11-24a**) und jetzt Commo, Battle Dress, Prospecting,
+Gravitics, Demolition, Survival, Recon, Hunting sowie je eine Fertigkeit pro Bogenwaffe
+(Sling … Repeating Crossbow, geführt über die Gruppe). **Vorhanden und in den Tabellen benutzt:**
+Brawling, Gambling, Carousing, Vacc Suit, Streetwise, Electronics, Computer, Mechanical,
+Engineering, Navigation, Pilot, Ship's Boat, Vehicle, Gunnery, Leader, Jack-of-all-Trades, Medical,
+Administration, Bribery, Forgery, Forward Observer, Steward, Tactics.
+
+**Die sechs Bogenwaffen** (`weapons.json`, B4 16–17) sind Schusswaffen **ohne Magazin**
+(Kennzeichen **2026-11-24c**): Schleuder, Short Bow, Long Bow und Repeating Crossbow laden
+automatisch ein Schuss je Runde, Sporting und Military Crossbow brauchen zum Spannen eine eigene
+Runde und gelten dabei als ausweichend (Military: zwei Runden beim Ausweichen). Der Repeating
+Crossbow hat zehn Bolzen im Magazin. Reichweiten- und Rüstungsmatrix stehen Wort für Wort in den
+Tabellen von B4; Gewichte und Preise aus der Gewichtstabelle (B4 17).
+
+- ✱ **Hausregel:** B4 nennt für Bogenwaffen **kein Gesetz** und kein Mindest-SOC. Die App lässt sie
+  deshalb überall erlaubt (wie Hände und Tierwaffen) und gibt sie **keinem erzeugten NSC** – ein
+  Charakter aus Barbar oder Hunter erhält sie über Sachwerte und Kaskaden, die das Feld nicht
+  abfragen.
+- **Heavy Weapons** (B4 11) braucht keine der zwölf Tabellen; er fehlt weiterhin.
 
 Die Waffentabellen mit begünstigten und benachteiligten Attributswerten und dem Schaden
-(Klingen B4 10, Schusswaffen B4 10–11, Bogen B4 16–17) sind in der App teils in `weapons.json`
-vorhanden; Bogen und die Gruppen-Notation fehlen.
+(Klingen B4 10, Schusswaffen B4 10–11, Bogen B4 16–17) stehen für die Bogenwaffen jetzt in
+`weapons.json`; die übrigen B4-Tabellen wiederholen nur B1 und sind nicht übertragen.
 
 ## Fertig gewürfelte NSC
 
@@ -255,23 +274,16 @@ haben – Vorlagen für NSC, die niemand erzeugen soll, sondern die man aufstell
 
 ## Wo der Code noch nicht folgt
 
-- Die sechs gebauten Laufbahnen folgen dem Modell; an ihnen steht nichts Neues.
-- **Pirate und Bureaucrat stehen in der App**: Zeile in `src/data/services.json` mit allen vier
-  Fertigkeitstabellen, Sachwerten, Geld, Rängen und Gaben, dazu das Schiff des Piraten (Corsair) und
-  die sechs neuen Fertigkeiten in `skills.json` (Zero-G Combat, Ship Tactics, Recruiting,
-  Instruction, Interrogation, Liaison). Sie sind die Probelaufbahnen zu Kennzeichen
-  **2026-11-24a**: Gegenprobe („Stand 7−“, „Stä 8−“), Term-DM, Weiterbewerbung, Ausstieg nur über
-  die gelungene Weiterverpflichtung, Ruhestand als Regel der Laufbahn, natürliche Waffenkunde und
-  Beginnsalter sind damit erprobt (Tests in `model/career-b4.test.ts`).
-- Die zehn anderen (Belter, Sailor, Diplomat, Doctor, Flyer, Barbarian, Rogue, Noble, Scientist,
-  Hunter) sind **nur Daten** – jeder ihrer Sonderregeln gehört zu einem der Felder aus
-  **2026-11-24a**, kein neuer Code. Ihnen fehlen noch ihre Fertigkeiten in `skills.json` (u. a.
-  Bow Combat, Prospecting, Hunting, Survival, Recon, Demolition, Gravitics, Battle Dress) und die
-  Bogenwaffe bei den Waffen.
-- Der **Name des Rangwurfs** („Position“ bzw. „Commission“ in B4) steht seit Kennzeichen
-  **2026-11-24b** in der App: `Service.commissionTitle` nennt ihn in den Worten der Laufbahn, der
-  Bürokrat steigt in den „Gehobenen Dienst“. Ohne das Feld heißt er „Offizierspatent“ – bei Navy,
-  Marines, Army und bei den Merchants, deren Ränge Schiffsoffiziere sind, auch so gemeint. Für
-  Diplomat, Barbar und Adliger kommt je eigene Fassung, sobald sie gebaut werden.
+- Die **sechs Laufbahnen des Regelwerks** und die **zwölf aus B4** stehen in `services.json` und
+  folgen dem Modell (Kennzeichen **2026-11-24a** und **2026-11-24c**): Gegenprobe („Stand 7−“,
+  „Stä 8−“), Term-DM, Weiterbewerbung, Ausstieg nur über die gelungene Weiterverpflichtung,
+  kein Ruhestand, natürliche Waffenkunde, Beginnsalter, Einstieg allein aus dem Stand und die
+  Rangtafel mit fehlenden Stufen (Barbar nur Warrior und Chief) sind gebaut und erprobt
+  (Tests in `model/career-b4.test.ts` und `data/data.test.ts`).
+- Der **Name des Rangwurfs** (`Service.commissionTitle`, Kennzeichen **2026-11-24b**) steht nur beim
+  Bürokraten („Gehobener Dienst“). B4 selbst nennt den Wurf überall nur *position*; ob Diplomat,
+  Barbar und Adliger eigene Worte bekommen, ist offen. Ohne das Feld heißt er „Offizierspatent“.
 - Die **Rente** nach dem Ruhestand kennt die App noch nicht (Notiz statt Zahlung), bei den neuen
   Laufbahnen wie bei den alten.
+- Die **Beispiel-NSC** aus B4 18–41 sind nicht in der App: sie erzeugt ihre Läufe selbst. Die
+  Beispiele taugen als Vergleich für eigene Würfe.

@@ -309,7 +309,7 @@ describe('Charaktererschaffung', () => {
             g = { career: { ...g.career, worlds: [...(g.career.worlds ?? []), random.int(0, 1) ? '0101' : '0202'] } };
             break;
           case 'service':
-            g = enlist(g, pick(serviceOptions(state)).service.id, random);
+            g = enlist(g, pick(serviceOptions(state).filter((o) => o.available)).service.id, random);
             break;
           case 'skill':
             g = rollSkill(g, pick(tableOptions(state).filter((o) => o.available)).table.id, random);

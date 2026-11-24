@@ -10,6 +10,7 @@ import {
   isWorld,
   itemOf,
   previousWorld,
+  rankAt,
   uwpCode,
   MAX_CASH_ROLLS,
   MAX_TERMS,
@@ -349,7 +350,7 @@ const stepNames: Partial<Record<GenerationStep, string>> = {
 export function generationView(generation: Generation, hexes: readonly Hex[], error: string | undefined, shipGain?: ShipGainChoice): GenerationView {
   const state = stateOf(generation);
   const service = state.service;
-  const rank = service && state.rank > 0 ? service.ranks[state.rank - 1]!.title : undefined;
+  const rank = service && state.rank > 0 ? rankAt(service, state.rank)!.title : undefined;
   const status = service ? [service.name, rank, `Term ${state.terms}`].filter(Boolean).join(' · ') : '';
   const term = `Term ${state.terms}`;
 

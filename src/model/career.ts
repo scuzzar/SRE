@@ -1,6 +1,6 @@
 import type { Upp } from './campaign';
 import { DomainError } from './errors';
-import { cascadeOf, gainOf, itemOf, ref, serviceOf, skillOf, tableOf, weaponFor, type Aging, type Cascade, type Gain, type Service, type Throw } from './reference';
+import { cascadeOf, gainOf, itemOf, ref, serviceOf, skillOf, tableOf, weaponFor, type Aging, type Cascade, type Gain, type Rank, type Service, type Throw } from './reference';
 import { characteristics, JACK_OF_ALL_TRADES, type Characteristic } from './rules';
 
 /**
@@ -230,6 +230,21 @@ export function musterRollsOf(terms: number, rank: number): number {
   return terms + Math.ceil(rank / 2);
 }
 
+/** Die Rangstufen einer Laufbahn, aufsteigend; eine Laufbahn kann Stufen überspringen (Barbar: 2 und 5). */
+export function rankLevels(service: Service): readonly number[] {
+  return service.ranks.map((r) => r.level).sort((a, b) => a - b);
+}
+
+/** Der Rang einer Laufbahn mit dieser Stufe, wenn es ihn dort gibt. */
+export function rankAt(service: Service, level: number): Rank | undefined {
+  return service.ranks.find((r) => r.level === level);
+}
+
+/** Die nächste Rangstufe über `level`, oder `undefined`, wenn die Laufbahn höher nicht kennt. */
+export function nextRankLevel(service: Service, level: number): number | undefined {
+  return rankLevels(service).find((l) => l > level);
+}
+
 /** Die Zeilen der Aging Table für einen Term: je Attribut die mit dem größten `fromTerm` ≤ Term. */
 export function agingFor(term: number): readonly Aging[] {
   return characteristics.flatMap((c) => {
@@ -302,14 +317,14 @@ class Replay {
         const service = serviceOf(this.need(roll.for, 'die Laufbahn'));
         // Eine Laufbahn ohne Einberufungszahl (die zwölf aus Supplement 4) würfelt keine Einberufung:
         // abgelehnt heißt, dass man sich anderweitig bewirbt.
-        if (successOf(this.withTarget(roll))) this.enter(service, false);
+        if (successOf(this.withTarget(roll))) this.enter(service, false, roll.chosen, last);
         else this.step = service.draft === undefined ? 'service' : 'draft';
         break;
       }
       case 'draft': {
         const service = ref.services.find((s) => s.draft === roll.dice[0]);
         if (!service || roll.for !== service.id) throw new DomainError('Die Einberufung passt nicht zum Würfel.');
-        this.enter(service, true);
+        this.enter(service, true, roll.chosen, last);
         break;
       }
       case 'survival':
@@ -318,18 +333,19 @@ class Replay {
         break;
       case 'commission':
         if (successOf(this.withTarget(roll))) {
-          this.promote(1);
-          this.step = this.canPromote() ? 'promotion' : 'skill';
+          // Die erste Rangstufe muss nicht Rang 1 sein (der Barbar kennt nur „Warrior“ und „Chief“).
+          if (this.promote(rankLevels(this.service!)[0]!, roll.chosen, last)) this.step = this.canPromote() ? 'promotion' : 'skill';
         } else {
           this.step = 'skill';
         }
         break;
       case 'promotion':
         if (successOf(this.withTarget(roll))) {
-          this.promote(this.rank + 1);
-          this.promoted = true;
+          const next = nextRankLevel(this.service!, this.rank);
+          if (next === undefined) throw new DomainError('Höher als den höchsten Rang der Laufbahn kann man nicht befördern.');
+          if (this.promote(next, roll.chosen, last)) this.promoted = true;
         }
-        this.step = 'skill';
+        if (this.step !== 'cascade') this.step = 'skill';
         break;
       case 'skill': {
         const table = tableOf(this.need(roll.on, 'die Tabelle'));
@@ -491,11 +507,12 @@ class Replay {
     this.effects.push(change === undefined ? { kind: 'characteristic', characteristic: c, value } : { kind: 'characteristic', characteristic: c, value, change });
   }
 
-  private enter(service: Service, drafted: boolean): void {
+  private enter(service: Service, drafted: boolean, chosen: string | undefined, last: boolean): void {
     this.service = service;
     this.drafted = drafted;
     this.effects.push({ kind: 'service', service: service.id, drafted });
-    if (service.onEnlistment) this.gain(service.onEnlistment, undefined, false, false);
+    // Die Automatik-Fertigkeit einer Kaskade (der Flyer: Air Craft-1) fragt nach der genauen Fertigkeit.
+    if (service.onEnlistment && !this.gain(service.onEnlistment, chosen, last, false)) return;
     this.beginTerm();
   }
 
@@ -512,19 +529,20 @@ class Replay {
   }
 
   private canPromote(): boolean {
-    return this.service!.promotion !== undefined && this.rank >= 1 && this.rank < this.service!.ranks.length && !this.promoted;
+    return this.service!.promotion !== undefined && this.rank >= 1 && nextRankLevel(this.service!, this.rank) !== undefined && !this.promoted;
   }
 
   private afterSurvival(): void {
     this.step = this.canCommission() ? 'commission' : this.canPromote() ? 'promotion' : 'skill';
   }
 
-  private promote(level: number): void {
-    const rank = this.service!.ranks[level - 1]!;
+  private promote(level: number, chosen: string | undefined, last: boolean): boolean {
+    const rank = rankAt(this.service!, level)!;
     this.rank = level;
     this.skillsLeft++;
     this.effects.push({ kind: 'rank', level, title: rank.title });
-    if (rank.grants) this.gain(rank.grants, undefined, false, false);
+    // Auch die Rang-Gabe kann eine Kaskade sein (der Barbar als Warrior: Blade Combat-1).
+    return rank.grants === undefined ? true : this.gain(rank.grants, chosen, last, false);
   }
 
   private afterSkill(): void {

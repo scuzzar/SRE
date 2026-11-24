@@ -5,6 +5,7 @@ import {
   CRISIS_TARGET,
   MAX_CASH_ROLLS,
   pensionOf,
+  rankAt,
   replay,
   musterSources,
   termDmOf,
@@ -265,7 +266,7 @@ function thousands(n: number): string {
 
 /** Die Herkunft aus Laufbahn, Rang, Terms und Alter: „Ex-Navy · Commander · 5 Terms · 38 Jahre“. */
 export function backgroundOf(state: CareerState): string {
-  const rank = state.rank > 0 ? state.service!.ranks[state.rank - 1]!.title : undefined;
+  const rank = state.rank > 0 ? rankAt(state.service!, state.rank)!.title : undefined;
   const terms = `${state.terms} ${state.terms === 1 ? 'Term' : 'Terms'}`;
   return [`Ex-${state.service!.name}`, rank, terms, `${ageOf(state.terms, state.service)} Jahre`].filter(Boolean).join(' · ');
 }

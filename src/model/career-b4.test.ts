@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { addCharacter, createCampaign } from './campaign';
 import { ageOf, replay, termDmOf, throwConditions, throwDm, type TermDm } from './career';
 import {
+  cascadeOptions,
   careerInput,
+  chooseCascade,
   enlist,
   muster,
   reenlist,
@@ -76,9 +78,11 @@ describe('Laufbahnen aus Citizens of the Imperium', () => {
 
   it('zeigt die neuen Laufbahnen in der Wahl, ohne Einberufungszahl in der Einberufung', () => {
     const options = serviceOptions(stateOf(kira()));
-    expect(options.map((o) => o.service.id)).toEqual(['navy', 'marines', 'army', 'scouts', 'merchants', 'other', 'pirate', 'bureaucrat']);
-    expect(options.every((o) => o.available)).toBe(true);
-    expect(ref.services.filter((s) => s.draft === undefined).map((s) => s.id)).toEqual(['pirate', 'bureaucrat']);
+    const b4 = ['pirate', 'bureaucrat', 'belter', 'sailor', 'diplomat', 'doctor', 'flyer', 'barbarian', 'rogue', 'noble', 'scientist', 'hunter'];
+    expect(options.map((o) => o.service.id)).toEqual(['navy', 'marines', 'army', 'scouts', 'merchants', 'other', ...b4]);
+    // Gesperrt ist nur, was eine Qualifikation verlangt und nicht mitbringt: der Adlige will Stand 10+.
+    expect(options.filter((o) => !o.available).map((o) => o.service.id)).toEqual(stateOf(kira()).upp.soc >= 10 ? [] : ['noble']);
+    expect(ref.services.filter((s) => s.draft === undefined).map((s) => s.id)).toEqual(b4);
   });
 
   it('sperrt die Qualifikation die Laufbahn, wer den Attributswert nicht mitbringt (S. 8)', () => {
@@ -164,5 +168,59 @@ describe('Laufbahnen aus Citizens of the Imperium', () => {
     const roll = g.career.rolls.at(-1)!;
     expect(roll).toMatchObject({ kind: 'enlistment', for: 'bureaucrat', dm: 2, target: 5 });
     expect(replay(g.career).outcomes[6]!.sources).toEqual([{ label: 'STR 8−', dm: 2 }]);
+  });
+});
+
+describe('Rangstufen und Automatikgaben (2026-11-24c)', () => {
+  it('fragt die Automatik der Musterung nach der genauen Fertigkeit (der Flyer: Air Craft-1, S. 7)', () => {
+    // Flyer 6+ ohne DMs: 5+5 gelingt und gibt Air Craft-1 – eine Gruppe, also fragt die App nach.
+    const g = enlist(kira(), 'flyer', fixedRandom(5, 5));
+    const state = stateOf(g);
+    expect(state.service?.id).toBe('flyer');
+    expect(state.step).toBe('cascade');
+    expect(state.cascade?.cascade.id).toBe('air-craft');
+    expect(cascadeOptions(g).map((o) => o.skill)).toEqual(['prop-fixed-wing', 'jet-fixed-wing', 'helicopter']);
+    // Gewählt wird auf dem Wurf der Musterung; erst danach kommt das Überleben.
+    const after = chooseCascade(g, 'jet-fixed-wing');
+    expect(stateOf(after)).toMatchObject({ step: 'survival', terms: 1 });
+    expect(stateOf(after).skills).toEqual([{ of: 'jet-fixed-wing', level: 1 }]);
+  });
+
+  it('gibt der Rangwurf die unterste Rangstufe der Laufbahn und lässt die nächste vorhandene gelten (der Barbar: Warrior und Chief, S. 9)', () => {
+    // Barbar: Musterung 5+ (Schwert-1), Überleben 6+, Position 6+, Beförderung 9+.
+    let g = enlist(kira(), 'barbarian', fixedRandom(3, 4));
+    expect(stateOf(g).skills).toEqual([{ of: 'sword', level: 1 }]);
+    g = rollNext(g, fixedRandom(3, 4));
+    expect(stateOf(g).step).toBe('commission');
+    g = rollNext(g, fixedRandom(1, 6));
+    // Warrior steht auf Stufe 2 – die Stufen 1, 3 und 4 kennt die Tafel des Barbars nicht.
+    expect(stateOf(g).rank).toBe(2);
+    expect(stateOf(g).service?.ranks.map((r) => r.level)).toEqual([2, 5]);
+    // Die Gabe des Warriors ist Blade Combat-1: die App fragt nach der Klinge.
+    expect(stateOf(g).step).toBe('cascade');
+    expect(stateOf(g).cascade?.cascade.id).toBe('blade-combat');
+    g = chooseCascade(g, 'broadsword');
+    expect(stateOf(g).skills).toContainEqual({ of: 'broadsword', level: 1 });
+    expect(stateOf(g).step).toBe('promotion');
+    // Beförderung 9+: vom Warrior direkt auf Chief (Stufe 5), und der gibt Leader-1.
+    g = rollNext(g, fixedRandom(4, 6));
+    const state = stateOf(g);
+    expect(state.rank).toBe(5);
+    expect(state.skills).toContainEqual({ of: 'leader', level: 1 });
+    expect(state.step).toBe('skill');
+    // Höher als Chief kann der Barbar nicht steigen.
+    expect(state.rank).toBeLessThanOrEqual(Math.max(...(state.service?.ranks.map((r) => r.level) ?? [])));
+  });
+
+  it('lässt die Rangfolge der übrigen Laufbahnen unverändert (Navy 1 bis 6)', () => {
+    const navy = serviceOf('navy');
+    expect(navy.ranks.map((r) => r.level)).toEqual([1, 2, 3, 4, 5, 6]);
+    // Der Flyer beginnt mit Pilot auf Stufe 1 und endet beim Air Marshal auf Stufe 6.
+    expect(serviceOf('flyer').ranks.map((r) => `${r.level}:${r.title}`)).toEqual(['1:Pilot', '2:Flight Leader', '3:Sqdrn Leader', '4:Staff Major', '5:Group Leader', '6:Air Marshal']);
+    // Und eine Laufbahn ohne Rangtafel hat weder Rangwurf noch Beförderung.
+    for (const id of ['belter', 'doctor', 'rogue', 'scientist', 'hunter', 'scouts']) {
+      expect(serviceOf(id).commission, id).toBeUndefined();
+      expect(serviceOf(id).ranks, id).toEqual([]);
+    }
   });
 });

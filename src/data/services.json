@@ -2131,6 +2131,2529 @@
           }
         ]
       }
+    },
+    {
+      "id": "belter",
+      "name": "Belter",
+      "startAge": 14,
+      "reenlist": 7,
+      "enlistment": {
+        "target": 8,
+        "dms": [
+          {
+            "characteristic": "DEX",
+            "atLeast": 9,
+            "dm": 1
+          },
+          {
+            "characteristic": "INT",
+            "atLeast": 6,
+            "dm": 2
+          }
+        ]
+      },
+      "survival": {
+        "target": 9,
+        "dms": [],
+        "dmPerTerm": 1
+      },
+      "onEnlistment": {
+        "id": "belter.entry",
+        "skill": "vacc-suit"
+      },
+      "ranks": [],
+      "skills": [
+        {
+          "id": "belter.personal",
+          "name": "Personal Development",
+          "rows": [
+            {
+              "id": "belter.personal.1",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "belter.personal.2",
+              "characteristic": "DEX",
+              "change": 1
+            },
+            {
+              "id": "belter.personal.3",
+              "characteristic": "END",
+              "change": 1
+            },
+            {
+              "id": "belter.personal.4",
+              "skill": "gambling"
+            },
+            {
+              "id": "belter.personal.5",
+              "skill": "brawling"
+            },
+            {
+              "id": "belter.personal.6",
+              "skill": "vacc-suit"
+            }
+          ]
+        },
+        {
+          "id": "belter.service",
+          "name": "Service Skills",
+          "rows": [
+            {
+              "id": "belter.service.1",
+              "skill": "vacc-suit"
+            },
+            {
+              "id": "belter.service.2",
+              "skill": "vacc-suit"
+            },
+            {
+              "id": "belter.service.3",
+              "skill": "prospecting"
+            },
+            {
+              "id": "belter.service.4",
+              "skill": "forward-observer"
+            },
+            {
+              "id": "belter.service.5",
+              "skill": "prospecting"
+            },
+            {
+              "id": "belter.service.6",
+              "skill": "ships-boat"
+            }
+          ]
+        },
+        {
+          "id": "belter.education",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "belter.education.1",
+              "skill": "ships-boat"
+            },
+            {
+              "id": "belter.education.2",
+              "skill": "electronics"
+            },
+            {
+              "id": "belter.education.3",
+              "skill": "prospecting"
+            },
+            {
+              "id": "belter.education.4",
+              "skill": "mechanical"
+            },
+            {
+              "id": "belter.education.5",
+              "skill": "prospecting"
+            },
+            {
+              "id": "belter.education.6",
+              "skill": "instruction"
+            }
+          ]
+        },
+        {
+          "id": "belter.education8",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "belter.education8.1",
+              "skill": "navigation"
+            },
+            {
+              "id": "belter.education8.2",
+              "skill": "medical"
+            },
+            {
+              "id": "belter.education8.3",
+              "skill": "pilot"
+            },
+            {
+              "id": "belter.education8.4",
+              "skill": "computer"
+            },
+            {
+              "id": "belter.education8.5",
+              "skill": "engineering"
+            },
+            {
+              "id": "belter.education8.6",
+              "skill": "jack-of-all-trades"
+            }
+          ],
+          "minEdu": 8
+        }
+      ],
+      "benefits": {
+        "id": "belter.benefits",
+        "name": "Benefits",
+        "rows": [
+          {
+            "id": "belter.benefits.1",
+            "item": "low-passage"
+          },
+          {
+            "id": "belter.benefits.2",
+            "characteristic": "INT",
+            "change": 1
+          },
+          {
+            "id": "belter.benefits.3",
+            "characteristic": "INT",
+            "change": 1
+          },
+          {
+            "id": "belter.benefits.4",
+            "item": "high-passage"
+          },
+          {
+            "id": "belter.benefits.5",
+            "item": "travellers-aid-society"
+          },
+          {
+            "id": "belter.benefits.6",
+            "ship": "J",
+            "shipDebtFree": true
+          },
+          {
+            "id": "belter.7"
+          }
+        ]
+      },
+      "cash": {
+        "id": "belter.cash",
+        "name": "Cash",
+        "rows": [
+          {
+            "id": "belter.1"
+          },
+          {
+            "id": "belter.2"
+          },
+          {
+            "id": "belter.cash.3",
+            "credits": 1000
+          },
+          {
+            "id": "belter.cash.4",
+            "credits": 10000
+          },
+          {
+            "id": "belter.cash.5",
+            "credits": 100000
+          },
+          {
+            "id": "belter.cash.6",
+            "credits": 10000
+          },
+          {
+            "id": "belter.cash.7",
+            "credits": 100000
+          }
+        ]
+      }
+    },
+    {
+      "id": "sailor",
+      "name": "Sailor",
+      "reenlist": 6,
+      "enlistment": {
+        "target": 6,
+        "dms": [
+          {
+            "characteristic": "END",
+            "atLeast": 10,
+            "dm": 1
+          },
+          {
+            "characteristic": "STR",
+            "atLeast": 8,
+            "dm": 2
+          }
+        ]
+      },
+      "survival": {
+        "target": 5,
+        "dms": [
+          {
+            "characteristic": "END",
+            "atLeast": 8,
+            "dm": 2
+          }
+        ]
+      },
+      "commission": {
+        "target": 5,
+        "dms": [
+          {
+            "characteristic": "INT",
+            "atLeast": 9,
+            "dm": 1
+          }
+        ]
+      },
+      "promotion": {
+        "target": 6,
+        "dms": [
+          {
+            "characteristic": "EDU",
+            "atLeast": 8,
+            "dm": 1
+          }
+        ]
+      },
+      "ranks": [
+        {
+          "level": 1,
+          "title": "Ensign"
+        },
+        {
+          "level": 2,
+          "title": "Lieutenant"
+        },
+        {
+          "level": 3,
+          "title": "Lt Cmdr"
+        },
+        {
+          "level": 4,
+          "title": "Commander"
+        },
+        {
+          "level": 5,
+          "title": "Captain"
+        },
+        {
+          "level": 6,
+          "title": "Admiral"
+        }
+      ],
+      "skills": [
+        {
+          "id": "sailor.personal",
+          "name": "Personal Development",
+          "rows": [
+            {
+              "id": "sailor.personal.1",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "sailor.personal.2",
+              "characteristic": "DEX",
+              "change": 1
+            },
+            {
+              "id": "sailor.personal.3",
+              "characteristic": "END",
+              "change": 1
+            },
+            {
+              "id": "sailor.personal.4",
+              "skill": "gambling"
+            },
+            {
+              "id": "sailor.personal.5",
+              "skill": "brawling"
+            },
+            {
+              "id": "sailor.personal.6",
+              "skill": "carousing"
+            }
+          ]
+        },
+        {
+          "id": "sailor.service",
+          "name": "Service Skills",
+          "rows": [
+            {
+              "id": "sailor.service.1",
+              "choose": "gun-combat"
+            },
+            {
+              "id": "sailor.service.2",
+              "skill": "commo"
+            },
+            {
+              "id": "sailor.service.3",
+              "skill": "forward-observer"
+            },
+            {
+              "id": "sailor.service.4",
+              "choose": "vehicle"
+            },
+            {
+              "id": "sailor.service.5",
+              "choose": "vehicle"
+            },
+            {
+              "id": "sailor.service.6",
+              "skill": "battle-dress"
+            }
+          ]
+        },
+        {
+          "id": "sailor.education",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "sailor.education.1",
+              "choose": "water-craft"
+            },
+            {
+              "id": "sailor.education.2",
+              "skill": "electronics"
+            },
+            {
+              "id": "sailor.education.3",
+              "skill": "mechanical"
+            },
+            {
+              "id": "sailor.education.4",
+              "skill": "gravitics"
+            },
+            {
+              "id": "sailor.education.5",
+              "skill": "navigation"
+            },
+            {
+              "id": "sailor.education.6",
+              "skill": "demolition"
+            }
+          ]
+        },
+        {
+          "id": "sailor.education8",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "sailor.education8.1",
+              "skill": "medical"
+            },
+            {
+              "id": "sailor.education8.2",
+              "choose": "vehicle"
+            },
+            {
+              "id": "sailor.education8.3",
+              "skill": "streetwise"
+            },
+            {
+              "id": "sailor.education8.4",
+              "skill": "computer"
+            },
+            {
+              "id": "sailor.education8.5",
+              "skill": "admin"
+            },
+            {
+              "id": "sailor.education8.6",
+              "skill": "jack-of-all-trades"
+            }
+          ],
+          "minEdu": 8
+        }
+      ],
+      "benefits": {
+        "id": "sailor.benefits",
+        "name": "Benefits",
+        "rows": [
+          {
+            "id": "sailor.benefits.1",
+            "item": "low-passage"
+          },
+          {
+            "id": "sailor.benefits.2",
+            "characteristic": "EDU",
+            "change": 1
+          },
+          {
+            "id": "sailor.benefits.3",
+            "choose": "weapon",
+            "weapon": true
+          },
+          {
+            "id": "sailor.benefits.4",
+            "choose": "weapon",
+            "weapon": true
+          },
+          {
+            "id": "sailor.benefits.5",
+            "item": "high-passage"
+          },
+          {
+            "id": "sailor.benefits.6",
+            "item": "high-passage"
+          },
+          {
+            "id": "sailor.benefits.7",
+            "characteristic": "SOC",
+            "change": 1
+          }
+        ]
+      },
+      "cash": {
+        "id": "sailor.cash",
+        "name": "Cash",
+        "rows": [
+          {
+            "id": "sailor.cash.1",
+            "credits": 2000
+          },
+          {
+            "id": "sailor.cash.2",
+            "credits": 5000
+          },
+          {
+            "id": "sailor.cash.3",
+            "credits": 10000
+          },
+          {
+            "id": "sailor.cash.4",
+            "credits": 10000
+          },
+          {
+            "id": "sailor.cash.5",
+            "credits": 10000
+          },
+          {
+            "id": "sailor.cash.6",
+            "credits": 20000
+          },
+          {
+            "id": "sailor.cash.7",
+            "credits": 30000
+          }
+        ]
+      }
+    },
+    {
+      "id": "diplomat",
+      "name": "Diplomat",
+      "reenlist": 5,
+      "enlistment": {
+        "target": 8,
+        "dms": [
+          {
+            "characteristic": "EDU",
+            "atLeast": 8,
+            "dm": 1
+          },
+          {
+            "characteristic": "SOC",
+            "atLeast": 9,
+            "dm": 2
+          }
+        ]
+      },
+      "survival": {
+        "target": 3,
+        "dms": [
+          {
+            "characteristic": "EDU",
+            "atLeast": 9,
+            "dm": 2
+          }
+        ]
+      },
+      "commission": {
+        "target": 5,
+        "dms": [
+          {
+            "characteristic": "INT",
+            "atLeast": 8,
+            "dm": 1
+          }
+        ]
+      },
+      "promotion": {
+        "target": 10,
+        "dms": [
+          {
+            "characteristic": "SOC",
+            "atLeast": 10,
+            "dm": 1
+          }
+        ]
+      },
+      "onEnlistment": {
+        "id": "diplomat.entry",
+        "skill": "liaison"
+      },
+      "ranks": [
+        {
+          "level": 1,
+          "title": "3d Secretary"
+        },
+        {
+          "level": 2,
+          "title": "2d Secretary"
+        },
+        {
+          "level": 3,
+          "title": "1st Secretary"
+        },
+        {
+          "level": 4,
+          "title": "Counselor"
+        },
+        {
+          "level": 5,
+          "title": "Minister"
+        },
+        {
+          "level": 6,
+          "title": "Ambassador"
+        }
+      ],
+      "skills": [
+        {
+          "id": "diplomat.personal",
+          "name": "Personal Development",
+          "rows": [
+            {
+              "id": "diplomat.personal.1",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "diplomat.personal.2",
+              "characteristic": "EDU",
+              "change": 1
+            },
+            {
+              "id": "diplomat.personal.3",
+              "characteristic": "INT",
+              "change": 1
+            },
+            {
+              "id": "diplomat.personal.4",
+              "choose": "blade-combat"
+            },
+            {
+              "id": "diplomat.personal.5",
+              "choose": "gun-combat"
+            },
+            {
+              "id": "diplomat.personal.6",
+              "skill": "carousing"
+            }
+          ]
+        },
+        {
+          "id": "diplomat.service",
+          "name": "Service Skills",
+          "rows": [
+            {
+              "id": "diplomat.service.1",
+              "characteristic": "INT",
+              "change": 1
+            },
+            {
+              "id": "diplomat.service.2",
+              "skill": "vacc-suit"
+            },
+            {
+              "id": "diplomat.service.3",
+              "choose": "vehicle"
+            },
+            {
+              "id": "diplomat.service.4",
+              "choose": "vehicle"
+            },
+            {
+              "id": "diplomat.service.5",
+              "skill": "gambling"
+            },
+            {
+              "id": "diplomat.service.6",
+              "skill": "computer"
+            }
+          ]
+        },
+        {
+          "id": "diplomat.education",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "diplomat.education.1",
+              "skill": "forgery"
+            },
+            {
+              "id": "diplomat.education.2",
+              "skill": "streetwise"
+            },
+            {
+              "id": "diplomat.education.3",
+              "skill": "interrogation"
+            },
+            {
+              "id": "diplomat.education.4",
+              "skill": "recruiting"
+            },
+            {
+              "id": "diplomat.education.5",
+              "skill": "instruction"
+            },
+            {
+              "id": "diplomat.education.6",
+              "skill": "admin"
+            }
+          ]
+        },
+        {
+          "id": "diplomat.education8",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "diplomat.education8.1",
+              "skill": "liaison"
+            },
+            {
+              "id": "diplomat.education8.2",
+              "skill": "liaison"
+            },
+            {
+              "id": "diplomat.education8.3",
+              "skill": "admin"
+            },
+            {
+              "id": "diplomat.education8.4",
+              "skill": "computer"
+            },
+            {
+              "id": "diplomat.education8.5",
+              "characteristic": "SOC",
+              "change": 1
+            },
+            {
+              "id": "diplomat.education8.6",
+              "skill": "jack-of-all-trades"
+            }
+          ],
+          "minEdu": 8
+        }
+      ],
+      "benefits": {
+        "id": "diplomat.benefits",
+        "name": "Benefits",
+        "rows": [
+          {
+            "id": "diplomat.benefits.1",
+            "item": "low-passage"
+          },
+          {
+            "id": "diplomat.benefits.2",
+            "characteristic": "INT",
+            "change": 1
+          },
+          {
+            "id": "diplomat.benefits.3",
+            "characteristic": "INT",
+            "change": 2
+          },
+          {
+            "id": "diplomat.benefits.4",
+            "choose": "weapon",
+            "weapon": true
+          },
+          {
+            "id": "diplomat.benefits.5",
+            "characteristic": "SOC",
+            "change": 1
+          },
+          {
+            "id": "diplomat.benefits.6",
+            "item": "high-passage"
+          },
+          {
+            "id": "diplomat.benefits.7",
+            "item": "travellers-aid-society"
+          }
+        ]
+      },
+      "cash": {
+        "id": "diplomat.cash",
+        "name": "Cash",
+        "rows": [
+          {
+            "id": "diplomat.cash.1",
+            "credits": 10000
+          },
+          {
+            "id": "diplomat.cash.2",
+            "credits": 10000
+          },
+          {
+            "id": "diplomat.cash.3",
+            "credits": 10000
+          },
+          {
+            "id": "diplomat.cash.4",
+            "credits": 20000
+          },
+          {
+            "id": "diplomat.cash.5",
+            "credits": 50000
+          },
+          {
+            "id": "diplomat.cash.6",
+            "credits": 60000
+          },
+          {
+            "id": "diplomat.cash.7",
+            "credits": 70000
+          }
+        ]
+      }
+    },
+    {
+      "id": "doctor",
+      "name": "Doctor",
+      "reenlist": 4,
+      "naturalGunSkill": false,
+      "enlistment": {
+        "target": 9,
+        "dms": [
+          {
+            "characteristic": "INT",
+            "atLeast": 8,
+            "dm": 1
+          },
+          {
+            "characteristic": "DEX",
+            "atLeast": 9,
+            "dm": 2
+          }
+        ]
+      },
+      "survival": {
+        "target": 3,
+        "dms": [
+          {
+            "characteristic": "INT",
+            "atLeast": 8,
+            "dm": 2
+          }
+        ]
+      },
+      "onEnlistment": {
+        "id": "doctor.entry",
+        "skill": "medical"
+      },
+      "ranks": [],
+      "skills": [
+        {
+          "id": "doctor.personal",
+          "name": "Personal Development",
+          "rows": [
+            {
+              "id": "doctor.personal.1",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "doctor.personal.2",
+              "characteristic": "DEX",
+              "change": 1
+            },
+            {
+              "id": "doctor.personal.3",
+              "characteristic": "END",
+              "change": 1
+            },
+            {
+              "id": "doctor.personal.4",
+              "characteristic": "INT",
+              "change": 1
+            },
+            {
+              "id": "doctor.personal.5",
+              "characteristic": "EDU",
+              "change": 1
+            },
+            {
+              "id": "doctor.personal.6",
+              "characteristic": "SOC",
+              "change": 1
+            }
+          ]
+        },
+        {
+          "id": "doctor.service",
+          "name": "Service Skills",
+          "rows": [
+            {
+              "id": "doctor.service.1",
+              "characteristic": "DEX",
+              "change": 1
+            },
+            {
+              "id": "doctor.service.2",
+              "skill": "electronics"
+            },
+            {
+              "id": "doctor.service.3",
+              "skill": "medical"
+            },
+            {
+              "id": "doctor.service.4",
+              "skill": "streetwise"
+            },
+            {
+              "id": "doctor.service.5",
+              "skill": "medical"
+            },
+            {
+              "id": "doctor.service.6",
+              "choose": "blade-combat"
+            }
+          ]
+        },
+        {
+          "id": "doctor.education",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "doctor.education.1",
+              "skill": "medical"
+            },
+            {
+              "id": "doctor.education.2",
+              "skill": "medical"
+            },
+            {
+              "id": "doctor.education.3",
+              "skill": "mechanical"
+            },
+            {
+              "id": "doctor.education.4",
+              "skill": "electronics"
+            },
+            {
+              "id": "doctor.education.5",
+              "skill": "computer"
+            },
+            {
+              "id": "doctor.education.6",
+              "skill": "admin"
+            }
+          ]
+        },
+        {
+          "id": "doctor.education8",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "doctor.education8.1",
+              "skill": "medical"
+            },
+            {
+              "id": "doctor.education8.2",
+              "skill": "medical"
+            },
+            {
+              "id": "doctor.education8.3",
+              "skill": "admin"
+            },
+            {
+              "id": "doctor.education8.4",
+              "skill": "computer"
+            },
+            {
+              "id": "doctor.education8.5",
+              "characteristic": "INT",
+              "change": 1
+            },
+            {
+              "id": "doctor.education8.6",
+              "characteristic": "EDU",
+              "change": 1
+            }
+          ],
+          "minEdu": 8
+        }
+      ],
+      "benefits": {
+        "id": "doctor.benefits",
+        "name": "Benefits",
+        "rows": [
+          {
+            "id": "doctor.benefits.1",
+            "item": "low-passage"
+          },
+          {
+            "id": "doctor.benefits.2",
+            "characteristic": "EDU",
+            "change": 1
+          },
+          {
+            "id": "doctor.benefits.3",
+            "characteristic": "EDU",
+            "change": 1
+          },
+          {
+            "id": "doctor.benefits.4",
+            "choose": "weapon",
+            "weapon": true
+          },
+          {
+            "id": "doctor.benefits.5",
+            "item": "surgical-instruments"
+          },
+          {
+            "id": "doctor.benefits.6",
+            "item": "middle-passage"
+          },
+          {
+            "id": "doctor.7"
+          }
+        ]
+      },
+      "cash": {
+        "id": "doctor.cash",
+        "name": "Cash",
+        "rows": [
+          {
+            "id": "doctor.cash.1",
+            "credits": 20000
+          },
+          {
+            "id": "doctor.cash.2",
+            "credits": 20000
+          },
+          {
+            "id": "doctor.cash.3",
+            "credits": 20000
+          },
+          {
+            "id": "doctor.cash.4",
+            "credits": 30000
+          },
+          {
+            "id": "doctor.cash.5",
+            "credits": 40000
+          },
+          {
+            "id": "doctor.cash.6",
+            "credits": 60000
+          },
+          {
+            "id": "doctor.cash.7",
+            "credits": 100000
+          }
+        ]
+      }
+    },
+    {
+      "id": "flyer",
+      "name": "Flyer",
+      "reenlist": 6,
+      "enlistment": {
+        "target": 6,
+        "dms": [
+          {
+            "characteristic": "STR",
+            "atLeast": 7,
+            "dm": 1
+          },
+          {
+            "characteristic": "DEX",
+            "atLeast": 9,
+            "dm": 2
+          }
+        ]
+      },
+      "survival": {
+        "target": 5,
+        "dms": [
+          {
+            "characteristic": "DEX",
+            "atLeast": 8,
+            "dm": 2
+          }
+        ]
+      },
+      "commission": {
+        "target": 5,
+        "dms": [
+          {
+            "characteristic": "EDU",
+            "atLeast": 6,
+            "dm": 1
+          }
+        ]
+      },
+      "promotion": {
+        "target": 8,
+        "dms": [
+          {
+            "characteristic": "EDU",
+            "atLeast": 8,
+            "dm": 1
+          }
+        ]
+      },
+      "onEnlistment": {
+        "id": "flyer.entry",
+        "choose": "air-craft"
+      },
+      "ranks": [
+        {
+          "level": 1,
+          "title": "Pilot"
+        },
+        {
+          "level": 2,
+          "title": "Flight Leader"
+        },
+        {
+          "level": 3,
+          "title": "Sqdrn Leader"
+        },
+        {
+          "level": 4,
+          "title": "Staff Major"
+        },
+        {
+          "level": 5,
+          "title": "Group Leader"
+        },
+        {
+          "level": 6,
+          "title": "Air Marshal"
+        }
+      ],
+      "skills": [
+        {
+          "id": "flyer.personal",
+          "name": "Personal Development",
+          "rows": [
+            {
+              "id": "flyer.personal.1",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "flyer.personal.2",
+              "characteristic": "DEX",
+              "change": 1
+            },
+            {
+              "id": "flyer.personal.3",
+              "characteristic": "END",
+              "change": 1
+            },
+            {
+              "id": "flyer.personal.4",
+              "skill": "gambling"
+            },
+            {
+              "id": "flyer.personal.5",
+              "skill": "brawling"
+            },
+            {
+              "id": "flyer.personal.6",
+              "skill": "carousing"
+            }
+          ]
+        },
+        {
+          "id": "flyer.service",
+          "name": "Service Skills",
+          "rows": [
+            {
+              "id": "flyer.service.1",
+              "skill": "brawling"
+            },
+            {
+              "id": "flyer.service.2",
+              "skill": "vacc-suit"
+            },
+            {
+              "id": "flyer.service.3",
+              "choose": "gun-combat"
+            },
+            {
+              "id": "flyer.service.4",
+              "choose": "vehicle"
+            },
+            {
+              "id": "flyer.service.5",
+              "choose": "vehicle"
+            },
+            {
+              "id": "flyer.service.6",
+              "choose": "vehicle"
+            }
+          ]
+        },
+        {
+          "id": "flyer.education",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "flyer.education.1",
+              "choose": "air-craft"
+            },
+            {
+              "id": "flyer.education.2",
+              "skill": "mechanical"
+            },
+            {
+              "id": "flyer.education.3",
+              "skill": "electronics"
+            },
+            {
+              "id": "flyer.education.4",
+              "skill": "gravitics"
+            },
+            {
+              "id": "flyer.education.5",
+              "choose": "gun-combat"
+            },
+            {
+              "id": "flyer.education.6",
+              "skill": "survival"
+            }
+          ]
+        },
+        {
+          "id": "flyer.education8",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "flyer.education8.1",
+              "skill": "medical"
+            },
+            {
+              "id": "flyer.education8.2",
+              "skill": "leader"
+            },
+            {
+              "id": "flyer.education8.3",
+              "choose": "air-craft"
+            },
+            {
+              "id": "flyer.education8.4",
+              "skill": "computer"
+            },
+            {
+              "id": "flyer.education8.5",
+              "skill": "admin"
+            },
+            {
+              "id": "flyer.education8.6",
+              "skill": "jack-of-all-trades"
+            }
+          ],
+          "minEdu": 8
+        }
+      ],
+      "benefits": {
+        "id": "flyer.benefits",
+        "name": "Benefits",
+        "rows": [
+          {
+            "id": "flyer.benefits.1",
+            "item": "low-passage"
+          },
+          {
+            "id": "flyer.benefits.2",
+            "characteristic": "EDU",
+            "change": 1
+          },
+          {
+            "id": "flyer.benefits.3",
+            "choose": "weapon",
+            "weapon": true
+          },
+          {
+            "id": "flyer.benefits.4",
+            "choose": "weapon",
+            "weapon": true
+          },
+          {
+            "id": "flyer.benefits.5",
+            "item": "high-passage"
+          },
+          {
+            "id": "flyer.benefits.6",
+            "item": "middle-passage"
+          },
+          {
+            "id": "flyer.benefits.7",
+            "characteristic": "SOC",
+            "change": 1
+          }
+        ]
+      },
+      "cash": {
+        "id": "flyer.cash",
+        "name": "Cash",
+        "rows": [
+          {
+            "id": "flyer.cash.1",
+            "credits": 2000
+          },
+          {
+            "id": "flyer.cash.2",
+            "credits": 5000
+          },
+          {
+            "id": "flyer.cash.3",
+            "credits": 10000
+          },
+          {
+            "id": "flyer.cash.4",
+            "credits": 10000
+          },
+          {
+            "id": "flyer.cash.5",
+            "credits": 10000
+          },
+          {
+            "id": "flyer.cash.6",
+            "credits": 20000
+          },
+          {
+            "id": "flyer.cash.7",
+            "credits": 30000
+          }
+        ]
+      }
+    },
+    {
+      "id": "barbarian",
+      "name": "Barbarian",
+      "startAge": 14,
+      "reenlist": 6,
+      "retirement": false,
+      "naturalGunSkill": false,
+      "enlistment": {
+        "target": 5,
+        "dms": [
+          {
+            "characteristic": "END",
+            "atLeast": 9,
+            "dm": 1
+          },
+          {
+            "characteristic": "STR",
+            "atLeast": 10,
+            "dm": 2
+          }
+        ]
+      },
+      "survival": {
+        "target": 6,
+        "dms": [
+          {
+            "characteristic": "STR",
+            "atLeast": 8,
+            "dm": 2
+          }
+        ]
+      },
+      "commission": {
+        "target": 6,
+        "dms": [
+          {
+            "characteristic": "STR",
+            "atLeast": 10,
+            "dm": 1
+          }
+        ]
+      },
+      "promotion": {
+        "target": 9,
+        "dms": [
+          {
+            "characteristic": "INT",
+            "atLeast": 6,
+            "dm": 1
+          }
+        ]
+      },
+      "onEnlistment": {
+        "id": "barbarian.entry",
+        "skill": "sword"
+      },
+      "ranks": [
+        {
+          "level": 2,
+          "title": "Warrior",
+          "grants": {
+            "id": "barbarian.rank.2",
+            "choose": "blade-combat"
+          }
+        },
+        {
+          "level": 5,
+          "title": "Chief",
+          "grants": {
+            "id": "barbarian.rank.5",
+            "skill": "leader"
+          }
+        }
+      ],
+      "skills": [
+        {
+          "id": "barbarian.personal",
+          "name": "Personal Development",
+          "rows": [
+            {
+              "id": "barbarian.personal.1",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "barbarian.personal.2",
+              "characteristic": "STR",
+              "change": 2
+            },
+            {
+              "id": "barbarian.personal.3",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "barbarian.personal.4",
+              "skill": "carousing"
+            },
+            {
+              "id": "barbarian.personal.5",
+              "characteristic": "DEX",
+              "change": 1
+            },
+            {
+              "id": "barbarian.personal.6",
+              "characteristic": "END",
+              "change": 1
+            }
+          ]
+        },
+        {
+          "id": "barbarian.service",
+          "name": "Service Skills",
+          "rows": [
+            {
+              "id": "barbarian.service.1",
+              "skill": "brawling"
+            },
+            {
+              "id": "barbarian.service.2",
+              "choose": "blade-combat"
+            },
+            {
+              "id": "barbarian.service.3",
+              "choose": "blade-combat"
+            },
+            {
+              "id": "barbarian.service.4",
+              "choose": "bow-combat"
+            },
+            {
+              "id": "barbarian.service.5",
+              "choose": "bow-combat"
+            },
+            {
+              "id": "barbarian.service.6",
+              "choose": "gun-combat"
+            }
+          ]
+        },
+        {
+          "id": "barbarian.education",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "barbarian.education.1",
+              "choose": "blade-combat"
+            },
+            {
+              "id": "barbarian.education.2",
+              "skill": "mechanical"
+            },
+            {
+              "id": "barbarian.education.3",
+              "skill": "survival"
+            },
+            {
+              "id": "barbarian.education.4",
+              "skill": "recon"
+            },
+            {
+              "id": "barbarian.education.5",
+              "skill": "streetwise"
+            },
+            {
+              "id": "barbarian.education.6",
+              "choose": "bow-combat"
+            }
+          ]
+        },
+        {
+          "id": "barbarian.education8",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "barbarian.education8.1",
+              "skill": "medical"
+            },
+            {
+              "id": "barbarian.education8.2",
+              "skill": "interrogation"
+            },
+            {
+              "id": "barbarian.education8.3",
+              "skill": "tactics"
+            },
+            {
+              "id": "barbarian.education8.4",
+              "skill": "leader"
+            },
+            {
+              "id": "barbarian.education8.5",
+              "skill": "instruction"
+            },
+            {
+              "id": "barbarian.education8.6",
+              "skill": "jack-of-all-trades"
+            }
+          ],
+          "minEdu": 8
+        }
+      ],
+      "benefits": {
+        "id": "barbarian.benefits",
+        "name": "Benefits",
+        "rows": [
+          {
+            "id": "barbarian.benefits.1",
+            "item": "low-passage"
+          },
+          {
+            "id": "barbarian.benefits.2",
+            "choose": "blade-combat",
+            "weapon": true
+          },
+          {
+            "id": "barbarian.benefits.3",
+            "choose": "blade-combat",
+            "weapon": true
+          },
+          {
+            "id": "barbarian.benefits.4",
+            "choose": "blade-combat",
+            "weapon": true
+          },
+          {
+            "id": "barbarian.5"
+          },
+          {
+            "id": "barbarian.benefits.6",
+            "item": "high-passage"
+          },
+          {
+            "id": "barbarian.benefits.7",
+            "item": "high-passage"
+          }
+        ]
+      },
+      "cash": {
+        "id": "barbarian.cash",
+        "name": "Cash",
+        "rows": [
+          {
+            "id": "barbarian.1"
+          },
+          {
+            "id": "barbarian.2"
+          },
+          {
+            "id": "barbarian.cash.3",
+            "credits": 1000
+          },
+          {
+            "id": "barbarian.cash.4",
+            "credits": 2000
+          },
+          {
+            "id": "barbarian.cash.5",
+            "credits": 3000
+          },
+          {
+            "id": "barbarian.cash.6",
+            "credits": 4000
+          },
+          {
+            "id": "barbarian.cash.7",
+            "credits": 5000
+          }
+        ]
+      }
+    },
+    {
+      "id": "rogue",
+      "name": "Rogue",
+      "reenlist": 5,
+      "enlistment": {
+        "target": 6,
+        "dms": [
+          {
+            "characteristic": "SOC",
+            "atMost": 8,
+            "dm": 1
+          },
+          {
+            "characteristic": "END",
+            "atLeast": 7,
+            "dm": 2
+          }
+        ]
+      },
+      "survival": {
+        "target": 6,
+        "dms": [
+          {
+            "characteristic": "INT",
+            "atLeast": 9,
+            "dm": 2
+          }
+        ]
+      },
+      "onEnlistment": {
+        "id": "rogue.entry",
+        "skill": "streetwise"
+      },
+      "ranks": [],
+      "skills": [
+        {
+          "id": "rogue.personal",
+          "name": "Personal Development",
+          "rows": [
+            {
+              "id": "rogue.personal.1",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "rogue.personal.2",
+              "characteristic": "DEX",
+              "change": 1
+            },
+            {
+              "id": "rogue.personal.3",
+              "characteristic": "END",
+              "change": 1
+            },
+            {
+              "id": "rogue.personal.4",
+              "characteristic": "INT",
+              "change": 1
+            },
+            {
+              "id": "rogue.personal.5",
+              "skill": "brawling"
+            },
+            {
+              "id": "rogue.personal.6",
+              "skill": "carousing"
+            }
+          ]
+        },
+        {
+          "id": "rogue.service",
+          "name": "Service Skills",
+          "rows": [
+            {
+              "id": "rogue.service.1",
+              "choose": "blade-combat"
+            },
+            {
+              "id": "rogue.service.2",
+              "choose": "gun-combat"
+            },
+            {
+              "id": "rogue.service.3",
+              "skill": "demolition"
+            },
+            {
+              "id": "rogue.service.4",
+              "choose": "vehicle"
+            },
+            {
+              "id": "rogue.service.5",
+              "characteristic": "EDU",
+              "change": 1
+            },
+            {
+              "id": "rogue.service.6",
+              "choose": "vehicle"
+            }
+          ]
+        },
+        {
+          "id": "rogue.education",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "rogue.education.1",
+              "skill": "streetwise"
+            },
+            {
+              "id": "rogue.education.2",
+              "skill": "forgery"
+            },
+            {
+              "id": "rogue.education.3",
+              "skill": "bribery"
+            },
+            {
+              "id": "rogue.education.4",
+              "skill": "carousing"
+            },
+            {
+              "id": "rogue.education.5",
+              "skill": "liaison"
+            },
+            {
+              "id": "rogue.education.6",
+              "skill": "ship-tactics"
+            }
+          ]
+        },
+        {
+          "id": "rogue.education8",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "rogue.education8.1",
+              "skill": "medical"
+            },
+            {
+              "id": "rogue.education8.2",
+              "skill": "bribery"
+            },
+            {
+              "id": "rogue.education8.3",
+              "skill": "forgery"
+            },
+            {
+              "id": "rogue.education8.4",
+              "skill": "computer"
+            },
+            {
+              "id": "rogue.education8.5",
+              "skill": "leader"
+            },
+            {
+              "id": "rogue.education8.6",
+              "skill": "jack-of-all-trades"
+            }
+          ],
+          "minEdu": 8
+        }
+      ],
+      "benefits": {
+        "id": "rogue.benefits",
+        "name": "Benefits",
+        "rows": [
+          {
+            "id": "rogue.benefits.1",
+            "item": "low-passage"
+          },
+          {
+            "id": "rogue.benefits.2",
+            "characteristic": "SOC",
+            "change": 1
+          },
+          {
+            "id": "rogue.benefits.3",
+            "choose": "gun-combat",
+            "weapon": true
+          },
+          {
+            "id": "rogue.benefits.4",
+            "choose": "blade-combat",
+            "weapon": true
+          },
+          {
+            "id": "rogue.benefits.5",
+            "item": "high-passage"
+          },
+          {
+            "id": "rogue.benefits.6",
+            "item": "travellers-aid-society"
+          },
+          {
+            "id": "rogue.7"
+          }
+        ]
+      },
+      "cash": {
+        "id": "rogue.cash",
+        "name": "Cash",
+        "rows": [
+          {
+            "id": "rogue.1"
+          },
+          {
+            "id": "rogue.2"
+          },
+          {
+            "id": "rogue.cash.3",
+            "credits": 10000
+          },
+          {
+            "id": "rogue.cash.4",
+            "credits": 10000
+          },
+          {
+            "id": "rogue.cash.5",
+            "credits": 50000
+          },
+          {
+            "id": "rogue.cash.6",
+            "credits": 100000
+          },
+          {
+            "id": "rogue.cash.7",
+            "credits": 100000
+          }
+        ]
+      }
+    },
+    {
+      "id": "noble",
+      "name": "Noble",
+      "reenlist": 4,
+      "needs": {
+        "characteristic": "SOC",
+        "atLeast": 10
+      },
+      "enlistment": {
+        "target": 2,
+        "dms": []
+      },
+      "survival": {
+        "target": 3,
+        "dms": []
+      },
+      "commission": {
+        "target": 5,
+        "dms": [
+          {
+            "characteristic": "EDU",
+            "atLeast": 9,
+            "dm": 1
+          }
+        ]
+      },
+      "promotion": {
+        "target": 12,
+        "dms": [
+          {
+            "characteristic": "INT",
+            "atLeast": 10,
+            "dm": 1
+          }
+        ]
+      },
+      "ranks": [
+        {
+          "level": 1,
+          "title": "B Knight"
+        },
+        {
+          "level": 2,
+          "title": "C Baron"
+        },
+        {
+          "level": 3,
+          "title": "D Marquis"
+        },
+        {
+          "level": 4,
+          "title": "E Count"
+        },
+        {
+          "level": 5,
+          "title": "F Duke"
+        }
+      ],
+      "skills": [
+        {
+          "id": "noble.personal",
+          "name": "Personal Development",
+          "rows": [
+            {
+              "id": "noble.personal.1",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "noble.personal.2",
+              "characteristic": "DEX",
+              "change": 1
+            },
+            {
+              "id": "noble.personal.3",
+              "characteristic": "END",
+              "change": 1
+            },
+            {
+              "id": "noble.personal.4",
+              "characteristic": "INT",
+              "change": 1
+            },
+            {
+              "id": "noble.personal.5",
+              "skill": "carousing"
+            },
+            {
+              "id": "noble.personal.6",
+              "skill": "brawling"
+            }
+          ]
+        },
+        {
+          "id": "noble.service",
+          "name": "Service Skills",
+          "rows": [
+            {
+              "id": "noble.service.1",
+              "choose": "gun-combat"
+            },
+            {
+              "id": "noble.service.2",
+              "choose": "blade-combat"
+            },
+            {
+              "id": "noble.service.3",
+              "skill": "hunting"
+            },
+            {
+              "id": "noble.service.4",
+              "choose": "vehicle"
+            },
+            {
+              "id": "noble.service.5",
+              "skill": "bribery"
+            },
+            {
+              "id": "noble.service.6",
+              "characteristic": "DEX",
+              "change": 1
+            }
+          ]
+        },
+        {
+          "id": "noble.education",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "noble.education.1",
+              "skill": "pilot"
+            },
+            {
+              "id": "noble.education.2",
+              "skill": "ships-boat"
+            },
+            {
+              "id": "noble.education.3",
+              "choose": "vehicle"
+            },
+            {
+              "id": "noble.education.4",
+              "skill": "navigation"
+            },
+            {
+              "id": "noble.education.5",
+              "skill": "engineering"
+            },
+            {
+              "id": "noble.education.6",
+              "skill": "leader"
+            }
+          ]
+        },
+        {
+          "id": "noble.education8",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "noble.education8.1",
+              "skill": "medical"
+            },
+            {
+              "id": "noble.education8.2",
+              "skill": "computer"
+            },
+            {
+              "id": "noble.education8.3",
+              "skill": "admin"
+            },
+            {
+              "id": "noble.education8.4",
+              "skill": "liaison"
+            },
+            {
+              "id": "noble.education8.5",
+              "skill": "leader"
+            },
+            {
+              "id": "noble.education8.6",
+              "skill": "jack-of-all-trades"
+            }
+          ],
+          "minEdu": 8
+        }
+      ],
+      "benefits": {
+        "id": "noble.benefits",
+        "name": "Benefits",
+        "rows": [
+          {
+            "id": "noble.benefits.1",
+            "item": "high-passage"
+          },
+          {
+            "id": "noble.benefits.2",
+            "item": "high-passage"
+          },
+          {
+            "id": "noble.benefits.3",
+            "choose": "gun-combat",
+            "weapon": true
+          },
+          {
+            "id": "noble.benefits.4",
+            "choose": "blade-combat",
+            "weapon": true
+          },
+          {
+            "id": "noble.benefits.5",
+            "item": "travellers-aid-society"
+          },
+          {
+            "id": "noble.benefits.6",
+            "ship": "Y",
+            "shipDebtFree": true
+          },
+          {
+            "id": "noble.7"
+          }
+        ]
+      },
+      "cash": {
+        "id": "noble.cash",
+        "name": "Cash",
+        "rows": [
+          {
+            "id": "noble.cash.1",
+            "credits": 10000
+          },
+          {
+            "id": "noble.cash.2",
+            "credits": 50000
+          },
+          {
+            "id": "noble.cash.3",
+            "credits": 50000
+          },
+          {
+            "id": "noble.cash.4",
+            "credits": 100000
+          },
+          {
+            "id": "noble.cash.5",
+            "credits": 100000
+          },
+          {
+            "id": "noble.cash.6",
+            "credits": 100000
+          },
+          {
+            "id": "noble.cash.7",
+            "credits": 200000
+          }
+        ]
+      }
+    },
+    {
+      "id": "scientist",
+      "name": "Scientist",
+      "reenlist": 5,
+      "enlistment": {
+        "target": 6,
+        "dms": [
+          {
+            "characteristic": "INT",
+            "atLeast": 9,
+            "dm": 1
+          },
+          {
+            "characteristic": "EDU",
+            "atLeast": 10,
+            "dm": 2
+          }
+        ]
+      },
+      "survival": {
+        "target": 5,
+        "dms": [
+          {
+            "characteristic": "EDU",
+            "atLeast": 9,
+            "dm": 2
+          }
+        ]
+      },
+      "onEnlistment": {
+        "id": "scientist.entry",
+        "skill": "computer"
+      },
+      "ranks": [],
+      "skills": [
+        {
+          "id": "scientist.personal",
+          "name": "Personal Development",
+          "rows": [
+            {
+              "id": "scientist.personal.1",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "scientist.personal.2",
+              "characteristic": "DEX",
+              "change": 1
+            },
+            {
+              "id": "scientist.personal.3",
+              "characteristic": "END",
+              "change": 1
+            },
+            {
+              "id": "scientist.personal.4",
+              "characteristic": "INT",
+              "change": 1
+            },
+            {
+              "id": "scientist.personal.5",
+              "characteristic": "EDU",
+              "change": 1
+            },
+            {
+              "id": "scientist.personal.6",
+              "skill": "carousing"
+            }
+          ]
+        },
+        {
+          "id": "scientist.service",
+          "name": "Service Skills",
+          "rows": [
+            {
+              "id": "scientist.service.1",
+              "choose": "gun-combat"
+            },
+            {
+              "id": "scientist.service.2",
+              "choose": "blade-combat"
+            },
+            {
+              "id": "scientist.service.3",
+              "choose": "vehicle"
+            },
+            {
+              "id": "scientist.service.4",
+              "skill": "jack-of-all-trades"
+            },
+            {
+              "id": "scientist.service.5",
+              "skill": "navigation"
+            },
+            {
+              "id": "scientist.service.6",
+              "skill": "survival"
+            }
+          ]
+        },
+        {
+          "id": "scientist.education",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "scientist.education.1",
+              "skill": "mechanical"
+            },
+            {
+              "id": "scientist.education.2",
+              "skill": "electronics"
+            },
+            {
+              "id": "scientist.education.3",
+              "skill": "gravitics"
+            },
+            {
+              "id": "scientist.education.4",
+              "skill": "computer"
+            },
+            {
+              "id": "scientist.education.5",
+              "characteristic": "INT",
+              "change": 1
+            },
+            {
+              "id": "scientist.education.6",
+              "characteristic": "EDU",
+              "change": 1
+            }
+          ]
+        },
+        {
+          "id": "scientist.education8",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "scientist.education8.1",
+              "skill": "medical"
+            },
+            {
+              "id": "scientist.education8.2",
+              "skill": "computer"
+            },
+            {
+              "id": "scientist.education8.3",
+              "skill": "admin"
+            },
+            {
+              "id": "scientist.education8.4",
+              "skill": "leader"
+            },
+            {
+              "id": "scientist.education8.5",
+              "characteristic": "INT",
+              "change": 1
+            },
+            {
+              "id": "scientist.education8.6",
+              "skill": "jack-of-all-trades"
+            }
+          ],
+          "minEdu": 8
+        }
+      ],
+      "benefits": {
+        "id": "scientist.benefits",
+        "name": "Benefits",
+        "rows": [
+          {
+            "id": "scientist.benefits.1",
+            "item": "low-passage"
+          },
+          {
+            "id": "scientist.benefits.2",
+            "item": "middle-passage"
+          },
+          {
+            "id": "scientist.benefits.3",
+            "item": "high-passage"
+          },
+          {
+            "id": "scientist.benefits.4",
+            "characteristic": "SOC",
+            "change": 1
+          },
+          {
+            "id": "scientist.benefits.5",
+            "choose": "gun-combat",
+            "weapon": true
+          },
+          {
+            "id": "scientist.benefits.6",
+            "ship": "L",
+            "shipDebtFree": true
+          },
+          {
+            "id": "scientist.7"
+          }
+        ]
+      },
+      "cash": {
+        "id": "scientist.cash",
+        "name": "Cash",
+        "rows": [
+          {
+            "id": "scientist.cash.1",
+            "credits": 1000
+          },
+          {
+            "id": "scientist.cash.2",
+            "credits": 2000
+          },
+          {
+            "id": "scientist.cash.3",
+            "credits": 5000
+          },
+          {
+            "id": "scientist.cash.4",
+            "credits": 10000
+          },
+          {
+            "id": "scientist.cash.5",
+            "credits": 20000
+          },
+          {
+            "id": "scientist.cash.6",
+            "credits": 30000
+          },
+          {
+            "id": "scientist.cash.7",
+            "credits": 40000
+          }
+        ]
+      }
+    },
+    {
+      "id": "hunter",
+      "name": "Hunter",
+      "reenlist": 5,
+      "enlistment": {
+        "target": 9,
+        "dms": [
+          {
+            "characteristic": "DEX",
+            "atLeast": 10,
+            "dm": 1
+          },
+          {
+            "characteristic": "END",
+            "atLeast": 9,
+            "dm": 2
+          }
+        ]
+      },
+      "survival": {
+        "target": 6,
+        "dms": [
+          {
+            "characteristic": "STR",
+            "atLeast": 10,
+            "dm": 2
+          }
+        ]
+      },
+      "onEnlistment": {
+        "id": "hunter.entry",
+        "skill": "hunting"
+      },
+      "ranks": [],
+      "skills": [
+        {
+          "id": "hunter.personal",
+          "name": "Personal Development",
+          "rows": [
+            {
+              "id": "hunter.personal.1",
+              "characteristic": "STR",
+              "change": 1
+            },
+            {
+              "id": "hunter.personal.2",
+              "characteristic": "DEX",
+              "change": 1
+            },
+            {
+              "id": "hunter.personal.3",
+              "characteristic": "END",
+              "change": 1
+            },
+            {
+              "id": "hunter.personal.4",
+              "characteristic": "INT",
+              "change": 1
+            },
+            {
+              "id": "hunter.personal.5",
+              "choose": "gun-combat"
+            },
+            {
+              "id": "hunter.personal.6",
+              "choose": "blade-combat"
+            }
+          ]
+        },
+        {
+          "id": "hunter.service",
+          "name": "Service Skills",
+          "rows": [
+            {
+              "id": "hunter.service.1",
+              "choose": "gun-combat"
+            },
+            {
+              "id": "hunter.service.2",
+              "choose": "blade-combat"
+            },
+            {
+              "id": "hunter.service.3",
+              "skill": "survival"
+            },
+            {
+              "id": "hunter.service.4",
+              "skill": "hunting"
+            },
+            {
+              "id": "hunter.service.5",
+              "choose": "vehicle"
+            },
+            {
+              "id": "hunter.service.6",
+              "skill": "hunting"
+            }
+          ]
+        },
+        {
+          "id": "hunter.education",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "hunter.education.1",
+              "skill": "mechanical"
+            },
+            {
+              "id": "hunter.education.2",
+              "skill": "electronics"
+            },
+            {
+              "id": "hunter.education.3",
+              "skill": "gravitics"
+            },
+            {
+              "id": "hunter.education.4",
+              "skill": "computer"
+            },
+            {
+              "id": "hunter.education.5",
+              "skill": "hunting"
+            },
+            {
+              "id": "hunter.education.6",
+              "skill": "admin"
+            }
+          ]
+        },
+        {
+          "id": "hunter.education8",
+          "name": "Advanced Education",
+          "rows": [
+            {
+              "id": "hunter.education8.1",
+              "skill": "medical"
+            },
+            {
+              "id": "hunter.education8.2",
+              "skill": "computer"
+            },
+            {
+              "id": "hunter.education8.3",
+              "skill": "hunting"
+            },
+            {
+              "id": "hunter.education8.4",
+              "skill": "leader"
+            },
+            {
+              "id": "hunter.education8.5",
+              "skill": "survival"
+            },
+            {
+              "id": "hunter.education8.6",
+              "skill": "admin"
+            }
+          ],
+          "minEdu": 8
+        }
+      ],
+      "benefits": {
+        "id": "hunter.benefits",
+        "name": "Benefits",
+        "rows": [
+          {
+            "id": "hunter.benefits.1",
+            "item": "low-passage"
+          },
+          {
+            "id": "hunter.benefits.2",
+            "item": "high-passage"
+          },
+          {
+            "id": "hunter.benefits.3",
+            "choose": "weapon",
+            "weapon": true
+          },
+          {
+            "id": "hunter.benefits.4",
+            "choose": "weapon",
+            "weapon": true
+          },
+          {
+            "id": "hunter.benefits.5",
+            "choose": "weapon",
+            "weapon": true
+          },
+          {
+            "id": "hunter.benefits.6",
+            "ship": "K",
+            "shipDebtFree": true
+          },
+          {
+            "id": "hunter.7"
+          }
+        ]
+      },
+      "cash": {
+        "id": "hunter.cash",
+        "name": "Cash",
+        "rows": [
+          {
+            "id": "hunter.cash.1",
+            "credits": 1000
+          },
+          {
+            "id": "hunter.cash.2",
+            "credits": 1000
+          },
+          {
+            "id": "hunter.cash.3",
+            "credits": 5000
+          },
+          {
+            "id": "hunter.cash.4",
+            "credits": 5000
+          },
+          {
+            "id": "hunter.cash.5",
+            "credits": 10000
+          },
+          {
+            "id": "hunter.cash.6",
+            "credits": 100000
+          },
+          {
+            "id": "hunter.cash.7",
+            "credits": 100000
+          }
+        ]
+      }
     }
   ],
   "cascades": [
@@ -2208,6 +4731,37 @@
         "submachinegun",
         "laser-carbine",
         "laser-rifle"
+      ]
+    },
+    {
+      "id": "bow-combat",
+      "name": "Bow Combat",
+      "options": [
+        "sling",
+        "short-bow",
+        "long-bow",
+        "sporting-crossbow",
+        "military-crossbow",
+        "repeating-crossbow"
+      ]
+    },
+    {
+      "id": "air-craft",
+      "name": "Air Craft",
+      "options": [
+        "prop-fixed-wing",
+        "jet-fixed-wing",
+        "helicopter"
+      ]
+    },
+    {
+      "id": "water-craft",
+      "name": "Water Craft",
+      "options": [
+        "large-watercraft",
+        "small-watercraft",
+        "hovercraft",
+        "submersible"
       ]
     }
   ],

@@ -1,91 +1,1081 @@
 {
   "designs": [
-    { "id": "S", "code": "S", "name": "Scout/Courier", "computer": "model-1bis", "hull": 100, "jump": 2, "maneuver": 2, "fuel": 40, "staterooms": 4, "lowBerths": 0, "hardpoints": 1, "cargo": 3, "crew": "1 (Pilot/Engineer)", "basePrice": 29430000, "months": 9, "streamlined": true, "turrets": [{ "type": "double", "weapons": [] }] },
-    { "id": "A", "code": "A", "name": "Free Trader", "computer": "model-1", "hull": 200, "jump": 1, "maneuver": 1, "fuel": 30, "staterooms": 10, "lowBerths": 20, "hardpoints": 2, "cargo": 82, "crew": "4 (Pilot, Engineer, Medic, Steward)", "basePrice": 37080000, "months": 11, "streamlined": true },
-    { "id": "R", "code": "R", "name": "Subsidized Merchant", "computer": "model-1", "hull": 400, "jump": 1, "maneuver": 1, "fuel": 50, "staterooms": 13, "lowBerths": 9, "hardpoints": 2, "cargo": 200, "crew": "5 (+ Pilot für Launch)", "basePrice": 101030000, "months": 14, "craft": ["launch"], "streamlined": true },
-    { "id": "M", "code": "M", "name": "Subsidized Liner", "computer": "model-3", "hull": 600, "jump": 3, "maneuver": 1, "fuel": 210, "staterooms": 30, "lowBerths": 20, "hardpoints": 3, "cargo": 129, "crew": "9", "basePrice": 236970000, "months": 22, "craft": ["launch"], "streamlined": false },
-    { "id": "Y", "code": "Y", "name": "Yacht", "computer": "model-1", "hull": 200, "jump": 1, "maneuver": 1, "fuel": 50, "staterooms": 14, "lowBerths": 0, "hardpoints": 1, "cargo": 11, "crew": "4 (Pilot, Engineer, Medic, Steward)", "basePrice": 51060000, "months": 11, "craft": ["boat"], "streamlined": true },
-    { "id": "C", "code": "C", "name": "Mercenary Cruiser", "computer": "model-5", "hull": 800, "jump": 3, "maneuver": 3, "fuel": 318, "staterooms": 25, "lowBerths": 0, "hardpoints": 8, "cargo": 80, "crew": "8", "basePrice": 445950000, "months": 25, "craft": ["cutter", "cutter"], "streamlined": false, "turrets": [{ "type": "triple", "weapons": [] }, { "type": "triple", "weapons": [] }, { "type": "triple", "weapons": [] }, { "type": "triple", "weapons": [] }, { "type": "triple", "weapons": [] }, { "type": "triple", "weapons": [] }, { "type": "triple", "weapons": [] }, { "type": "triple", "weapons": [] }] },
-    { "id": "T", "code": "T", "name": "Patrol Cruiser", "computer": "model-3", "hull": 400, "jump": 3, "maneuver": 4, "fuel": 160, "staterooms": 12, "lowBerths": 4, "hardpoints": 4, "cargo": 50, "crew": "10", "basePrice": 221040000, "months": 16, "streamlined": true, "turrets": [{ "type": "triple", "weapons": ["beam-laser", "beam-laser", "missile-rack"] }, { "type": "triple", "weapons": ["beam-laser", "beam-laser", "missile-rack"] }] },
-    { "id": "L", "code": "L", "name": "Laboratory Ship", "computer": "model-2", "hull": 400, "jump": 2, "maneuver": 1, "fuel": 90, "staterooms": 20, "lowBerths": 0, "hardpoints": 2, "cargo": 23, "crew": "5", "basePrice": 158980000, "months": 14, "craft": ["pinnace"], "streamlined": false },
-    { "id": "K", "code": "K", "name": "Safari Ship", "computer": "model-1bis", "hull": 200, "jump": 2, "maneuver": 1, "fuel": 60, "staterooms": 11, "lowBerths": 0, "hardpoints": 1, "cargo": 6, "crew": "5", "basePrice": 81080000, "months": 11, "craft": ["launch"], "streamlined": true, "turrets": [{ "type": "double", "weapons": [] }] },
-    { "id": "P", "code": "P", "name": "Corsair", "computer": "model-2", "hull": 400, "jump": 2, "maneuver": 3, "fuel": 120, "staterooms": 10, "lowBerths": 20, "hardpoints": 3, "cargo": 160, "crew": "5", "basePrice": 180000000, "months": 14, "streamlined": false, "turrets": [{ "type": "triple", "weapons": ["beam-laser"] }, { "type": "triple", "weapons": ["beam-laser"] }, { "type": "triple", "weapons": ["beam-laser"] }] },
-    { "id": "launch", "code": "launch", "kind": "smallCraft", "name": "Launch", "hull": 20, "jump": 0, "maneuver": 1, "fuel": 1, "staterooms": 0, "lowBerths": 0, "hardpoints": 0, "cargo": 13, "crew": "Pilot + Rider", "basePrice": 14000000, "streamlined": true, "lasers": 0 },
-    { "id": "boat", "code": "boat", "kind": "smallCraft", "name": "Ship's Boat", "hull": 30, "jump": 0, "maneuver": 6, "fuel": 1.8, "staterooms": 0, "lowBerths": 0, "hardpoints": 0, "cargo": 13.7, "crew": "Pilot + Rider", "basePrice": 16000000, "streamlined": true, "lasers": 1, "turrets": [{ "type": "weaponry", "weapons": ["beam-laser"] }] },
-    { "id": "slow-boat", "code": "slow-boat", "kind": "smallCraft", "name": "Slow Boat", "hull": 30, "jump": 0, "maneuver": 3, "fuel": 1, "staterooms": 0, "lowBerths": 0, "hardpoints": 0, "cargo": 19.9, "crew": "Pilot + Rider", "basePrice": 15000000, "streamlined": true, "lasers": 1, "turrets": [{ "type": "weaponry", "weapons": ["beam-laser"] }] },
-    { "id": "pinnace", "code": "pinnace", "kind": "smallCraft", "name": "Pinnace", "hull": 40, "jump": 0, "maneuver": 5, "fuel": 2, "staterooms": 0, "lowBerths": 0, "hardpoints": 0, "cargo": 22.4, "crew": "Pilot + Rider", "basePrice": 20000000, "streamlined": true, "lasers": 2, "turrets": [{ "type": "weaponry", "weapons": ["beam-laser", "beam-laser"] }] },
-    { "id": "slow-pinnace", "code": "slow-pinnace", "kind": "smallCraft", "name": "Slow Pinnace", "hull": 40, "jump": 0, "maneuver": 2, "fuel": 1, "staterooms": 0, "lowBerths": 0, "hardpoints": 0, "cargo": 31.6, "crew": "Pilot + Rider", "basePrice": 18000000, "streamlined": true, "lasers": 1, "turrets": [{ "type": "weaponry", "weapons": ["beam-laser"] }] },
-    { "id": "cutter", "code": "cutter", "kind": "smallCraft", "name": "Modular Cutter", "hull": 50, "jump": 0, "maneuver": 4, "fuel": 2, "staterooms": 0, "lowBerths": 0, "hardpoints": 0, "cargo": 2.5, "crew": "Pilot + Rider", "basePrice": 28000000, "streamlined": true, "lasers": 2, "turrets": [{ "type": "weaponry", "weapons": ["beam-laser", "beam-laser"] }] },
-    { "id": "shuttle", "code": "shuttle", "kind": "smallCraft", "name": "Shuttle", "hull": 95, "jump": 0, "maneuver": 3, "fuel": 2.85, "staterooms": 0, "lowBerths": 0, "hardpoints": 0, "cargo": 71, "crew": "Pilot + Rider", "basePrice": 33000000, "streamlined": true, "lasers": 2, "turrets": [{ "type": "weaponry", "weapons": ["beam-laser", "beam-laser"] }] },
-    { "id": "fighter", "code": "fighter", "kind": "smallCraft", "name": "Fighter", "hull": 10, "jump": 0, "maneuver": 6, "fuel": 1, "staterooms": 0, "lowBerths": 0, "hardpoints": 0, "cargo": 1, "crew": "Pilot", "basePrice": 18000000, "streamlined": true, "lasers": 1, "turrets": [{ "type": "weaponry", "weapons": ["beam-laser"] }] }
+    {
+      "id": "S",
+      "code": "S",
+      "name": "Scout/Courier",
+      "computer": "model-1bis",
+      "hull": 100,
+      "jump": 2,
+      "maneuver": 2,
+      "fuel": 40,
+      "staterooms": 4,
+      "lowBerths": 0,
+      "hardpoints": 1,
+      "cargo": 3,
+      "crew": "1 (Pilot/Engineer)",
+      "basePrice": 29430000,
+      "months": 9,
+      "streamlined": true,
+      "turrets": [
+        {
+          "type": "double",
+          "weapons": []
+        }
+      ]
+    },
+    {
+      "id": "A",
+      "code": "A",
+      "name": "Free Trader",
+      "computer": "model-1",
+      "hull": 200,
+      "jump": 1,
+      "maneuver": 1,
+      "fuel": 30,
+      "staterooms": 10,
+      "lowBerths": 20,
+      "hardpoints": 2,
+      "cargo": 82,
+      "crew": "4 (Pilot, Engineer, Medic, Steward)",
+      "basePrice": 37080000,
+      "months": 11,
+      "streamlined": true
+    },
+    {
+      "id": "R",
+      "code": "R",
+      "name": "Subsidized Merchant",
+      "computer": "model-1",
+      "hull": 400,
+      "jump": 1,
+      "maneuver": 1,
+      "fuel": 50,
+      "staterooms": 13,
+      "lowBerths": 9,
+      "hardpoints": 2,
+      "cargo": 200,
+      "crew": "5 (+ Pilot für Launch)",
+      "basePrice": 101030000,
+      "months": 14,
+      "craft": [
+        "launch"
+      ],
+      "streamlined": true
+    },
+    {
+      "id": "M",
+      "code": "M",
+      "name": "Subsidized Liner",
+      "computer": "model-3",
+      "hull": 600,
+      "jump": 3,
+      "maneuver": 1,
+      "fuel": 210,
+      "staterooms": 30,
+      "lowBerths": 20,
+      "hardpoints": 3,
+      "cargo": 129,
+      "crew": "9",
+      "basePrice": 236970000,
+      "months": 22,
+      "craft": [
+        "launch"
+      ],
+      "streamlined": false
+    },
+    {
+      "id": "Y",
+      "code": "Y",
+      "name": "Yacht",
+      "computer": "model-1",
+      "hull": 200,
+      "jump": 1,
+      "maneuver": 1,
+      "fuel": 50,
+      "staterooms": 14,
+      "lowBerths": 0,
+      "hardpoints": 1,
+      "cargo": 11,
+      "crew": "4 (Pilot, Engineer, Medic, Steward)",
+      "basePrice": 51060000,
+      "months": 11,
+      "craft": [
+        "boat"
+      ],
+      "streamlined": true
+    },
+    {
+      "id": "C",
+      "code": "C",
+      "name": "Mercenary Cruiser",
+      "computer": "model-5",
+      "hull": 800,
+      "jump": 3,
+      "maneuver": 3,
+      "fuel": 318,
+      "staterooms": 25,
+      "lowBerths": 0,
+      "hardpoints": 8,
+      "cargo": 80,
+      "crew": "8",
+      "basePrice": 445950000,
+      "months": 25,
+      "craft": [
+        "cutter",
+        "cutter"
+      ],
+      "streamlined": false,
+      "turrets": [
+        {
+          "type": "triple",
+          "weapons": []
+        },
+        {
+          "type": "triple",
+          "weapons": []
+        },
+        {
+          "type": "triple",
+          "weapons": []
+        },
+        {
+          "type": "triple",
+          "weapons": []
+        },
+        {
+          "type": "triple",
+          "weapons": []
+        },
+        {
+          "type": "triple",
+          "weapons": []
+        },
+        {
+          "type": "triple",
+          "weapons": []
+        },
+        {
+          "type": "triple",
+          "weapons": []
+        }
+      ]
+    },
+    {
+      "id": "T",
+      "code": "T",
+      "name": "Patrol Cruiser",
+      "computer": "model-3",
+      "hull": 400,
+      "jump": 3,
+      "maneuver": 4,
+      "fuel": 160,
+      "staterooms": 12,
+      "lowBerths": 4,
+      "hardpoints": 4,
+      "cargo": 50,
+      "crew": "10",
+      "basePrice": 221040000,
+      "months": 16,
+      "streamlined": true,
+      "turrets": [
+        {
+          "type": "triple",
+          "weapons": [
+            "beam-laser",
+            "beam-laser",
+            "missile-rack"
+          ]
+        },
+        {
+          "type": "triple",
+          "weapons": [
+            "beam-laser",
+            "beam-laser",
+            "missile-rack"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L",
+      "code": "L",
+      "name": "Laboratory Ship",
+      "computer": "model-2",
+      "hull": 400,
+      "jump": 2,
+      "maneuver": 1,
+      "fuel": 90,
+      "staterooms": 20,
+      "lowBerths": 0,
+      "hardpoints": 2,
+      "cargo": 23,
+      "crew": "5",
+      "basePrice": 158980000,
+      "months": 14,
+      "craft": [
+        "pinnace"
+      ],
+      "streamlined": false
+    },
+    {
+      "id": "K",
+      "code": "K",
+      "name": "Safari Ship",
+      "computer": "model-1bis",
+      "hull": 200,
+      "jump": 2,
+      "maneuver": 1,
+      "fuel": 60,
+      "staterooms": 11,
+      "lowBerths": 0,
+      "hardpoints": 1,
+      "cargo": 6,
+      "crew": "5",
+      "basePrice": 81080000,
+      "months": 11,
+      "craft": [
+        "launch"
+      ],
+      "streamlined": true,
+      "turrets": [
+        {
+          "type": "double",
+          "weapons": []
+        }
+      ]
+    },
+    {
+      "id": "P",
+      "code": "P",
+      "name": "Corsair",
+      "computer": "model-2",
+      "hull": 400,
+      "jump": 2,
+      "maneuver": 3,
+      "fuel": 120,
+      "staterooms": 10,
+      "lowBerths": 20,
+      "hardpoints": 3,
+      "cargo": 160,
+      "crew": "5",
+      "basePrice": 180000000,
+      "months": 14,
+      "streamlined": false,
+      "turrets": [
+        {
+          "type": "triple",
+          "weapons": [
+            "beam-laser"
+          ]
+        },
+        {
+          "type": "triple",
+          "weapons": [
+            "beam-laser"
+          ]
+        },
+        {
+          "type": "triple",
+          "weapons": [
+            "beam-laser"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "launch",
+      "code": "launch",
+      "kind": "smallCraft",
+      "name": "Launch",
+      "hull": 20,
+      "jump": 0,
+      "maneuver": 1,
+      "fuel": 1,
+      "staterooms": 0,
+      "lowBerths": 0,
+      "hardpoints": 0,
+      "cargo": 13,
+      "crew": "Pilot + Rider",
+      "basePrice": 14000000,
+      "streamlined": true,
+      "lasers": 0
+    },
+    {
+      "id": "boat",
+      "code": "boat",
+      "kind": "smallCraft",
+      "name": "Ship's Boat",
+      "hull": 30,
+      "jump": 0,
+      "maneuver": 6,
+      "fuel": 1.8,
+      "staterooms": 0,
+      "lowBerths": 0,
+      "hardpoints": 0,
+      "cargo": 13.7,
+      "crew": "Pilot + Rider",
+      "basePrice": 16000000,
+      "streamlined": true,
+      "lasers": 1,
+      "turrets": [
+        {
+          "type": "weaponry",
+          "weapons": [
+            "beam-laser"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "slow-boat",
+      "code": "slow-boat",
+      "kind": "smallCraft",
+      "name": "Slow Boat",
+      "hull": 30,
+      "jump": 0,
+      "maneuver": 3,
+      "fuel": 1,
+      "staterooms": 0,
+      "lowBerths": 0,
+      "hardpoints": 0,
+      "cargo": 19.9,
+      "crew": "Pilot + Rider",
+      "basePrice": 15000000,
+      "streamlined": true,
+      "lasers": 1,
+      "turrets": [
+        {
+          "type": "weaponry",
+          "weapons": [
+            "beam-laser"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pinnace",
+      "code": "pinnace",
+      "kind": "smallCraft",
+      "name": "Pinnace",
+      "hull": 40,
+      "jump": 0,
+      "maneuver": 5,
+      "fuel": 2,
+      "staterooms": 0,
+      "lowBerths": 0,
+      "hardpoints": 0,
+      "cargo": 22.4,
+      "crew": "Pilot + Rider",
+      "basePrice": 20000000,
+      "streamlined": true,
+      "lasers": 2,
+      "turrets": [
+        {
+          "type": "weaponry",
+          "weapons": [
+            "beam-laser",
+            "beam-laser"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "slow-pinnace",
+      "code": "slow-pinnace",
+      "kind": "smallCraft",
+      "name": "Slow Pinnace",
+      "hull": 40,
+      "jump": 0,
+      "maneuver": 2,
+      "fuel": 1,
+      "staterooms": 0,
+      "lowBerths": 0,
+      "hardpoints": 0,
+      "cargo": 31.6,
+      "crew": "Pilot + Rider",
+      "basePrice": 18000000,
+      "streamlined": true,
+      "lasers": 1,
+      "turrets": [
+        {
+          "type": "weaponry",
+          "weapons": [
+            "beam-laser"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cutter",
+      "code": "cutter",
+      "kind": "smallCraft",
+      "name": "Modular Cutter",
+      "hull": 50,
+      "jump": 0,
+      "maneuver": 4,
+      "fuel": 2,
+      "staterooms": 0,
+      "lowBerths": 0,
+      "hardpoints": 0,
+      "cargo": 2.5,
+      "crew": "Pilot + Rider",
+      "basePrice": 28000000,
+      "streamlined": true,
+      "lasers": 2,
+      "turrets": [
+        {
+          "type": "weaponry",
+          "weapons": [
+            "beam-laser",
+            "beam-laser"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shuttle",
+      "code": "shuttle",
+      "kind": "smallCraft",
+      "name": "Shuttle",
+      "hull": 95,
+      "jump": 0,
+      "maneuver": 3,
+      "fuel": 2.85,
+      "staterooms": 0,
+      "lowBerths": 0,
+      "hardpoints": 0,
+      "cargo": 71,
+      "crew": "Pilot + Rider",
+      "basePrice": 33000000,
+      "streamlined": true,
+      "lasers": 2,
+      "turrets": [
+        {
+          "type": "weaponry",
+          "weapons": [
+            "beam-laser",
+            "beam-laser"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fighter",
+      "code": "fighter",
+      "kind": "smallCraft",
+      "name": "Fighter",
+      "hull": 10,
+      "jump": 0,
+      "maneuver": 6,
+      "fuel": 1,
+      "staterooms": 0,
+      "lowBerths": 0,
+      "hardpoints": 0,
+      "cargo": 1,
+      "crew": "Pilot",
+      "basePrice": 18000000,
+      "streamlined": true,
+      "lasers": 1,
+      "turrets": [
+        {
+          "type": "weaponry",
+          "weapons": [
+            "beam-laser"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "J",
+      "code": "J",
+      "name": "Seeker",
+      "computer": "model-1bis",
+      "hull": 100,
+      "jump": 2,
+      "maneuver": 1,
+      "fuel": 40,
+      "staterooms": 4,
+      "lowBerths": 0,
+      "hardpoints": 1,
+      "cargo": 20,
+      "crew": "1 (Pilot/Engineer)",
+      "basePrice": 20000000,
+      "months": 9,
+      "streamlined": true,
+      "turrets": [
+        {
+          "type": "single",
+          "weapons": [
+            "pulse-laser"
+          ]
+        }
+      ]
+    }
   ],
   "starshipEncounters": {
-    "A": [null, null, null, null, "S", "A", "R", "M*", "Y", "T", "R*", "M*", "C*", "T*"],
-    "B": [null, null, null, null, "A", "S", "A", "R*", "M", "R", "C*", "Y*", "T*", "C*"],
-    "C": [null, null, null, null, null, "R", "A", "R*", "TP", "T", "Y", "A", "S*", "Y*"],
-    "D": [null, null, null, null, "L", "K", "S", "SP", "A", "R", "M", "Y", "TP", null],
-    "E": [null, null, "K", null, null, null, null, "S", "A", "TP", "CP", null, null, null],
-    "X": [null, null, null, "L", null, null, null, "T", "TP", "CP", "C", null, null, null]
+    "A": [
+      null,
+      null,
+      null,
+      null,
+      "S",
+      "A",
+      "R",
+      "M*",
+      "Y",
+      "T",
+      "R*",
+      "M*",
+      "C*",
+      "T*"
+    ],
+    "B": [
+      null,
+      null,
+      null,
+      null,
+      "A",
+      "S",
+      "A",
+      "R*",
+      "M",
+      "R",
+      "C*",
+      "Y*",
+      "T*",
+      "C*"
+    ],
+    "C": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      "R",
+      "A",
+      "R*",
+      "TP",
+      "T",
+      "Y",
+      "A",
+      "S*",
+      "Y*"
+    ],
+    "D": [
+      null,
+      null,
+      null,
+      null,
+      "L",
+      "K",
+      "S",
+      "SP",
+      "A",
+      "R",
+      "M",
+      "Y",
+      "TP",
+      null
+    ],
+    "E": [
+      null,
+      null,
+      "K",
+      null,
+      null,
+      null,
+      null,
+      "S",
+      "A",
+      "TP",
+      "CP",
+      null,
+      null,
+      null
+    ],
+    "X": [
+      null,
+      null,
+      null,
+      "L",
+      null,
+      null,
+      null,
+      "T",
+      "TP",
+      "CP",
+      "C",
+      null,
+      null,
+      null
+    ]
   },
   "turretTypes": [
-    { "id": "single", "name": "Single Turret", "slots": 1, "price": 200000 },
-    { "id": "double", "name": "Double Turret", "slots": 2, "price": 500000 },
-    { "id": "triple", "name": "Triple Turret", "slots": 3, "price": 1000000 },
-    { "id": "weaponry", "name": "Small Craft Weaponry", "slots": 3, "price": 0, "smallCraft": true }
+    {
+      "id": "single",
+      "name": "Single Turret",
+      "slots": 1,
+      "price": 200000
+    },
+    {
+      "id": "double",
+      "name": "Double Turret",
+      "slots": 2,
+      "price": 500000
+    },
+    {
+      "id": "triple",
+      "name": "Triple Turret",
+      "slots": 3,
+      "price": 1000000
+    },
+    {
+      "id": "weaponry",
+      "name": "Small Craft Weaponry",
+      "slots": 3,
+      "price": 0,
+      "smallCraft": true
+    }
   ],
   "shipWeapons": [
-    { "id": "pulse-laser", "name": "Pulse Laser", "price": 500000 },
-    { "id": "beam-laser", "name": "Beam Laser", "price": 1000000 },
-    { "id": "missile-rack", "name": "Missile Rack", "price": 750000 },
-    { "id": "sandcaster", "name": "Sandcaster", "price": 250000 }
+    {
+      "id": "pulse-laser",
+      "name": "Pulse Laser",
+      "price": 500000
+    },
+    {
+      "id": "beam-laser",
+      "name": "Beam Laser",
+      "price": 1000000
+    },
+    {
+      "id": "missile-rack",
+      "name": "Missile Rack",
+      "price": 750000
+    },
+    {
+      "id": "sandcaster",
+      "name": "Sandcaster",
+      "price": 250000
+    }
   ],
   "computers": [
-    { "id": "model-1", "name": "Modell/1", "jump": 1, "price": 2000000, "tons": 1, "cpu": 2, "storage": 4, "tl": 5 },
-    { "id": "model-1bis", "name": "Modell/1bis", "jump": 2, "price": 4000000, "tons": 1, "cpu": 4, "storage": 0, "tl": 6 },
-    { "id": "model-2", "name": "Modell/2", "jump": 2, "price": 9000000, "tons": 2, "cpu": 3, "storage": 6, "tl": 7 },
-    { "id": "model-2bis", "name": "Modell/2bis", "jump": 3, "price": 18000000, "tons": 2, "cpu": 6, "storage": 0, "tl": 8 },
-    { "id": "model-3", "name": "Modell/3", "jump": 3, "price": 18000000, "tons": 3, "cpu": 5, "storage": 9, "tl": 9 },
-    { "id": "model-4", "name": "Modell/4", "jump": 4, "price": 30000000, "tons": 4, "cpu": 8, "storage": 15, "tl": 10 },
-    { "id": "model-5", "name": "Modell/5", "jump": 5, "price": 45000000, "tons": 5, "cpu": 12, "storage": 25, "tl": 11 },
-    { "id": "model-6", "name": "Modell/6", "jump": 6, "price": 55000000, "tons": 7, "cpu": 15, "storage": 35, "tl": 12 },
-    { "id": "model-7", "name": "Modell/7", "jump": 7, "price": 80000000, "tons": 9, "cpu": 20, "storage": 50, "tl": 13 }
+    {
+      "id": "model-1",
+      "name": "Modell/1",
+      "jump": 1,
+      "price": 2000000,
+      "tons": 1,
+      "cpu": 2,
+      "storage": 4,
+      "tl": 5
+    },
+    {
+      "id": "model-1bis",
+      "name": "Modell/1bis",
+      "jump": 2,
+      "price": 4000000,
+      "tons": 1,
+      "cpu": 4,
+      "storage": 0,
+      "tl": 6
+    },
+    {
+      "id": "model-2",
+      "name": "Modell/2",
+      "jump": 2,
+      "price": 9000000,
+      "tons": 2,
+      "cpu": 3,
+      "storage": 6,
+      "tl": 7
+    },
+    {
+      "id": "model-2bis",
+      "name": "Modell/2bis",
+      "jump": 3,
+      "price": 18000000,
+      "tons": 2,
+      "cpu": 6,
+      "storage": 0,
+      "tl": 8
+    },
+    {
+      "id": "model-3",
+      "name": "Modell/3",
+      "jump": 3,
+      "price": 18000000,
+      "tons": 3,
+      "cpu": 5,
+      "storage": 9,
+      "tl": 9
+    },
+    {
+      "id": "model-4",
+      "name": "Modell/4",
+      "jump": 4,
+      "price": 30000000,
+      "tons": 4,
+      "cpu": 8,
+      "storage": 15,
+      "tl": 10
+    },
+    {
+      "id": "model-5",
+      "name": "Modell/5",
+      "jump": 5,
+      "price": 45000000,
+      "tons": 5,
+      "cpu": 12,
+      "storage": 25,
+      "tl": 11
+    },
+    {
+      "id": "model-6",
+      "name": "Modell/6",
+      "jump": 6,
+      "price": 55000000,
+      "tons": 7,
+      "cpu": 15,
+      "storage": 35,
+      "tl": 12
+    },
+    {
+      "id": "model-7",
+      "name": "Modell/7",
+      "jump": 7,
+      "price": 80000000,
+      "tons": 9,
+      "cpu": 20,
+      "storage": 50,
+      "tl": 13
+    }
   ],
   "software": [
-    { "id": "predict-1", "name": "Predict-1", "kind": "offensive", "space": 1, "price": 2000000, "effect": "DM +1 auf den Trefferwurf", "writeSkills": "1, Navig-1" },
-    { "id": "predict-2", "name": "Predict-2", "kind": "offensive", "space": 2, "price": 4000000, "effect": "DM +2 auf den Trefferwurf", "writeSkills": "1, Navig-2" },
-    { "id": "predict-3", "name": "Predict-3", "kind": "offensive", "space": 1, "price": 6000000, "effect": "DM +2 auf den Trefferwurf", "writeSkills": "1, Navig-3" },
-    { "id": "predict-4", "name": "Predict-4", "kind": "offensive", "space": 3, "price": 8000000, "effect": "DM +3 auf den Trefferwurf", "writeSkills": "1, Navig-4" },
-    { "id": "predict-5", "name": "Predict-5", "kind": "offensive", "space": 2, "price": 10000000, "effect": "DM +3 auf den Trefferwurf", "writeSkills": "2, Navig-5" },
-    { "id": "gunner-interact", "name": "Gunner Interact", "kind": "offensive", "space": 1, "price": 1000000, "effect": "Die Fertigkeit des Gunners wird zum DM auf den Trefferwurf", "writeSkills": "2, Gunnery-2" },
-    { "id": "target", "name": "Target", "kind": "offensive", "space": 1, "price": 1000000, "effect": "Pflicht für jedes Feuer der Turrets", "writeSkills": "2, Navig-2" },
-    { "id": "select-1", "name": "Select-1", "kind": "offensive", "space": 1, "price": 500000, "effect": "Zielwahl Hauptbereich oder Engineering, dafür DM −2", "writeSkills": "1, Gunnery-2" },
-    { "id": "select-2", "name": "Select-2", "kind": "offensive", "space": 2, "price": 800000, "effect": "Zielwahl wie Select-1, dafür DM −1", "writeSkills": "2, Gunnery-3" },
-    { "id": "select-3", "name": "Select-3", "kind": "offensive", "space": 1, "price": 1000000, "effect": "Zielwahl wie Select-1, ohne DM", "writeSkills": "3, Gunnery-4" },
-    { "id": "multi-target-2", "name": "Multi-Target-2", "kind": "offensive", "space": 1, "price": 1000000, "effect": "Turrets auf zwei Ziele zugleich", "writeSkills": "2, Gunnery-2" },
-    { "id": "multi-target-3", "name": "Multi-Target-3", "kind": "offensive", "space": 2, "price": 2000000, "effect": "Turrets auf drei Ziele zugleich", "writeSkills": "2, Gunnery-3" },
-    { "id": "multi-target-4", "name": "Multi-Target-4", "kind": "offensive", "space": 4, "price": 3000000, "effect": "Turrets auf vier Ziele zugleich", "writeSkills": "3, Gunnery-4" },
-    { "id": "launch", "name": "Launch", "kind": "offensive", "space": 1, "price": 2000000, "effect": "Raketen und Sand werden abschussfähig", "writeSkills": "1, Gunnery-2" },
-    { "id": "double-fire", "name": "Double Fire", "kind": "offensive", "space": 4, "price": 4000000, "effect": "Doppelter Laserschuss, mit Überlastrisiko", "writeSkills": "2, Engineer-3" },
-    { "id": "maneuver-evade-1", "name": "Maneuver/Evade-1", "kind": "defensive", "space": 1, "price": 1000000, "effect": "Verteidigungs-DM: −¼ Pilotenstufe", "writeSkills": "1, Pilot-2" },
-    { "id": "maneuver-evade-2", "name": "Maneuver/Evade-2", "kind": "defensive", "space": 2, "price": 2000000, "effect": "Verteidigungs-DM: −½ Pilotenstufe", "writeSkills": "1, Pilot-3" },
-    { "id": "maneuver-evade-3", "name": "Maneuver/Evade-3", "kind": "defensive", "space": 3, "price": 3000000, "effect": "Verteidigungs-DM: −¾ Pilotenstufe", "writeSkills": "2, Pilot-4" },
-    { "id": "maneuver-evade-4", "name": "Maneuver/Evade-4", "kind": "defensive", "space": 4, "price": 4000000, "effect": "Verteidigungs-DM: − volle Pilotenstufe", "writeSkills": "2, Pilot-5" },
-    { "id": "maneuver-evade-5", "name": "Maneuver/Evade-5", "kind": "defensive", "space": 5, "price": 5000000, "effect": "Verteidigungs-DM: − volle Pilotenstufe", "writeSkills": "3, Pilot-6" },
-    { "id": "maneuver-evade-6", "name": "Maneuver/Evade-6", "kind": "defensive", "space": 3, "price": 6000000, "effect": "Verteidigungs-DM: −5", "writeSkills": "3, Pilot-7" },
-    { "id": "auto-evade", "name": "Auto-Evade", "kind": "defensive", "space": 1, "price": 500000, "effect": "Wie Maneuver/Evade, schwächer: −2", "writeSkills": "2, Pilot-4" },
-    { "id": "return-fire", "name": "Return Fire", "kind": "defensive", "space": 1, "price": 500000, "effect": "Automatisches Rückfeuer", "writeSkills": "2, Gunnery-3" },
-    { "id": "anti-missile", "name": "Anti-Missile", "kind": "defensive", "space": 2, "price": 1000000, "effect": "Laser gegen Raketen im eigenen Band", "writeSkills": "3, Gunnery-3" },
-    { "id": "ecm", "name": "ECM", "kind": "defensive", "space": 3, "price": 4000000, "effect": "Raketen explodieren folgenlos bei 7+", "writeSkills": "4, Electronics-3" },
-    { "id": "maneuver", "name": "Maneuver", "kind": "routine", "space": 1, "price": 100000, "effect": "Pflichtprogramm für den Maneuver Drive", "writeSkills": "1, Pilot-1" },
-    { "id": "jump-1", "name": "Jump-1", "kind": "routine", "space": 1, "price": 100000, "effect": "Pflichtprogramm für Sprung 1", "writeSkills": "1, Pilot/Navig-1" },
-    { "id": "jump-2", "name": "Jump-2", "kind": "routine", "space": 2, "price": 300000, "effect": "Pflichtprogramm für Sprung 2", "writeSkills": "2, Pilot/Navig-2" },
-    { "id": "jump-3", "name": "Jump-3", "kind": "routine", "space": 3, "price": 400000, "effect": "Pflichtprogramm für Sprung 3", "writeSkills": "2, Pilot/Navig-3" },
-    { "id": "jump-4", "name": "Jump-4", "kind": "routine", "space": 4, "price": 500000, "effect": "Pflichtprogramm für Sprung 4", "writeSkills": "3, Pilot/Navig-4" },
-    { "id": "jump-5", "name": "Jump-5", "kind": "routine", "space": 5, "price": 600000, "effect": "Pflichtprogramm für Sprung 5", "writeSkills": "3, Pilot/Navig-5" },
-    { "id": "jump-6", "name": "Jump-6", "kind": "routine", "space": 6, "price": 700000, "effect": "Pflichtprogramm für Sprung 6", "writeSkills": "4, Pilot/Navig-6" },
-    { "id": "navigation", "name": "Navigation", "kind": "routine", "space": 1, "price": 400000, "effect": "Führt den Sprung aus", "writeSkills": "3, Navig-3" },
-    { "id": "generate", "name": "Generate", "kind": "routine", "space": 1, "price": 800000, "effect": "Erstellt den Flugplan (sonst Kassette Cr10.000)", "writeSkills": "3, Navig-4" },
-    { "id": "anti-hijack", "name": "Anti-Hijack", "kind": "routine", "space": 1, "price": 100000, "effect": "Sperrt die Kontrollbereiche; Umgehung nur auf 5−", "writeSkills": "1, Tactics-1" },
-    { "id": "library", "name": "Library", "kind": "routine", "space": 1, "price": 300000, "effect": "Nachschlagewerk zu Region und Subsektor", "writeSkills": "1, keine" }
+    {
+      "id": "predict-1",
+      "name": "Predict-1",
+      "kind": "offensive",
+      "space": 1,
+      "price": 2000000,
+      "effect": "DM +1 auf den Trefferwurf",
+      "writeSkills": "1, Navig-1"
+    },
+    {
+      "id": "predict-2",
+      "name": "Predict-2",
+      "kind": "offensive",
+      "space": 2,
+      "price": 4000000,
+      "effect": "DM +2 auf den Trefferwurf",
+      "writeSkills": "1, Navig-2"
+    },
+    {
+      "id": "predict-3",
+      "name": "Predict-3",
+      "kind": "offensive",
+      "space": 1,
+      "price": 6000000,
+      "effect": "DM +2 auf den Trefferwurf",
+      "writeSkills": "1, Navig-3"
+    },
+    {
+      "id": "predict-4",
+      "name": "Predict-4",
+      "kind": "offensive",
+      "space": 3,
+      "price": 8000000,
+      "effect": "DM +3 auf den Trefferwurf",
+      "writeSkills": "1, Navig-4"
+    },
+    {
+      "id": "predict-5",
+      "name": "Predict-5",
+      "kind": "offensive",
+      "space": 2,
+      "price": 10000000,
+      "effect": "DM +3 auf den Trefferwurf",
+      "writeSkills": "2, Navig-5"
+    },
+    {
+      "id": "gunner-interact",
+      "name": "Gunner Interact",
+      "kind": "offensive",
+      "space": 1,
+      "price": 1000000,
+      "effect": "Die Fertigkeit des Gunners wird zum DM auf den Trefferwurf",
+      "writeSkills": "2, Gunnery-2"
+    },
+    {
+      "id": "target",
+      "name": "Target",
+      "kind": "offensive",
+      "space": 1,
+      "price": 1000000,
+      "effect": "Pflicht für jedes Feuer der Turrets",
+      "writeSkills": "2, Navig-2"
+    },
+    {
+      "id": "select-1",
+      "name": "Select-1",
+      "kind": "offensive",
+      "space": 1,
+      "price": 500000,
+      "effect": "Zielwahl Hauptbereich oder Engineering, dafür DM −2",
+      "writeSkills": "1, Gunnery-2"
+    },
+    {
+      "id": "select-2",
+      "name": "Select-2",
+      "kind": "offensive",
+      "space": 2,
+      "price": 800000,
+      "effect": "Zielwahl wie Select-1, dafür DM −1",
+      "writeSkills": "2, Gunnery-3"
+    },
+    {
+      "id": "select-3",
+      "name": "Select-3",
+      "kind": "offensive",
+      "space": 1,
+      "price": 1000000,
+      "effect": "Zielwahl wie Select-1, ohne DM",
+      "writeSkills": "3, Gunnery-4"
+    },
+    {
+      "id": "multi-target-2",
+      "name": "Multi-Target-2",
+      "kind": "offensive",
+      "space": 1,
+      "price": 1000000,
+      "effect": "Turrets auf zwei Ziele zugleich",
+      "writeSkills": "2, Gunnery-2"
+    },
+    {
+      "id": "multi-target-3",
+      "name": "Multi-Target-3",
+      "kind": "offensive",
+      "space": 2,
+      "price": 2000000,
+      "effect": "Turrets auf drei Ziele zugleich",
+      "writeSkills": "2, Gunnery-3"
+    },
+    {
+      "id": "multi-target-4",
+      "name": "Multi-Target-4",
+      "kind": "offensive",
+      "space": 4,
+      "price": 3000000,
+      "effect": "Turrets auf vier Ziele zugleich",
+      "writeSkills": "3, Gunnery-4"
+    },
+    {
+      "id": "launch",
+      "name": "Launch",
+      "kind": "offensive",
+      "space": 1,
+      "price": 2000000,
+      "effect": "Raketen und Sand werden abschussfähig",
+      "writeSkills": "1, Gunnery-2"
+    },
+    {
+      "id": "double-fire",
+      "name": "Double Fire",
+      "kind": "offensive",
+      "space": 4,
+      "price": 4000000,
+      "effect": "Doppelter Laserschuss, mit Überlastrisiko",
+      "writeSkills": "2, Engineer-3"
+    },
+    {
+      "id": "maneuver-evade-1",
+      "name": "Maneuver/Evade-1",
+      "kind": "defensive",
+      "space": 1,
+      "price": 1000000,
+      "effect": "Verteidigungs-DM: −¼ Pilotenstufe",
+      "writeSkills": "1, Pilot-2"
+    },
+    {
+      "id": "maneuver-evade-2",
+      "name": "Maneuver/Evade-2",
+      "kind": "defensive",
+      "space": 2,
+      "price": 2000000,
+      "effect": "Verteidigungs-DM: −½ Pilotenstufe",
+      "writeSkills": "1, Pilot-3"
+    },
+    {
+      "id": "maneuver-evade-3",
+      "name": "Maneuver/Evade-3",
+      "kind": "defensive",
+      "space": 3,
+      "price": 3000000,
+      "effect": "Verteidigungs-DM: −¾ Pilotenstufe",
+      "writeSkills": "2, Pilot-4"
+    },
+    {
+      "id": "maneuver-evade-4",
+      "name": "Maneuver/Evade-4",
+      "kind": "defensive",
+      "space": 4,
+      "price": 4000000,
+      "effect": "Verteidigungs-DM: − volle Pilotenstufe",
+      "writeSkills": "2, Pilot-5"
+    },
+    {
+      "id": "maneuver-evade-5",
+      "name": "Maneuver/Evade-5",
+      "kind": "defensive",
+      "space": 5,
+      "price": 5000000,
+      "effect": "Verteidigungs-DM: − volle Pilotenstufe",
+      "writeSkills": "3, Pilot-6"
+    },
+    {
+      "id": "maneuver-evade-6",
+      "name": "Maneuver/Evade-6",
+      "kind": "defensive",
+      "space": 3,
+      "price": 6000000,
+      "effect": "Verteidigungs-DM: −5",
+      "writeSkills": "3, Pilot-7"
+    },
+    {
+      "id": "auto-evade",
+      "name": "Auto-Evade",
+      "kind": "defensive",
+      "space": 1,
+      "price": 500000,
+      "effect": "Wie Maneuver/Evade, schwächer: −2",
+      "writeSkills": "2, Pilot-4"
+    },
+    {
+      "id": "return-fire",
+      "name": "Return Fire",
+      "kind": "defensive",
+      "space": 1,
+      "price": 500000,
+      "effect": "Automatisches Rückfeuer",
+      "writeSkills": "2, Gunnery-3"
+    },
+    {
+      "id": "anti-missile",
+      "name": "Anti-Missile",
+      "kind": "defensive",
+      "space": 2,
+      "price": 1000000,
+      "effect": "Laser gegen Raketen im eigenen Band",
+      "writeSkills": "3, Gunnery-3"
+    },
+    {
+      "id": "ecm",
+      "name": "ECM",
+      "kind": "defensive",
+      "space": 3,
+      "price": 4000000,
+      "effect": "Raketen explodieren folgenlos bei 7+",
+      "writeSkills": "4, Electronics-3"
+    },
+    {
+      "id": "maneuver",
+      "name": "Maneuver",
+      "kind": "routine",
+      "space": 1,
+      "price": 100000,
+      "effect": "Pflichtprogramm für den Maneuver Drive",
+      "writeSkills": "1, Pilot-1"
+    },
+    {
+      "id": "jump-1",
+      "name": "Jump-1",
+      "kind": "routine",
+      "space": 1,
+      "price": 100000,
+      "effect": "Pflichtprogramm für Sprung 1",
+      "writeSkills": "1, Pilot/Navig-1"
+    },
+    {
+      "id": "jump-2",
+      "name": "Jump-2",
+      "kind": "routine",
+      "space": 2,
+      "price": 300000,
+      "effect": "Pflichtprogramm für Sprung 2",
+      "writeSkills": "2, Pilot/Navig-2"
+    },
+    {
+      "id": "jump-3",
+      "name": "Jump-3",
+      "kind": "routine",
+      "space": 3,
+      "price": 400000,
+      "effect": "Pflichtprogramm für Sprung 3",
+      "writeSkills": "2, Pilot/Navig-3"
+    },
+    {
+      "id": "jump-4",
+      "name": "Jump-4",
+      "kind": "routine",
+      "space": 4,
+      "price": 500000,
+      "effect": "Pflichtprogramm für Sprung 4",
+      "writeSkills": "3, Pilot/Navig-4"
+    },
+    {
+      "id": "jump-5",
+      "name": "Jump-5",
+      "kind": "routine",
+      "space": 5,
+      "price": 600000,
+      "effect": "Pflichtprogramm für Sprung 5",
+      "writeSkills": "3, Pilot/Navig-5"
+    },
+    {
+      "id": "jump-6",
+      "name": "Jump-6",
+      "kind": "routine",
+      "space": 6,
+      "price": 700000,
+      "effect": "Pflichtprogramm für Sprung 6",
+      "writeSkills": "4, Pilot/Navig-6"
+    },
+    {
+      "id": "navigation",
+      "name": "Navigation",
+      "kind": "routine",
+      "space": 1,
+      "price": 400000,
+      "effect": "Führt den Sprung aus",
+      "writeSkills": "3, Navig-3"
+    },
+    {
+      "id": "generate",
+      "name": "Generate",
+      "kind": "routine",
+      "space": 1,
+      "price": 800000,
+      "effect": "Erstellt den Flugplan (sonst Kassette Cr10.000)",
+      "writeSkills": "3, Navig-4"
+    },
+    {
+      "id": "anti-hijack",
+      "name": "Anti-Hijack",
+      "kind": "routine",
+      "space": 1,
+      "price": 100000,
+      "effect": "Sperrt die Kontrollbereiche; Umgehung nur auf 5−",
+      "writeSkills": "1, Tactics-1"
+    },
+    {
+      "id": "library",
+      "name": "Library",
+      "kind": "routine",
+      "space": 1,
+      "price": 300000,
+      "effect": "Nachschlagewerk zu Region und Subsektor",
+      "writeSkills": "1, keine"
+    }
   ]
 }

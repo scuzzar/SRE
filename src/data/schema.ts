@@ -261,7 +261,7 @@ export const WeaponSchema = z.object({
   ammo: z.string().min(1).optional(),
   /** Ab dieser Gesetzesstufe ist die Waffe verboten (S. 14); fehlt bei den Händen. */
   law: z.number().int().min(1).max(15).optional(),
-  /** Ab diesem SOC bekommt ein erzeugter NSC die Waffe (Hausregel 2026-11-14c); fehlt bei Händen und Tierwaffen. */
+  /** Ab diesem SOC bekommt ein erzeugter NSC die Waffe (Hausregel 2026-11-14c); fehlt bei Händen, Tierwaffen und den Bogenwaffen aus Supplement 4 (2026-11-24c). */
   minSoc: z.number().int().min(0).max(15).optional(),
   /** Feuerstoß: so viele Schuss auf einmal (Book 1: 4); fehlt, schießt die Waffe keine Feuerstöße. */
   burst: z.number().int().min(2).optional(),
@@ -730,7 +730,9 @@ function checkCareerData(data: CareerData, skillIds: ReadonlySet<string>, ctx: z
     if (!skillIds.has(weapon.uses)) issue(`Unbekannte Fertigkeit ${weapon.uses} bei der Waffe ${weapon.id}`);
     if (weapon.required >= weapon.advantageous) issue(`Die Waffe ${weapon.id}: das nötige Attribut liegt nicht unter dem vorteilhaften`);
     if ((weapon.rounds === undefined) !== (weapon.ammo === undefined)) issue(`Die Waffe ${weapon.id}: Magazin und Schuss nur zusammen`);
-    if ((weapon.rounds !== undefined) !== (weapon.attack === 'shot')) issue(`Die Waffe ${weapon.id}: genau die Schusswaffen haben ein Magazin`);
+    // Ein Magazin hat nur, was Schuss ist; die Bogenwaffen aus Supplement 4 (B4 S. 16) sind
+    // Schusswaffen ohne Magazin (2026-11-24c).
+    if (weapon.rounds !== undefined && weapon.attack !== 'shot') issue(`Die Waffe ${weapon.id}: ein Magazin hat nur, was Schuss ist`);
     if (weapon.ammo !== undefined && data.items.find((i) => i.id === weapon.ammo)?.kind !== 'ammunition') issue(`Die Waffe ${weapon.id}: ihr Magazin ${weapon.ammo} ist keine Munition`);
     if (weapon.burst !== undefined && (weapon.rounds === undefined || weapon.burst > weapon.rounds)) issue(`Die Waffe ${weapon.id}: ein Feuerstoß braucht ein Magazin, das ihn fasst`);
     if (weapon.single !== undefined) {
@@ -779,7 +781,9 @@ function checkCareerData(data: CareerData, skillIds: ReadonlySet<string>, ctx: z
     for (const table of service.skills) if (table.rows.length !== 6) issue(`${table.id} hat nicht 6 Zeilen`);
     for (const table of [service.benefits, service.cash]) if (table.rows.length !== 7) issue(`${table.id} hat nicht 7 Zeilen`);
     // Eine leere Zeile gibt es auch auf der Geldtabelle: die Tabellen in Supplement 4 haben „—“.
-    if (service.ranks.some((r, i) => r.level !== i + 1)) issue(`Die Ränge von ${service.id} sind nicht 1, 2, 3, …`);
+    // Die Rangstufen einer Laufbahn steigen, müssen aber nicht durchlaufen (der Barbar kennt nur 2 und 5, 2026-11-24c).
+    if (service.ranks.some((r) => r.level < 1 || r.level > 6)) issue(`Die Ränge von ${service.id} stehen nicht auf Stufe 1 bis 6`);
+    if (service.ranks.some((r, i) => i > 0 && r.level <= service.ranks[i - 1]!.level)) issue(`Die Ränge von ${service.id} steigen nicht`);
     if ((service.commission === undefined) !== (service.ranks.length === 0)) issue(`${service.id}: Patent nur mit Rängen`);
     if ((service.commission === undefined) !== (service.promotion === undefined)) issue(`${service.id}: Patent und Beförderung nur zusammen`);
   }
