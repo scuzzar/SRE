@@ -1,11 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Auf den GitHub-Runnern läuft die Suite auf zwei Worker-Kernen und lädt die App als ein Bundle:
- * die 30 s Standard-Timeout pro Test und die 5 s einer Erwartung reichen dort nicht – die Läufe
- * fallen mit verschiedenen Tests um (`Test timeout of 30000ms exceeded`, leere Felder, "session
- * closed" beim Abriss). Lokal ist dieselbe Suite grün. Darum auf dem Runner das Drei- bis
- * Vierfache an Zeit; lokal bleibt alles knapp, damit langsame Stellen auffallen.
+ * Die Suite läuft nach jeder Änderung lokal. `CI` ist gesetzt, wo sie trotzdem irgendwo
+ * automatisch läuft – auf einem Runner oder mit `CI=1 npx playwright test`, was hier ein
+ * stehengebliebenes Vorschaufenster umgeht. Dort gilt pro Test das Vierfache und je Erwartung
+ * das Vierfache, weil zwei Worker auf zwei Kernen die App als ein Bundle laden; lokal bleibt
+ * alles knapp, damit langsame Stellen auffallen. Dazu auf dem Runner Chromium ohne
+ * geteilten Speicher: `/dev/shm` ist dort 64 MB klein, und die App sprengt das, der Renderer
+ * stirbt mitten im Test („session closed“).
  */
 const ci = process.env.CI !== undefined;
 
@@ -20,9 +22,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'retain-on-failure',
-    // Auf den Runern ist /dev/shm klein (64 MB); die App als ein Bundle sprengt das, und der
-    // Renderer stirbt mitten im Test ("Protocol error … session closed"). Ohne /dev/shm
-    // weicht Chromium auf die Festplatte aus. Lokal nicht nötig, darum nur auf dem Runner.
+    // Nur dort, wo die Suite automatisch läuft: `/dev/shm` ist auf Runern 64 MB klein, die App
+    // als ein Bundle sprengt das und der Renderer stirbt mitten im Test („session closed“).
+    // Ohne geteilten Speicher weicht Chromium auf die Festplatte aus; lokal ist das nicht nötig.
     launchOptions: { args: ci ? ['--disable-dev-shm-usage'] : [] },
   },
   projects: [

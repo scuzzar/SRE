@@ -76,6 +76,15 @@ function twoDice(random: Random): number[] {
 }
 
 /**
+ * Ob die gewürfelten Werte in die Laufbahn lassen (der Adlige: Stand 10+); eine Laufbahn ohne
+ * `needs`-Qualifikation steht allen offen.
+ */
+export function qualified(state: CareerState, service: Service): boolean {
+  const needs = service.needs;
+  return needs === undefined || state.upp[needs.characteristic.toLowerCase() as keyof CareerState['upp']] >= needs.atLeast;
+}
+
+/**
  * Wie die Musterung für jede Laufbahn stünde. Eine Laufbahn mit `needs` ist nur offen, wer die
  * Qualifikation mitbringt (der Adlige: Stand 10+).
  */
@@ -83,7 +92,7 @@ export function serviceOptions(state: CareerState): readonly { readonly service:
   return ref.services.map((service) => ({
     service,
     odds: throwOdds(service.enlistment, state.upp),
-    available: service.needs === undefined || state.upp[service.needs.characteristic.toLowerCase() as keyof CareerState['upp']] >= service.needs.atLeast,
+    available: qualified(state, service),
   }));
 }
 
@@ -213,8 +222,8 @@ export function enlist(generation: Generation, serviceId: string, random: Random
   const state = stateOf(generation);
   expectStep(state, 'service');
   const service = serviceOf(serviceId);
-  if (service.needs !== undefined && state.upp[service.needs.characteristic.toLowerCase() as keyof CareerState['upp']] < service.needs.atLeast) {
-    throw new DomainError(`${service.name} steht nur Menschen mit ${service.needs.characteristic} ${service.needs.atLeast}+ offen.`);
+  if (!qualified(state, service)) {
+    throw new DomainError(`${service.name} steht nur Menschen mit ${service.needs!.characteristic} ${service.needs!.atLeast}+ offen.`);
   }
   const dm = throwDm(service.enlistment, state.upp);
   return append(generation, { kind: 'enlistment', for: service.id, dice: twoDice(random), dm, target: service.enlistment.target });
@@ -287,7 +296,7 @@ export function finishGeneration(campaign: Campaign, name: string): { campaign: 
 
 /** Was eine abgeschlossene Erschaffung einem Charakter gibt: UPP, Fertigkeiten, Besitz, Credits, Herkunft, Pension in der Notiz, Heimatwelt. */
 export function careerInput(state: CareerState, name: string): CharacterInput {
-  const pension = pensionOf(state.terms, state.dead);
+  const pension = pensionOf(state.terms, state.dead, state.service);
   return {
     name,
     background: backgroundOf(state),
@@ -307,7 +316,11 @@ function pick<T>(items: readonly T[], random: Random): T {
 
 /** Eine Laufbahn, zufällig, gewichtet nach der Chance der Musterung. */
 function pickService(state: CareerState, random: Random): string {
-  const options = serviceOptions(state).map((o) => ({ id: o.service.id, weight: Math.max(1, Math.round(o.odds.chance)) }));
+  // Nur was die Liste auch anbietet: eine Laufbahn, deren Qualifikation die Werte nicht
+  // erfüllen, bleibt im Durchlauf außer Wahl (2026-11-24e).
+  const options = serviceOptions(state)
+    .filter((o) => o.available)
+    .map((o) => ({ id: o.service.id, weight: Math.max(1, Math.round(o.odds.chance)) }));
   let n = random.int(1, options.reduce((sum, o) => sum + o.weight, 0));
   for (const option of options) {
     n -= option.weight;
@@ -395,8 +408,9 @@ const MAX_PATRON_RUNS = 1000;
 
 /**
  * Der Lebenslauf eines Patron-NSC (siehe domain-model.md, *Patron als NSC*): ein Durchlauf in der
- * vorgegebenen Laufbahn, bis zum Namen. Wird er dort nicht genommen oder stirbt er, beginnt der Lauf
- * von vorn (Hausregel). Läuft für sich, ohne die Erschaffung der Kampagne zu berühren.
+ * vorgegebenen Laufbahn, bis zum Namen. Wird er dort nicht genommen, passt die Qualifikation nicht
+ * oder stirbt er, beginnt der Lauf von vorn (Hausregel; die Qualifikation seit 2026-11-24e, sonst
+ * ist der Adlige als NSC unmöglich). Läuft für sich, ohne die Erschaffung der Kampagne zu berühren.
  */
 export function runCareerIn(hexes: Campaign['hexes'], service: string, random: Random): Generation {
   serviceOf(service);
@@ -404,6 +418,9 @@ export function runCareerIn(hexes: Campaign['hexes'], service: string, random: R
   for (let run = 0; run < MAX_PATRON_RUNS; run++) {
     let generation = startGeneration();
     for (let i = 0; i < MAX_RUN_STEPS; i++) {
+      const before = stateOf(generation);
+      // Ohne Qualifikation: Er würde nicht angenommen, also von vorn (wie bei der Einberufung).
+      if (before.step === 'service' && !qualified(before, serviceOf(service))) break;
       const next = runStep(generation, hexes, random, service);
       if (!next) break;
       generation = next;

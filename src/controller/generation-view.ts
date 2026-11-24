@@ -449,10 +449,10 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
       const last = state.terms >= MAX_TERMS;
       prompt = last
         ? `Ende von ${term}: nach ${MAX_TERMS} Terms bleibt nur, wer eine 12 würfelt`
-        : service.retirement === false
-          ? `Ende von ${term}: ${service.name} tritt nicht in den Ruhestand – gedient wird bis ${MAX_TERMS} Terms`
-          : service.freeExit === false
-            ? `Ende von ${term}: weiterverpflichten? Weg lässt dich hier nur der gelungene Wurf`
+        : service.freeExit === false
+          ? `Ende von ${term}: weiterverpflichten? Weg lässt dich hier nur der gelungene Wurf`
+          : service.retirement === false
+            ? `Ende von ${term}: weiterverpflichten? ${service.name} zahlt keine Ruhestandsbezüge`
             : `Ende von ${term}: weiterverpflichten?`;
       action = { kind: 'reenlist', odds: odds!, last, quit: canQuit(state), freeExit: service.freeExit };
       break;
@@ -493,7 +493,7 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
     }),
     possessions: state.possessions.map((p) => ({ name: itemLabel(itemOf(p.of)), count: p.count })),
     credits: state.credits,
-    pension: pensionOf(state.terms, state.dead),
+    pension: pensionOf(state.terms, state.dead, state.service),
     lines: careerLines(generation.career),
     homeworld: state.homeworld === undefined ? undefined : worldName(hexes, state.homeworld),
     termWorlds: state.worlds.map((id) => worldName(hexes, id)),

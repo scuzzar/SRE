@@ -672,6 +672,17 @@
         "Service",
         "Throw"
       ]
+    },
+    {
+      "id": "2026-11-24e",
+      "file": "2026-11-24e-der-barbar-ohne-ruhestand",
+      "title": "Der Barbar ohne Ruhestand und der NSC-Lauf mit Qualifikation: `Service.retirement` sagt nur noch über die **Ruhestandsbezüge** aus (false = keine), sein Dienstende ist das übliche – bis jetzt blieb ein Barbar für immer und war als NSC nicht zu erzeugen; nach dem siebenten Term bleibt nur, wer eine 12 würfelt; ein **Lauf** würfelt neu, wenn die `needs`-Qualifikation fehlt (Adliger); die **Patron-Reihen** (`Patron.career`) wählen aus allen achtzehn Laufbahnen",
+      "approved": true,
+      "show": [
+        "Service",
+        "Qualification",
+        "Patron"
+      ]
     }
   ]
 }

@@ -220,8 +220,13 @@ export function ageOf(terms: number, service?: Service): number {
   return (service?.startAge ?? START_AGE) + TERM_YEARS * terms;
 }
 
-/** Pension im Jahr: ab 5 Terms Cr 4000, je weiteren Term Cr 2000 mehr. */
-export function pensionOf(terms: number, dead: boolean): number {
+/**
+ * Pension im Jahr: ab 5 Terms Cr 4000, je weiteren Term Cr 2000 mehr. Eine Laufbahn ohne
+ * `retirement` (der Barbar) zahlt keine: Ruhestand heißt im Vorbild *mit Bezügen* ausscheiden
+ * (Supplement 4 S. 9, 2026-11-24e).
+ */
+export function pensionOf(terms: number, dead: boolean, service?: Service): number {
+  if (service?.retirement === false) return 0;
   return dead || terms < 5 ? 0 : 4000 + 2000 * (terms - 5);
 }
 
@@ -404,15 +409,17 @@ class Replay {
         const sum = sumOf(roll);
         const made = successOf(this.withTarget(roll)) === true;
         const service = this.service!;
-        // Barbar: ein Ruhestand gibt es nicht, gedient wird bis zum siebenten Term. Bürokrat: vor dem
-        // Ruhestand lässt nur die *gelungene* Weiterverpflichtung weg (Supplement 4 S. 8–9).
+        // Nach dem siebenten Term endet der Dienst; nur eine 12 hält weiter im Dienst (B1 S. 7).
+        // Bürokrat: vor dem Ruhestand lässt nur die *gelungene* Weiterverpflichtung weg, gleich was
+        // man wollte (Supplement 4 S. 8). Eine Laufbahn ohne `retirement` (der Barbar) endet wie
+        // jede andere; ihr fehlen nur die Ruhestandsbezüge (Supplement 4 S. 9, 2026-11-24e).
         const stays =
-          sum === 12 || this.terms >= MAX_TERMS
+          sum === 12
             ? true
-            : service.retirement === false
-              ? true
+            : this.terms >= MAX_TERMS
+              ? false
               : service.freeExit === false
-                ? roll.wants === made
+                ? roll.wants === true || !made
                 : roll.wants && made;
         if (stays) {
           this.beginTerm();

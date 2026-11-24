@@ -94,15 +94,15 @@ function withPatron(list: 1 | 2, a: number, b: number, located = true): Campaign
 
 describe('Patron als NSC (2026-11-14, Laufbahn 2026-11-14b)', () => {
   it('erzeugt einen dauerhaften NSC in der Laufbahn des Patrons, mit Rolle Patron, Ort und Verweis', () => {
-    // Liste eins, 15: Smuggler, Laufbahn Merchants.
+    // Liste eins, 15: Smuggler, Laufbahn Pirate (2026-11-24e).
     const { campaign, id } = createPatronNpc(withPatron(1, 1, 5), 0, seeded(7));
     const npc = campaign.characters.find((c) => c.id === id)!;
     expect(npc).toMatchObject({ npc: true, role: 'patron', place: { world: '0101' }, patron: { list: 1, roll: 15 } });
-    expect(npc.background).toMatch(/^Smuggler · Ex-Merchants · /);
+    expect(npc.background).toMatch(/^Smuggler · Ex-Pirate · /);
     expect(npc.name).not.toBe('');
     const state = replay(npc.career!);
     expect(state.step).toBe('name');
-    expect(state.service?.id).toBe('merchants');
+    expect(state.service?.id).toBe('pirate');
     expect(['0101', '0202']).toContain(npc.homeworld);
     // Ein NSC steht nicht oben.
     expect(campaign.focus).toBeUndefined();
@@ -117,6 +117,20 @@ describe('Patron als NSC (2026-11-14, Laufbahn 2026-11-14b)', () => {
       expect(npc.dead).toBe(false);
       // Eine Waffe aus der Abmusterung ist seine Primärwaffe und in der Hand.
       expect(npc.wields).toBe(npc.primary);
+    }
+  });
+
+  it('erzeugt auch die neuen Laufbahnen, selbst mit Qualifikation und ohne Ruhestand (2026-11-24e)', () => {
+    // Barbarian (2-31), Noble (2-25 und 1-61), Belter (2-43), Hunter (2-14), Pirate (2-33).
+    const zeilen: [1 | 2, number, number, string][] = [[2, 3, 1, 'barbarian'], [2, 2, 5, 'noble'], [1, 6, 1, 'noble'], [2, 4, 3, 'belter'], [2, 1, 4, 'hunter'], [2, 3, 3, 'pirate']];
+    for (const [list, a, b, service] of zeilen) {
+      for (let seed = 1; seed <= 6; seed++) {
+        const { campaign, id } = createPatronNpc(withPatron(list, a, b), 0, seeded(seed));
+        const state = replay(campaign.characters.find((c) => c.id === id)!.career!);
+        expect([list, b, service, state.service?.id]).toEqual([list, b, service, service]);
+        // Der Adlige braucht seinen Stand: ohne Qualifikation würfelt der Lauf von vorn.
+        if (service === 'noble') expect(state.upp.soc).toBeGreaterThanOrEqual(10);
+      }
     }
   });
 

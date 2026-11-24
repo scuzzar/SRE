@@ -143,7 +143,7 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
 |---|---|
 | `npm run dev` | Entwicklungsserver mit Neuladen |
 | `npm run check` | Typecheck, Lint (mit den Schichtenregeln) und Unit-Tests |
-| `npm run test:e2e` | GUI-Tests mit Playwright (baut vorher und startet `vite preview`) |
+| `npm run test:e2e` | GUI-Tests mit Playwright (baut vorher und startet `vite preview`); läuft nach jeder Änderung **lokal** und ist nicht Teil des CI-Jobs, der nur Typen, Schichten und Unit-Tests prüft (`.github/workflows/ci.yml`) |
 | `npm run build` | Build für GitHub Pages nach `dist/` (relative Pfade, läuft in jedem Unterordner) |
 | `npm run build:single` | Die ganze App als eine HTML-Datei nach `dist-single/index.html` |
 | `npm run icons` | Die PNG-Icons in `public/` neu aus `public/icon.svg` rendern (nach jeder Änderung am Icon) |

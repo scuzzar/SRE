@@ -4,6 +4,12 @@ on:
   push:
   pull_request:
 
+# Geprüft wird, was schnell und verlässlich ist. Die Systemtests (Playwright) laufen nach jeder
+# Änderung lokal (`npm run test:e2e`, so steht es in AGENTS.md) und bleiben darum hier heraus: auf
+# dem Runner brauchen sie über zehn Minuten und fallen um, ohne dass die App etwas kann – zwei
+# Chromiums auf zwei Kernen, die App als ein Bundle, 64 MB geteilter Speicher. Mehr Zeit und
+# `--disable-dev-shm-usage` haben es gebessert, zuverlässig nicht. Der alte Job steht im
+# Git-Verlauf (vor `Playwright aus dem Push-CI genommen`).
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -17,19 +23,3 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
-
-      # Die Systembibliotheken für Chromium hat der Runner schon. `--with-deps` holte nur Schriften
-      # und xvfb nach und brauchte dafür über den Ubuntu-Mirror bis zu 10 Minuten.
-      - id: playwright
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
-      - run: npx playwright install --only-shell chromium
-      - run: npm run test:e2e
-      - uses: actions/upload-artifact@v7
-        if: failure()
-        with:
-          name: playwright-report
-          path: test-results/

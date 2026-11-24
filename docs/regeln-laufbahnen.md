@@ -89,8 +89,8 @@ Der Ablauf ist der bekannte (B1, SE Charts) mit vier Abweichungen:
 | Alter zu Beginn | 18; **Belterer und Barbar 14** | ✔ (`Service.startAge`, 2026-11-24a) |
 | Musterung misslingt | *Rejection*: die Person **sucht eine andere Laufbahn** und bewirbt sich dort | ✔ bei den zwölf ohne Einberufungszahl (✱ weiterbewerben); bei den sechs des Regelwerks entscheidet weiterhin die **Einberufung** (2026-11-24a) |
 | Fertigkeiten je Term | erster Term 2, jeder weitere 1, +1 bei Position, +1 bei Beförderung; aus **vier Tabellen**, die vierte nur bei **Bildung 8+** | ✔ (`skillsPerTerm`, vierte Tabelle mit `minEdu`) |
-| Weiterverpflichtung | jeder Term; 12 genau → ein Term Zwangsdienst; misslingt sie → Ende | ✔ |
-| Retirement | Dienst bis 7 Terme; **Ruhestand ab dem 5. Term möglich, nach dem 7. Pflicht**; Rentenzahlung je nach Dienstzeit und Laufbahn | ○ (die App kennt `MAX_TERMS = 7`, aber keinen Ruhestand und keine Rentenzahlung) |
+| Weiterverpflichtung | jeder Term; 12 genau → ein Term Zwangsdienst; misslingt sie → Ende | ✔ (nach dem 7. Term bleibt überhaupt nur eine 12, 2026-11-24e) |
+| Retirement | Dienst bis 7 Terme; **Ruhestand ab dem 5. Term möglich, nach dem 7. Pflicht**; Rentenzahlung je nach Dienstzeit und Laufbahn | ◐ (`MAX_TERMS = 7`: nach dem 7. Term bleibt nur eine 12; Pension ab 5 Terms als Notiz, Cr 4000 und je Term Cr 2000 mehr, eine Laufbahn ohne `retirement` ohne Bezüge – 2026-11-24e); gezahlt wird nicht |
 | Abmusterung | ein Wurf je Term, +1 Wurf bei Rang 1–2, +2 bei Rang 3–4, +2 und +1 DM auf Tabelle 1 bei Rang 5–6; Gamblen +1 DM auf Tabelle 2; **Tabelle 2 höchstens dreimal** | ✔ (`musterRollsOf`, `MAX_CASH_ROLLS`) |
 | Alterung | ab Alter 34 und alle vier Jahre, Alterungstabelle auf Stärke, Gewandtheit, Ausdauer, Intelligenz; Attribut auf 0 → krank, Grundwurf 8+, sonst Ende ohne Weiterverpflichtung | ✔ (Alterungstabellen der Referenzdaten) |
 
@@ -227,8 +227,8 @@ Fertigkeit darin genommen werden. Neu sind die Sachwerte der Laufbahn selbst:
 | **Belterer**, **Barbar** | beginnen mit **14** statt 18 | B4 2 |
 | **Belter** | Überleben-DM **+1 je laufendem Term** statt fester DM: schon der **erste Term +1**, der zweite +2, der siebente +7 | B4 6 |
 | **Adliger** | nur für Stand 10+, automatisch; der Rang folgt dem Stand (B 11 … F 15) und der Rangwurf entfällt; ✱ je Beförderung auf so einen Rang **+1 Stand**, höchstens 15 | B4 8, The Traveller Book S. 27 |
-| **Barbar** | kann **nicht in den Ruhestand** | B4 9 |
-| **Bürokrat** | muss die **Weiterverpflichtung würfeln**, um vor dem Ruhestand wegzudürfen | B4 8 |
+| **Barbar** | kann **nicht in den Ruhestand**: er bekommt **keine Ruhestandsbezüge**, sein Dienstende ist sonst das übliche (2026-11-24e) | B4 9 |
+| **Bürokrat** | muss die **Weiterverpflichtung würfeln**, um vor dem Ruhestand wegzudürfen: wer bleiben will, bleibt, und wer weg will, braucht den gelungenen Wurf | B4 8 |
 | **Barbar, Bürokrat, Arzt** | haben **keine natürliche Waffenkunde** an Schusswaffen: gelten als völlig ungebildet (DM −5 beim Schießen, B1 30) | B4 11 |
 | **Arzt** | Medical 3+ heißt **Doctor**, Gewandtheit 8+ zusätzlich **Surgeon**; unter Medical 3 ist es Ordnungsperson, Sanitäter oder Pfleger | B4 26 |
 | **alle zwölf** | jedes Kapitel setzt voraus, dass die Person **abgemustert** hat; der SL darf sie trotzdem im Dienst verwenden | B4 18 ff. |
@@ -296,7 +296,9 @@ haben – Vorlagen für NSC, die niemand erzeugen soll, sondern die man aufstell
 - Der **Name des Rangwurfs** (`Service.commissionTitle`, Kennzeichen **2026-11-24b**) steht nur beim
   Bürokraten („Gehobener Dienst“). B4 selbst nennt den Wurf überall nur *position*; ob Diplomat,
   Barbar und Adliger eigene Worte bekommen, ist offen. Ohne das Feld heißt er „Offizierspatent“.
-- Die **Rente** nach dem Ruhestand kennt die App noch nicht (Notiz statt Zahlung), bei den neuen
-  Laufbahnen wie bei den alten.
+- Die **Rente** steht als Notiz am Charakter: Cr 4000 nach 5 Terms, je weiterer Term Cr 2000 mehr;
+  nach dem 7. Term ist der Dienst aus, es sei denn, die Weiterverpflichtung ist eine 12
+  (2026-11-24e). Eine Laufbahn ohne `retirement` (der Barbar) bekommt **keine** Bezüge. Gezahlt
+  wird nicht – es gibt kein laufendes Einkommen in der App.
 - Die **Beispiel-NSC** aus B4 18–41 sind nicht in der App: sie erzeugt ihre Läufe selbst. Die
   Beispiele taugen als Vergleich für eigene Würfe.

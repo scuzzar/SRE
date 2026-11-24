@@ -618,7 +618,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Laufbahnen aus Supplement 4 *Citizens of the Imperium* (Regeln und Tabellen in
 > [`regeln-laufbahnen.md`](regeln-laufbahnen.md)). Sie bringen keine neue Schicht, nur Felder an den
 > Referenzdaten: `Service` bekommt `startAge` (Belterer und Barbar beginnen mit 14), `retirement`
-> (ein Barbar tritt nie in den Ruhestand), `freeExit` (ein Bürokrat darf nur mit gelungener
+> (ein Barbar tritt nie in den Ruhestand – seit 2026-11-24e: ohne Bezüge), `freeExit` (ein Bürokrat darf nur mit gelungener
 > Weiterverpflichtung weg) und `naturalGunSkill` (Barbar, Bürokrat und Arzt haben keine natürliche
 > Schusswaffenkunde), und mit `Qualification` eine neue Referenzklasse für den **Einstieg ohne
 > Wurf** (`needs`, beim Adligen Stand 10+). `draft` wird **optional**: eine Laufbahn ohne
@@ -662,6 +662,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > und die Person würfelt den Rangwurf wie jede andere. Der Adel ist die einzige Laufbahn mit
 > Standesrängen; an den übrigen ändert sich nichts, ihr `standing` ist leer.
 
+> Am 24. November 2026 freigegeben (Kennzeichen **2026-11-24e**): **Der Barbar ohne Ruhestand und der NSC-Lauf mit Qualifikation**. `Service.retirement` sagt künftig nur noch aus, ob es für die Laufbahn einen **Ruhestand mit Bezügen** gibt: `false` (der Barbar, B4 S. 9 „Barbarians cannot retire“) heißt **keine Ruhestandsbezüge**, sein Ende ist sonst das übliche. Bis jetzt hieß `retirement === false` „die Person geht nie weg“ – und weil das vor der Obergrenze von sieben Terms griff, kam ein Barbar nie zur Abmusterung: ein NSC in dieser Laufbahn war unmöglich. Neu gefasst auch das Ende nach dem **siebenten Term**: dort bleibt nur, wer eine **12** würfelt (B1 S. 7: “retirement is mandatory … persons who throw 12 may continue“); bis jetzt blieb, wer sieben Terme gedient hatte, unabhängig vom Wurf. Ein **Lauf** (die zufällig durchlaufene Erschaffung eines NSC) würfelt **von vorn**, wenn die Werte die `needs`-Qualifikation nicht erfüllen – beim Adligen Stand 10+ – statt abzubrechen, wie das bei abgelehnter Musterung schon heute geschieht. Und die **Patron-Reihen** (`Patron.career`) wählen jetzt aus **allen achtzehn** Laufbahnen statt nur aus sechs: Schmuggler und Pirat → Pirate, Schurke/Swindler/Unterwelt/Brandstifter → Rogue, Gelehrter/Forscher/Professor/Wissenschaftler → Scientist, Noble/Playboy/Émigré → Noble, Clerk/Administrator/Gouverneur/Government Official/Bürokrat → Bureaucrat, Belter → Belter, Hunter → Hunter, Pilot → Flyer, Barbarian → Barbarian, Doctor → Doctor, Diplomat → Diplomat, Crewmember → Sailor; die übrigen Zeilen bleiben, wo sie waren. Beim *Durchlaufen* schließlich wählt der Zufall nur
+> eine Laufbahn, deren Qualifikation die gewürfelten Werte erfüllen – die Liste graut dieselben
+> aus. Der Ausschnitt dazu liegt unter [`changes/2026-11-24e-der-barbar-ohne-ruhestand.png`](changes/2026-11-24e-der-barbar-ohne-ruhestand.png).
+>
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -2209,7 +2213,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   - **NSC aus einer Laufbahn** (2026-11-14c). „+ Neuer NSC“ in der NSC-Liste fragt zuerst nach der
     **Rolle** und bietet dann an: leer anlegen (Editor wie bisher) oder **aus einer Laufbahn
     erzeugen**. Erzeugt wird wie beim Patron-NSC, nur in der gewählten Laufbahn: Die
-    Charaktererschaffung läuft zufällig und ohne Animation durch (abgelehnt oder tot: von vorn),
+    Charaktererschaffung läuft zufällig und ohne Animation durch (abgelehnt, ohne
+    `needs`-Qualifikation oder tot: von vorn – beim Adligen also, solange der Stand unter 10 bleibt,
+    2026-11-24e),
     Name von der Tafel NSC, Ort der Aufenthaltsort, danach öffnet der Editor zum Nachbessern. Ohne
     Aufenthaltsort geht es nicht. Er hat keinen Patron. Lange auf „NSC platzieren“ am angetippten
     Feld des Globus gedrückt (2026-11-17), lebt er stattdessen auf diesem Feld bzw. in der Stadt
@@ -2626,11 +2632,12 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        *Krise* (Schritt und Wurf `crisis`, 2W6, 8+): gelingt sie, steht das Attribut auf 1, sonst ist
        der Charakter tot. Die Krise stammt aus dem Vorbild, nicht aus den Charts.
     5. *Weiterverpflichtung*: Man sagt, ob man bleiben will (`wants`), dann wird immer gewürfelt. Eine
-       12 heißt bleiben, egal was man wollte. Sonst bleibt, wer will und den Zielwert schafft, außer
-       nach dem 7. Term: dann nur mit 12 (aus dem Vorbild). Eine Laufbahn ohne `retirement` (Barbar) lässt
-       einen nie freiwillig weg: dienen bis zum 7. Term. Eine ohne `freeExit` (Bürokrat) lässt vor dem
-       Ruhestand nur weg, wenn die Weiterverpflichtung gelingt, gleich was man wollte. Wer bleibt,
-       beginnt den nächsten Term (3.), alle anderen mustern ab.
+       12 heißt bleiben, egal was man wollte. Sonst bleibt, wer will und den Zielwert schafft; nach dem
+       7. Term bleibt nur, wer eine 12 würfelt (aus dem Vorbild, 2026-11-24e). Eine Laufbahn ohne
+       `retirement` (Barbar) gibt **keine Ruhestandsbezüge**, ihr Ende ist sonst das übliche
+       (2026-11-24e; vorher blieb sie bis zum 7. Term und dann ganz). Eine ohne `freeExit` (Bürokrat)
+       lässt vor dem Ruhestand nur weg, wenn die Weiterverpflichtung gelingt, gleich was man wollte.
+       Wer bleibt, beginnt den nächsten Term (3.), alle anderen mustern ab.
     6. *Abmusterung*: so viele Würfe wie Terms, dazu +1 bei Rang 1–2, +2 bei Rang 3–4, +3 bei Rang
        5–6. Je Wurf wählt man Geld oder Sachwerte; Geld höchstens dreimal. DM +1 auf Geld mit
        Gambling, DM +1 auf Sachwerte ab Rang 5. Ein Gegenstand mit `once` (Travellers' Aid Society,
@@ -2638,7 +2645,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        Kaskade mit `weapon`: Man wählt eine Fertigkeit daraus und bekommt den Gegenstand, der sie
        nutzt (`uses`), statt der Fertigkeit. Wählt man eine Waffe, die man schon aus der Abmusterung
        hat, steigt stattdessen die Fertigkeit darin um 1. Nach mindestens 5 Terms gibt es eine Pension (Cr 4000
-       bei 5 Terms, je Term mehr Cr 2000).
+       bei 5 Terms, je Term mehr Cr 2000); eine Laufbahn ohne `retirement` gibt keine (2026-11-24e).
     7. *Name*: Zum Schluss gibt man den Namen ein und schließt ab.
   - **Zugewinne.** Eine Zeile (`Gain`) bringt genau eins: eine Fertigkeit +1 (`skill`), eine Wahl aus
     einer Kaskade (`choose`, mit `weapon` die Waffe statt der Fertigkeit), ein Attribut ± `change`
