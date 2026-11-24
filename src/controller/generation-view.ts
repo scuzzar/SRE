@@ -1,5 +1,6 @@
 import {
   ageOf,
+  canQuit,
   canTakeCash,
   cascadeOf,
   cascadeOptions,
@@ -9,6 +10,7 @@ import {
   isWorld,
   itemOf,
   previousWorld,
+  rankAt,
   uwpCode,
   MAX_CASH_ROLLS,
   MAX_TERMS,
@@ -19,6 +21,7 @@ import {
   replay,
   serviceOf,
   serviceOptions,
+  shipDesignOf,
   shownLevel,
   skillOf,
   stateOf,
@@ -33,6 +36,8 @@ import {
   type Effect,
   type Gain,
   type RollKind,
+  type Service,
+  type ShipChoice,
   type Generation,
   type GenerationStep,
   type Hex,
@@ -63,7 +68,7 @@ export interface CareerLine {
 
 export type GenerationAction =
   | { readonly kind: 'roll'; readonly label: string; readonly dice: 1 | 2; readonly odds: ThrowOdds | undefined }
-  | { readonly kind: 'service'; readonly options: readonly ({ readonly id: string; readonly name: string } & ThrowOdds)[] }
+  | { readonly kind: 'service'; readonly options: readonly ({ readonly id: string; readonly name: string; readonly available: boolean; readonly needs: string | undefined } & ThrowOdds)[] }
   | {
       readonly kind: 'skill';
       readonly left: number;
@@ -76,7 +81,7 @@ export type GenerationAction =
       /** Bei Blade und Gun Combat je Waffe das nötige und vorteilhafte Attribut, gemessen am UPP jetzt. */
       readonly options: readonly { readonly skill: string; readonly name: string; readonly item: string | undefined; readonly characteristic: WeaponCharacteristic | undefined }[];
     }
-  | { readonly kind: 'reenlist'; readonly odds: ThrowOdds; readonly last: boolean }
+  | { readonly kind: 'reenlist'; readonly odds: ThrowOdds; readonly last: boolean; readonly quit: boolean; readonly freeExit: boolean }
   | {
       readonly kind: 'muster';
       readonly left: number;
@@ -215,7 +220,33 @@ function effectText(effect: Effect): string | undefined {
   }
 }
 
-function label(roll: CareerRoll): string {
+/**
+ * Der Text des Ship-Vorteils im Lebenslauf: der Name des Entwurfs und, wenn die Kampagne schon
+ * entschieden hat, was aus dem Angebot wurde.
+ */
+function shipGainText(effect: Extract<Effect, { kind: 'ship' }>, choice: ShipChoice | undefined): string {
+  const name = shipDesignOf(effect.design).name;
+  return choice === undefined ? name : `${name} ${choice === 'switch' ? 'genommen' : 'ausgeschlagen'}`;
+}
+
+/**
+ * Der Name des Wurfs, der Rang 1 gibt: die Laufbahn gibt ihn selbst („Gehobener Dienst“ beim
+ * Bürokraten, Supplement 4 S. 8), sonst heißt er „Offizierspatent“.
+ */
+export function commissionTitle(service: Service | undefined): string {
+  return service?.commissionTitle ?? 'Offizierspatent';
+}
+
+/** Die Laufbahn, in der diese Würfe gemacht wurden: die letzte Musterung oder Einberufung bis hierher. */
+function serviceSoFar(rolls: readonly CareerRoll[], index: number): Service | undefined {
+  for (let i = index; i >= 0; i--) {
+    const roll = rolls[i]!;
+    if ((roll.kind === 'enlistment' || roll.kind === 'draft') && roll.for !== undefined) return serviceOf(roll.for);
+  }
+  return undefined;
+}
+
+function label(roll: CareerRoll, service: Service | undefined): string {
   switch (roll.kind) {
     case 'characteristic':
       return roll.of!;
@@ -226,7 +257,7 @@ function label(roll: CareerRoll): string {
     case 'survival':
       return 'Überleben';
     case 'commission':
-      return 'Offizierspatent';
+      return commissionTitle(service);
     case 'promotion':
       return 'Beförderung';
     case 'skill': {
@@ -246,7 +277,7 @@ function label(roll: CareerRoll): string {
   }
 }
 
-function result(roll: CareerRoll, effects: readonly Effect[]): string {
+function result(roll: CareerRoll, effects: readonly Effect[], service: Service | undefined): string {
   const success = successOf(roll);
   const gains = effects.flatMap((e) => (e.kind === 'characteristic' || e.kind === 'skill' || e.kind === 'item' ? [effectText(e)!] : []));
   const withGains = (head: string) => [head, ...gains].join(' · ');
@@ -267,7 +298,7 @@ function result(roll: CareerRoll, effects: readonly Effect[]): string {
     case 'commission':
     case 'promotion': {
       const rank = effects.find((e) => e.kind === 'rank');
-      if (!rank) return roll.kind === 'commission' ? 'kein Patent' : 'keine Beförderung';
+      if (!rank) return roll.kind === 'commission' ? `kein ${commissionTitle(service)}` : 'keine Beförderung';
       return withGains(effectText(rank)!);
     }
     case 'aging':
@@ -284,7 +315,8 @@ function result(roll: CareerRoll, effects: readonly Effect[]): string {
     case 'cash':
     case 'benefit': {
       const texts = effects.flatMap((e) => {
-        const text = effectText(e);
+        // Der Ship-Vorteil nennt den Entwurf und, was die Kampagne aus dem Angebot gemacht hat.
+        const text = e.kind === 'ship' ? shipGainText(e, roll.shipChoice) : effectText(e);
         return text === undefined ? [] : [text];
       });
       return texts.length > 0 ? texts.join(' · ') : (pending() ?? 'nichts');
@@ -297,20 +329,21 @@ export function careerLines(career: Career): readonly CareerLine[] {
   const { outcomes } = replay(career);
   return career.rolls.map((roll, index) => {
     const outcome = outcomes[index]!;
+    const service = serviceSoFar(career.rolls, index);
     // Wer abmustern will, hat weder Erfolg noch Fehlschlag; der Zielwert zählt für ihn nicht, nur eine 12.
     const leaving = roll.kind === 'reenlist' && !roll.wants;
     return {
       index,
       kind: roll.kind,
       term: outcome.term,
-      label: label(roll),
+      label: label(roll, service),
       dice: roll.dice,
       dm: roll.dm,
       parts: outcome.sources,
       total: sumOf(roll) + roll.dm,
       target: leaving ? undefined : roll.target,
       success: leaving ? undefined : roll.kind === 'reenlist' ? outcome.effects.some((e) => e.kind === 'term') : successOf(roll),
-      result: result(roll, outcome.effects),
+      result: result(roll, outcome.effects, service),
       gains: outcome.effects.flatMap((e) => {
         const gained = e.kind === 'characteristic' || e.kind === 'skill' || e.kind === 'item' || e.kind === 'credits' || e.kind === 'rank';
         const text = e.kind === 'skill' ? shortSkillText(e.skill, e.level) : gained ? effectText(e) : undefined;
@@ -329,7 +362,7 @@ const stepNames: Partial<Record<GenerationStep, string>> = {
 export function generationView(generation: Generation, hexes: readonly Hex[], error: string | undefined, shipGain?: ShipGainChoice): GenerationView {
   const state = stateOf(generation);
   const service = state.service;
-  const rank = service && state.rank > 0 ? service.ranks[state.rank - 1]!.title : undefined;
+  const rank = service && state.rank > 0 ? rankAt(service, state.rank)!.title : undefined;
   const status = service ? [service.name, rank, `Term ${state.terms}`].filter(Boolean).join(' · ') : '';
   const term = `Term ${state.terms}`;
 
@@ -354,7 +387,13 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
       prompt = 'Laufbahn wählen; dann wird die Musterung gewürfelt';
       action = {
         kind: 'service',
-        options: serviceOptions(state).map((o) => ({ id: o.service.id, name: o.service.name, ...o.odds })),
+        options: serviceOptions(state).map((o) => ({
+          id: o.service.id,
+          name: o.service.name,
+          available: o.available,
+          needs: o.service.needs === undefined ? undefined : `${o.service.needs.characteristic} ${o.service.needs.atLeast}+`,
+          ...o.odds,
+        })),
       };
       break;
     case 'draft':
@@ -363,10 +402,12 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
       break;
     case 'survival':
     case 'commission':
-    case 'promotion':
-      prompt = `${term}: ${stepNames[state.step]}`;
-      action = { kind: 'roll', label: `${stepNames[state.step]} würfeln`, dice: 2, odds };
+    case 'promotion': {
+      const stepName = state.step === 'commission' ? commissionTitle(service) : stepNames[state.step]!;
+      prompt = `${term}: ${stepName}`;
+      action = { kind: 'roll', label: `${stepName} würfeln`, dice: 2, odds };
       break;
+    }
     case 'skill':
       prompt = `${term}: ${state.skillsLeft === 1 ? 'eine Fertigkeit' : `${state.skillsLeft} Fertigkeiten`}; Tabelle wählen`;
       action = {
@@ -404,9 +445,16 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
       action = { kind: 'roll', label: 'Krise würfeln', dice: 2, odds };
       break;
     case 'reenlist': {
+      const service = state.service!;
       const last = state.terms >= MAX_TERMS;
-      prompt = last ? `Ende von ${term}: nach ${MAX_TERMS} Terms bleibt nur, wer eine 12 würfelt` : `Ende von ${term}: weiterverpflichten?`;
-      action = { kind: 'reenlist', odds: odds!, last };
+      prompt = last
+        ? `Ende von ${term}: nach ${MAX_TERMS} Terms bleibt nur, wer eine 12 würfelt`
+        : service.retirement === false
+          ? `Ende von ${term}: ${service.name} tritt nicht in den Ruhestand – gedient wird bis ${MAX_TERMS} Terms`
+          : service.freeExit === false
+            ? `Ende von ${term}: weiterverpflichten? Weg lässt dich hier nur der gelungene Wurf`
+            : `Ende von ${term}: weiterverpflichten?`;
+      action = { kind: 'reenlist', odds: odds!, last, quit: canQuit(state), freeExit: service.freeExit };
       break;
     }
     case 'muster':
@@ -434,7 +482,7 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
     step: state.step,
     prompt,
     status,
-    age: ageOf(state.terms),
+    age: ageOf(state.terms, state.service),
     upp: characteristics.map((characteristic, i) => ({
       characteristic,
       value: i < state.rolled ? state.upp[characteristic.toLowerCase() as keyof typeof state.upp] : undefined,

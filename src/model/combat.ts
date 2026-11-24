@@ -7,6 +7,8 @@ import { HANDS, itemOf, itemOfWeapon, weaponOf, type AnimalSpecial, type ArmorCl
 import { valueOf, type Characteristic } from './rules';
 import { autoWounds, checkWounds, fightingWounds, isAnimal, isFirstHitNow, woundStateOf, victimOf, woundedUpp, woundsOf, type WoundBlock, type WoundState } from './wounds';
 import { animalRowOf, animalTypeOf } from './animals';
+import { cascadeOf } from './reference';
+import { replay } from './career';
 import { filterDice } from './hold';
 
 /** *Basic Throw to Hit* (S. 6): 2W6 + DM ≥ 8. */
@@ -78,6 +80,21 @@ export function weaponSkill(character: Character, weapon: Weapon): SkillLevel | 
   return activeSkills(character).find((s) => s.of === weapon.uses);
 }
 
+/** So tief steht, wer eine Schusswaffe ohne jede Schusswaffenfertigkeit hält (DM −5, Book 1 S. 30). */
+export const UNSKILLED_GUN_DM = -5;
+
+/**
+ * Der DM der Waffenfertigkeit: die Stufe, ohne Fertigkeit 0. Barbar, Bürokrat und Arzt haben keine
+ * natürliche Waffenkunde an Schusswaffen und gelten als völlig ungebildet (Supplement 4 S. 11).
+ */
+export function weaponSkillDm(character: Character, weapon: Weapon): number {
+  const level = weaponSkill(character, weapon)?.level ?? 0;
+  if (level > 0 || weapon.attack !== 'shot') return level;
+  if (!cascadeOf('gun-combat').options.includes(weapon.uses)) return level;
+  if (character.career === undefined) return level;
+  return replay(character.career).service?.naturalGunSkill === false ? UNSKILLED_GUN_DM : level;
+}
+
 export function armorDm(weapon: Weapon, armor: ArmorClass): number {
   return weapon.vsArmor.find((a) => a.armor === armor)!.dm;
 }
@@ -140,7 +157,7 @@ export function fighterOf(campaign: Campaign, who: CharacterId): Fighter {
   const upp = woundedUpp(character.upp, woundsOf(campaign, who));
   const fighting = woundedUpp(character.upp, fightingWounds(campaign, who));
   const weapon = wieldedWeapon(character);
-  return { who, name: character.name, upp, fighting, weapon, skill: weaponSkill(character, weapon)?.level ?? 0, armor: wornArmor(character), state: woundStateOf(campaign, who), animal: false, natural: 0, hide: 0, special: undefined };
+  return { who, name: character.name, upp, fighting, weapon, skill: weaponSkillDm(character, weapon), armor: wornArmor(character), state: woundStateOf(campaign, who), animal: false, natural: 0, hide: 0, special: undefined };
 }
 
 /**

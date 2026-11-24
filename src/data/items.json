@@ -1137,5 +1137,66 @@
     "name": "Fell (kg)",
     "kind": "game",
     "weight": 1
+  },
+  {
+    "id": "sling",
+    "name": "Sling",
+    "kind": "weapon",
+    "tl": 0,
+    "weight": 0.1,
+    "price": 1,
+    "weapon": "sling"
+  },
+  {
+    "id": "short-bow",
+    "name": "Short Bow",
+    "kind": "weapon",
+    "tl": 0,
+    "weight": 0.5,
+    "price": 50,
+    "weapon": "short-bow"
+  },
+  {
+    "id": "long-bow",
+    "name": "Long Bow",
+    "kind": "weapon",
+    "tl": 0,
+    "weight": 1,
+    "price": 75,
+    "weapon": "long-bow"
+  },
+  {
+    "id": "sporting-crossbow",
+    "name": "Sporting Crossbow",
+    "kind": "weapon",
+    "tl": 1,
+    "weight": 3,
+    "price": 150,
+    "weapon": "sporting-crossbow"
+  },
+  {
+    "id": "military-crossbow",
+    "name": "Military Crossbow",
+    "kind": "weapon",
+    "tl": 1,
+    "weight": 6,
+    "price": 250,
+    "weapon": "military-crossbow"
+  },
+  {
+    "id": "repeating-crossbow",
+    "name": "Repeating Crossbow",
+    "kind": "weapon",
+    "tl": 2,
+    "weight": 4,
+    "price": 200,
+    "weapon": "repeating-crossbow"
+  },
+  {
+    "id": "surgical-instruments",
+    "name": "Medical Instruments",
+    "kind": "equipment",
+    "price": 5000,
+    "note": "B4 S. 13: ärztliches Besteck – Instrumente, Diagnosezeug, Drogen; Sachwert des Arztes (Cr 5.000)."
   }
 ]

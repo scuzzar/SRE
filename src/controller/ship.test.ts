@@ -44,8 +44,8 @@ describe('Reiter Schiff', () => {
     game.showScreen('ship');
     const view = game.snapshot();
     expect(view.ship?.ship).toBeUndefined();
-    // Neun Standardentwürfe und acht Small Craft (2026-11-21c); ohne Schiff wäre ein Boot eigenständig.
-    expect(view.ship?.yard).toHaveLength(17);
+    // Elf Standardentwürfe (der Corsair seit 2026-11-24a, der Seeker aus B4 S. 15 seit 2026-11-24c) und acht Small Craft; ohne Schiff wäre ein Boot eigenständig.
+    expect(view.ship?.yard).toHaveLength(19);
     expect(view.ship?.yard.find((d) => d.designId === 'shuttle')).toMatchObject({ smallCraft: true, becomes: 'eigenständig, ohne Mutterschiff' });
   });
 

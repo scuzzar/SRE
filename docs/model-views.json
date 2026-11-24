@@ -633,6 +633,45 @@
       "file": "2026-11-23c-andockflug",
       "title": "Andockflug: ein Small Craft fliegt heim und dockt mit der nächsten Bewegung an",
       "approved": true
+    },
+    {
+      "id": "2026-11-24a",
+      "file": "2026-11-24a-laufbahnen-des-buergers",
+      "title": "Laufbahnen des Bürgers: zwölf neue Laufbahnen aus Supplement 4 – `Service` bekommt `startAge`, `retirement`, `freeExit`, `naturalGunSkill` und `needs` (`Qualification`), `draft` wird optional (Laufbahnen ohne Einberufungszahl lassen die Person weiterbewerben), `Throw.dmPerTerm` (Belter) und `ThrowDm.atMost` (Stand 7−) kommen dazu",
+      "approved": true,
+      "show": [
+        "Characteristic"
+      ]
+    },
+    {
+      "id": "2026-11-24b",
+      "file": "2026-11-24b-name-der-ranglaufbahn",
+      "title": "Name der Ranglaufbahn: `Service.commissionTitle` gibt den Wurfs, der in die erste Rangstufe führt, bei zivilen Laufbahnen in ihren Worten – Bürokrat „Gehobener Dienst“ statt „Offizierspatent“",
+      "approved": true,
+      "show": [
+        "Rank"
+      ]
+    },
+    {
+      "id": "2026-11-24c",
+      "file": "2026-11-24c-rangstufen-und-bogenwaffen",
+      "title": "Rangstufen und Bogenwaffen (Supplement 4): eine Laufbahn muss nicht jede Rangstufe haben (der Barbar kennt nur Warrior und Chief), und Bogenwaffen sind Schusswaffen ohne Magazin",
+      "approved": true,
+      "show": [
+        "Service",
+        "Gain",
+        "Cascade"
+      ]
+    },
+    {
+      "id": "2026-11-24d",
+      "file": "2026-11-24d-der-adelsrang-des-adligen",
+      "title": "Der Adelsrang des Adligen: ein Rang kann einen Stand nennen (Rank.standing); bei der Musterung steht die Person sofort auf dem höchsten Rang, den ihr Stand erreicht, der Rangwurf entfällt, und jede Beförderung auf so einen Rang gibt +1 Stand (höchstens 15)",
+      "approved": true,
+      "show": [
+        "Service",
+        "Throw"
+      ]
     }
   ]
 }

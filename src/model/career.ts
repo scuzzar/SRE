@@ -1,6 +1,6 @@
 import type { Upp } from './campaign';
 import { DomainError } from './errors';
-import { cascadeOf, gainOf, itemOf, ref, serviceOf, skillOf, tableOf, weaponFor, type Aging, type Cascade, type Gain, type Service, type Throw } from './reference';
+import { cascadeOf, gainOf, itemOf, ref, serviceOf, skillOf, tableOf, weaponFor, type Aging, type Cascade, type Gain, type Rank, type Service, type Throw } from './reference';
 import { characteristics, JACK_OF_ALL_TRADES, type Characteristic } from './rules';
 
 /**
@@ -105,9 +105,19 @@ export interface DmSource {
 /** Eine Bedingung eines Wurfs mit Zielwert und ob sie beim Stand der UPP greift. */
 export interface ThrowCondition {
   readonly characteristic: Characteristic;
-  readonly atLeast: number;
+  /** Die Bedingung „ab diesem Wert“; mit `atMost` gesetzt, wenn die Bedingung nach unten gilt. */
+  readonly atLeast?: number | undefined;
+  /** Die Bedingung „bis höchstens diesen Wert“ („Stand 7−“, Supplement 4 S. 6). */
+  readonly atMost?: number | undefined;
   readonly dm: number;
   readonly applies: boolean;
+}
+
+/** Der DM einer Laufbahn, der je geleisteten Term zählt (der Belterer: +1 je Term). */
+export interface TermDm {
+  readonly perTerm: number;
+  readonly terms: number;
+  readonly dm: number;
 }
 
 export interface RollOutcome {
@@ -178,14 +188,25 @@ export function successOf(roll: CareerRoll): boolean | undefined {
   return roll.target === undefined ? undefined : sumOf(roll) + roll.dm >= roll.target;
 }
 
-/** DM eines Wurfs der Laufbahn: je DM, dessen Attribut mindestens `atLeast` ist. */
-export function throwDm(th: Throw, upp: Upp): number {
-  return th.dms.reduce((dm, d) => (upp[uppKey[d.characteristic]] >= d.atLeast ? dm + d.dm : dm), 0);
+/** Ob eine Wurfbedingung beim Stand der UPP greift: nach oben ab `atLeast`, nach unten bis `atMost`. */
+export function conditionApplies(d: { characteristic: Characteristic; atLeast?: number | undefined; atMost?: number | undefined }, upp: Upp): boolean {
+  const value = upp[uppKey[d.characteristic]];
+  return d.atLeast !== undefined ? value >= d.atLeast : value <= (d.atMost as number);
 }
 
-/** Die Bedingungen eines Wurfs: welches Attribut ab welchem Wert welchen DM gibt, und ob es greift. */
+/** Der DM eines Wurfs der Laufbahn: je greifende Bedingung und der DM je Term bis zum gegebenen Term. */
+export function throwDm(th: Throw, upp: Upp, terms = 0): number {
+  return th.dms.reduce((dm, d) => (conditionApplies(d, upp) ? dm + d.dm : dm), 0) + (termDmOf(th, terms)?.dm ?? 0);
+}
+
+/** Der DM je Term, um den es gerade geht (`terms` ist der angefangene Term, im ersten also 1); ohne `dmPerTerm` nichts. */
+export function termDmOf(th: Throw, terms: number): TermDm | undefined {
+  return th.dmPerTerm === undefined ? undefined : { perTerm: th.dmPerTerm, terms, dm: th.dmPerTerm * terms };
+}
+
+/** Die Bedingungen eines Wurfs: welches Attribut ab oder bis welchem Wert welchen DM gibt, und ob es greift. */
 export function throwConditions(th: Throw, upp: Upp): readonly ThrowCondition[] {
-  return th.dms.map((d) => ({ ...d, applies: upp[uppKey[d.characteristic]] >= d.atLeast }));
+  return th.dms.map((d) => ({ ...d, applies: conditionApplies(d, upp) }));
 }
 
 /** DM-Quellen der Abmusterung: Gambling auf Geld, Rang 5+ auf Sachwerte. */
@@ -194,8 +215,9 @@ export function musterSources(kind: 'cash' | 'benefit', skills: readonly { reado
   return rank >= 5 ? [{ label: `Rang ${rank}`, dm: 1 }] : [];
 }
 
-export function ageOf(terms: number): number {
-  return START_AGE + TERM_YEARS * terms;
+/** Das Alter nach `terms` Termen: die Laufbahn beginnt mit 18, mit `startAge` mit diesem. */
+export function ageOf(terms: number, service?: Service): number {
+  return (service?.startAge ?? START_AGE) + TERM_YEARS * terms;
 }
 
 /** Pension im Jahr: ab 5 Terms Cr 4000, je weiteren Term Cr 2000 mehr. */
@@ -206,6 +228,30 @@ export function pensionOf(terms: number, dead: boolean): number {
 /** Abmusterungswürfe: einer je Term, dazu +1 bei Rang 1–2, +2 bei Rang 3–4, +3 bei Rang 5–6. */
 export function musterRollsOf(terms: number, rank: number): number {
   return terms + Math.ceil(rank / 2);
+}
+
+/** Die Rangstufen einer Laufbahn, aufsteigend; eine Laufbahn kann Stufen überspringen (Barbar: 2 und 5). */
+export function rankLevels(service: Service): readonly number[] {
+  return service.ranks.map((r) => r.level).sort((a, b) => a - b);
+}
+
+/** Der Rang einer Laufbahn mit dieser Stufe, wenn es ihn dort gibt. */
+export function rankAt(service: Service, level: number): Rank | undefined {
+  return service.ranks.find((r) => r.level === level);
+}
+
+/** Die nächste Rangstufe über `level`, oder `undefined`, wenn die Laufbahn höher nicht kennt. */
+export function nextRankLevel(service: Service, level: number): number | undefined {
+  return rankLevels(service).find((l) => l > level);
+}
+
+/**
+ * Der höchste Rang einer Laufbahn, dessen Stand der eigene erreicht (2026-11-24d); `undefined`,
+ * wenn die Laufbahn keine Standesränge kennt oder der Stand für den untersten nicht reicht.
+ */
+export function standingRank(service: Service, soc: number): Rank | undefined {
+  const fitting = service.ranks.filter((r) => r.standing !== undefined && r.standing <= soc);
+  return fitting.sort((a, b) => a.level - b.level).at(-1);
 }
 
 /** Die Zeilen der Aging Table für einen Term: je Attribut die mit dem größten `fromTerm` ≤ Term. */
@@ -278,14 +324,16 @@ class Replay {
       }
       case 'enlistment': {
         const service = serviceOf(this.need(roll.for, 'die Laufbahn'));
-        if (successOf(this.withTarget(roll))) this.enter(service, false);
-        else this.step = 'draft';
+        // Eine Laufbahn ohne Einberufungszahl (die zwölf aus Supplement 4) würfelt keine Einberufung:
+        // abgelehnt heißt, dass man sich anderweitig bewirbt.
+        if (successOf(this.withTarget(roll))) this.enter(service, false, roll.chosen, last);
+        else this.step = service.draft === undefined ? 'service' : 'draft';
         break;
       }
       case 'draft': {
         const service = ref.services.find((s) => s.draft === roll.dice[0]);
         if (!service || roll.for !== service.id) throw new DomainError('Die Einberufung passt nicht zum Würfel.');
-        this.enter(service, true);
+        this.enter(service, true, roll.chosen, last);
         break;
       }
       case 'survival':
@@ -294,18 +342,19 @@ class Replay {
         break;
       case 'commission':
         if (successOf(this.withTarget(roll))) {
-          this.promote(1);
-          this.step = this.canPromote() ? 'promotion' : 'skill';
+          // Die erste Rangstufe muss nicht Rang 1 sein (der Barbar kennt nur „Warrior“ und „Chief“).
+          if (this.promote(rankLevels(this.service!)[0]!, roll.chosen, last)) this.step = this.canPromote() ? 'promotion' : 'skill';
         } else {
           this.step = 'skill';
         }
         break;
       case 'promotion':
         if (successOf(this.withTarget(roll))) {
-          this.promote(this.rank + 1);
-          this.promoted = true;
+          const next = nextRankLevel(this.service!, this.rank);
+          if (next === undefined) throw new DomainError('Höher als den höchsten Rang der Laufbahn kann man nicht befördern.');
+          if (this.promote(next, roll.chosen, last)) this.promoted = true;
         }
-        this.step = 'skill';
+        if (this.step !== 'cascade') this.step = 'skill';
         break;
       case 'skill': {
         const table = tableOf(this.need(roll.on, 'die Tabelle'));
@@ -353,7 +402,18 @@ class Replay {
       case 'reenlist': {
         if (roll.wants === undefined) throw new DomainError('Bei der Weiterverpflichtung fehlt, ob man bleiben will.');
         const sum = sumOf(roll);
-        const stays = sum === 12 || (this.terms < MAX_TERMS && roll.wants && successOf(this.withTarget(roll)) === true);
+        const made = successOf(this.withTarget(roll)) === true;
+        const service = this.service!;
+        // Barbar: ein Ruhestand gibt es nicht, gedient wird bis zum siebenten Term. Bürokrat: vor dem
+        // Ruhestand lässt nur die *gelungene* Weiterverpflichtung weg (Supplement 4 S. 8–9).
+        const stays =
+          sum === 12 || this.terms >= MAX_TERMS
+            ? true
+            : service.retirement === false
+              ? true
+              : service.freeExit === false
+                ? roll.wants === made
+                : roll.wants && made;
         if (stays) {
           this.beginTerm();
         } else {
@@ -387,7 +447,14 @@ class Replay {
         : roll.kind === 'survival' || roll.kind === 'commission' || roll.kind === 'promotion'
           ? this.service?.[roll.kind]
           : undefined;
-    if (th) return throwConditions(th, this.upp).flatMap((c) => (c.applies ? [{ label: c.characteristic, dm: c.dm }] : []));
+    if (th) {
+      const parts: DmSource[] = throwConditions(th, this.upp)
+        .filter((c) => c.applies)
+        .map((c) => ({ label: c.atMost === undefined ? c.characteristic : `${c.characteristic} ${c.atMost}−`, dm: c.dm }));
+      const perTerm = termDmOf(th, this.terms);
+      if (perTerm) parts.push({ label: `Term ${perTerm.terms}`, dm: perTerm.dm });
+      return parts;
+    }
     if (roll.kind === 'cash' || roll.kind === 'benefit') return musterSources(roll.kind, this.skills, this.rank);
     return [];
   }
@@ -449,11 +516,19 @@ class Replay {
     this.effects.push(change === undefined ? { kind: 'characteristic', characteristic: c, value } : { kind: 'characteristic', characteristic: c, value, change });
   }
 
-  private enter(service: Service, drafted: boolean): void {
+  private enter(service: Service, drafted: boolean, chosen: string | undefined, last: boolean): void {
     this.service = service;
     this.drafted = drafted;
     this.effects.push({ kind: 'service', service: service.id, drafted });
-    if (service.onEnlistment) this.gain(service.onEnlistment, undefined, false, false);
+    // Standesränge (2026-11-24d): nennt die Rangtafel Stände, steht die Person gleich bei der
+    // Musterung auf dem höchsten Rang, den ihr Stand erreicht; der Rangwurf entfällt für sie.
+    const standing = standingRank(service, this.value('SOC'));
+    if (standing !== undefined) {
+      this.rank = standing.level;
+      this.effects.push({ kind: 'rank', level: standing.level, title: standing.title });
+    }
+    // Die Automatik-Fertigkeit einer Kaskade (der Flyer: Air Craft-1) fragt nach der genauen Fertigkeit.
+    if (service.onEnlistment && !this.gain(service.onEnlistment, chosen, last, false)) return;
     this.beginTerm();
   }
 
@@ -470,19 +545,24 @@ class Replay {
   }
 
   private canPromote(): boolean {
-    return this.service!.promotion !== undefined && this.rank >= 1 && this.rank < this.service!.ranks.length && !this.promoted;
+    return this.service!.promotion !== undefined && this.rank >= 1 && nextRankLevel(this.service!, this.rank) !== undefined && !this.promoted;
   }
 
   private afterSurvival(): void {
     this.step = this.canCommission() ? 'commission' : this.canPromote() ? 'promotion' : 'skill';
   }
 
-  private promote(level: number): void {
-    const rank = this.service!.ranks[level - 1]!;
+  private promote(level: number, chosen: string | undefined, last: boolean): boolean {
+    const rank = rankAt(this.service!, level)!;
+    // Der Rangwurf gibt den ersten Rang; alles Danach ist Beförderung.
+    const wasPromotion = this.rank > 0;
     this.rank = level;
     this.skillsLeft++;
     this.effects.push({ kind: 'rank', level, title: rank.title });
-    if (rank.grants) this.gain(rank.grants, undefined, false, false);
+    // Standesränge: jede Beförderung auf so einen Rang gibt +1 Stand (2026-11-24d), über 15 hinaus nicht.
+    if (wasPromotion && rank.standing !== undefined && this.value('SOC') < MAX_VALUE) this.set('SOC', this.value('SOC') + 1, 1);
+    // Auch die Rang-Gabe kann eine Kaskade sein (der Barbar als Warrior: Blade Combat-1).
+    return rank.grants === undefined ? true : this.gain(rank.grants, chosen, last, false);
   }
 
   private afterSkill(): void {

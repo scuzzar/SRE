@@ -164,7 +164,9 @@ describe('Referenzdaten', () => {
 
   it('geben jeder Waffe mit Gegenstand ein Mindest-SOC (0, 6, 10) und kennzeichnen die verbrecherischen Patrons (2026-11-14c)', () => {
     const shopWeapons = referenceData.weapons.filter((w) => referenceData.items.some((i) => i.weapon === w.id));
-    for (const w of shopWeapons) expect(w.minSoc === undefined).toBe(w.id === 'hands' || false);
+    // Ohne Mindest-SOC: Hände, Tierwaffen und die Bogenwaffen aus Supplement 4 (2026-11-24c).
+    const bowWeapons = referenceData.cascades.find((c) => c.id === 'bow-combat')!.options;
+    for (const w of shopWeapons) expect(w.minSoc === undefined).toBe(w.id === 'hands' || bowWeapons.includes(w.id));
     expect(referenceData.weapons.find((w) => w.id === 'dagger')!.minSoc).toBe(0);
     expect(referenceData.weapons.find((w) => w.id === 'automatic-pistol')!.minSoc).toBe(6);
     expect(referenceData.weapons.find((w) => w.id === 'laser-rifle')!.minSoc).toBe(10);
@@ -173,11 +175,15 @@ describe('Referenzdaten', () => {
     expect(criminal).toEqual(['Arsonist', 'Assassin', 'Cutthroat', 'Embezzler', 'Hijacker', 'Pirate', 'Rogue', 'Smuggler', 'Swindler', 'Terrorist', 'Underworld Leader']);
   });
 
-  it('haben die sechs Laufbahnen des Regelwerks mit den Würfen der Prior Service Table', () => {
+  it('haben die Laufbahnen des Regelwerks und die zwölf aus Supplement 4 die Würfe der Prior Service Table', () => {
     const [navy, marines, army, scouts, merchants, other] = referenceData.services;
-    expect(referenceData.services.map((s) => `${s.draft}:${s.name}`)).toEqual(['1:Navy', '2:Marines', '3:Army', '4:Scouts', '5:Merchants', '6:Other']);
+    expect(referenceData.services.map((s) => `${s.draft ?? '−'}:${s.name}`)).toEqual([
+      '1:Navy', '2:Marines', '3:Army', '4:Scouts', '5:Merchants', '6:Other',
+      '−:Pirate', '−:Bureaucrat', '−:Belter', '−:Sailor', '−:Diplomat', '−:Doctor', '−:Flyer',
+      '−:Barbarian', '−:Rogue', '−:Noble', '−:Scientist', '−:Hunter',
+    ]);
     expect(navy!.enlistment).toEqual({ target: 8, dms: [{ characteristic: 'INT', atLeast: 8, dm: 1 }, { characteristic: 'EDU', atLeast: 9, dm: 2 }] });
-    expect(referenceData.services.map((s) => s.reenlist)).toEqual([6, 6, 7, 3, 4, 5]);
+    expect(referenceData.services.map((s) => s.reenlist)).toEqual([6, 6, 7, 3, 4, 5, 7, 3, 7, 6, 5, 4, 6, 6, 5, 4, 5, 5]);
     expect(merchants!.ranks.map((r) => r.title)).toEqual(['4th Officer', '3rd Officer', '2nd Officer', '1st Officer', 'Captain']);
     expect(scouts!.commission).toBeUndefined();
     expect(scouts!.skillsPerTerm).toBe(2);
@@ -189,6 +195,45 @@ describe('Referenzdaten', () => {
     expect(scouts!.benefits.rows[5]).toMatchObject({ ship: 'S', shipDebtFree: true });
     expect(merchants!.benefits.rows[6]).toMatchObject({ ship: 'A' });
     expect(merchants!.benefits.rows[6]!.shipDebtFree).toBeUndefined();
+  });
+
+  it('haben die neuen Laufbahnen das, was Supplement 4 voraus hat', () => {
+    const service = (id: string) => referenceData.services.find((s) => s.id === id)!;
+    // Beltterer: Beginn mit 14, Überleben mit +1 je Term, Rangtafel und Patent gibt es nicht (B4 6).
+    expect(service('belter')).toMatchObject({ startAge: 14 });
+    expect(service('belter').survival).toEqual({ target: 9, dms: [], dmPerTerm: 1 });
+    expect(service('belter').commission).toBeUndefined();
+    expect(service('belter').ranks).toEqual([]);
+    expect(service('belter').benefits.rows[5]).toMatchObject({ ship: 'J', shipDebtFree: true });
+    // Barbar: kein Ruhestand, keine natürliche Schusswaffenkunde, nur zwei Rangstufen (B4 9).
+    expect(service('barbarian')).toMatchObject({ startAge: 14, retirement: false, naturalGunSkill: false });
+    expect(service('barbarian').ranks.map((r) => `${r.level}:${r.title}`)).toEqual(['2:Warrior', '5:Chief']);
+    expect(service('barbarian').ranks[0]!.grants).toEqual({ id: 'barbarian.rank.2', choose: 'blade-combat', weapon: false });
+    expect(service('barbarian').onEnlistment).toEqual({ id: 'barbarian.entry', skill: 'sword', weapon: false });
+    // Adliger: Einstieg ohne Wurf allein aus Stand 10+ (B4 8).
+    expect(service('noble').needs).toEqual({ characteristic: 'SOC', atLeast: 10 });
+    expect(service('noble').ranks.map((r) => r.title)).toEqual(['B Knight', 'C Baron', 'D Marquis', 'E Count', 'F Duke']);
+    expect(service('noble').benefits.rows[5]).toMatchObject({ ship: 'Y', shipDebtFree: true });
+    // Arzt und Scientist: Sachwert Instruments und Laborschiff (B4 13 und 15).
+    expect(service('doctor')).toMatchObject({ naturalGunSkill: false });
+    expect(service('doctor').benefits.rows[4]).toMatchObject({ item: 'surgical-instruments' });
+    expect(service('scientist').benefits.rows[5]).toMatchObject({ ship: 'L', shipDebtFree: true });
+    expect(service('hunter').benefits.rows[5]).toMatchObject({ ship: 'K', shipDebtFree: true });
+    // Der Flyer kommt mit einer Kaskade in die Laufbahn: Air Craft-1 (B4 7).
+    expect(service('flyer').onEnlistment).toEqual({ id: 'flyer.entry', choose: 'air-craft', weapon: false });
+  });
+
+  it('haben die Bogenwaffen aus Supplement 4 ihre Werte ohne Magazin', () => {
+    const weapon = (id: string) => referenceData.weapons.find((w) => w.id === id)!;
+    // B4 S. 16: Schusswaffen ohne Magazin, Schleuder wirkt gegen jede Rüstung fast gleich.
+    expect(weapon('sling')).toMatchObject({ attack: 'shot', uses: 'sling', required: 3, requiredDm: -2, advantageous: 11, advantageousDm: 1, wounds: 2 });
+    for (const id of ['sling', 'short-bow', 'long-bow', 'sporting-crossbow', 'military-crossbow', 'repeating-crossbow']) {
+      expect(weapon(id).rounds).toBeUndefined();
+      expect(referenceData.items.find((i) => i.weapon === id)).toBeDefined();
+    }
+    expect(weapon('long-bow').vsArmor.map((d) => d.dm)).toEqual([1, 0, -3, -3, 1, -1, -5]);
+    expect(weapon('repeating-crossbow').atRange.map((d) => d.dm ?? null)).toEqual([0, -2, 0, -10, null]);
+    expect(referenceData.cascades.find((c) => c.id === 'bow-combat')!.options).toEqual(['sling', 'short-bow', 'long-bow', 'sporting-crossbow', 'military-crossbow', 'repeating-crossbow']);
   });
 
   it('haben jede Waffe aus Blade und Gun Combat genau einmal als Gegenstand', () => {
@@ -241,7 +286,11 @@ describe('Referenzdaten', () => {
   });
 
   it('kennen die Standardentwürfe, Rechner und Programme aus SE 10 bis 13', () => {
-    expect(referenceData.ships.filter((s) => s.kind === 'starship').map((s) => s.code)).toEqual(['S', 'A', 'R', 'M', 'Y', 'C', 'T', 'L', 'K']);
+    expect(referenceData.ships.filter((s) => s.kind === 'starship').map((s) => s.code)).toEqual(['S', 'A', 'R', 'M', 'Y', 'C', 'T', 'L', 'K', 'P', 'J']);
+    // Der Seeker als Sachwert der Beltterer (B4 S. 15): ein geänderter Typ S mit Bergungslaser.
+    expect(referenceData.ships.find((s) => s.code === 'J')).toMatchObject({ name: 'Seeker', hull: 100, jump: 2, maneuver: 1, cargo: 20, basePrice: 20_000_000, turrets: [{ type: 'single', weapons: ['pulse-laser'] }] });
+    // Der Corsair als Sachwert der Piraten-Laufbahn (Supplement 4 S. 13).
+    expect(referenceData.ships.find((s) => s.code === 'P')).toMatchObject({ name: 'Corsair', hull: 400, jump: 2, maneuver: 3, cargo: 160, lowBerths: 20, streamlined: false });
     // Die Small Craft aus SR 33–35 (2026-11-21b).
     expect(referenceData.ships.filter((s) => s.kind === 'smallCraft').map((s) => s.id)).toEqual(['launch', 'boat', 'slow-boat', 'pinnace', 'slow-pinnace', 'cutter', 'shuttle', 'fighter']);
     const design = (code: string) => referenceData.ships.find((s) => s.code === code)!;

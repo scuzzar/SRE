@@ -43,12 +43,30 @@ export function GenerationSheet({ generation, log }: { generation: GenerationVie
   // Das große Popup bleibt nach dem Urteil offen, bis man weitertippt.
   const [closed, setClosed] = useState(-1);
   const dramatic = animate && dramaticKinds.includes(latest.kind) && latest.dice.length === 2 && latest.target !== undefined;
+  const run = () => {
+    game.runGeneration();
+    setSeen(game.snapshot().generation?.lines.length ?? 0);
+  };
   // Der Lebenslauf wächst nach unten; der neueste Wurf soll zu sehen sein.
   const body = useRef<HTMLDivElement>(null);
   const count = view.lines.length;
+  // Die Laufbahnwahl gehört ins Hauptfeld über dem Dock: bei achtzehn Laufbahnen wäre sie im Dock
+  // abgeschnitten. Hier wächst sie mit und das Feld scrollt.
+  const choicesInBody = view.action.kind === 'service';
+  const choices = useRef<HTMLDivElement>(null);
   useEffect(() => {
     body.current?.scrollTo({ top: body.current.scrollHeight });
   }, [count]);
+  useEffect(() => {
+    if (!choicesInBody) return;
+    const el = choices.current;
+    const field = body.current;
+    // Die Wahl von oben zeigen: Frage und die ersten Laufbahnen. Die Charakterkarte oben bleibt
+    // stehen (sticky), also rückt die Wahl unter sie.
+    if (!el || !field) return;
+    const card = field.querySelector('.generation-card')?.getBoundingClientRect().height ?? 0;
+    field.scrollTop += el.getBoundingClientRect().top - field.getBoundingClientRect().top - card;
+  }, [choicesInBody, view.prompt]);
 
   return (
     <div
@@ -85,6 +103,19 @@ export function GenerationSheet({ generation, log }: { generation: GenerationVie
         <div className="sheet-body" ref={body}>
           <CharacterSheet generation={view} />
           <CareerList lines={view.lines} worlds={view.termWorlds} compact />
+          {choicesInBody && (
+            <div className="generation-choices" ref={choices}>
+              <p className="generation-prompt" aria-live="polite">
+                {view.prompt}
+              </p>
+              {view.error && (
+                <p className="error" role="alert">
+                  {view.error}
+                </p>
+              )}
+              <Actions action={view.action} disabled={rolling} onRun={run} />
+            </div>
+          )}
         </div>
 
         <div className="generation-dock">
@@ -107,22 +138,19 @@ export function GenerationSheet({ generation, log }: { generation: GenerationVie
               </span>
             </div>
           )}
-          <p className="generation-prompt" aria-live="polite">
-            {view.prompt}
-          </p>
-          {view.error && (
-            <p className="error" role="alert">
-              {view.error}
-            </p>
+          {!choicesInBody && (
+            <>
+              <p className="generation-prompt" aria-live="polite">
+                {view.prompt}
+              </p>
+              {view.error && (
+                <p className="error" role="alert">
+                  {view.error}
+                </p>
+              )}
+              <Actions action={view.action} disabled={rolling} onRun={run} />
+            </>
           )}
-          <Actions
-            action={view.action}
-            disabled={rolling}
-            onRun={() => {
-              game.runGeneration();
-              setSeen(game.snapshot().generation?.lines.length ?? 0);
-            }}
-          />
         </div>
       </section>
       {dramatic && closed < latest.index && (
@@ -441,10 +469,16 @@ function OddsLines({ odds }: { odds: ThrowOdds }) {
       <span>Zielwert {odds.target}+</span>
       {odds.conditions.map((c) => (
         <span key={c.characteristic} className={c.applies ? 'met' : 'unmet'}>
-          {c.characteristic} {c.atLeast}+ → {signed(c.dm)}
+          {c.characteristic} {c.atMost === undefined ? `${c.atLeast}+` : `${c.atMost}−`} → {signed(c.dm)}
           {c.applies ? ' ✓' : ''}
         </span>
       ))}
+      {odds.perTerm && (
+        <span className={odds.perTerm.dm > 0 ? 'met' : undefined}>
+          je Term {signed(odds.perTerm.perTerm)}
+          {odds.perTerm.terms > 0 ? ` · ${odds.perTerm.terms}: ${signed(odds.perTerm.dm)}` : ''}
+        </span>
+      )}
       <span>{needText(odds)}</span>
     </span>
   );
@@ -497,9 +531,9 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
       return (
         <div className="choice-grid services" role="group" aria-label="Laufbahn">
           {action.options.map((o) => (
-            <button key={o.id} type="button" aria-disabled={disabled || undefined} onClick={() => game.chooseService(o.id)}>
+            <button key={o.id} type="button" disabled={!o.available} aria-disabled={disabled || undefined} onClick={() => game.chooseService(o.id)}>
               <strong>{o.name}</strong>
-              <OddsLines odds={o} />
+              {o.needs === undefined ? <OddsLines odds={o} /> : <span className="small-label">{o.needs}</span>}
             </button>
           ))}
         </div>
@@ -549,11 +583,19 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
             <span className="small-label">nur eine 12 verlängert</span>
           </span>
         </HoldButton>
+      ) : !action.quit ? (
+        <HoldButton className="roll generation-main" busy={disabled} onPress={() => game.reenlist(true)} onHold={onRun}>
+          <DiceIcon />
+          <span>
+            Weiterdienen
+            <span className="small-label">diese Laufbahn tritt nicht in den Ruhestand</span>
+          </span>
+        </HoldButton>
       ) : (
         <div className="choice-grid" role="group" aria-label="Weiterverpflichtung">
           <button type="button" aria-disabled={disabled || undefined} onClick={() => game.reenlist(false)}>
             <strong>Abmustern</strong>
-            <span className="small-label">eine 12 heißt trotzdem bleiben</span>
+            <span className="small-label">{action.freeExit ? 'eine 12 heißt trotzdem bleiben' : 'nur der gelungene Wurf lässt dich weg'}</span>
           </button>
           <button type="button" className="preferred" aria-disabled={disabled || undefined} onClick={() => game.reenlist(true)}>
             <strong>Weiterverpflichten</strong>

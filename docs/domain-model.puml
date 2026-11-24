@@ -1003,20 +1003,31 @@ hide <<browser>> stereotype
   }
   class Service <<reference>> $erschaffung {
     name: string
-    draft: number
+    draft: number [0..1]
     reenlist: number
     skillsPerTerm: number [0..1]
+    startAge: number [0..1]
+    retirement: boolean
+    freeExit: boolean
+    naturalGunSkill: boolean
+    commissionTitle: string [0..1]
   }
   class Throw <<value>> $erschaffung {
     target: number
+    dmPerTerm: number [0..1]
   }
   class ThrowDm <<value>> $erschaffung {
-    atLeast: number
+    atLeast: number [0..1]
+    atMost: number [0..1]
     dm: number
+  }
+  class Qualification <<value>> $erschaffung {
+    atLeast: number
   }
   class Rank <<reference>> $erschaffung {
     level: number
     title: string
+    standing: number [0..1]
   }
   class Table <<reference>> $erschaffung {
     name: string
@@ -1470,6 +1481,8 @@ Service "1" *-- "4" Table : skills {ordered}
 Service "1" *-- "1" Table : benefits
 Service "1" *-- "1" Table : cash
 Service "1" *-- "0..1" Gain : onEnlistment
+  Service "1" *-- "0..1" Qualification : needs
+  Qualification "1" --> "1" Characteristic : of
 Rank "1" *-- "0..1" Gain : grants
 Table "1" *-- "6..7" Gain : rows {ordered}
 Gain "*" --> "0..1" Skill : skill
