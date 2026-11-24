@@ -43,12 +43,30 @@ export function GenerationSheet({ generation, log }: { generation: GenerationVie
   // Das große Popup bleibt nach dem Urteil offen, bis man weitertippt.
   const [closed, setClosed] = useState(-1);
   const dramatic = animate && dramaticKinds.includes(latest.kind) && latest.dice.length === 2 && latest.target !== undefined;
+  const run = () => {
+    game.runGeneration();
+    setSeen(game.snapshot().generation?.lines.length ?? 0);
+  };
   // Der Lebenslauf wächst nach unten; der neueste Wurf soll zu sehen sein.
   const body = useRef<HTMLDivElement>(null);
   const count = view.lines.length;
+  // Die Laufbahnwahl gehört ins Hauptfeld über dem Dock: bei achtzehn Laufbahnen wäre sie im Dock
+  // abgeschnitten. Hier wächst sie mit und das Feld scrollt.
+  const choicesInBody = view.action.kind === 'service';
+  const choices = useRef<HTMLDivElement>(null);
   useEffect(() => {
     body.current?.scrollTo({ top: body.current.scrollHeight });
   }, [count]);
+  useEffect(() => {
+    if (!choicesInBody) return;
+    const el = choices.current;
+    const field = body.current;
+    // Die Wahl von oben zeigen: Frage und die ersten Laufbahnen. Die Charakterkarte oben bleibt
+    // stehen (sticky), also rückt die Wahl unter sie.
+    if (!el || !field) return;
+    const card = field.querySelector('.generation-card')?.getBoundingClientRect().height ?? 0;
+    field.scrollTop += el.getBoundingClientRect().top - field.getBoundingClientRect().top - card;
+  }, [choicesInBody, view.prompt]);
 
   return (
     <div
@@ -85,6 +103,19 @@ export function GenerationSheet({ generation, log }: { generation: GenerationVie
         <div className="sheet-body" ref={body}>
           <CharacterSheet generation={view} />
           <CareerList lines={view.lines} worlds={view.termWorlds} compact />
+          {choicesInBody && (
+            <div className="generation-choices" ref={choices}>
+              <p className="generation-prompt" aria-live="polite">
+                {view.prompt}
+              </p>
+              {view.error && (
+                <p className="error" role="alert">
+                  {view.error}
+                </p>
+              )}
+              <Actions action={view.action} disabled={rolling} onRun={run} />
+            </div>
+          )}
         </div>
 
         <div className="generation-dock">
@@ -107,22 +138,19 @@ export function GenerationSheet({ generation, log }: { generation: GenerationVie
               </span>
             </div>
           )}
-          <p className="generation-prompt" aria-live="polite">
-            {view.prompt}
-          </p>
-          {view.error && (
-            <p className="error" role="alert">
-              {view.error}
-            </p>
+          {!choicesInBody && (
+            <>
+              <p className="generation-prompt" aria-live="polite">
+                {view.prompt}
+              </p>
+              {view.error && (
+                <p className="error" role="alert">
+                  {view.error}
+                </p>
+              )}
+              <Actions action={view.action} disabled={rolling} onRun={run} />
+            </>
           )}
-          <Actions
-            action={view.action}
-            disabled={rolling}
-            onRun={() => {
-              game.runGeneration();
-              setSeen(game.snapshot().generation?.lines.length ?? 0);
-            }}
-          />
         </div>
       </section>
       {dramatic && closed < latest.index && (

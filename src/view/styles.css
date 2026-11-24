@@ -2592,6 +2592,24 @@ button:disabled {
   justify-content: flex-start;
 }
 
+/* Die Laufbahnwahl im Hauptfeld der Erschaffung: sie wächst und das Feld scrollt, statt unten
+   abzuscheiden. Drei Spalten, damit die achtzehn Laufbahnen nicht zwanzig Zeilen brauchen. */
+.generation-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 12px;
+}
+
+.generation-choices .choice-grid.services {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.generation-choices .choice-grid.services button {
+  min-height: 64px;
+  padding: 6px 4px;
+}
+
 /* Die Fertigkeitstabellen nebeneinander wie im Chart; eine Spalte antippen würfelt darauf. */
 .skill-tables {
   display: grid;
