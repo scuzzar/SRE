@@ -635,7 +635,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-24b-name-der-ranglaufbahn.png`](changes/2026-11-24b-name-der-ranglaufbahn.png).
 >
-> Noch nicht freigegeben (Kennzeichen **2026-11-24c**): **Rangstufen und Bogenwaffen** – was die
+> Am 24. November 2026 freigegeben (Kennzeichen **2026-11-24c**): **Rangstufen und Bogenwaffen** – was die
 > zwölf Laufbahnen an den beiden bestehenden Klassen brauchen. `Rank.level` ist die Rangstufe,
 > und eine Laufbahn muss **nicht jede Stufe haben**: die Tafel des Barbars kennt nur **Warrior
 > (Stufe 2)** und **Chief (Stufe 5)**, die Stufen 1, 3 und 4 gibt es dort nicht. Der Rangwurf gibt
@@ -643,8 +643,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > einer Laufbahn ist die höchste Stufe ihrer Tafel. Und `Weapon.rounds` ist das Magazin der
 > Schusswaffen – die **Bogenwaffen** aus Supplement 4 (B4 S. 16) sind Schusswaffen **ohne Magazin**:
 > Bogen, Langbogen und Schleuder laden automatisch, der Sport-, Militär- und Wiederholcrosser laden
-> mit einer eigenen Runde, der Wiederholer nimmt die Bolzen aus seinem Magazin von zehn. Kein Feld
-> kommt neu dazu, nur diese beiden Lesarten. Der Ausschnitt dazu liegt unter
+> mit einer eigenen Runde, der Wiederholer nimmt die Bolzen aus seinem Magazin von zehn. Wie Hände
+> und Tierwaffen haben sie **kein `minSoc`**: ein erzeugter NSC bekommt sie nie, ein Charakter aus
+> Barbar oder Hunter wohl (Sachwerte und Kaskaden fragen das Feld nicht ab). Kein Feld kommt neu
+> dazu, nur diese beiden Lesarten. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-24c-rangstufen-und-bogenwaffen.png`](changes/2026-11-24c-rangstufen-und-bogenwaffen.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
@@ -792,7 +794,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Shop | (Screen `shop`, `openShop`, `closeShop`) | Der Screen für den Einkauf auf dem Aufenthaltsort, ohne eigenen Reiter: „Einkaufen“ am angetippten Feld einer Stadt auf dem Globus des Aufenthaltsorts öffnet ihn an der Stelle des Felds (nur in Städten), ✕ führt dorthin zurück, ein Reiter verlässt ihn |
 | Kasse | (Screen `funds`, im Reiter Charaktere) | Stand der Gruppenkasse, freie Buchungen (Einnahme, Ausgabe, Einzahlung, Auszahlung mit einem gewählten SC) und das Kassenbuch; geht auch ohne Aufenthaltsort |
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
-| Bogenwaffe | `Weapon` mit `attack: shot` ohne `rounds` | Die sechs Bogenwaffen aus Supplement 4 (B4 S. 16): Schleuder, Short Bow, Long Bow, Sporting, Military und Repeating Crossbow; Schusswaffen ohne Magazin, geführt mit Bow Combat |
+| Bogenwaffe | `Weapon` mit `attack: shot` ohne `rounds` | Die sechs Bogenwaffen aus Supplement 4 (B4 S. 16): Schleuder, Short Bow, Long Bow, Sporting, Military und Repeating Crossbow; Schusswaffen ohne Magazin, geführt mit Bow Combat; ohne `minSoc` wie Hände und Tierwaffen, ein erzeugter NSC bekommt sie nie (2026-11-24c) |
 | Schuss im Magazin | `Possession.rounds`, `Weapon.rounds` | Wie viele Schuss eine Schusswaffe gerade geladen hat bzw. voll fasst |
 | Verboten ab Gesetz | `Weapon.law` | Ab dieser Gesetzesstufe ist die Waffe verboten (S. 14), z. B. Body Pistol ab 1 |
 | Begegnung | `Encounter` | Eine Gruppe von NSC, auf die die Gruppe trifft, z. B. „5 Thugs“; gewürfelt nach der Random Encounter List (S. 21) |
@@ -4293,7 +4295,11 @@ Diagramm mit diesen Ausnahmen:
   `from` und `to`, wie im Bild. Begegnungen von vor den Range Bands haben nur eine Reichweite
   (`range`); beim Laden bekommen sie deren erstes Band (Close: Band 0 mit Berührung, Short 0,
   Medium 1, Long 3, Very Long 11) und keinen `bandDie`.
-- **Laufbahnen** (2026-11-24a) folgen dem Modell (`model/career.ts`, `model/generation.ts`,
-  `data/schema.ts`, Daten in `src/data/services.json`): die sechs des Regelwerks und die zwei
-  Probelaufbahnen Pirate und Bureaucrat. Die zehn anderen aus Supplement 4 sind nur Daten und
-  fehlen noch in `services.json`, mit ihnen ihre Fertigkeiten und die Bogenwaffe.
+- **Laufbahnen** (2026-11-24a, 2026-11-24c) folgen dem Modell (`model/career.ts`,
+  `model/generation.ts`, `data/schema.ts`, Daten in `src/data/services.json`): die sechs des
+  Regelwerks und die zwölf aus Supplement 4.
+- **Der Rang des Adligen aus dem Stand** (B4 S. 8: „Rank corresponds to noble rank (taken from
+  Social Standing) once position is achieved", die Stufen B bis F = Stand 11 bis 15) fehlt im Code:
+  jeder Adlige beginnt mit dem gelungenen Rangwurf auf der untersten Stufe und steigt nur durch
+  Beförderung. Nötig wäre ein Feld `Rank.standing` `[0..1]` – der Standswert, der den Rang gibt –
+  und die Regel, dass der Rangwurf den höchsten Rang mit `standing` bis zum Stand gibt.
