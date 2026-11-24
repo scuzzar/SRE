@@ -4,3 +4,7 @@ dist-single/
 playwright-report/
 test-results/
 *.tsbuildinfo
+
+# Arbeitsverzeichnisse für Skripte und Screenshots
+/.shots/
+/.tmp-b4/
