@@ -651,6 +651,17 @@
       "show": [
         "Rank"
       ]
+    },
+    {
+      "id": "2026-11-24c",
+      "file": "2026-11-24c-rangstufen-und-bogenwaffen",
+      "title": "Rangstufen und Bogenwaffen (Supplement 4): eine Laufbahn muss nicht jede Rangstufe haben (der Barbar kennt nur Warrior und Chief), und Bogenwaffen sind Schusswaffen ohne Magazin",
+      "approved": false,
+      "show": [
+        "Service",
+        "Gain",
+        "Cascade"
+      ]
     }
   ]
 }

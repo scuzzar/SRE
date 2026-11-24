@@ -634,6 +634,18 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Schiffsoffiziere). Siehe *Rangwurf* unter *Begriffe* und die Erschaffung unter *Charakter anlegen*.
 > Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-24b-name-der-ranglaufbahn.png`](changes/2026-11-24b-name-der-ranglaufbahn.png).
+>
+> Noch nicht freigegeben (Kennzeichen **2026-11-24c**): **Rangstufen und Bogenwaffen** – was die
+> zwölf Laufbahnen an den beiden bestehenden Klassen brauchen. `Rank.level` ist die Rangstufe,
+> und eine Laufbahn muss **nicht jede Stufe haben**: die Tafel des Barbars kennt nur **Warrior
+> (Stufe 2)** und **Chief (Stufe 5)**, die Stufen 1, 3 und 4 gibt es dort nicht. Der Rangwurf gibt
+> die **unterste Stufe der Laufbahn**, die Beförderung die **nächste vorhandene**; der höchste Rang
+> einer Laufbahn ist die höchste Stufe ihrer Tafel. Und `Weapon.rounds` ist das Magazin der
+> Schusswaffen – die **Bogenwaffen** aus Supplement 4 (B4 S. 16) sind Schusswaffen **ohne Magazin**:
+> Bogen, Langbogen und Schleuder laden automatisch, der Sport-, Militär- und Wiederholcrosser laden
+> mit einer eigenen Runde, der Wiederholer nimmt die Bolzen aus seinem Magazin von zehn. Kein Feld
+> kommt neu dazu, nur diese beiden Lesarten. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-24c-rangstufen-und-bogenwaffen.png`](changes/2026-11-24c-rangstufen-und-bogenwaffen.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -780,6 +792,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Shop | (Screen `shop`, `openShop`, `closeShop`) | Der Screen für den Einkauf auf dem Aufenthaltsort, ohne eigenen Reiter: „Einkaufen“ am angetippten Feld einer Stadt auf dem Globus des Aufenthaltsorts öffnet ihn an der Stelle des Felds (nur in Städten), ✕ führt dorthin zurück, ein Reiter verlässt ihn |
 | Kasse | (Screen `funds`, im Reiter Charaktere) | Stand der Gruppenkasse, freie Buchungen (Einnahme, Ausgabe, Einzahlung, Auszahlung mit einem gewählten SC) und das Kassenbuch; geht auch ohne Aufenthaltsort |
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
+| Bogenwaffe | `Weapon` mit `attack: shot` ohne `rounds` | Die sechs Bogenwaffen aus Supplement 4 (B4 S. 16): Schleuder, Short Bow, Long Bow, Sporting, Military und Repeating Crossbow; Schusswaffen ohne Magazin, geführt mit Bow Combat |
 | Schuss im Magazin | `Possession.rounds`, `Weapon.rounds` | Wie viele Schuss eine Schusswaffe gerade geladen hat bzw. voll fasst |
 | Verboten ab Gesetz | `Weapon.law` | Ab dieser Gesetzesstufe ist die Waffe verboten (S. 14), z. B. Body Pistol ab 1 |
 | Begegnung | `Encounter` | Eine Gruppe von NSC, auf die die Gruppe trifft, z. B. „5 Thugs“; gewürfelt nach der Random Encounter List (S. 21) |
@@ -895,7 +908,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Einberufung | `CareerRoll` mit `draft` | 1W6, wenn die Musterung in einer Laufbahn mit `draft` scheitert; bestimmt die Laufbahn |
 | Weiterbewerbung | (Ablauf, Schritt `service`) | Scheitert die Musterung in einer Laufbahn ohne `draft`, wählt man eine andere Laufbahn und würfelt dort neu |
 | Qualifikation | `Service.needs` (`Qualification`) | Der Einstieg ohne Wurf: wer das Attribut mindestens `atLeast` hat, kommt in die Laufbahn (Adliger: SOC 10+) |
-| Rangwurf | `Service.commission` (`Service.commissionTitle`) | Der Wurf, der Rang 1 gibt; ohne `commissionTitle` heißt er „Offizierspatent“, beim Bürokraten „Gehobener Dienst“ (2026-11-24b) |
+| Rangwurf | `Service.commission` (`Service.commissionTitle`) | Der Wurf, der die unterste Rangstufe der Laufbahn gibt; ohne `commissionTitle` heißt er „Offizierspatent“, beim Bürokraten „Gehobener Dienst“ (2026-11-24b) |
+| Rangstufe | `Rank.level` | Die Stufe eines Rangs innerhalb seiner Laufbahn; eine Laufbahn muss nicht jede Stufe haben (der Barbar kennt nur 2 und 5, 2026-11-24c) |
 | Term | (`Career./terms`) | Vier Jahre Dienst |
 | Heimatwelt | `Character.homeworld`, `Career.homeworld` | Die Welt, von der ein Charakter stammt |
 | Welt eines Terms | `Career.worlds` | Die Welt, auf der ein Charakter einen Term gedient hat |
@@ -904,7 +918,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Weiterverpflichtung | `CareerRoll` mit `reenlist` | Der Wurf am Ende jedes Terms; 12 heißt: bleiben müssen |
 | Abmusterung | `CareerRoll` mit `cash` oder `benefit` | Die Würfe auf Geld oder Sachwerte am Ende der Laufbahn |
 | Wurf mit Zielwert | `Throw` | Ein 2W6-Wurf einer Laufbahn, z. B. Survival 5+, mit seinen DMs |
-| Rang | `Rank` | Ein Rang einer Laufbahn, z. B. Lt Cmdr (Rang 3 der Navy) |
+| Rang | `Rank` | Ein Rang einer Laufbahn, z. B. Lt Cmdr (Rangstufe 3 der Navy) |
 | Tabelle | `Table` | Eine Fertigkeitstabelle, die Sachwerte- oder die Geldtabelle einer Laufbahn |
 | Zugewinn | `Gain` | Eine Zeile einer Tabelle oder was ein Rang bringt: Fertigkeit, Attribut, Gegenstand, Waffe oder Geld |
 | Kaskade | `Cascade` | Ein Sammelbegriff, aus dem man eine Fertigkeit wählt: Blade Combat, Gun Combat, Vehicle |
@@ -1784,6 +1798,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
   S. 4 und 23: Body Pistol 6, Automatic Pistol 15, Revolver 6, Carbine 10, Rifle 20, Automatic Rifle
   20, Shotgun 10, Submachinegun 30 Schuss je Magazin; Laser Carbine 50 und Laser Rifle 100 Schuss je
   Power Pack. Klingen und Hände haben keine.
+  - **Bogenwaffen ausnehmen sich** (2026-11-24c): die sechs Bogenwaffen aus Supplement 4 (B4 S. 16)
+    sind Schusswaffen (`attack: shot`) **ohne Magazin** – `rounds` und `ammo` fehlen. Schleuder,
+    Short Bow, Long Bow und der wiederholende Crosser laden automatisch ein Schuss je Runde; der
+    Sporting und der Military Crossbow brauchen zum Spannen eine eigene Runde und gelten dabei als
+    ausweichend (Military: zwei Runden, wenn man ausweicht). Der Repeating Crossbow hat zehn Bolzen
+    im Magazin und lädt diese in einer Runde (zwei beim Ausweichen); Bolzen sind je Waffentyp
+    nicht austauschbar.
   - Wie viele Schuss eine Schusswaffe im Besitz gerade geladen hat, steht am Besitz (`rounds`, 0 bis
     `Weapon.rounds`); fehlt das Feld, ist sie voll. Hat ein Charakter dieselbe Schusswaffe mehrfach,
     gilt die Zahl für die in der Hand.
@@ -2564,11 +2585,14 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        der Musterung mitgibt (Marines Cutlass-1, Army Rifle-1, Scouts Pilot-1), kommt sofort dazu.
     3. *Term*, jedes Mal in dieser Reihenfolge: zuerst die Welt des Terms (`world`), dann Überleben (`survival`); misslingt es, ist der
        Charakter tot und die Erschaffung zu Ende (`dead`) wie im Regelwerk. Ohne Rang und in einer Laufbahn mit Rängen:
-       der *Rangwurf* (`commission`), das gibt Rang 1; er heißt `commissionTitle` und sonst „Offizierspatent“. Mit Rang unter dem höchsten der Laufbahn (Merchants haben 5):
-       Beförderung, einmal je Term, auch im Term des Patents. Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
+       der *Rangwurf* (`commission`), das gibt die **unterste Rangstufe der Laufbahn** (`Rank.level`, 2026-11-24c: beim Barbar ist das Warrior auf Stufe 2); er heißt `commissionTitle` und sonst „Offizierspatent“. Mit Rang unter der höchsten Rangstufe der Laufbahn (Merchants und Nobles haben 5):
+       Beförderung, einmal je Term, auch im Term des Patents; sie gibt die **nächste vorhandene Stufe** (beim Barbar von Warrior auf Chief). Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
        (`skillsPerTerm`); +1 für Patent, +1 für Beförderung. Für jede wählt man eine Tabelle; die
        vierte (`minEdu` 8) nur mit EDU 8+, gemessen vor dem Wurf. Ein Rang bringt, was in ihm steht
-       (`grants`, z. B. Navy Captain +1 SOC).
+       (`grants`, z. B. Navy Captain +1 SOC). Was bei der Musterung mitgeht (`onEnlistment`) und was
+       ein Rang gibt, kann eine **Gruppe** sein (der Flyer: Air Craft-1, der Barbar als Warrior:
+       Blade Combat-1): dann folgt sofort der Schritt `cascade` und fragt nach der genauen
+       Fertigkeit, wie beim letzten Wurf einer Fertigkeit.
     4. *Altern* ab dem Ende des 4. Terms: je Attribut der Aging Table ein Wurf nach der Zeile mit dem
        größten `fromTerm`, der den Term nicht übersteigt (INT erst ab dem 12. Term);
        unter dem Zielwert sinkt das Attribut um `loss`. Fällt ein Attribut dadurch unter 1, folgt eine
@@ -4272,5 +4296,4 @@ Diagramm mit diesen Ausnahmen:
 - **Laufbahnen** (2026-11-24a) folgen dem Modell (`model/career.ts`, `model/generation.ts`,
   `data/schema.ts`, Daten in `src/data/services.json`): die sechs des Regelwerks und die zwei
   Probelaufbahnen Pirate und Bureaucrat. Die zehn anderen aus Supplement 4 sind nur Daten und
-  fehlen noch in `services.json`, mit ihnen ihre Fertigkeiten und die Bogenwaffe. Der Name des
-  Rangwurfs (`commissionTitle`, 2026-11-24b) fehlt noch im Code.
+  fehlen noch in `services.json`, mit ihnen ihre Fertigkeiten und die Bogenwaffe.
