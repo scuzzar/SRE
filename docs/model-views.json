@@ -621,7 +621,7 @@
       "id": "2026-11-23a",
       "file": "2026-11-23a-raumkampf-interface",
       "title": "Raumkampf-Interface: die Raumrunde mit zwei Phasen (SystemFlight.phase mit BattlePhase) – „Bewegen“ lässt die Raumrunde stehen, „End Turn“ feuert die Fremden und rückt weiter; gefeuert wird je Hardpoint (SpaceUnit.fired entfällt, dafür firedTurrets); Zielwahl und Hardpoint-Leiste im Blatt sind Anzeige, kein Spielstand",
-      "approved": false,
+      "approved": true,
       "show": [
         "SpaceAttack",
         "Ship",
@@ -632,7 +632,7 @@
       "id": "2026-11-23c",
       "file": "2026-11-23c-andockflug",
       "title": "Andockflug: ein Small Craft fliegt heim und dockt mit der nächsten Bewegung an",
-      "approved": false
+      "approved": true
     },
     {
       "id": "2026-11-24a",

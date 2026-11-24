@@ -591,7 +591,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Programme*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-22d-crew-und-programme.png`](changes/2026-11-22d-crew-und-programme.png).
 >
-> Noch nicht freigegeben (Kennzeichen 2026-11-23a): **Raumkampf-Interface** (nach der Skizze des Owners
+> Am 24. November 2026 freigegeben (Kennzeichen 2026-11-23a): **Raumkampf-Interface** (nach der Skizze des Owners
 > und dem Modell [`mock/raumkampf-ui.html`](mock/raumkampf-ui.html)). Die Raumrunde bekommt im
 > Raumkampf zwei Phasen: **Schub** und **Feuer** – „Bewegen“ führt die Bewegung aus und lässt die
 > Raumrunde stehen, „End Turn“ lässt die fremden Schiffe feuern und rückt weiter. Neu im Bild:
@@ -601,7 +601,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Pflichtprogramme rechnet jetzt der Code; siehe *Raumkampf*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-23a-raumkampf-interface.png`](changes/2026-11-23a-raumkampf-interface.png).
 >
-> Noch nicht freigegeben (Kennzeichen 2026-11-23c): **Andockflug** – „Andocken“ ist nicht mehr der
+> Am 24. November 2026 freigegeben (Kennzeichen 2026-11-23c): **Andockflug** – „Andocken“ ist nicht mehr der
 > Augenblick an der Nahgrenze, sondern ein Flug. Ein Small Craft darf andocken, wenn das Mutterschiff
 > **Platz** hat (Liegeplatz des Entwurfs, sonst freier Laderaum für den Rumpf) und das Small Craft
 > genug **Schub** hat, um den Ort zu erreichen, an dem sein Mutterschiff nach der nächsten Bewegung
