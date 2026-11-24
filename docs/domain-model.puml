@@ -1028,7 +1028,7 @@ hide <<browser>> stereotype
   class Rank <<reference>> $erschaffung {
     level: number
     title: string
-    $new("2026-11-24d", "standing: number [0..1]")
+    standing: number [0..1]
   }
   class Table <<reference>> $erschaffung {
     name: string

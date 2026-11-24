@@ -649,7 +649,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > dazu, nur diese beiden Lesarten. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-24c-rangstufen-und-bogenwaffen.png`](changes/2026-11-24c-rangstufen-und-bogenwaffen.png).
 >
-> Noch nicht freigegeben (Kennzeichen **2026-11-24d**): **Der Adelsrang des Adligen**. `Rank.standing`
+> Am 24. November 2026 freigegeben (Kennzeichen **2026-11-24d**): **Der Adelsrang des Adligen**. `Rank.standing`
 > `[0..1]` nennt den **Stand, ab dem ein Rang gilt** – beim Adel die Buchstaben der Rangtafel:
 > Stand **B (11) = Knight, C (12) = Baron, D (13) = Marquis, E (14) = Count, F (15) = Duke**.
 > Nennt die Rangtafel einer Laufbahn solche Stände, steht die Person **gleich bei der Musterung auf
