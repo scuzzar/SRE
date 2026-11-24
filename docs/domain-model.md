@@ -627,7 +627,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > `startAge` leer, die drei Schalter wahr. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-24a-laufbahnen-des-buergers.png`](changes/2026-11-24a-laufbahnen-des-buergers.png).
 >
-> **Entwurf, noch nicht abgestimmt** (Kennzeichen **2026-11-24b**): **Name der Ranglaufbahn**.
+> Am 24. November 2026 freigegeben (Kennzeichen **2026-11-24b**): **Name der Ranglaufbahn**.
 > `Service.commissionTitle` `[0..1]` gibt den Wurf, der Rang 1 gibt, in den Worten der Laufbahn: Der
 > Bürokrat steigt in den **gehobenen Dienst**, nicht in ein Offizierspatent. Ohne das Feld heißt der
 > Wurf „Offizierspatent“, was bei Navy, Marines, Army und bei den Merchants passt (deren Ränge sind
@@ -4273,4 +4273,4 @@ Diagramm mit diesen Ausnahmen:
   `data/schema.ts`, Daten in `src/data/services.json`): die sechs des Regelwerks und die zwei
   Probelaufbahnen Pirate und Bureaucrat. Die zehn anderen aus Supplement 4 sind nur Daten und
   fehlen noch in `services.json`, mit ihnen ihre Fertigkeiten und die Bogenwaffe. Der Name des
-  Rangwurfs (`commissionTitle`, 2026-11-24b) ist noch nicht freigegeben und fehlt drum im Code.
+  Rangwurfs (`commissionTitle`, 2026-11-24b) fehlt noch im Code.

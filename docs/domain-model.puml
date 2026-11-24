@@ -1011,7 +1011,7 @@ hide <<browser>> stereotype
     retirement: boolean
     freeExit: boolean
     naturalGunSkill: boolean
-    $new("2026-11-24b", "commissionTitle: string [0..1]")
+    commissionTitle: string [0..1]
   }
   class Throw <<value>> $erschaffung {
     target: number

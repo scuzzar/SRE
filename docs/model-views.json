@@ -647,7 +647,7 @@
       "id": "2026-11-24b",
       "file": "2026-11-24b-name-der-ranglaufbahn",
       "title": "Name der Ranglaufbahn: `Service.commissionTitle` gibt den Wurfs, der in die erste Rangstufe führt, bei zivilen Laufbahnen in ihren Worten – Bürokrat ,Gehobener Dienst, statt ,Offizierspatent,",
-      "approved": false,
+      "approved": true,
       "show": [
         "Rank"
       ]
