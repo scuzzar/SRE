@@ -648,6 +648,17 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Barbar oder Hunter wohl (Sachwerte und Kaskaden fragen das Feld nicht ab). Kein Feld kommt neu
 > dazu, nur diese beiden Lesarten. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-24c-rangstufen-und-bogenwaffen.png`](changes/2026-11-24c-rangstufen-und-bogenwaffen.png).
+>
+> Noch nicht freigegeben (Kennzeichen **2026-11-24d**): **Der Adelsrang des Adligen**. `Rank.standing`
+> `[0..1]` nennt den **Stand, ab dem ein Rang gilt** – beim Adel die Buchstaben der Rangtafel:
+> Stand **B (11) = Knight, C (12) = Baron, D (13) = Marquis, E (14) = Count, F (15) = Duke**.
+> Nennt die Rangtafel einer Laufbahn solche Stände, steht die Person **gleich bei der Musterung auf
+> dem höchsten Rang, den ihr Stand erreicht**, und der **Rangwurf entfällt** – wer mit Stand 13
+> eingezogen oder angenommen wird, ist Marquis, nicht Knight. **Beförderung hebt den Rang auf die
+> nächste Stufe** der Tafel (und darüber, was der Stand gibt); der höchste Rang der Tafel schließt
+> sie. Mit einem Stand **unter der untersten Stufe** (der Adlige mit 10) gibt es keinen Standesrang,
+> und die Person würfelt den Rangwurf wie jede andere. Der Adel ist die einzige Laufbahn mit
+> Standesrängen; an den übrigen ändert sich nichts, ihr `standing` ist leer.
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -910,7 +921,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Einberufung | `CareerRoll` mit `draft` | 1W6, wenn die Musterung in einer Laufbahn mit `draft` scheitert; bestimmt die Laufbahn |
 | Weiterbewerbung | (Ablauf, Schritt `service`) | Scheitert die Musterung in einer Laufbahn ohne `draft`, wählt man eine andere Laufbahn und würfelt dort neu |
 | Qualifikation | `Service.needs` (`Qualification`) | Der Einstieg ohne Wurf: wer das Attribut mindestens `atLeast` hat, kommt in die Laufbahn (Adliger: SOC 10+) |
-| Rangwurf | `Service.commission` (`Service.commissionTitle`) | Der Wurf, der die unterste Rangstufe der Laufbahn gibt; ohne `commissionTitle` heißt er „Offizierspatent“, beim Bürokraten „Gehobener Dienst“ (2026-11-24b) |
+| Rangwurf | `Service.commission` (`Service.commissionTitle`) | Der Wurf, der die unterste Rangstufe der Laufbahn gibt – bei einer Laufbahn mit Standesrängen entfällt er, wenn der Stand der Person schon einen Rang gibt; ohne `commissionTitle` heißt er „Offizierspatent“, beim Bürokraten „Gehobener Dienst“ (2026-11-24b) |
+| Standesrang | `Rank.standing` | Der Stand, ab dem dieser Rang gilt (2026-11-24d): beim Adel B (11) = Knight bis F (15) = Duke; die Rangtafel nennt ihn nur dort, sonst ist er leer |
 | Rangstufe | `Rank.level` | Die Stufe eines Rangs innerhalb seiner Laufbahn; eine Laufbahn muss nicht jede Stufe haben (der Barbar kennt nur 2 und 5, 2026-11-24c) |
 | Term | (`Career./terms`) | Vier Jahre Dienst |
 | Heimatwelt | `Character.homeworld`, `Career.homeworld` | Die Welt, von der ein Charakter stammt |
@@ -2585,10 +2597,19 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        Wer eingezogen wurde, darf im ersten Term kein Offizierspatent versuchen. Das Alter zählt von
        18, bei einer Laufbahn mit `startAge` von diesem Wert. Was eine Laufbahn bei
        der Musterung mitgibt (Marines Cutlass-1, Army Rifle-1, Scouts Pilot-1), kommt sofort dazu.
+       Nennt die Rangtafel der Laufbahn **Standesränge** (`Rank.standing`, 2026-11-24d), steht die
+       Person von hier an auf dem Rang, den ihr Stand erreicht, und der Rangwurf betrifft sie nicht
+       mehr. Der Adel ist die einzige Laufbahn mit Standesrängen.
     3. *Term*, jedes Mal in dieser Reihenfolge: zuerst die Welt des Terms (`world`), dann Überleben (`survival`); misslingt es, ist der
-       Charakter tot und die Erschaffung zu Ende (`dead`) wie im Regelwerk. Ohne Rang und in einer Laufbahn mit Rängen:
-       der *Rangwurf* (`commission`), das gibt die **unterste Rangstufe der Laufbahn** (`Rank.level`, 2026-11-24c: beim Barbar ist das Warrior auf Stufe 2); er heißt `commissionTitle` und sonst „Offizierspatent“. Mit Rang unter der höchsten Rangstufe der Laufbahn (Merchants und Nobles haben 5):
-       Beförderung, einmal je Term, auch im Term des Patents; sie gibt die **nächste vorhandene Stufe** (beim Barbar von Warrior auf Chief). Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
+       Charakter tot und die Erschaffung zu Ende (`dead`) wie im Regelwerk. **Standesränge** zuerst
+       (2026-11-24d): Nennt die Rangtafel einer Laufbahn Stände (`Rank.standing`), steht die Person
+       seit der Musterung auf dem **höchsten Rang, dessen Stand ihr eigener erreicht** – der Adlige
+       mit Stand 13 ist Marquis – und der Rangwurf entfällt für sie. Ohne Rang in einer Laufbahn ohne
+       Standesränge gibt der *Rangwurf* (`commission`) die **unterste Rangstufe der Laufbahn**
+       (`Rank.level`, 2026-11-24c: beim Barbar ist das Warrior auf Stufe 2); er heißt `commissionTitle`
+       und sonst „Offizierspatent“. Mit Rang unter der höchsten Rangstufe der Laufbahn (Merchants und
+       Nobles haben 5):
+       Beförderung, einmal je Term, auch im Term des Patents; sie gibt die **nächste vorhandene Stufe** (beim Barbar von Warrior auf Chief) und hebt damit auch den Standesrang über den Stand hinaus. Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
        (`skillsPerTerm`); +1 für Patent, +1 für Beförderung. Für jede wählt man eine Tabelle; die
        vierte (`minEdu` 8) nur mit EDU 8+, gemessen vor dem Wurf. Ein Rang bringt, was in ihm steht
        (`grants`, z. B. Navy Captain +1 SOC). Was bei der Musterung mitgeht (`onEnlistment`) und was
@@ -4299,7 +4320,6 @@ Diagramm mit diesen Ausnahmen:
   `model/generation.ts`, `data/schema.ts`, Daten in `src/data/services.json`): die sechs des
   Regelwerks und die zwölf aus Supplement 4.
 - **Der Rang des Adligen aus dem Stand** (B4 S. 8: „Rank corresponds to noble rank (taken from
-  Social Standing) once position is achieved", die Stufen B bis F = Stand 11 bis 15) fehlt im Code:
-  jeder Adlige beginnt mit dem gelungenen Rangwurf auf der untersten Stufe und steigt nur durch
-  Beförderung. Nötig wäre ein Feld `Rank.standing` `[0..1]` – der Standswert, der den Rang gibt –
-  und die Regel, dass der Rangwurf den höchsten Rang mit `standing` bis zum Stand gibt.
+  Social Standing) once position is achieved“, die Buchstaben B bis F = Stand 11 bis 15) fehlt im
+  Code: jeder Adlige beginnt auf der untersten Stufe und steigt nur durch Beförderung. Das Modell
+  sagt es seit Kennzeichen **2026-11-24d** (`Rank.standing`), das noch nicht freigegeben ist.
