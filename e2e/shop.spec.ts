@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { characters, openPeople, openSector, openShop, openCombat, land } from './layout';
+import { schwererLauf, characters, openPeople, openSector, openShop, openCombat, land } from './layout';
 
 /** Eine fertige Welt im Subsektor, lange gedrückt durchgewürfelt und Regina genannt; ihre Weltkarte bleibt offen. */
 async function makeWorld(page: Page) {
@@ -60,7 +60,7 @@ test('Shop: Einkaufen an Kessra öffnet den Shop; die Kasse im Reiter Charaktere
 
 test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, verkaufen und die Waffe in die Hand nehmen', async ({ page }) => {
   // Ein langer Ablauf: Globus bauen, landen, kaufen, verkaufen, ausrüsten.
-  test.setTimeout(60_000);
+  schwererLauf(60_000);
   await page.goto('/');
   // Die Demo-Kampagne bringt ein Startkapital mit; eingezahlt wird in der Kasse im Reiter Charaktere,
   // vorgewählt vom Charakter oben.

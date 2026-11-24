@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openOracle, openSector, oracle, openPeople, openHomeGlobe, land } from './layout';
+import { schwererLauf, openOracle, openSector, oracle, openPeople, openHomeGlobe, land } from './layout';
 
 test.use({ reducedMotion: 'reduce' });
 
@@ -114,7 +114,7 @@ test('Sektor: Die Karte lässt sich vergrößern und wieder verkleinern, ohne Bi
 
 test('Sektor: Lange drücken auf „Vorkommen würfeln“ würfelt die Welt bis zum Namen; die fertige Welt bekommt eine Notiz', async ({ page }) => {
   // Am Ende entsteht der Globus der neuen Welt; ohne Grafikkarte und neben anderen Tests dauert das.
-  test.setTimeout(60_000);
+  schwererLauf(60_000);
   await page.goto('/');
   await openSector(page);
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });

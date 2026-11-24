@@ -1,9 +1,19 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 // Wo etwas steht, hängt vom Layout ab: Auf dem Smartphone liegt unten das Ziehblatt mit den Reitern
 // (Log ist einer davon) und der Reihe Notiz, 2W6, Karte; im Desktop-Modus steht links eine Spalte
 // mit denselben Reitern, darunter das Log oder an seiner Stelle der Bereich. Diese Helfer halten die
 // Tests davon frei.
+
+/**
+ * Zeit für schwere Läufe (Globus, Shop mit vielen Gegenständen, Raumkarte). Lokal gilt der
+ * Wert; auf dem Runner, wo die Suite auf zwei Kernen läuft und die App als ein Bundle lädt, das
+ * Dreifache. Ein `test.setTimeout` allein überschreibt nämlich die Zeit aus
+ * `playwright.config.ts` – und die ist auf dem Runner höher als die Grundzeit hier.
+ */
+export function schwererLauf(ms: number) {
+  test.setTimeout(process.env.CI ? ms * 3 : ms);
+}
 
 /** Der gerade gewählte Bereich: auf dem Smartphone der Inhalt des Ziehblatts, im Desktop-Modus der Inhalt der Seitenspalte. */
 export const host = (page: Page) => page.locator('.screen-host');

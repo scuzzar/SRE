@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { openPeople, openShop, openCombat, pickCapital, openHomeGlobe } from './layout';
+import { schwererLauf, openPeople, openShop, openCombat, pickCapital, openHomeGlobe } from './layout';
 
 // Der Desktop-Modus (ab 1024 px): links eine Spalte mit den Reitern, darunter das Log mit dem Charakter
 // oben oder an seiner Stelle der gewählte Bereich bzw. das angetippte Feld; unten die Reihe Notiz,
@@ -165,7 +165,7 @@ test('Die Ziffern wählen die Reiter', async ({ page }, testInfo) => {
 test('Globus als Grundkarte: ein angetipptes Feld steht in der Seitenspalte, ✕ führt zum Subsektor', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   // Der Globus wird zweimal aufgebaut (öffnen und nach dem Neuladen); das dauert ohne Grafikkarte.
-  test.setTimeout(90_000);
+  schwererLauf(90_000);
   await openHomeGlobe(page);
   const globe = page.getByRole('region', { name: 'Globus · Kessra' });
   await expect(globe).toBeVisible();
