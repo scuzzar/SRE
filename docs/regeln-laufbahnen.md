@@ -114,8 +114,13 @@ Wert hat; sind beide Bedingungen erfüllt, **zählen beide DM zusammen**.
 | +1 bei | Int 9+ | — | Bil 8+ | Stand 10+ | — | Bil 8+ |
 | Weiterverpflichtung | 7+ | 7+ | 6+ | 5+ | 4+ | 6+ |
 
-Belter haben beim Überleben **kein festes DM, sondern +1 je geleisteten Term** (erster Term +1,
-zweiter +2, …, siebenter +7).
+Belter haben beim Überleben **kein festes DM, sondern +1 je laufendem Term**. Das sagt B4 6
+ausdrücklich unter der Tabelle: „Belters receive a variable DM for survival based on terms served;
+**in the first term of service, the DM is +1**; in the second term, the DM is +2, in the seventh
+term, the DM is +7.“ Der Term, um den es geht, ist der **angefangene** – der Überlebenwurf gilt dem
+Term, den die Person gerade dient (B1 6: „Each term of service involves some danger; **during the
+term**, a character must successfully throw his service's survival number“), und im Ablauf
+(B1 25 „Character Generation Checklist“) steht er als Schritt 3 vor Rang, Fertigkeiten und Altern.
 
 **B4 8** – zweite Gruppe:
 
@@ -220,7 +225,7 @@ Fertigkeit darin genommen werden. Neu sind die Sachwerte der Laufbahn selbst:
 | Laufbahn | Sonderregel | Quelle |
 |---|---|---|
 | **Belterer**, **Barbar** | beginnen mit **14** statt 18 | B4 2 |
-| **Belter** | Überleben-DM **+1 je Term** statt fester DM | B4 6 |
+| **Belter** | Überleben-DM **+1 je laufendem Term** statt fester DM: schon der **erste Term +1**, der zweite +2, der siebente +7 | B4 6 |
 | **Adliger** | nur für Stand 10+, automatisch; der Rang folgt dem Stand (B 11 … F 15) und der Rangwurf entfällt; ✱ je Beförderung auf so einen Rang **+1 Stand**, höchstens 15 | B4 8, The Traveller Book S. 27 |
 | **Barbar** | kann **nicht in den Ruhestand** | B4 9 |
 | **Bürokrat** | muss die **Weiterverpflichtung würfeln**, um vor dem Ruhestand wegzudürfen | B4 8 |

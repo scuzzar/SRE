@@ -2663,8 +2663,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Alle sind Referenzdaten in `services.json`: eine weitere Laufbahn ist Daten, kein Code.
   - **Würfe mit Gegenprobe und Termzähler**: eine `ThrowDm` mit `atMost` statt `atLeast` gilt, wenn
     das Attribut den Wert **nicht übersteigt** (Pirat Musterung +1 bei Stand 7−); beide Bedingungen
-    derselben Laufbahn schließen einander aus. Eine `Throw` mit `dmPerTerm` zählt je geleisteten Term
-    (Belter Überleben +1 im ersten Term, +2 im zweiten, …, +7 im siebenten).
+    derselben Laufbahn schließen einander aus. Eine `Throw` mit `dmPerTerm` zählt den
+    **laufenden** Term (Belter Überleben +1 im ersten Term, +2 im zweiten, …, +7 im siebenten; B4 S. 6
+    sagt das ausdrücklich, und der Überlebenwurf gilt dem Term, den die Person gerade dient – B1 S. 6
+    „during the term“, Ablauf Schritt 3).
   - **Der Rangwurf** (`commission`) heißt nach der Laufbahn (`commissionTitle`, 2026-11-24b): „Offizierspatent“
     ohne das Feld – bei Navy, Marines, Army und Merchants (deren Ränge Schiffsoffiziere sind) auch so
     gemeint –, „Gehobener Dienst“ beim Bürokraten; für Diplomat, Barbar und Adliger kommt je eigene

@@ -199,7 +199,7 @@ export function throwDm(th: Throw, upp: Upp, terms = 0): number {
   return th.dms.reduce((dm, d) => (conditionApplies(d, upp) ? dm + d.dm : dm), 0) + (termDmOf(th, terms)?.dm ?? 0);
 }
 
-/** Der DM je geleisteten Term, beim Stand nach `terms` Termen; ohne `dmPerTerm` nichts. */
+/** Der DM je Term, um den es gerade geht (`terms` ist der angefangene Term, im ersten also 1); ohne `dmPerTerm` nichts. */
 export function termDmOf(th: Throw, terms: number): TermDm | undefined {
   return th.dmPerTerm === undefined ? undefined : { perTerm: th.dmPerTerm, terms, dm: th.dmPerTerm * terms };
 }

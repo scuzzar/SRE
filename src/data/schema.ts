@@ -443,12 +443,12 @@ export const ThrowDmSchema = z
   .refine((d) => (d.atLeast === undefined) !== (d.atMost === undefined), 'Eine Wurfbedingung hat entweder atLeast oder atMost');
 
 /**
- * Ein 2W6-Wurf einer Laufbahn mit Zielwert und DMs; `dmPerTerm` zählt je geleisteten Term
- * (der Belterer in Supplement 4 S. 6).
+ * Ein 2W6-Wurf einer Laufbahn mit Zielwert und DMs; `dmPerTerm` zählt den **laufenden** Term
+ * (der Belterer in Supplement 4 S. 6: erster Term +1, zweiter +2, siebente +7).
  */
 export const ThrowSchema = z.object({
   target: z.number().int(),
-  /** Der DM je geleisteten Term, z. B. +1 im ersten, +2 im zweiten Term. */
+  /** Der DM je laufendem Term, z. B. +1 im ersten, +2 im zweiten, +7 im siebenten Term. */
   dmPerTerm: z.number().int().min(1).optional(),
   dms: z.array(ThrowDmSchema).max(2),
 });

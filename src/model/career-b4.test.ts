@@ -7,6 +7,7 @@ import {
   chooseCascade,
   enlist,
   muster,
+  nextThrow,
   reenlist,
   rollNext,
   rollSkill,
@@ -48,12 +49,36 @@ describe('Laufbahnen aus Citizens of the Imperium', () => {
     expect(throwDm(bureau, { ...kiraUpp, edu: 8, str: 9 })).toBe(1);
   });
 
-  it('zählt der Term-DM je geleisteten Term (der Belterer, S. 6)', () => {
-    const belter = { target: 9, dmPerTerm: 1, dms: [] };
-    expect(throwDm(belter, kiraUpp)).toBe(0);
-    expect(throwDm(belter, kiraUpp, 3)).toBe(3);
-    expect(termDmOf(belter, 3)).toEqual<TermDm>({ perTerm: 1, terms: 3, dm: 3 });
+  it('zählt der Term-DM den laufenden Term: erster +1, zweiter +2, siebenter +7 (S. 6, unter der Tabelle)', () => {
+    const belter = serviceOf('belter').survival;
+    expect(belter.target).toBe(9);
+    // B4 S. 6 sagt die drei Beispiele ausdrücklich: „in the first term of service, the DM is +1“.
+    expect(throwDm(belter, kiraUpp, 1)).toBe(1);
+    expect(throwDm(belter, kiraUpp, 2)).toBe(2);
+    expect(throwDm(belter, kiraUpp, 7)).toBe(7);
+    expect(termDmOf(belter, 7)).toEqual<TermDm>({ perTerm: 1, terms: 7, dm: 7 });
+    // Vor dem ersten Term steht kein Term-DM zu, und der Pirat hat gar keinen.
+    expect(throwDm(belter, kiraUpp, 0)).toBe(0);
     expect(termDmOf(serviceOf('pirate').survival, 3)).toBeUndefined();
+  });
+
+  it('gibt der Belterer im ersten Term +1, im zweiten +2, im dritten +3 – der Wurf gilt dem angefangenen Term', () => {
+    let g = enlist(kira(), 'belter', fixedRandom(6, 6));
+    const daechs: number[] = [];
+    for (let i = 0; i < 40 && daechs.length < 3; i++) {
+      const state = stateOf(g);
+      if (state.step === 'survival') {
+        daechs.push(nextThrow(state)!.dm);
+        g = rollNext(g, fixedRandom(6, 6));
+      } else if (state.step === 'reenlist') {
+        g = reenlist(g, true, fixedRandom(6, 6));
+      } else if (state.step === 'skill') {
+        g = rollSkill(g, 'belter.personal', fixedRandom(3));
+      } else {
+        throw new Error(`unerwarteter Schritt ${state.step}`);
+      }
+    }
+    expect(daechs).toEqual([1, 2, 3]);
   });
 
   it('beginnt die Laufbahn mit dem Alter der Laufbahn (Belterer und Barbar: 14, S. 2)', () => {
