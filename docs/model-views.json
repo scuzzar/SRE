@@ -666,7 +666,7 @@
     {
       "id": "2026-11-24d",
       "file": "2026-11-24d-der-adelsrang-des-adligen",
-      "title": "Der Adelsrang des Adligen: ein Rang kann einen Stand nennen (Rank.standing); bei der Musterung steht die Person sofort auf dem höchsten Rang, den ihr Stand erreicht, der Rangwurf entfällt, Beförderung steigt zur nächsten Stufe",
+      "title": "Der Adelsrang des Adligen: ein Rang kann einen Stand nennen (Rank.standing); bei der Musterung steht die Person sofort auf dem höchsten Rang, den ihr Stand erreicht, der Rangwurf entfällt, und die Beförderung auf einen Rang hebt den Stand auf mindestens den Stand dieses Rangs",
       "approved": false,
       "show": [
         "Service",

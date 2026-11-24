@@ -655,8 +655,9 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Nennt die Rangtafel einer Laufbahn solche Stände, steht die Person **gleich bei der Musterung auf
 > dem höchsten Rang, den ihr Stand erreicht**, und der **Rangwurf entfällt** – wer mit Stand 13
 > eingezogen oder angenommen wird, ist Marquis, nicht Knight. **Beförderung hebt den Rang auf die
-> nächste Stufe** der Tafel (und darüber, was der Stand gibt); der höchste Rang der Tafel schließt
-> sie. Mit einem Stand **unter der untersten Stufe** (der Adlige mit 10) gibt es keinen Standesrang,
+> nächste Stufe** der Tafel – und da der Rang dem Stand folgt, **hebt jede Beförderung den Stand auf
+> mindestens den Stand des neuen Rangs** (Beförderung auf Count heißt Stand 14; als Knight mit Stand
+> 10 befördert werden heißt Stand 12). Der höchste Rang der Tafel schließt sie. Mit einem Stand **unter der untersten Stufe** (der Adlige mit 10) gibt es keinen Standesrang,
 > und die Person würfelt den Rangwurf wie jede andere. Der Adel ist die einzige Laufbahn mit
 > Standesrängen; an den übrigen ändert sich nichts, ihr `standing` ist leer.
 
@@ -922,7 +923,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Weiterbewerbung | (Ablauf, Schritt `service`) | Scheitert die Musterung in einer Laufbahn ohne `draft`, wählt man eine andere Laufbahn und würfelt dort neu |
 | Qualifikation | `Service.needs` (`Qualification`) | Der Einstieg ohne Wurf: wer das Attribut mindestens `atLeast` hat, kommt in die Laufbahn (Adliger: SOC 10+) |
 | Rangwurf | `Service.commission` (`Service.commissionTitle`) | Der Wurf, der die unterste Rangstufe der Laufbahn gibt – bei einer Laufbahn mit Standesrängen entfällt er, wenn der Stand der Person schon einen Rang gibt; ohne `commissionTitle` heißt er „Offizierspatent“, beim Bürokraten „Gehobener Dienst“ (2026-11-24b) |
-| Standesrang | `Rank.standing` | Der Stand, ab dem dieser Rang gilt (2026-11-24d): beim Adel B (11) = Knight bis F (15) = Duke; die Rangtafel nennt ihn nur dort, sonst ist er leer |
+| Standesrang | `Rank.standing` | Der Stand, ab dem dieser Rang gilt (2026-11-24d): beim Adel B (11) = Knight bis F (15) = Duke; die Rangtafel nennt ihn nur dort, sonst ist er leer. Beförderung auf so einen Rang hebt den Stand des Charakters auf mindestens diesen Wert |
 | Rangstufe | `Rank.level` | Die Stufe eines Rangs innerhalb seiner Laufbahn; eine Laufbahn muss nicht jede Stufe haben (der Barbar kennt nur 2 und 5, 2026-11-24c) |
 | Term | (`Career./terms`) | Vier Jahre Dienst |
 | Heimatwelt | `Character.homeworld`, `Career.homeworld` | Die Welt, von der ein Charakter stammt |
@@ -2609,7 +2610,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        (`Rank.level`, 2026-11-24c: beim Barbar ist das Warrior auf Stufe 2); er heißt `commissionTitle`
        und sonst „Offizierspatent“. Mit Rang unter der höchsten Rangstufe der Laufbahn (Merchants und
        Nobles haben 5):
-       Beförderung, einmal je Term, auch im Term des Patents; sie gibt die **nächste vorhandene Stufe** (beim Barbar von Warrior auf Chief) und hebt damit auch den Standesrang über den Stand hinaus. Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
+       Beförderung, einmal je Term, auch im Term des Patents; sie gibt die **nächste vorhandene Stufe** (beim Barbar von Warrior auf Chief). Bei einem Rang mit Standesrang **steigt der Stand mit**:
+       er wird mindestens der Stand dieses Rangs (`Rank.standing`), und der Lebenslauf führt ihn als
+       +1 Stand (2026-11-24d). Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
        (`skillsPerTerm`); +1 für Patent, +1 für Beförderung. Für jede wählt man eine Tabelle; die
        vierte (`minEdu` 8) nur mit EDU 8+, gemessen vor dem Wurf. Ein Rang bringt, was in ihm steht
        (`grants`, z. B. Navy Captain +1 SOC). Was bei der Musterung mitgeht (`onEnlistment`) und was
