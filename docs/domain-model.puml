@@ -1007,7 +1007,7 @@ hide <<browser>> stereotype
     reenlist: number
     skillsPerTerm: number [0..1]
     startAge: number [0..1]
-    retirement: boolean
+    $new("2026-11-24e", "retirement: boolean – ohne Ruhestand keine Bezüge")
     freeExit: boolean
     naturalGunSkill: boolean
     commissionTitle: string [0..1]
@@ -1481,7 +1481,7 @@ Service "1" *-- "4" Table : skills {ordered}
 Service "1" *-- "1" Table : benefits
 Service "1" *-- "1" Table : cash
 Service "1" *-- "0..1" Gain : onEnlistment
-  Service "1" *-- "0..1" Qualification : needs
+  Service "1" -$newArrow("2026-11-24e")-> "0..1" Qualification : needs
   Qualification "1" --> "1" Characteristic : of
 Rank "1" *-- "0..1" Gain : grants
 Table "1" *-- "6..7" Gain : rows {ordered}
@@ -1578,7 +1578,7 @@ Recovery --> RecoveryKind
 LogEntry <|-- Note
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
-Patron "*" --> "0..1" Service : career
+Patron "*" -$newArrow("2026-11-24e")-> "0..1" Service : career
 LogEntry <|-- RumorRoll
 LogEntry <|-- Butchering
 Butchering "*" --> "1" Character : of
