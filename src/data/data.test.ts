@@ -175,9 +175,9 @@ describe('Referenzdaten', () => {
 
   it('haben die sechs Laufbahnen des Regelwerks mit den Würfen der Prior Service Table', () => {
     const [navy, marines, army, scouts, merchants, other] = referenceData.services;
-    expect(referenceData.services.map((s) => `${s.draft}:${s.name}`)).toEqual(['1:Navy', '2:Marines', '3:Army', '4:Scouts', '5:Merchants', '6:Other']);
+    expect(referenceData.services.map((s) => `${s.draft ?? '−'}:${s.name}`)).toEqual(['1:Navy', '2:Marines', '3:Army', '4:Scouts', '5:Merchants', '6:Other', '−:Pirate', '−:Bureaucrat']);
     expect(navy!.enlistment).toEqual({ target: 8, dms: [{ characteristic: 'INT', atLeast: 8, dm: 1 }, { characteristic: 'EDU', atLeast: 9, dm: 2 }] });
-    expect(referenceData.services.map((s) => s.reenlist)).toEqual([6, 6, 7, 3, 4, 5]);
+    expect(referenceData.services.map((s) => s.reenlist)).toEqual([6, 6, 7, 3, 4, 5, 7, 3]);
     expect(merchants!.ranks.map((r) => r.title)).toEqual(['4th Officer', '3rd Officer', '2nd Officer', '1st Officer', 'Captain']);
     expect(scouts!.commission).toBeUndefined();
     expect(scouts!.skillsPerTerm).toBe(2);
@@ -241,7 +241,9 @@ describe('Referenzdaten', () => {
   });
 
   it('kennen die Standardentwürfe, Rechner und Programme aus SE 10 bis 13', () => {
-    expect(referenceData.ships.filter((s) => s.kind === 'starship').map((s) => s.code)).toEqual(['S', 'A', 'R', 'M', 'Y', 'C', 'T', 'L', 'K']);
+    expect(referenceData.ships.filter((s) => s.kind === 'starship').map((s) => s.code)).toEqual(['S', 'A', 'R', 'M', 'Y', 'C', 'T', 'L', 'K', 'P']);
+    // Der Corsair als Sachwert der Piraten-Laufbahn (Supplement 4 S. 13).
+    expect(referenceData.ships.find((s) => s.code === 'P')).toMatchObject({ name: 'Corsair', hull: 400, jump: 2, maneuver: 3, cargo: 160, lowBerths: 20, streamlined: false });
     // Die Small Craft aus SR 33–35 (2026-11-21b).
     expect(referenceData.ships.filter((s) => s.kind === 'smallCraft').map((s) => s.id)).toEqual(['launch', 'boat', 'slow-boat', 'pinnace', 'slow-pinnace', 'cutter', 'shuttle', 'fighter']);
     const design = (code: string) => referenceData.ships.find((s) => s.code === code)!;

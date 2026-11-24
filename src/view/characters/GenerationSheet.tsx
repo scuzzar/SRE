@@ -441,10 +441,16 @@ function OddsLines({ odds }: { odds: ThrowOdds }) {
       <span>Zielwert {odds.target}+</span>
       {odds.conditions.map((c) => (
         <span key={c.characteristic} className={c.applies ? 'met' : 'unmet'}>
-          {c.characteristic} {c.atLeast}+ → {signed(c.dm)}
+          {c.characteristic} {c.atMost === undefined ? `${c.atLeast}+` : `${c.atMost}−`} → {signed(c.dm)}
           {c.applies ? ' ✓' : ''}
         </span>
       ))}
+      {odds.perTerm && (
+        <span className={odds.perTerm.dm > 0 ? 'met' : undefined}>
+          je Term {signed(odds.perTerm.perTerm)}
+          {odds.perTerm.terms > 0 ? ` · ${odds.perTerm.terms}: ${signed(odds.perTerm.dm)}` : ''}
+        </span>
+      )}
       <span>{needText(odds)}</span>
     </span>
   );
@@ -497,9 +503,9 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
       return (
         <div className="choice-grid services" role="group" aria-label="Laufbahn">
           {action.options.map((o) => (
-            <button key={o.id} type="button" aria-disabled={disabled || undefined} onClick={() => game.chooseService(o.id)}>
+            <button key={o.id} type="button" disabled={!o.available} aria-disabled={disabled || undefined} onClick={() => game.chooseService(o.id)}>
               <strong>{o.name}</strong>
-              <OddsLines odds={o} />
+              {o.needs === undefined ? <OddsLines odds={o} /> : <span className="small-label">{o.needs}</span>}
             </button>
           ))}
         </div>
@@ -549,11 +555,19 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
             <span className="small-label">nur eine 12 verlängert</span>
           </span>
         </HoldButton>
+      ) : !action.quit ? (
+        <HoldButton className="roll generation-main" busy={disabled} onPress={() => game.reenlist(true)} onHold={onRun}>
+          <DiceIcon />
+          <span>
+            Weiterdienen
+            <span className="small-label">diese Laufbahn tritt nicht in den Ruhestand</span>
+          </span>
+        </HoldButton>
       ) : (
         <div className="choice-grid" role="group" aria-label="Weiterverpflichtung">
           <button type="button" aria-disabled={disabled || undefined} onClick={() => game.reenlist(false)}>
             <strong>Abmustern</strong>
-            <span className="small-label">eine 12 heißt trotzdem bleiben</span>
+            <span className="small-label">{action.freeExit ? 'eine 12 heißt trotzdem bleiben' : 'nur der gelungene Wurf lässt dich weg'}</span>
           </button>
           <button type="button" className="preferred" aria-disabled={disabled || undefined} onClick={() => game.reenlist(true)}>
             <strong>Weiterverpflichten</strong>

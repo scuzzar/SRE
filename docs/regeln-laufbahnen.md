@@ -256,19 +256,17 @@ haben – Vorlagen für NSC, die niemand erzeugen soll, sondern die man aufstell
 ## Wo der Code noch nicht folgt
 
 - Die sechs gebauten Laufbahnen folgen dem Modell; an ihnen steht nichts Neues.
-- An den zwölf neuen steht nichts im Code: keine Zeile in `services.json`, keine der neuen
-  Fertigkeiten, keine Bogenwaffen, kein Ruhestand.
-- Für die zwölf braucht das Modell an `Service` (Referenzdaten) wenige Ergänzungen; sie stehen seit
-  Kennzeichen **2026-11-24a** im Diagramm (noch nicht freigegeben, Ausschnitt
-  [`changes/2026-11-24a-laufbahnen-des-buergers.png`](changes/2026-11-24a-laufbahnen-des-buergers.png)):
-  1. **DM nach „oder weniger“** (`Stand 7−`, `Stand 8−`, `Stä 8−`) – heute nur „mindestens“.
-  2. **Überleben-DM nach Termen** (Belter).
-  3. **Einstieg ohne Wurf, mit Attributsschwelle** (Adliger: Stand 10+).
-  4. **Beginnsalter** (Belter und Barbar 14).
-  5. **Ruhestand** als Regel der Laufbahn: Barbar kann nicht, Bürokrat nur mit Wurf; dazu die
-     Rentenzahlung, die die App noch gar nicht kennt.
-  6. **Keine natürliche Schusswaffenkunde** (Barbar, Bürokrat, Arzt) – eine Kampf-Regel, keine
-     Erschaffungsregel; im Modell `Service.naturalGunSkill`.
-- Die **Einberufung** der zwölf ist offen: B4 kennt für sie keine Einberufungszahl, sondern lässt die
-  Person eine andere Laufbahn suchen. Wie die App das hält (neue Hausregel oder Einberufung nur unter
-  den sechs alten), muss der Owner entscheiden.
+- **Pirate und Bureaucrat stehen in der App**: Zeile in `src/data/services.json` mit allen vier
+  Fertigkeitstabellen, Sachwerten, Geld, Rängen und Gaben, dazu das Schiff des Piraten (Corsair) und
+  die sechs neuen Fertigkeiten in `skills.json` (Zero-G Combat, Ship Tactics, Recruiting,
+  Instruction, Interrogation, Liaison). Sie sind die Probelaufbahnen zu Kennzeichen
+  **2026-11-24a**: Gegenprobe („Stand 7−“, „Stä 8−“), Term-DM, Weiterbewerbung, Ausstieg nur über
+  die gelungene Weiterverpflichtung, Ruhestand als Regel der Laufbahn, natürliche Waffenkunde und
+  Beginnsalter sind damit erprobt (Tests in `model/career-b4.test.ts`).
+- Die zehn anderen (Belter, Sailor, Diplomat, Doctor, Flyer, Barbarian, Rogue, Noble, Scientist,
+  Hunter) sind **nur Daten** – jeder ihrer Sonderregeln gehört zu einem der Felder aus
+  **2026-11-24a**, kein neuer Code. Ihnen fehlen noch ihre Fertigkeiten in `skills.json` (u. a.
+  Bow Combat, Prospecting, Hunting, Survival, Recon, Demolition, Gravitics, Battle Dress) und die
+  Bogenwaffe bei den Waffen.
+- Die **Rente** nach dem Ruhestand kennt die App noch nicht (Notiz statt Zahlung), bei den neuen
+  Laufbahnen wie bei den alten.

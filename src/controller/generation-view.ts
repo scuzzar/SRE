@@ -1,5 +1,6 @@
 import {
   ageOf,
+  canQuit,
   canTakeCash,
   cascadeOf,
   cascadeOptions,
@@ -63,7 +64,7 @@ export interface CareerLine {
 
 export type GenerationAction =
   | { readonly kind: 'roll'; readonly label: string; readonly dice: 1 | 2; readonly odds: ThrowOdds | undefined }
-  | { readonly kind: 'service'; readonly options: readonly ({ readonly id: string; readonly name: string } & ThrowOdds)[] }
+  | { readonly kind: 'service'; readonly options: readonly ({ readonly id: string; readonly name: string; readonly available: boolean; readonly needs: string | undefined } & ThrowOdds)[] }
   | {
       readonly kind: 'skill';
       readonly left: number;
@@ -76,7 +77,7 @@ export type GenerationAction =
       /** Bei Blade und Gun Combat je Waffe das nötige und vorteilhafte Attribut, gemessen am UPP jetzt. */
       readonly options: readonly { readonly skill: string; readonly name: string; readonly item: string | undefined; readonly characteristic: WeaponCharacteristic | undefined }[];
     }
-  | { readonly kind: 'reenlist'; readonly odds: ThrowOdds; readonly last: boolean }
+  | { readonly kind: 'reenlist'; readonly odds: ThrowOdds; readonly last: boolean; readonly quit: boolean; readonly freeExit: boolean }
   | {
       readonly kind: 'muster';
       readonly left: number;
@@ -354,7 +355,13 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
       prompt = 'Laufbahn wählen; dann wird die Musterung gewürfelt';
       action = {
         kind: 'service',
-        options: serviceOptions(state).map((o) => ({ id: o.service.id, name: o.service.name, ...o.odds })),
+        options: serviceOptions(state).map((o) => ({
+          id: o.service.id,
+          name: o.service.name,
+          available: o.available,
+          needs: o.service.needs === undefined ? undefined : `${o.service.needs.characteristic} ${o.service.needs.atLeast}+`,
+          ...o.odds,
+        })),
       };
       break;
     case 'draft':
@@ -404,9 +411,16 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
       action = { kind: 'roll', label: 'Krise würfeln', dice: 2, odds };
       break;
     case 'reenlist': {
+      const service = state.service!;
       const last = state.terms >= MAX_TERMS;
-      prompt = last ? `Ende von ${term}: nach ${MAX_TERMS} Terms bleibt nur, wer eine 12 würfelt` : `Ende von ${term}: weiterverpflichten?`;
-      action = { kind: 'reenlist', odds: odds!, last };
+      prompt = last
+        ? `Ende von ${term}: nach ${MAX_TERMS} Terms bleibt nur, wer eine 12 würfelt`
+        : service.retirement === false
+          ? `Ende von ${term}: ${service.name} tritt nicht in den Ruhestand – gedient wird bis ${MAX_TERMS} Terms`
+          : service.freeExit === false
+            ? `Ende von ${term}: weiterverpflichten? Weg lässt dich hier nur der gelungene Wurf`
+            : `Ende von ${term}: weiterverpflichten?`;
+      action = { kind: 'reenlist', odds: odds!, last, quit: canQuit(state), freeExit: service.freeExit };
       break;
     }
     case 'muster':
@@ -434,7 +448,7 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
     step: state.step,
     prompt,
     status,
-    age: ageOf(state.terms),
+    age: ageOf(state.terms, state.service),
     upp: characteristics.map((characteristic, i) => ({
       characteristic,
       value: i < state.rolled ? state.upp[characteristic.toLowerCase() as keyof typeof state.upp] : undefined,

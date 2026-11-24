@@ -50,7 +50,7 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   await expect(picker).toBeHidden();
   await expect(dialog.getByRole('article', { name: 'Neuer Charakter' })).toContainText('von Regina');
   await expect(prompt).toHaveText('Laufbahn wählen; dann wird die Musterung gewürfelt');
-  await expect(dialog.getByRole('group', { name: 'Laufbahn' }).getByRole('button')).toHaveCount(6);
+  await expect(dialog.getByRole('group', { name: 'Laufbahn' }).getByRole('button')).toHaveCount(8);
 
   // Orakel und Karte gehen mitten in der Erschaffung; die Antwort steht auch im Log.
   await dialog.getByRole('button', { name: 'Karte', exact: true }).click();
@@ -211,6 +211,49 @@ test.describe('mit Animation', () => {
     await expect(popup).toBeHidden();
     await expect(dialog.locator('.generation-prompt')).not.toContainText('Laufbahn wählen');
   });
+});
+
+test('Laufbahnen aus Supplement 4: Pirate und Bureaucrat in der Wahl, der Bürokrat braucht den gelungenen Wurf (2026-11-24a)', async ({ page }) => {
+  await campaignWithWorld(page);
+  await host(page).getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
+  const prompt = dialog.locator('.generation-prompt');
+  const popup = page.getByRole('alertdialog');
+  for (const c of ['STR', 'DEX', 'END', 'INT', 'EDU', 'SOC']) await dialog.getByRole('button', { name: `${c} würfeln` }).click();
+  await dialog.getByRole('button', { name: /^Regina/ }).click();
+
+  const services = dialog.getByRole('group', { name: 'Laufbahn' }).getByRole('button');
+  await expect(services).toHaveCount(8);
+  await expect(services.nth(6)).toContainText('Pirate');
+  await expect(services.nth(7)).toContainText('Bureaucrat');
+
+  /** Das Ergebnis des letzten Wurfs wegklicken, sonst der nächste mögliche Knopf. */
+  async function weiter() {
+    if (await popup.isVisible()) {
+      await popup.click();
+      if (await popup.isVisible()) await popup.click();
+      return;
+    }
+    await dialog.locator('.generation-dock button:not([disabled])').first().click();
+  }
+
+  // Bewerben, bis es klappt: abgelehnt heißt hier „weiterbewerben“, die Einberufung gibt es nicht.
+  for (let i = 0; i < 20; i++) {
+    await services.nth(7).click();
+    for (let k = 0; k < 4 && (await popup.isVisible()); k++) await popup.click();
+    if (!(await prompt.innerText()).startsWith('Laufbahn wählen')) break;
+    await expect(prompt).toHaveText('Laufbahn wählen; dann wird die Musterung gewürfelt');
+  }
+
+  // Bis zur ersten Weiterverpflichtung: immer der nächste Schritt.
+  for (let i = 0; i < 60; i++) {
+    const text = await prompt.innerText();
+    if (text.startsWith('Ende von Term 1')) break;
+    if (text.startsWith('Gestorben')) test.skip(true, 'der Bürokrat ist im ersten Term gestorben');
+    await weiter();
+  }
+  await expect(prompt).toContainText('Weg lässt dich hier nur der gelungene Wurf');
+  await expect(dialog.getByRole('group', { name: 'Weiterverpflichtung' }).getByRole('button', { name: /Abmustern/ })).toContainText('nur der gelungene Wurf lässt dich weg');
 });
 
 test('Inspirationskarte: Tippen, solange sie hereinkommt, zeigt sie sofort ganz und wählt nichts aus', async ({ page }) => {

@@ -1,0 +1,168 @@
+import { describe, expect, it } from 'vitest';
+import { addCharacter, createCampaign } from './campaign';
+import { ageOf, replay, termDmOf, throwConditions, throwDm, type TermDm } from './career';
+import {
+  careerInput,
+  enlist,
+  muster,
+  reenlist,
+  rollNext,
+  rollSkill,
+  serviceOptions,
+  stateOf,
+  type Generation,
+} from './generation';
+import { weaponSkillDm, UNSKILLED_GUN_DM } from './combat';
+import { ref, serviceOf, weaponOf } from './reference';
+import { fixedRandom } from './testing';
+
+/**
+ * Die Grundlagen aus Supplement 4 *Citizens of the Imperium* (Kennzeichen 2026-11-24a):
+ * Gegenprobe, Term-DM, Beginnsalter, Weiterbewerbung, Ruhestand, natürliche Waffenkunde.
+ */
+
+/** UPP 7A8975 wie Kira: STR 7, DEX 10, END 8, INT 9, EDU 7, SOC 5. */
+const kiraUpp = { str: 7, dex: 10, end: 8, int: 9, edu: 7, soc: 5 };
+
+/** Ein Lebenslauf ohne Welten, wie es sie vor den Welten gab: nach den Attributen kommt die Laufbahn. */
+function kira(pairs: [number, number][] = [[3, 4], [5, 5], [4, 4], [4, 5], [3, 4], [2, 3]]): Generation {
+  let g: Generation = { career: { rolls: [] } };
+  for (const [a, b] of pairs) g = rollNext(g, fixedRandom(a, b));
+  return g;
+}
+
+describe('Laufbahnen aus Citizens of the Imperium', () => {
+  it('gilt die Gegenprobe „Stand 7−“ und „Stä 8−“ (S. 6 und 8)', () => {
+    const pirate = serviceOf('pirate').enlistment;
+    // SOC 5 ≤ 7 gibt +1, END 8 < 9 nichts: 7+ mit DM +1.
+    expect(throwDm(pirate, kiraUpp)).toBe(1);
+    expect(throwConditions(pirate, kiraUpp)[0]).toMatchObject({ characteristic: 'SOC', atMost: 7, dm: 1, applies: true });
+    // SOC 9 > 7 gibt nichts, END 9 ≥ 9 dafür +2.
+    expect(throwDm(pirate, { ...kiraUpp, soc: 9, end: 9 })).toBe(2);
+
+    const bureau = serviceOf('bureaucrat').enlistment;
+    // EDU 7 < 8 nichts, STR 7 ≤ 8 gibt +2.
+    expect(throwDm(bureau, kiraUpp)).toBe(2);
+    expect(throwDm(bureau, { ...kiraUpp, edu: 8, str: 9 })).toBe(1);
+  });
+
+  it('zählt der Term-DM je geleisteten Term (der Belterer, S. 6)', () => {
+    const belter = { target: 9, dmPerTerm: 1, dms: [] };
+    expect(throwDm(belter, kiraUpp)).toBe(0);
+    expect(throwDm(belter, kiraUpp, 3)).toBe(3);
+    expect(termDmOf(belter, 3)).toEqual<TermDm>({ perTerm: 1, terms: 3, dm: 3 });
+    expect(termDmOf(serviceOf('pirate').survival, 3)).toBeUndefined();
+  });
+
+  it('beginnt die Laufbahn mit dem Alter der Laufbahn (Belterer und Barbar: 14, S. 2)', () => {
+    expect(ageOf(3)).toBe(30);
+    expect(ageOf(3, serviceOf('pirate'))).toBe(30);
+    expect(ageOf(3, { ...serviceOf('pirate'), startAge: 14 })).toBe(26);
+  });
+
+  it('bewirbt sich weiter, wer in einer Laufbahn ohne Einberufungszahl abgelehnt wird', () => {
+    // Navy 8+ mit INT 9 ≥ 8 → +1: 1+1 +1 = 3 < 8 → Einberufung.
+    expect(stateOf(enlist(kira(), 'navy', fixedRandom(1, 1))).step).toBe('draft');
+    // Pirate 7+ mit SOC ≤ 7 → +1: 2+2 +1 = 5 < 7 → zurück zur Laufbahnwahl, kein Würfel für die Einberufung.
+    const refused = stateOf(enlist(kira(), 'pirate', fixedRandom(2, 2)));
+    expect(refused.step).toBe('service');
+    expect(refused.service).toBeUndefined();
+    // Und dort kann er sich gleich wieder bewerben.
+    const inPirate = stateOf(enlist(kira(), 'pirate', fixedRandom(3, 4)));
+    expect(inPirate).toMatchObject({ step: 'survival', terms: 1 });
+    // Die Automatik-Fertigkeit der Laufbahn kommt sofort mit (Pirate Brawling-1, S. 7).
+    expect(inPirate.skills).toEqual([{ of: 'brawling', level: 1 }]);
+  });
+
+  it('zeigt die neuen Laufbahnen in der Wahl, ohne Einberufungszahl in der Einberufung', () => {
+    const options = serviceOptions(stateOf(kira()));
+    expect(options.map((o) => o.service.id)).toEqual(['navy', 'marines', 'army', 'scouts', 'merchants', 'other', 'pirate', 'bureaucrat']);
+    expect(options.every((o) => o.available)).toBe(true);
+    expect(ref.services.filter((s) => s.draft === undefined).map((s) => s.id)).toEqual(['pirate', 'bureaucrat']);
+  });
+
+  it('sperrt die Qualifikation die Laufbahn, wer den Attributswert nicht mitbringt (S. 8)', () => {
+    const other = ref.services.find((s) => s.id === 'other')!;
+    const had = other.needs;
+    other.needs = { characteristic: 'SOC', atLeast: 10 };
+    try {
+      // Stand 5: nicht wählbar, und die Musterung gibt es nicht.
+      expect(serviceOptions(stateOf(kira())).find((o) => o.service.id === 'other')!.available).toBe(false);
+      expect(() => enlist(kira(), 'other', fixedRandom(6, 6))).toThrow(/SOC 10\+/);
+      // Stand 10: wählbar.
+      const noble = kira([[3, 4], [5, 5], [4, 4], [4, 5], [3, 4], [5, 5]]);
+      expect(serviceOptions(stateOf(noble)).find((o) => o.service.id === 'other')!.available).toBe(true);
+      expect(stateOf(enlist(noble, 'other', fixedRandom(6, 6))).service?.id).toBe('other');
+    } finally {
+      if (had === undefined) delete (other as { needs?: unknown }).needs;
+      else other.needs = had;
+    }
+  });
+
+  it('lässt den Bürokrat nur die gelungene Weiterverpflichtung aussteigen (S. 8)', () => {
+    const atReenlist = () => {
+      let g = enlist(kira(), 'bureaucrat', fixedRandom(2, 2)); // 4 + 2 = 6 ≥ 5+
+      g = rollNext(g, fixedRandom(6, 6)); // Überleben 4+
+      g = rollNext(g, fixedRandom(1, 1)); // Patent 6+ misslingt
+      g = rollSkill(g, 'bureaucrat.personal', fixedRandom(1));
+      return rollSkill(g, 'bureaucrat.personal', fixedRandom(2));
+    };
+    expect(stateOf(atReenlist()).step).toBe('reenlist');
+    // Will weg und der Wurf misslingt (2 < 3+): er darf nicht weg.
+    expect(stateOf(reenlist(atReenlist(), false, fixedRandom(1, 1)))).toMatchObject({ step: 'survival', terms: 2 });
+    // Will weg und der Wurf gelingt: er mussert ab.
+    expect(stateOf(reenlist(atReenlist(), false, fixedRandom(2, 2)))).toMatchObject({ step: 'muster', musterLeft: 1 });
+    // Will bleiben: bleibt nur mit dem gelungenen Wurf – misslingt er, tritt er ab wie sonst auch.
+    expect(stateOf(reenlist(atReenlist(), true, fixedRandom(2, 2)))).toMatchObject({ step: 'survival', terms: 2 });
+    expect(stateOf(reenlist(atReenlist(), true, fixedRandom(1, 1)))).toMatchObject({ step: 'muster' });
+  });
+
+  it('lässt eine Laufbahn ohne Ruhestand bis zum siebenten Term dienen (Barbar, S. 9)', () => {
+    const other = ref.services.find((s) => s.id === 'other')!;
+    const was = other.retirement;
+    other.retirement = false;
+    try {
+      let g = enlist(kira(), 'other', fixedRandom(6, 6));
+      g = rollNext(g, fixedRandom(6, 6));
+      g = rollSkill(g, 'other.personal', fixedRandom(1));
+      g = rollSkill(g, 'other.personal', fixedRandom(2));
+      expect(stateOf(g).step).toBe('reenlist');
+      // Weg will, und der Wurf gelingt: ohne Ruhestand bleibt er trotzdem.
+      expect(stateOf(reenlist(g, false, fixedRandom(6, 6)))).toMatchObject({ step: 'survival', terms: 2 });
+    } finally {
+      other.retirement = was;
+    }
+  });
+
+  it('hält Barbar, Bürokrat und Arzt für völlig ungebildet an Schusswaffen (S. 11, Book 1 S. 30)', () => {
+    const rifle = weaponOf('rifle');
+    let g = enlist(kira(), 'bureaucrat', fixedRandom(2, 2));
+    g = rollNext(g, fixedRandom(6, 6));
+    g = rollNext(g, fixedRandom(1, 1));
+    g = rollSkill(g, 'bureaucrat.personal', fixedRandom(1));
+    g = rollSkill(g, 'bureaucrat.personal', fixedRandom(2));
+    g = reenlist(g, false, fixedRandom(2, 2));
+    g = muster(g, 'cash', fixedRandom(3));
+    expect(stateOf(g).step).toBe('name');
+    const { campaign, id } = addCharacter(createCampaign([]), careerInput(stateOf(g), 'Amtsverweser'), g.career);
+    const bureau = campaign.characters.find((c) => c.id === id)!;
+    expect(bureau.career).toBeDefined();
+    expect(weaponSkillDm(bureau, rifle)).toBe(UNSKILLED_GUN_DM);
+    // Die übrigen Laufbahnen behalten ihre natürliche Waffenkunde von einem halben Grad.
+    let k = enlist(kira(), 'other', fixedRandom(6, 6));
+    k = rollNext(k, fixedRandom(6, 6));
+    k = rollSkill(k, 'other.personal', fixedRandom(1));
+    k = rollSkill(k, 'other.personal', fixedRandom(2));
+    const other = addCharacter(createCampaign([]), careerInput(stateOf(k), 'Müßiggänger'), k.career);
+    expect(weaponSkillDm(other.campaign.characters.find((c) => c.id === other.id)!, rifle)).toBe(0);
+    // Und wer die Fertigkeit hat, schießt normal – auch als Bürokrat.
+    expect(weaponSkillDm({ ...bureau, skills: [...(bureau.skills ?? []), { of: 'rifle', level: 1, retired: false }] }, rifle)).toBe(1);
+  });
+
+  it('zeichnet die Gegenprobe im Lebenslauf des Bürokraten', () => {
+    const g = enlist(kira(), 'bureaucrat', fixedRandom(2, 2));
+    const roll = g.career.rolls.at(-1)!;
+    expect(roll).toMatchObject({ kind: 'enlistment', for: 'bureaucrat', dm: 2, target: 5 });
+    expect(replay(g.career).outcomes[6]!.sources).toEqual([{ label: 'STR 8−', dm: 2 }]);
+  });
+});

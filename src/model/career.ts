@@ -105,9 +105,19 @@ export interface DmSource {
 /** Eine Bedingung eines Wurfs mit Zielwert und ob sie beim Stand der UPP greift. */
 export interface ThrowCondition {
   readonly characteristic: Characteristic;
-  readonly atLeast: number;
+  /** Die Bedingung „ab diesem Wert“; mit `atMost` gesetzt, wenn die Bedingung nach unten gilt. */
+  readonly atLeast?: number | undefined;
+  /** Die Bedingung „bis höchstens diesen Wert“ („Stand 7−“, Supplement 4 S. 6). */
+  readonly atMost?: number | undefined;
   readonly dm: number;
   readonly applies: boolean;
+}
+
+/** Der DM einer Laufbahn, der je geleisteten Term zählt (der Belterer: +1 je Term). */
+export interface TermDm {
+  readonly perTerm: number;
+  readonly terms: number;
+  readonly dm: number;
 }
 
 export interface RollOutcome {
@@ -178,14 +188,25 @@ export function successOf(roll: CareerRoll): boolean | undefined {
   return roll.target === undefined ? undefined : sumOf(roll) + roll.dm >= roll.target;
 }
 
-/** DM eines Wurfs der Laufbahn: je DM, dessen Attribut mindestens `atLeast` ist. */
-export function throwDm(th: Throw, upp: Upp): number {
-  return th.dms.reduce((dm, d) => (upp[uppKey[d.characteristic]] >= d.atLeast ? dm + d.dm : dm), 0);
+/** Ob eine Wurfbedingung beim Stand der UPP greift: nach oben ab `atLeast`, nach unten bis `atMost`. */
+export function conditionApplies(d: { characteristic: Characteristic; atLeast?: number | undefined; atMost?: number | undefined }, upp: Upp): boolean {
+  const value = upp[uppKey[d.characteristic]];
+  return d.atLeast !== undefined ? value >= d.atLeast : value <= (d.atMost as number);
 }
 
-/** Die Bedingungen eines Wurfs: welches Attribut ab welchem Wert welchen DM gibt, und ob es greift. */
+/** Der DM eines Wurfs der Laufbahn: je greifende Bedingung und der DM je Term bis zum gegebenen Term. */
+export function throwDm(th: Throw, upp: Upp, terms = 0): number {
+  return th.dms.reduce((dm, d) => (conditionApplies(d, upp) ? dm + d.dm : dm), 0) + (termDmOf(th, terms)?.dm ?? 0);
+}
+
+/** Der DM je geleisteten Term, beim Stand nach `terms` Termen; ohne `dmPerTerm` nichts. */
+export function termDmOf(th: Throw, terms: number): TermDm | undefined {
+  return th.dmPerTerm === undefined ? undefined : { perTerm: th.dmPerTerm, terms, dm: th.dmPerTerm * terms };
+}
+
+/** Die Bedingungen eines Wurfs: welches Attribut ab oder bis welchem Wert welchen DM gibt, und ob es greift. */
 export function throwConditions(th: Throw, upp: Upp): readonly ThrowCondition[] {
-  return th.dms.map((d) => ({ ...d, applies: upp[uppKey[d.characteristic]] >= d.atLeast }));
+  return th.dms.map((d) => ({ ...d, applies: conditionApplies(d, upp) }));
 }
 
 /** DM-Quellen der Abmusterung: Gambling auf Geld, Rang 5+ auf Sachwerte. */
@@ -194,8 +215,9 @@ export function musterSources(kind: 'cash' | 'benefit', skills: readonly { reado
   return rank >= 5 ? [{ label: `Rang ${rank}`, dm: 1 }] : [];
 }
 
-export function ageOf(terms: number): number {
-  return START_AGE + TERM_YEARS * terms;
+/** Das Alter nach `terms` Termen: die Laufbahn beginnt mit 18, mit `startAge` mit diesem. */
+export function ageOf(terms: number, service?: Service): number {
+  return (service?.startAge ?? START_AGE) + TERM_YEARS * terms;
 }
 
 /** Pension im Jahr: ab 5 Terms Cr 4000, je weiteren Term Cr 2000 mehr. */
@@ -278,8 +300,10 @@ class Replay {
       }
       case 'enlistment': {
         const service = serviceOf(this.need(roll.for, 'die Laufbahn'));
+        // Eine Laufbahn ohne Einberufungszahl (die zwölf aus Supplement 4) würfelt keine Einberufung:
+        // abgelehnt heißt, dass man sich anderweitig bewirbt.
         if (successOf(this.withTarget(roll))) this.enter(service, false);
-        else this.step = 'draft';
+        else this.step = service.draft === undefined ? 'service' : 'draft';
         break;
       }
       case 'draft': {
@@ -353,7 +377,18 @@ class Replay {
       case 'reenlist': {
         if (roll.wants === undefined) throw new DomainError('Bei der Weiterverpflichtung fehlt, ob man bleiben will.');
         const sum = sumOf(roll);
-        const stays = sum === 12 || (this.terms < MAX_TERMS && roll.wants && successOf(this.withTarget(roll)) === true);
+        const made = successOf(this.withTarget(roll)) === true;
+        const service = this.service!;
+        // Barbar: ein Ruhestand gibt es nicht, gedient wird bis zum siebenten Term. Bürokrat: vor dem
+        // Ruhestand lässt nur die *gelungene* Weiterverpflichtung weg (Supplement 4 S. 8–9).
+        const stays =
+          sum === 12 || this.terms >= MAX_TERMS
+            ? true
+            : service.retirement === false
+              ? true
+              : service.freeExit === false
+                ? roll.wants === made
+                : roll.wants && made;
         if (stays) {
           this.beginTerm();
         } else {
@@ -387,7 +422,14 @@ class Replay {
         : roll.kind === 'survival' || roll.kind === 'commission' || roll.kind === 'promotion'
           ? this.service?.[roll.kind]
           : undefined;
-    if (th) return throwConditions(th, this.upp).flatMap((c) => (c.applies ? [{ label: c.characteristic, dm: c.dm }] : []));
+    if (th) {
+      const parts: DmSource[] = throwConditions(th, this.upp)
+        .filter((c) => c.applies)
+        .map((c) => ({ label: c.atMost === undefined ? c.characteristic : `${c.characteristic} ${c.atMost}−`, dm: c.dm }));
+      const perTerm = termDmOf(th, this.terms);
+      if (perTerm) parts.push({ label: `Term ${perTerm.terms}`, dm: perTerm.dm });
+      return parts;
+    }
     if (roll.kind === 'cash' || roll.kind === 'benefit') return musterSources(roll.kind, this.skills, this.rank);
     return [];
   }

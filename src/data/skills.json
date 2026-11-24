@@ -54,5 +54,11 @@
   { "id": "large-watercraft", "name": "Large Watercraft", "short": "LWc" },
   { "id": "small-watercraft", "name": "Small Watercraft", "short": "SWc" },
   { "id": "hovercraft", "name": "Hovercraft", "short": "Hov" },
-  { "id": "submersible", "name": "Submersible", "short": "Sub" }
+  { "id": "submersible", "name": "Submersible", "short": "Sub" },
+  { "id": "interrogation", "name": "Interrogation", "short": "Itg" },
+  { "id": "instruction", "name": "Instruction", "short": "Ins" },
+  { "id": "liaison", "name": "Liaison", "short": "Lia" },
+  { "id": "recruiting", "name": "Recruiting", "short": "Rec" },
+  { "id": "ship-tactics", "name": "Ship Tactics", "short": "STa" },
+  { "id": "zero-g-combat", "name": "Zero-G Combat", "short": "ZGC" }
 ]

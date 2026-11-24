@@ -4256,9 +4256,7 @@ Diagramm mit diesen Ausnahmen:
   `from` und `to`, wie im Bild. Begegnungen von vor den Range Bands haben nur eine Reichweite
   (`range`); beim Laden bekommen sie deren erstes Band (Close: Band 0 mit Berührung, Short 0,
   Medium 1, Long 3, Very Long 11) und keinen `bandDie`.
-- **Laufbahnen** (2026-11-24a) folgen dem Modell nur für die sechs Laufbahnen des Regelwerks
-  (`model/career.ts`, `model/generation.ts`, Daten in `src/data/services.json`). Von den zwölf aus
-  Supplement 4 steht noch nichts im Code: keine Zeile in `services.json`, keine ihrer Fertigkeiten,
-  keine Bogenwaffe. Die neuen Felder an `Service`, `Throw` und `ThrowDm` fehlen in `data/schema.ts`,
-  der Einberufungswurf verlangt `draft` noch verpflichtend, und die Erschaffung beginnt immer mit
-  18 Jahren.
+- **Laufbahnen** (2026-11-24a) folgen dem Modell (`model/career.ts`, `model/generation.ts`,
+  `data/schema.ts`, Daten in `src/data/services.json`): die sechs des Regelwerks und die zwei
+  Probelaufbahnen Pirate und Bureaucrat. Die zehn anderen aus Supplement 4 sind nur Daten und
+  fehlen noch in `services.json`, mit ihnen ihre Fertigkeiten und die Bogenwaffe.

@@ -7,8 +7,10 @@ import {
   pensionOf,
   replay,
   musterSources,
+  termDmOf,
   throwConditions,
   throwDm,
+  type TermDm,
   type Career,
   type CareerRoll,
   type CareerState,
@@ -30,6 +32,8 @@ export interface Generation {
 export interface ThrowOdds {
   /** Welche Attribute ab welchem Wert einen DM geben, und ob sie greifen. */
   readonly conditions: readonly ThrowCondition[];
+  /** Der DM je geleisteten Term (der Belterer); ohne ihn nichts. */
+  readonly perTerm: TermDm | undefined;
   readonly dm: number;
   readonly target: number;
   readonly need: number;
@@ -44,12 +48,12 @@ export function stateOf(generation: Generation): CareerState {
   return replay(generation.career);
 }
 
-function odds(dm: number, target: number, conditions: readonly ThrowCondition[] = []): ThrowOdds {
-  return { conditions, dm, target, need: target - dm, chance: chance2d6(target - dm) };
+function odds(dm: number, target: number, conditions: readonly ThrowCondition[] = [], perTerm?: TermDm): ThrowOdds {
+  return { conditions, perTerm, dm, target, need: target - dm, chance: chance2d6(target - dm) };
 }
 
-function throwOdds(th: Throw, upp: CareerState['upp']): ThrowOdds {
-  return odds(throwDm(th, upp), th.target, throwConditions(th, upp));
+function throwOdds(th: Throw, upp: CareerState['upp'], terms = 0): ThrowOdds {
+  return odds(throwDm(th, upp, terms), th.target, throwConditions(th, upp), termDmOf(th, terms));
 }
 
 function append(generation: Generation, roll: CareerRoll): Generation {
@@ -70,9 +74,21 @@ function twoDice(random: Random): number[] {
   return [die(random), die(random)];
 }
 
-/** Wie die Musterung für jede Laufbahn stünde. */
-export function serviceOptions(state: CareerState): readonly { readonly service: Service; readonly odds: ThrowOdds }[] {
-  return ref.services.map((service) => ({ service, odds: throwOdds(service.enlistment, state.upp) }));
+/**
+ * Wie die Musterung für jede Laufbahn stünde. Eine Laufbahn mit `needs` ist nur offen, wer die
+ * Qualifikation mitbringt (der Adlige: Stand 10+).
+ */
+export function serviceOptions(state: CareerState): readonly { readonly service: Service; readonly odds: ThrowOdds; readonly available: boolean }[] {
+  return ref.services.map((service) => ({
+    service,
+    odds: throwOdds(service.enlistment, state.upp),
+    available: service.needs === undefined || state.upp[service.needs.characteristic.toLowerCase() as keyof CareerState['upp']] >= service.needs.atLeast,
+  }));
+}
+
+/** Ob die Laufbahn von sich aus in den Ruhestand tritt und vor dem Ruhestand ausscheiden darf. */
+export function canQuit(state: CareerState): boolean {
+  return state.step === 'reenlist' && state.service?.retirement !== false;
 }
 
 /** Die Fertigkeitstabellen der Laufbahn; die mit `minEdu` nur mit genug EDU. */
@@ -124,11 +140,11 @@ export function nextThrow(state: CareerState): ThrowOdds | undefined {
   const service = state.service;
   switch (state.step) {
     case 'survival':
-      return throwOdds(service!.survival, state.upp);
+      return throwOdds(service!.survival, state.upp, state.terms);
     case 'commission':
-      return throwOdds(service!.commission!, state.upp);
+      return throwOdds(service!.commission!, state.upp, state.terms);
     case 'promotion':
-      return throwOdds(service!.promotion!, state.upp);
+      return throwOdds(service!.promotion!, state.upp, state.terms);
     case 'aging':
       return odds(0, state.aging!.target);
     case 'crisis':
@@ -196,6 +212,9 @@ export function enlist(generation: Generation, serviceId: string, random: Random
   const state = stateOf(generation);
   expectStep(state, 'service');
   const service = serviceOf(serviceId);
+  if (service.needs !== undefined && state.upp[service.needs.characteristic.toLowerCase() as keyof CareerState['upp']] < service.needs.atLeast) {
+    throw new DomainError(`${service.name} steht nur Menschen mit ${service.needs.characteristic} ${service.needs.atLeast}+ offen.`);
+  }
   const dm = throwDm(service.enlistment, state.upp);
   return append(generation, { kind: 'enlistment', for: service.id, dice: twoDice(random), dm, target: service.enlistment.target });
 }
@@ -248,7 +267,7 @@ function thousands(n: number): string {
 export function backgroundOf(state: CareerState): string {
   const rank = state.rank > 0 ? state.service!.ranks[state.rank - 1]!.title : undefined;
   const terms = `${state.terms} ${state.terms === 1 ? 'Term' : 'Terms'}`;
-  return [`Ex-${state.service!.name}`, rank, terms, `${ageOf(state.terms)} Jahre`].filter(Boolean).join(' · ');
+  return [`Ex-${state.service!.name}`, rank, terms, `${ageOf(state.terms, state.service)} Jahre`].filter(Boolean).join(' · ');
 }
 
 /**

@@ -434,11 +434,27 @@ export const TableSchema = z.object({
   rows: z.array(GainSchema).min(6).max(7),
 });
 
-/** Ein 2W6-Wurf einer Laufbahn mit Zielwert und DMs: +dm, wenn das Attribut mindestens `atLeast` ist. */
+/**
+ * Eine Bedingung eines Wurfs: `atLeast` gilt ab dem Wert, `atMost` bis zu ihm („Stand 7−“,
+ * Supplement 4 S. 6); genau eine von beiden.
+ */
+export const ThrowDmSchema = z
+  .object({ characteristic: CharacteristicSchema, atLeast: z.number().int().optional(), atMost: z.number().int().optional(), dm: z.number().int() })
+  .refine((d) => (d.atLeast === undefined) !== (d.atMost === undefined), 'Eine Wurfbedingung hat entweder atLeast oder atMost');
+
+/**
+ * Ein 2W6-Wurf einer Laufbahn mit Zielwert und DMs; `dmPerTerm` zählt je geleisteten Term
+ * (der Belterer in Supplement 4 S. 6).
+ */
 export const ThrowSchema = z.object({
   target: z.number().int(),
-  dms: z.array(z.object({ characteristic: CharacteristicSchema, atLeast: z.number().int(), dm: z.number().int() })).max(2),
+  /** Der DM je geleisteten Term, z. B. +1 im ersten, +2 im zweiten Term. */
+  dmPerTerm: z.number().int().min(1).optional(),
+  dms: z.array(ThrowDmSchema).max(2),
 });
+
+/** Der Einstieg ohne Wurf: nur, wer das Attribut mindestens `atLeast` hat (der Adlige: Stand 10+). */
+export const QualificationSchema = z.object({ characteristic: CharacteristicSchema, atLeast: z.number().int() });
 
 export const RankSchema = z.object({
   level: z.number().int().min(1).max(6),
@@ -450,9 +466,19 @@ export const RankSchema = z.object({
 export const ServiceSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  /** Die Zahl auf 1W6, mit der man bei der Einberufung hierher kommt. */
-  draft: z.number().int().min(1).max(6),
+  /** Die Zahl auf 1W6, mit der man bei der Einberufung hierher kommt; ohne sie wird weiterbeworben. */
+  draft: z.number().int().min(1).max(6).optional(),
   reenlist: z.number().int(),
+  /** Alter zu Beginn der Laufbahn; ohne 18 (Belterer und Barbar: 14, Supplement 4 S. 2). */
+  startAge: z.number().int().min(10).max(18).optional(),
+  /** false: ein Ruhestand gibt es nicht, gedient bis zum siebenten Term (Barbar, S. 9). */
+  retirement: z.boolean().default(true),
+  /** false: vor dem Ruhestand lässt nur die gelungene Weiterverpflichtung weg (Bürokrat, S. 8). */
+  freeExit: z.boolean().default(true),
+  /** false: keine natürliche Waffenkunde an Schusswaffen, DM −5 ohne Fertigkeit (S. 11). */
+  naturalGunSkill: z.boolean().default(true),
+  /** Der Einstieg ohne Wurf; eine Laufbahn mit ihr braucht trotzdem eine Musterung (der Adlige kommt später). */
+  needs: QualificationSchema.optional(),
   skillsPerTerm: z.number().int().min(1).optional(),
   enlistment: ThrowSchema,
   survival: ThrowSchema,
@@ -685,7 +711,7 @@ function checkCareerData(data: CareerData, skillIds: ReadonlySet<string>, ctx: z
   ];
   uniqueIds(data.items.map((i) => i.id), 'Gegenstand', ctx);
   uniqueIds(services.map((s) => s.id), 'Laufbahn', ctx);
-  uniqueIds(services.map((s) => String(s.draft)), 'Einberufungszahl', ctx);
+  uniqueIds(services.flatMap((s) => (s.draft === undefined ? [] : [String(s.draft)])), 'Einberufungszahl', ctx);
   uniqueIds(tables.map((t) => t.id), 'Tabelle', ctx);
   uniqueIds(gains.map((g) => g.id), 'Zugewinn', ctx);
   uniqueIds(data.cascades.map((c) => c.id), 'Kaskade', ctx);
@@ -750,7 +776,7 @@ function checkCareerData(data: CareerData, skillIds: ReadonlySet<string>, ctx: z
   for (const service of services) {
     for (const table of service.skills) if (table.rows.length !== 6) issue(`${table.id} hat nicht 6 Zeilen`);
     for (const table of [service.benefits, service.cash]) if (table.rows.length !== 7) issue(`${table.id} hat nicht 7 Zeilen`);
-    if (service.cash.rows.some((r) => r.credits === undefined)) issue(`${service.cash.id} hat eine Zeile ohne Geld`);
+    // Eine leere Zeile gibt es auch auf der Geldtabelle: die Tabellen in Supplement 4 haben „—“.
     if (service.ranks.some((r, i) => r.level !== i + 1)) issue(`Die Ränge von ${service.id} sind nicht 1, 2, 3, …`);
     if ((service.commission === undefined) !== (service.ranks.length === 0)) issue(`${service.id}: Patent nur mit Rängen`);
     if ((service.commission === undefined) !== (service.promotion === undefined)) issue(`${service.id}: Patent und Beförderung nur zusammen`);
