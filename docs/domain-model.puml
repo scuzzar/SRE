@@ -290,7 +290,7 @@ hide <<browser>> stereotype
   class SystemFlight $raum {
     startedAt: datetime
     round: number
-    $new("2026-11-23a", "phase: BattlePhase")
+    phase: BattlePhase
     /elapsed: number
   }
   class StarSystem $raum {
@@ -431,10 +431,9 @@ hide <<browser>> stereotype
     crashed: boolean
     name: string [0..1]
     intent: Intent [0..1]
-    $gone("2026-11-23a", "fired: boolean")
-    $new("2026-11-23a", "firedTurrets: number [0..*]")
+    firedTurrets: number [0..*]
     returned: boolean
-    $new("2026-11-23c", "docking: boolean")
+    docking: boolean
     /maxG: number
     /evading: boolean
   }
@@ -1355,7 +1354,7 @@ Booking "*" --> "0..1" Ship : forShip
 Campaign "1" *-- "0..1" SystemFlight : flight
 SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
-SystemFlight -$newArrow("2026-11-23a")-> BattlePhase : phase
+SystemFlight --> BattlePhase : phase
 SpaceUnit "*" --> "0..1" Ship : ship
 SpaceUnit "*" --> "0..1" ShipDesign : design
 SpaceUnit "1" *-- "0..1" ShipDamage : damage

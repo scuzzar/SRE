@@ -208,6 +208,12 @@ describe('Das Raumkampf-Interface: Phasen, Hardpoints und Programme (2026-11-23)
     expect(end.campaign.flight!.phase).toBe('thrust');
   });
 
+  it('keine zweite Bewegung in der Feuerphase und kein „End Turn“ vor der Bewegung', () => {
+    expect(() => endFirePhase(withFoe(), clock, always(2))).toThrow('Erst die Bewegung');
+    const moved = runRound(withFoe(), clock, always(2)).campaign;
+    expect(() => runRound(moved, clock, always(2))).toThrow('schon gelaufen');
+  });
+
   it('ein Tipp auf den Hardpoint feuert nur diesen, der andere darf noch', () => {
     let c = withFoe('ignore');
     c = { ...c, ships: c.ships.map((s) => (s.id === c.flight!.party ? { ...s, turrets: [{ type: 'double', weapons: ['pulse-laser'] }, { type: 'single', weapons: ['beam-laser'] }] } : s)) };

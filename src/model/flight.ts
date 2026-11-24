@@ -585,6 +585,8 @@ export interface RoundRun {
  */
 export function runRound(campaign: Campaign, clock: Clock, random?: Random, every = 2): RoundRun {
   const flight = activeFlight(campaign);
+  // In der Feuerphase ist die Bewegung dieser Raumrunde schon gelaufen (2026-11-23a); erst „End Turn“.
+  if (phaseOf(flight) === 'fire') throw new DomainError('Die Bewegung dieser Raumrunde ist schon gelaufen; erst „End Turn“.');
   const scene = sceneOf(campaign.hexes, flight.world);
   const t = flightTime(campaign, flight);
   // Fremde Schiffe wählen ihren Schub nach ihrer Absicht (2026-11-21h); nur die Einheit der Gruppe landet,
@@ -651,6 +653,8 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
  * Schubphase.
  */
 export function endFirePhase(campaign: Campaign, clock: Clock, random: Random): RoundRun {
+  // „End Turn“ gibt es nur in der Feuerphase, nach der Bewegung (2026-11-23a).
+  if (phaseOf(activeFlight(campaign)) !== 'fire') throw new DomainError('Erst die Bewegung dieser Raumrunde, dann „End Turn“.');
   let result = campaign;
   if (foesWillFire(result)) result = foesFire(result, random, clock);
   const settled = settleBattle(result, clock);
