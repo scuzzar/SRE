@@ -126,7 +126,7 @@ hide <<browser>> stereotype
     reenlist: number
     skillsPerTerm: number [0..1]
     startAge: number [0..1]
-    $new("2026-11-24e", "retirement: boolean – ohne Ruhestand keine Bezüge")
+    retirement: boolean
     freeExit: boolean
     naturalGunSkill: boolean
     commissionTitle: string [0..1]
@@ -246,7 +246,7 @@ Service "1" *-- "4" Table : skills {ordered}
 Service "1" *-- "1" Table : benefits
 Service "1" *-- "1" Table : cash
 Service "1" *-- "0..1" Gain : onEnlistment
-  Service "1" -$newArrow("2026-11-24e")-> "0..1" Qualification : needs
+  Service "1" *-- "0..1" Qualification : needs
   Qualification "1" --> "1" Characteristic : of
 Rank "1" *-- "0..1" Gain : grants
 Table "1" *-- "6..7" Gain : rows {ordered}
@@ -264,7 +264,7 @@ Aging --> "1" Characteristic : of
 ' Waffen (Referenzdaten)
 
 ' Verlauf
-Patron "*" -$newArrow("2026-11-24e")-> "0..1" Service : career
+Patron "*" --> "0..1" Service : career
 
 ' Probe
 
@@ -282,5 +282,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Service #line:d0021b;line.bold
 @enduml

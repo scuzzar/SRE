@@ -156,10 +156,21 @@ describe('Referenzdaten', () => {
   it('geben jedem Patron eine Laufbahn, den Gerüchten keine (docs/patron-nsc.md)', () => {
     const patrons = referenceData.encounters.patrons;
     for (const patron of patrons) expect(patron.career === undefined).toBe(patron.rumor);
-    expect(patrons.find((p) => p.name === 'Smuggler')!.career).toBe('merchants');
+    expect(patrons.find((p) => p.name === 'Smuggler')!.career).toBe('pirate');
     expect(patrons.filter((p) => p.name === 'Naval Officer').map((p) => p.career)).toEqual(['navy', 'navy', 'navy']);
     const broken = patrons.map((p) => (p.name === 'Smuggler' ? { ...p, career: 'jedi' } : p));
     expect(() => ReferenceDataSchema.parse({ ...referenceData, encounters: { ...referenceData.encounters, patrons: broken } })).toThrow(/Unbekannte Laufbahn jedi/);
+  });
+
+  it('führen die Patron-Reihen in alle achtzehn Laufbahnen (2026-11-24e)', () => {
+    const patrons = referenceData.encounters.patrons.filter((p) => !p.rumor);
+    const careers = new Set(patrons.map((p) => p.career));
+    // Keine Laufbahn bleibt ohne Zeile, keine Zeile ohne Laufbahn.
+    expect(referenceData.services.map((s) => s.id).filter((id) => !careers.has(id))).toEqual([]);
+    expect(patrons.find((p) => p.name === 'Barbarian')!.career).toBe('barbarian');
+    expect(patrons.filter((p) => p.name === 'Belter').map((p) => p.career)).toEqual(['belter', 'belter']);
+    expect(patrons.filter((p) => p.name === 'Pilot').map((p) => p.career)).toEqual(['flyer']);
+    expect(patrons.filter((p) => p.name === 'Crewmember').map((p) => p.career)).toEqual(['sailor']);
   });
 
   it('geben jeder Waffe mit Gegenstand ein Mindest-SOC (0, 6, 10) und kennzeichnen die verbrecherischen Patrons (2026-11-14c)', () => {

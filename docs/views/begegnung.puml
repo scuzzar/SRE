@@ -318,7 +318,7 @@ Character "*" --> "0..1" Patron : patron
 ' Verlauf
 LogEntry <|-- PatronRoll
 PatronRoll "*" --> "1" Patron : of
-Patron "*" -$newArrow("2026-11-24e")-> "0..1" Service : career
+Patron "*" --> "0..1" Service : career
 LogEntry <|-- RumorRoll
 LogEntry <|-- Butchering
 Butchering "*" --> "1" Character : of
@@ -381,5 +381,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Service #line:d0021b;line.bold
 @enduml

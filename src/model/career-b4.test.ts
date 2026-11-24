@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addCharacter, createCampaign } from './campaign';
-import { ageOf, replay, standingRank, termDmOf, throwConditions, throwDm, type TermDm } from './career';
+import { ageOf, MAX_TERMS, pensionOf, replay, standingRank, termDmOf, throwConditions, throwDm, type TermDm } from './career';
 import {
   cascadeOptions,
   careerInput,
@@ -141,12 +141,17 @@ describe('Laufbahnen aus Citizens of the Imperium', () => {
     expect(stateOf(reenlist(atReenlist(), false, fixedRandom(1, 1)))).toMatchObject({ step: 'survival', terms: 2 });
     // Will weg und der Wurf gelingt: er mussert ab.
     expect(stateOf(reenlist(atReenlist(), false, fixedRandom(2, 2)))).toMatchObject({ step: 'muster', musterLeft: 1 });
-    // Will bleiben: bleibt nur mit dem gelungenen Wurf – misslingt er, tritt er ab wie sonst auch.
+    // Will bleiben: er bleibt. Und misslingt der Wurf, bleibt er gegen seinen Willen – vor dem
+    // Ruhestand lässt ihn eben nur der *gelungene* Wurf weg, gleich was er wollte (S. 8).
     expect(stateOf(reenlist(atReenlist(), true, fixedRandom(2, 2)))).toMatchObject({ step: 'survival', terms: 2 });
-    expect(stateOf(reenlist(atReenlist(), true, fixedRandom(1, 1)))).toMatchObject({ step: 'muster' });
+    expect(stateOf(reenlist(atReenlist(), true, fixedRandom(1, 1)))).toMatchObject({ step: 'survival', terms: 2 });
   });
 
-  it('lässt eine Laufbahn ohne Ruhestand bis zum siebenten Term dienen (Barbar, S. 9)', () => {
+  it('gibt eine Laufbahn ohne Ruhestand keine Bezüge und lässt sie abmustern wie jede andere (B4 S. 9, 2026-11-24e)', () => {
+    // Ruhestand heißt im Vorbild *mit Bezügen* ausscheiden; der Barbar mussert ab, ohne je eine zu sehen.
+    expect(pensionOf(6, false, serviceOf('other'))).toBe(6000);
+    expect(pensionOf(6, false, serviceOf('barbarian'))).toBe(0);
+    expect(pensionOf(4, false, serviceOf('barbarian'))).toBe(0);
     const other = ref.services.find((s) => s.id === 'other')!;
     const was = other.retirement;
     other.retirement = false;
@@ -156,11 +161,32 @@ describe('Laufbahnen aus Citizens of the Imperium', () => {
       g = rollSkill(g, 'other.personal', fixedRandom(1));
       g = rollSkill(g, 'other.personal', fixedRandom(2));
       expect(stateOf(g).step).toBe('reenlist');
-      // Weg will, und der Wurf gelingt: ohne Ruhestand bleibt er trotzdem.
-      expect(stateOf(reenlist(g, false, fixedRandom(6, 6)))).toMatchObject({ step: 'survival', terms: 2 });
+      // Vorher blieb er hier für immer: jetzt endet der Dienst wie überall, nämlich mit dem
+      // misslungenen Wurf (2 < Ziel) – und mit einer 12 bleibt, wer will.
+      expect(stateOf(reenlist(g, true, fixedRandom(1, 1)))).toMatchObject({ step: 'muster' });
+      expect(stateOf(reenlist(g, true, fixedRandom(6, 6)))).toMatchObject({ step: 'survival', terms: 2 });
     } finally {
       other.retirement = was;
     }
+  });
+
+  it('hält nach dem siebenten Term nur eine 12 im Dienst (B1 S. 7, 2026-11-24e)', () => {
+    // Sieben Terms Other, jeder Wurf eine 12: überleben, Fertigkeiten, Weiterverpflichtung.
+    let g = enlist(kira(), 'other', fixedRandom(6, 6));
+    for (let i = 0; i < 60; i++) {
+      const state = stateOf(g);
+      if (state.terms >= MAX_TERMS && state.step === 'reenlist') break;
+      if (state.step === 'survival' || state.step === 'aging' || state.step === 'crisis') g = rollNext(g, fixedRandom(6, 6));
+      else if (state.step === 'skill') g = rollSkill(g, 'other.personal', fixedRandom(1));
+      else if (state.step === 'reenlist') g = reenlist(g, true, fixedRandom(6, 6));
+      else throw new Error(`unerwarteter Schritt ${state.step}`);
+    }
+    expect(stateOf(g).terms).toBe(MAX_TERMS);
+    expect(stateOf(g).step).toBe('reenlist');
+    // Selbst mit dem gelungenen Wurf (8 ≥ 5+) und dem Willnen zu bleiben: nach dem siebenten Term ist Schluss.
+    expect(stateOf(reenlist(g, true, fixedRandom(4, 4)))).toMatchObject({ step: 'muster' });
+    // Nur die 12 dient weiter.
+    expect(stateOf(reenlist(g, true, fixedRandom(6, 6)))).toMatchObject({ step: 'survival', terms: MAX_TERMS + 1 });
   });
 
   it('hält Barbar, Bürokrat und Arzt für völlig ungebildet an Schusswaffen (S. 11, Book 1 S. 30)', () => {

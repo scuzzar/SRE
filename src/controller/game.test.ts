@@ -652,7 +652,7 @@ describe('Begegnung und Kampfsimulation', () => {
     const npcs = game.snapshot().npcs;
     expect(npcs).toMatchObject({ all: false, here: 'Regina', total: 1, worlds: [{ name: 'Regina', roles: [{ role: 'patron' }] }] });
     const npc = npcs.worlds[0]!.roles[0]!.npcs[0]!;
-    expect(npc.background).toMatch(/^Smuggler · Ex-Merchants/);
+    expect(npc.background).toMatch(/^Smuggler · Ex-Pirate/);
     expect(game.snapshot().patron?.note).toBe(`${npc.name} (${npc.background}) steht jetzt unter Charaktere › NSC.`);
     // Nicht in der Leiste oben und nicht unter den SC.
     expect(game.snapshot().characters.map((c) => c.id)).not.toContain(npc.id);
