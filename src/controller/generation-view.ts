@@ -34,6 +34,7 @@ import {
   type Effect,
   type Gain,
   type RollKind,
+  type Service,
   type Generation,
   type GenerationStep,
   type Hex,
@@ -216,7 +217,24 @@ function effectText(effect: Effect): string | undefined {
   }
 }
 
-function label(roll: CareerRoll): string {
+/**
+ * Der Name des Wurfs, der Rang 1 gibt: die Laufbahn gibt ihn selbst („Gehobener Dienst“ beim
+ * Bürokraten, Supplement 4 S. 8), sonst heißt er „Offizierspatent“.
+ */
+export function commissionTitle(service: Service | undefined): string {
+  return service?.commissionTitle ?? 'Offizierspatent';
+}
+
+/** Die Laufbahn, in der diese Würfe gemacht wurden: die letzte Musterung oder Einberufung bis hierher. */
+function serviceSoFar(rolls: readonly CareerRoll[], index: number): Service | undefined {
+  for (let i = index; i >= 0; i--) {
+    const roll = rolls[i]!;
+    if ((roll.kind === 'enlistment' || roll.kind === 'draft') && roll.for !== undefined) return serviceOf(roll.for);
+  }
+  return undefined;
+}
+
+function label(roll: CareerRoll, service: Service | undefined): string {
   switch (roll.kind) {
     case 'characteristic':
       return roll.of!;
@@ -227,7 +245,7 @@ function label(roll: CareerRoll): string {
     case 'survival':
       return 'Überleben';
     case 'commission':
-      return 'Offizierspatent';
+      return commissionTitle(service);
     case 'promotion':
       return 'Beförderung';
     case 'skill': {
@@ -247,7 +265,7 @@ function label(roll: CareerRoll): string {
   }
 }
 
-function result(roll: CareerRoll, effects: readonly Effect[]): string {
+function result(roll: CareerRoll, effects: readonly Effect[], service: Service | undefined): string {
   const success = successOf(roll);
   const gains = effects.flatMap((e) => (e.kind === 'characteristic' || e.kind === 'skill' || e.kind === 'item' ? [effectText(e)!] : []));
   const withGains = (head: string) => [head, ...gains].join(' · ');
@@ -268,7 +286,7 @@ function result(roll: CareerRoll, effects: readonly Effect[]): string {
     case 'commission':
     case 'promotion': {
       const rank = effects.find((e) => e.kind === 'rank');
-      if (!rank) return roll.kind === 'commission' ? 'kein Patent' : 'keine Beförderung';
+      if (!rank) return roll.kind === 'commission' ? `kein ${commissionTitle(service)}` : 'keine Beförderung';
       return withGains(effectText(rank)!);
     }
     case 'aging':
@@ -298,20 +316,21 @@ export function careerLines(career: Career): readonly CareerLine[] {
   const { outcomes } = replay(career);
   return career.rolls.map((roll, index) => {
     const outcome = outcomes[index]!;
+    const service = serviceSoFar(career.rolls, index);
     // Wer abmustern will, hat weder Erfolg noch Fehlschlag; der Zielwert zählt für ihn nicht, nur eine 12.
     const leaving = roll.kind === 'reenlist' && !roll.wants;
     return {
       index,
       kind: roll.kind,
       term: outcome.term,
-      label: label(roll),
+      label: label(roll, service),
       dice: roll.dice,
       dm: roll.dm,
       parts: outcome.sources,
       total: sumOf(roll) + roll.dm,
       target: leaving ? undefined : roll.target,
       success: leaving ? undefined : roll.kind === 'reenlist' ? outcome.effects.some((e) => e.kind === 'term') : successOf(roll),
-      result: result(roll, outcome.effects),
+      result: result(roll, outcome.effects, service),
       gains: outcome.effects.flatMap((e) => {
         const gained = e.kind === 'characteristic' || e.kind === 'skill' || e.kind === 'item' || e.kind === 'credits' || e.kind === 'rank';
         const text = e.kind === 'skill' ? shortSkillText(e.skill, e.level) : gained ? effectText(e) : undefined;
@@ -370,10 +389,12 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
       break;
     case 'survival':
     case 'commission':
-    case 'promotion':
-      prompt = `${term}: ${stepNames[state.step]}`;
-      action = { kind: 'roll', label: `${stepNames[state.step]} würfeln`, dice: 2, odds };
+    case 'promotion': {
+      const stepName = state.step === 'commission' ? commissionTitle(service) : stepNames[state.step]!;
+      prompt = `${term}: ${stepName}`;
+      action = { kind: 'roll', label: `${stepName} würfeln`, dice: 2, odds };
       break;
+    }
     case 'skill':
       prompt = `${term}: ${state.skillsLeft === 1 ? 'eine Fertigkeit' : `${state.skillsLeft} Fertigkeiten`}; Tabelle wählen`;
       action = {

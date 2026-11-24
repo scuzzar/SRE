@@ -483,6 +483,8 @@ export const ServiceSchema = z.object({
   enlistment: ThrowSchema,
   survival: ThrowSchema,
   commission: ThrowSchema.optional(),
+  /** Der Name des Rangwurfs in den Worten der Laufbahn; ohne ihn „Offizierspatent“ (Bürokrat: „Gehobener Dienst“, S. 8). */
+  commissionTitle: z.string().min(1).optional(),
   promotion: ThrowSchema.optional(),
   ranks: z.array(RankSchema).max(6),
   onEnlistment: GainSchema.optional(),

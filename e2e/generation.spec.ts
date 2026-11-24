@@ -245,13 +245,17 @@ test('Laufbahnen aus Supplement 4: Pirate und Bureaucrat in der Wahl, der Bürok
     await expect(prompt).toHaveText('Laufbahn wählen; dann wird die Musterung gewürfelt');
   }
 
-  // Bis zur ersten Weiterverpflichtung: immer der nächste Schritt.
+  // Bis zur ersten Weiterverpflichtung: immer der nächste Schritt. Der Rangwurf heißt hier
+  // „Gehobener Dienst“, nicht „Offizierspatent“ (2026-11-24b).
+  let rangwurf = '';
   for (let i = 0; i < 60; i++) {
     const text = await prompt.innerText();
     if (text.startsWith('Ende von Term 1')) break;
     if (text.startsWith('Gestorben')) test.skip(true, 'der Bürokrat ist im ersten Term gestorben');
+    if (text.includes('Gehobener Dienst')) rangwurf = text;
     await weiter();
   }
+  expect(rangwurf).toContain('Gehobener Dienst');
   await expect(prompt).toContainText('Weg lässt dich hier nur der gelungene Wurf');
   await expect(dialog.getByRole('group', { name: 'Weiterverpflichtung' }).getByRole('button', { name: /Abmustern/ })).toContainText('nur der gelungene Wurf lässt dich weg');
 });
