@@ -21,6 +21,7 @@ import {
   replay,
   serviceOf,
   serviceOptions,
+  shipDesignOf,
   shownLevel,
   skillOf,
   stateOf,
@@ -36,6 +37,7 @@ import {
   type Gain,
   type RollKind,
   type Service,
+  type ShipChoice,
   type Generation,
   type GenerationStep,
   type Hex,
@@ -219,6 +221,15 @@ function effectText(effect: Effect): string | undefined {
 }
 
 /**
+ * Der Text des Ship-Vorteils im Lebenslauf: der Name des Entwurfs und, wenn die Kampagne schon
+ * entschieden hat, was aus dem Angebot wurde.
+ */
+function shipGainText(effect: Extract<Effect, { kind: 'ship' }>, choice: ShipChoice | undefined): string {
+  const name = shipDesignOf(effect.design).name;
+  return choice === undefined ? name : `${name} ${choice === 'switch' ? 'genommen' : 'ausgeschlagen'}`;
+}
+
+/**
  * Der Name des Wurfs, der Rang 1 gibt: die Laufbahn gibt ihn selbst („Gehobener Dienst“ beim
  * Bürokraten, Supplement 4 S. 8), sonst heißt er „Offizierspatent“.
  */
@@ -304,7 +315,8 @@ function result(roll: CareerRoll, effects: readonly Effect[], service: Service |
     case 'cash':
     case 'benefit': {
       const texts = effects.flatMap((e) => {
-        const text = effectText(e);
+        // Der Ship-Vorteil nennt den Entwurf und, was die Kampagne aus dem Angebot gemacht hat.
+        const text = e.kind === 'ship' ? shipGainText(e, roll.shipChoice) : effectText(e);
         return text === undefined ? [] : [text];
       });
       return texts.length > 0 ? texts.join(' · ') : (pending() ?? 'nichts');
