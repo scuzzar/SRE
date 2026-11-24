@@ -1,11 +1,22 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/**
+ * Auf den GitHub-Runnern läuft die Suite auf zwei Worker-Kernen und lädt die App als ein Bundle:
+ * die 30 s Standard-Timeout pro Test und die 5 s einer Erwartung reichen dort nicht – die Läufe
+ * fallen mit verschiedenen Tests um (`Test timeout of 30000ms exceeded`, leere Felder, "session
+ * closed" beim Abriss). Lokal ist dieselbe Suite grün. Darum auf dem Runner das Drei- bis
+ * Vierfache an Zeit; lokal bleibt alles knapp, damit langsame Stellen auffallen.
+ */
+const ci = process.env.CI !== undefined;
+
 export default defineConfig({
   testDir: 'e2e',
   fullyParallel: true,
+  timeout: ci ? 120_000 : 30_000,
+  expect: { timeout: ci ? 20_000 : 5_000 },
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  retries: ci ? 1 : 0,
+  reporter: ci ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'retain-on-failure',
@@ -33,6 +44,6 @@ export default defineConfig({
     command: 'npm run build && npx vite preview --port 4173 --strictPort',
     url: 'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: ci ? 300_000 : 120_000,
   },
 });
