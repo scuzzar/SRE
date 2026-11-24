@@ -612,6 +612,20 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Anfliegen 2 km/s) als eigene Bedingungen entfallen. Der Knopf „Andocken“ steht in der Knopfreihe des
 > Blatts am Platz von **Launch**. Siehe *Andocken* und *Andockflug* unter *Systemflug*. Der Ausschnitt
 > dazu liegt unter [`changes/2026-11-23c-andockflug.png`](changes/2026-11-23c-andockflug.png).
+>
+> Noch nicht freigegeben (Kennzeichen 2026-11-24a): **Laufbahnen des Bürgers** – die zwölf
+> Laufbahnen aus Supplement 4 *Citizens of the Imperium* (Regeln und Tabellen in
+> [`regeln-laufbahnen.md`](regeln-laufbahnen.md)). Sie bringen keine neue Schicht, nur Felder an den
+> Referenzdaten: `Service` bekommt `startAge` (Belterer und Barbar beginnen mit 14), `retirement`
+> (ein Barbar tritt nie in den Ruhestand), `freeExit` (ein Bürokrat darf nur mit gelungener
+> Weiterverpflichtung weg) und `naturalGunSkill` (Barbar, Bürokrat und Arzt haben keine natürliche
+> Schusswaffenkunde), und mit `Qualification` eine neue Referenzklasse für den **Einstieg ohne
+> Wurf** (`needs`, beim Adligen Stand 10+). `draft` wird **optional**: eine Laufbahn ohne
+> Einberufungszahl würfelt keine *Einberufung*, sondern lässt die Person **weiterbewerben**.
+> `Throw.dmPerTerm` ist der Überleben-DM des Belters (+1 je Term), `ThrowDm.atMost` die Bedingung
+> „Stand 7−“ und „Stä 8−“. An den sechs gebauten Laufbahnen ändert sich nichts: `draft` gesetzt,
+> `startAge` leer, die drei Schalter wahr. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-24a-laufbahnen-des-buergers.png`](changes/2026-11-24a-laufbahnen-des-buergers.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -868,9 +882,11 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Schritt | `GenerationStep` | Was in der Erschaffung als Nächstes dran ist, z. B. Überleben würfeln |
 | Lebenslauf | `Career` | Alle Würfe und Entscheidungen einer Erschaffung, der Reihe nach |
 | Wurf der Laufbahn | `CareerRoll` | Ein Wurf in der Erschaffung, mit der Entscheidung, die zu ihm gehört |
-| Laufbahn, Dienstzweig | `Service` | Navy, Marines, Army, Scouts, Merchants, Other |
+| Laufbahn, Dienstzweig | `Service` | Navy, Marines, Army, Scouts, Merchants, Other und die zwölf aus *Citizens of the Imperium* (Pirate, Belter, Sailor, Diplomat, Doctor, Flyer, Barbarian, Bureaucrat, Rogue, Noble, Scientist, Hunter) |
 | Musterung | `CareerRoll` mit `enlistment` | Der Wurf, um in die gewählte Laufbahn zu kommen |
-| Einberufung | `CareerRoll` mit `draft` | 1W6, wenn die Musterung scheitert; bestimmt die Laufbahn |
+| Einberufung | `CareerRoll` mit `draft` | 1W6, wenn die Musterung in einer Laufbahn mit `draft` scheitert; bestimmt die Laufbahn |
+| Weiterbewerbung | (Ablauf, Schritt `service`) | Scheitert die Musterung in einer Laufbahn ohne `draft`, wählt man eine andere Laufbahn und würfelt dort neu |
+| Qualifikation | `Service.needs` (`Qualification`) | Der Einstieg ohne Wurf: wer das Attribut mindestens `atLeast` hat, kommt in die Laufbahn (Adliger: SOC 10+) |
 | Term | (`Career./terms`) | Vier Jahre Dienst |
 | Heimatwelt | `Character.homeworld`, `Career.homeworld` | Die Welt, von der ein Charakter stammt |
 | Welt eines Terms | `Career.worlds` | Die Welt, auf der ein Charakter einen Term gedient hat |
@@ -2529,9 +2545,13 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     1. *Attribute*: STR, DEX, END, INT, EDU, SOC, in dieser Reihenfolge je 2W6.
     1a. *Heimatwelt* (`homeworld`): eine fertige Welt des Subsektors, siehe *Heimatwelt und Welten
        der Terms*.
-    2. *Laufbahn*: Man wählt eine der sechs Laufbahnen und würfelt die Musterung (2W6 + DMs ≥
-       Zielwert). Scheitert sie, folgt die *Einberufung*: 1W6 bestimmt die Laufbahn (`draft`). Wer
-       eingezogen wurde, darf im ersten Term kein Offizierspatent versuchen. Was eine Laufbahn bei
+    2. *Laufbahn*: Man wählt eine Laufbahn. Hat sie eine `needs`-Qualifikation, ist die Musterung kein
+       Wurf: wer das Attribut mindestens `atLeast` hat, kommt hinein, sonst gar nicht. Sonst würfelt
+       man die Musterung (2W6 + DMs ≥ Zielwert). Scheitert sie, folgt bei einer Laufbahn mit `draft`
+       die *Einberufung*: 1W6 bestimmt die Laufbahn; bei einer ohne `draft` (die zwölf neuen)
+       **bewerbt man sich weiter**: zurück zur Laufbahnwahl, eine andere Laufbahn, eine neue Musterung.
+       Wer eingezogen wurde, darf im ersten Term kein Offizierspatent versuchen. Das Alter zählt von
+       18, bei einer Laufbahn mit `startAge` von diesem Wert. Was eine Laufbahn bei
        der Musterung mitgibt (Marines Cutlass-1, Army Rifle-1, Scouts Pilot-1), kommt sofort dazu.
     3. *Term*, jedes Mal in dieser Reihenfolge: zuerst die Welt des Terms (`world`), dann Überleben (`survival`); misslingt es, ist der
        Charakter tot und die Erschaffung zu Ende (`dead`) wie im Regelwerk. Ohne Rang und in einer Laufbahn mit Rängen:
@@ -2547,8 +2567,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        der Charakter tot. Die Krise stammt aus dem Vorbild, nicht aus den Charts.
     5. *Weiterverpflichtung*: Man sagt, ob man bleiben will (`wants`), dann wird immer gewürfelt. Eine
        12 heißt bleiben, egal was man wollte. Sonst bleibt, wer will und den Zielwert schafft, außer
-       nach dem 7. Term: dann nur mit 12 (aus dem Vorbild). Wer bleibt, beginnt den nächsten Term (3.), alle anderen
-       mustern ab.
+       nach dem 7. Term: dann nur mit 12 (aus dem Vorbild). Eine Laufbahn ohne `retirement` (Barbar) lässt
+       einen nie freiwillig weg: dienen bis zum 7. Term. Eine ohne `freeExit` (Bürokrat) lässt vor dem
+       Ruhestand nur weg, wenn die Weiterverpflichtung gelingt, gleich was man wollte. Wer bleibt,
+       beginnt den nächsten Term (3.), alle anderen mustern ab.
     6. *Abmusterung*: so viele Würfe wie Terms, dazu +1 bei Rang 1–2, +2 bei Rang 3–4, +3 bei Rang
        5–6. Je Wurf wählt man Geld oder Sachwerte; Geld höchstens dreimal. DM +1 auf Geld mit
        Gambling, DM +1 auf Sachwerte ab Rang 5. Ein Gegenstand mit `once` (Travellers' Aid Society,
@@ -2574,8 +2596,22 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Alter („Ex-Navy · Commander · 5 Terms · 38 Jahre“), die Pension in der Notiz. Der Lebenslauf zieht
     mit um (`Character.career`) und bleibt danach unverändert; den Charakter bearbeitet man wie jeden
     anderen. Von Hand angelegte Charaktere haben keinen Lebenslauf. Danach ist die Erschaffung zu.
-  - **Laufbahnen** sind die sechs aus dem Regelwerk: Navy, Marines, Army, Scouts, Merchants, Other.
-    Weitere (etwa aus *Citizens of the Imperium*) wären nur Daten.
+  - **Laufbahnen** sind die sechs aus dem Regelwerk (Navy, Marines, Army, Scouts, Merchants, Other)
+    und die zwölf aus Supplement 4 *Citizens of the Imperium* (Pirate, Belter, Sailor, Diplomat,
+    Doctor, Flyer, Barbarian, Bureaucrat, Rogue, Noble, Scientist, Hunter). Regeln, Würfe, Ränge,
+    Tabellen und Sonderregeln je Laufbahn stehen in [`regeln-laufbahnen.md`](regeln-laufbahnen.md).
+    Alle sind Referenzdaten in `services.json`: eine weitere Laufbahn ist Daten, kein Code.
+  - **Würfe mit Gegenprobe und Termzähler**: eine `ThrowDm` mit `atMost` statt `atLeast` gilt, wenn
+    das Attribut den Wert **nicht übersteigt** (Pirat Musterung +1 bei Stand 7−); beide Bedingungen
+    derselben Laufbahn schließen einander aus. Eine `Throw` mit `dmPerTerm` zählt je geleisteten Term
+    (Belter Überleben +1 im ersten Term, +2 im zweiten, …, +7 im siebenten).
+  - **Natürliche Waffenkunde** (`naturalGunSkill`): eine Laufbahn, die sie nicht hat (Barbar,
+    Bürokrat, Arzt), gilt an Schusswaffen als völlig ungebildet und schießt mit DM −5 (B1 30).
+  - **Tabellen einer neuen Laufbahn** sind Daten: vier Fertigkeitstabellen (die vierte mit `minEdu` 8),
+    Sachwerte und Geld, Ränge mit ihren Gaben, und was die Laufbahn bei der Musterung mitgibt
+    (`onEnlistment`, bei den zwölf die Automatik-Fertigkeit: Pirate Brawling-1, Belter Vacc Suit-1,
+    Doctor Medical-1, Diplomat Liaison-1, Flyer Air Craft-1, Barbarian Sword-1, Rogue Streetwise-1,
+    Scientist Computer-1, Hunter Hunting-1).
   - **Fertigkeiten aus den Tabellen**, die es vorher nicht gab, kommen in die Liste: Brawling,
     Forgery und die einzelnen Fahrzeuge der Kaskade Vehicle (Grav, Tracked und Wheeled Vehicle,
     Prop-driven und Jet-driven Fixed Wing, Helicopter, Large und Small Watercraft, Hovercraft,
@@ -4220,3 +4256,9 @@ Diagramm mit diesen Ausnahmen:
   `from` und `to`, wie im Bild. Begegnungen von vor den Range Bands haben nur eine Reichweite
   (`range`); beim Laden bekommen sie deren erstes Band (Close: Band 0 mit Berührung, Short 0,
   Medium 1, Long 3, Very Long 11) und keinen `bandDie`.
+- **Laufbahnen** (2026-11-24a) folgen dem Modell nur für die sechs Laufbahnen des Regelwerks
+  (`model/career.ts`, `model/generation.ts`, Daten in `src/data/services.json`). Von den zwölf aus
+  Supplement 4 steht noch nichts im Code: keine Zeile in `services.json`, keine ihrer Fertigkeiten,
+  keine Bogenwaffe. Die neuen Felder an `Service`, `Throw` und `ThrowDm` fehlen in `data/schema.ts`,
+  der Einberufungswurf verlangt `draft` noch verpflichtend, und die Erschaffung beginnt immer mit
+  18 Jahren.

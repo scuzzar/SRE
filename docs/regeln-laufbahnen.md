@@ -258,8 +258,9 @@ haben – Vorlagen für NSC, die niemand erzeugen soll, sondern die man aufstell
 - Die sechs gebauten Laufbahnen folgen dem Modell; an ihnen steht nichts Neues.
 - An den zwölf neuen steht nichts im Code: keine Zeile in `services.json`, keine der neuen
   Fertigkeiten, keine Bogenwaffen, kein Ruhestand.
-- Für die zwölf braucht das Modell an `Service` (Referenzdaten) wenige Ergänzungen, die erst ins
-  Diagramm müssen, bevor gebaut wird:
+- Für die zwölf braucht das Modell an `Service` (Referenzdaten) wenige Ergänzungen; sie stehen seit
+  Kennzeichen **2026-11-24a** im Diagramm (noch nicht freigegeben, Ausschnitt
+  [`changes/2026-11-24a-laufbahnen-des-buergers.png`](changes/2026-11-24a-laufbahnen-des-buergers.png)):
   1. **DM nach „oder weniger“** (`Stand 7−`, `Stand 8−`, `Stä 8−`) – heute nur „mindestens“.
   2. **Überleben-DM nach Termen** (Belter).
   3. **Einstieg ohne Wurf, mit Attributsschwelle** (Adliger: Stand 10+).
@@ -267,7 +268,7 @@ haben – Vorlagen für NSC, die niemand erzeugen soll, sondern die man aufstell
   5. **Ruhestand** als Regel der Laufbahn: Barbar kann nicht, Bürokrat nur mit Wurf; dazu die
      Rentenzahlung, die die App noch gar nicht kennt.
   6. **Keine natürliche Schusswaffenkunde** (Barbar, Bürokrat, Arzt) – eine Kampf-Regel, keine
-     Erschaffungsregel.
+     Erschaffungsregel; im Modell `Service.naturalGunSkill`.
 - Die **Einberufung** der zwölf ist offen: B4 kennt für sie keine Einberufungszahl, sondern lässt die
   Person eine andere Laufbahn suchen. Wie die App das hält (neue Hausregel oder Einberufung nur unter
   den sechs alten), muss der Owner entscheiden.

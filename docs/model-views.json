@@ -633,6 +633,15 @@
       "file": "2026-11-23c-andockflug",
       "title": "Andockflug: ein Small Craft fliegt heim und dockt mit der nächsten Bewegung an",
       "approved": false
+    },
+    {
+      "id": "2026-11-24a",
+      "file": "2026-11-24a-laufbahnen-des-buergers",
+      "title": "Laufbahnen des Bürgers: zwölf neue Laufbahnen aus Supplement 4 – `Service` bekommt `startAge`, `retirement`, `freeExit`, `naturalGunSkill` und `needs` (`Qualification`), `draft` wird optional (Laufbahnen ohne Einberufungszahl lassen die Person weiterbewerben), `Throw.dmPerTerm` (Belter) und `ThrowDm.atMost` (Stand 7−) kommen dazu",
+      "approved": false,
+      "show": [
+        "Characteristic"
+      ]
     }
   ]
 }
