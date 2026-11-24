@@ -626,6 +626,14 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > „Stand 7−“ und „Stä 8−“. An den sechs gebauten Laufbahnen ändert sich nichts: `draft` gesetzt,
 > `startAge` leer, die drei Schalter wahr. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-24a-laufbahnen-des-buergers.png`](changes/2026-11-24a-laufbahnen-des-buergers.png).
+>
+> **Entwurf, noch nicht abgestimmt** (Kennzeichen **2026-11-24b**): **Name der Ranglaufbahn**.
+> `Service.commissionTitle` `[0..1]` gibt den Wurf, der Rang 1 gibt, in den Worten der Laufbahn: Der
+> Bürokrat steigt in den **gehobenen Dienst**, nicht in ein Offizierspatent. Ohne das Feld heißt der
+> Wurf „Offizierspatent“, was bei Navy, Marines, Army und bei den Merchants passt (deren Ränge sind
+> Schiffsoffiziere). Siehe *Rangwurf* unter *Begriffe* und die Erschaffung unter *Charakter anlegen*.
+> Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-24b-name-der-ranglaufbahn.png`](changes/2026-11-24b-name-der-ranglaufbahn.png).
 
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -887,6 +895,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Einberufung | `CareerRoll` mit `draft` | 1W6, wenn die Musterung in einer Laufbahn mit `draft` scheitert; bestimmt die Laufbahn |
 | Weiterbewerbung | (Ablauf, Schritt `service`) | Scheitert die Musterung in einer Laufbahn ohne `draft`, wählt man eine andere Laufbahn und würfelt dort neu |
 | Qualifikation | `Service.needs` (`Qualification`) | Der Einstieg ohne Wurf: wer das Attribut mindestens `atLeast` hat, kommt in die Laufbahn (Adliger: SOC 10+) |
+| Rangwurf | `Service.commission` (`Service.commissionTitle`) | Der Wurf, der Rang 1 gibt; ohne `commissionTitle` heißt er „Offizierspatent“, beim Bürokraten „Gehobener Dienst“ (2026-11-24b) |
 | Term | (`Career./terms`) | Vier Jahre Dienst |
 | Heimatwelt | `Character.homeworld`, `Career.homeworld` | Die Welt, von der ein Charakter stammt |
 | Welt eines Terms | `Career.worlds` | Die Welt, auf der ein Charakter einen Term gedient hat |
@@ -2555,7 +2564,7 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        der Musterung mitgibt (Marines Cutlass-1, Army Rifle-1, Scouts Pilot-1), kommt sofort dazu.
     3. *Term*, jedes Mal in dieser Reihenfolge: zuerst die Welt des Terms (`world`), dann Überleben (`survival`); misslingt es, ist der
        Charakter tot und die Erschaffung zu Ende (`dead`) wie im Regelwerk. Ohne Rang und in einer Laufbahn mit Rängen:
-       Offizierspatent, das gibt Rang 1. Mit Rang unter dem höchsten der Laufbahn (Merchants haben 5):
+       der *Rangwurf* (`commission`), das gibt Rang 1; er heißt `commissionTitle` und sonst „Offizierspatent“. Mit Rang unter dem höchsten der Laufbahn (Merchants haben 5):
        Beförderung, einmal je Term, auch im Term des Patents. Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
        (`skillsPerTerm`); +1 für Patent, +1 für Beförderung. Für jede wählt man eine Tabelle; die
        vierte (`minEdu` 8) nur mit EDU 8+, gemessen vor dem Wurf. Ein Rang bringt, was in ihm steht
@@ -2605,6 +2614,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     das Attribut den Wert **nicht übersteigt** (Pirat Musterung +1 bei Stand 7−); beide Bedingungen
     derselben Laufbahn schließen einander aus. Eine `Throw` mit `dmPerTerm` zählt je geleisteten Term
     (Belter Überleben +1 im ersten Term, +2 im zweiten, …, +7 im siebenten).
+  - **Der Rangwurf** (`commission`) heißt nach der Laufbahn (`commissionTitle`, 2026-11-24b): „Offizierspatent“
+    ohne das Feld – bei Navy, Marines, Army und Merchants (deren Ränge Schiffsoffiziere sind) auch so
+    gemeint –, „Gehobener Dienst“ beim Bürokraten; für Diplomat, Barbar und Adliger kommt je eigene
+    Fassung, sobald sie gebaut werden.
   - **Natürliche Waffenkunde** (`naturalGunSkill`): eine Laufbahn, die sie nicht hat (Barbar,
     Bürokrat, Arzt), gilt an Schusswaffen als völlig ungebildet und schießt mit DM −5 (B1 30).
   - **Tabellen einer neuen Laufbahn** sind Daten: vier Fertigkeitstabellen (die vierte mit `minEdu` 8),
@@ -4259,4 +4272,5 @@ Diagramm mit diesen Ausnahmen:
 - **Laufbahnen** (2026-11-24a) folgen dem Modell (`model/career.ts`, `model/generation.ts`,
   `data/schema.ts`, Daten in `src/data/services.json`): die sechs des Regelwerks und die zwei
   Probelaufbahnen Pirate und Bureaucrat. Die zehn anderen aus Supplement 4 sind nur Daten und
-  fehlen noch in `services.json`, mit ihnen ihre Fertigkeiten und die Bogenwaffe.
+  fehlen noch in `services.json`, mit ihnen ihre Fertigkeiten und die Bogenwaffe. Der Name des
+  Rangwurfs (`commissionTitle`, 2026-11-24b) ist noch nicht freigegeben und fehlt drum im Code.

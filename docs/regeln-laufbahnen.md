@@ -268,5 +268,8 @@ haben – Vorlagen für NSC, die niemand erzeugen soll, sondern die man aufstell
   **2026-11-24a**, kein neuer Code. Ihnen fehlen noch ihre Fertigkeiten in `skills.json` (u. a.
   Bow Combat, Prospecting, Hunting, Survival, Recon, Demolition, Gravitics, Battle Dress) und die
   Bogenwaffe bei den Waffen.
+- Der **Name des Rangwurfs** („Position“ bzw. „Commission“ in B4) folgt noch nicht: die App nennt ihn
+  überall „Offizierspatent“. Nach Kennzeichen **2026-11-24b** (Entwurf) sagt die Laufbahn ihn selbst
+  – `Service.commissionTitle`, beim Bürokraten „Gehobener Dienst“.
 - Die **Rente** nach dem Ruhestand kennt die App noch nicht (Notiz statt Zahlung), bei den neuen
   Laufbahnen wie bei den alten.

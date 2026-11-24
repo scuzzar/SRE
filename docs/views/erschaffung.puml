@@ -129,6 +129,7 @@ hide <<browser>> stereotype
     retirement: boolean
     freeExit: boolean
     naturalGunSkill: boolean
+    $new("2026-11-24b", "commissionTitle: string [0..1]")
   }
   class Throw <<value>> $erschaffung {
     target: number
@@ -280,4 +281,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Service #line:d0021b;line.bold
 @enduml
