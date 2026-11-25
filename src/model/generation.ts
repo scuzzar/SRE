@@ -433,7 +433,9 @@ export function runOneCareer(hexes: Campaign['hexes'], service: string, random: 
     if (!next) {
       const state = stateOf(generation);
       if (state.step === 'dead') return { end: 'dead', generation };
-      return { end: 'name', generation };
+      // Nur beim Namen in der eigenen Laufbahn ist der Lauf gefunden; sonst steht er irgendwo fest.
+      if (state.step === 'name' && state.service?.id === service) return { end: 'name', generation };
+      throw new DomainError('Der Lauf des NSC bleibt vor dem Namen stehen.');
     }
     generation = next;
     // Abgelehnt: Er würde eingezogen, also nicht in seiner Laufbahn; von vorn.

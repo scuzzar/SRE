@@ -44,7 +44,7 @@ test('NSC: mit Dienstalter — die Wartenscheibe zählt die Läufe, dann steht e
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
   const sheet = page.getByRole('dialog', { name: 'Neuer NSC' });
   await expect(sheet.getByLabel('Dienstalter')).toHaveValue('');
-  await sheet.getByRole('button', { name: '4', exact: true }).click();
+  await sheet.getByLabel('Dienstalter').selectOption('4');
   await expect(sheet.getByLabel('Dienstalter')).toHaveValue('4');
   await sheet.getByRole('button', { name: 'Scouts', exact: true }).click();
   const disc = page.getByText('Die Erschaffung läuft');

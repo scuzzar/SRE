@@ -305,6 +305,8 @@ import {
   type ShipEncounterCheck,
 } from '../model/draft';
 import { buildSnapshot, openWorldId, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
+import { spaceChoices, targetIndex, type OpenSpace } from './space-view';
+import type { JourneyMode } from './time-view';
 
 /** Wie lange die Wartenscheibe nach jedem verworfenen Lauf steht (2026-11-24g). */
 const NPC_PAUSE_MS = 70;
@@ -317,8 +319,9 @@ const NPC_PACE_MAX_MS = 1400;
 function repaint(ms = 0): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-import { spaceChoices, targetIndex, type OpenSpace } from './space-view';
-import type { JourneyMode } from './time-view';
+
+/** Nach der Obergrenze des Zögerns zeigt die Scheibe den Zähler noch nach so vielen Läufen. */
+const NPC_REPAINT_EVERY = 10;
 
 /** Was beim Wechsel der Kampagne verfällt: Entwürfe und alles, was an ihnen hängt. */
 /** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
@@ -2295,7 +2298,9 @@ export class GameController {
           return generation;
         }
         // Das Zögern hat eine Obergrenze: bei einem Pechvogel soll die Scheibe nicht endlos stehen.
+        // Danach gibt sie das Bild nur noch alle paar Läufe frei, damit der Zähler weiterläuft.
         if (attempts * NPC_PAUSE_MS <= NPC_PACE_MAX_MS) await repaint(NPC_PAUSE_MS);
+        else if (attempts % NPC_REPAINT_EVERY === 0) await repaint();
       }
       throw new DomainError('Der Lauf des NSC kommt nicht zum Ende.');
     } finally {

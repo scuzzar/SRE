@@ -2244,8 +2244,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     2026-11-24e),
     Name von der Tafel NSC, Ort der Aufenthaltsort, danach öffnet der Editor zum Nachbessern. Ohne
     Aufenthaltsort geht es nicht. Er hat keinen Patron. **Dienstalter** (2026-11-24f): Über der Liste
-    der Laufbahnen steht das Feld „Dienstalter“ (Auswahl, leer = „so lange er kann“) mit den Chips
-    „so lange er kann“ und 1 bis 7 – leer wählt der Lauf,
+    der Laufbahnen steht das Feld „Dienstalter“ (Auswahl: „So lange er kann“ oder
+    1 bis 7 Terms, ohne eigene Schnellwahl daneben) – leer wählt der Lauf,
     wie lange er kommt (er will bleiben, so lange es geht, wie beim Patron-NSC), gesetzt würfelt
     er genau so viele Terms ohne Überleben und ohne Weiterverpflichtung, und nichts kann ihn
     töten. Das Feld steht in beiden Dialogen. Lange auf „NSC platzieren“ am angetippten

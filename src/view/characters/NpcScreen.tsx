@@ -150,16 +150,6 @@ export function NewNpcSheet({ npcs, onClose, here }: { npcs: NpcScreenView; onCl
               ))}
             </select>
           </label>
-          <div className="chips" role="group" aria-label="Schnellwahl der Terms">
-            <button type="button" aria-pressed={terms === undefined} onClick={() => setTerms(undefined)}>
-              so lange er kann
-            </button>
-            {npcs.termsGoal.map((n) => (
-              <button key={n} type="button" aria-pressed={terms === n} onClick={() => setTerms(n)}>
-                {n}
-              </button>
-            ))}
-          </div>
           <fieldset>
             <legend>Aus einer Laufbahn erzeugen</legend>
             <p className="small-label">
