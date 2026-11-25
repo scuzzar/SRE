@@ -37,70 +37,33 @@ gespeicherte Stand nie `model/draft/`. Weil `platform/` nichts aus `model/draft/
 kann ein Entwurf gar nicht in den Speicher geraten.
 
 **2. Der Controller nimmt jede Eingabe an.** Die View ruft für jede Eingabe genau eine
-Controller-Methode auf. Der Controller entscheidet, was daraus folgt:
+Controller-Methode auf (`src/controller/game.ts`), etwa `rollDice()`, `drawCard(question, forNote)`,
+`fightAttack()`, `evade()`, `buy(item, count, character)` oder `travel()`. Der Controller entscheidet,
+was daraus folgt:
 
-- **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository:
-  `rollDice()`, `drawCard(question, forNote)` (aus dem Feld Notiz des Charakter-Editors gezogen, `forNote`, landet die Auswahl beim Bestätigen im Notiztext statt im Log), `toggleOdds(odds)` (Orakelfeld der Karte), `togglePick(slot)`, `toggleRoll(roll)`
-  (Wurffeld), `confirmCard(question)` (mit der Frage aus dem Feld der Karte), `discardCard()`, `drawNames()` und `closeNames()` (Name von der Karte), `writeNote(text, interprets)`, `deleteLogEntry(index)`, `setOdds(odds)`; für den Charakter oben und die Probe
-  `focusCharacter(id)` (Wischen), `chooseSkill(skill)`, `chooseSkillOf(id, skill)` (Fertigkeit auf einer anderen Karte der Leiste), `toggleCharacteristic(c)`, `rollTask()`,
-  `endTask()`; für den Kampf `wieldWeapon(weapon)`, `chooseTarget(armor, range)`, `endAttack()`,
-  `rollAttack()`, `rollDamage()`, `reload()`, für Begegnungen `rollEncounter(roll)`,
-  `endEncounter()`, `rollPatron(force)`, `createPatronNpc()` („Als NSC“ zum letzten Patron-Wurf; die Erschaffung läuft dafür in `model/generation.ts` `runCareerIn` für sich durch, ohne die offene Erschaffung der Kampagne zu berühren), `createPatronMission()` („Als Mission“: derselbe NSC und dazu eine offene Mission, `model/patron.ts`), `rollRumor(force)`, `rollLegal(force)` (der zweite Test im Zeitraum nur mit `force`, dem langen Druck; die Tests stehen im Log, Regeln in `model/encounter-check.ts`), für die Spielzeit `passDays(days)`, `endWeek(force)` und `setStartDate(day, year)` (`model/time.ts`; neue Logeinträge bekommen in `change` den heutigen Tag), für die Reise `openJourney()` (auf der Weltkarte; würfelt die NSC im Kälteschlaf und hält die Reise in Vorbereitung im Zustand), `choosePassage(id, passage)`, `guessSurvivors(id, n)`, `travel()` und `closeJourney()` (`model/travel.ts`), `setTerrain(terrain)`, `rollAnimals(row)`, `rollEventSaves(index)`, `struggle()`, `openLoot(id)`, `takeLoot(npc, pc)`, `butcher(animal, pc)`, `closeButchered()`, `sellGame(key, kg, total, pc)`, `adoptNpcs(npcs, asNpc)`, in der Kampfsimulation `chooseFightTarget(id)`,
-  `setBand(pc, band, close)`, `moveBand(step)`, `fightAttack()`, `fightReload()`, `evade()` und `skipTurn()`, für Heilung
-  `recover(how, npc, healer, facility, pc)` und für Wunden an SC
-  `assignWound(to)`, `unassignWound()`, `confirmWounding()`; für Shop und Gruppenkasse `stayHere()` (auf der
-  Weltkarte), `openShop()` und `closeShop()` („Einkaufen“ am angetippten Feld einer Stadt auf der Welt der Gruppe und ✕ zurück dorthin), `book(kind, amount, text, character)`, `buy(item, count, character)` und
-  `sell(item, count, price, character)`; für den Reiter Schiff `buyShipDesign(design, method)` (Werft, bar
-  oder über die Bank; auch Small Craft, als Beiboot im Laderaum oder eigenständig, 2026-11-21c), `renameShip(name)`, `editShip(input)`, `buyFuelTons(tons)`, die Bewaffnung in der Werft `installTurret(type)`, `replaceTurret(index, type)`, `installWeapon(index, weapon)`, `removeWeapon(index, slot)`, `removeTurret(index)` (`model/armament.ts`, 2026-11-21g) (`model/ship.ts`, Entwürfe
-  in `src/data/ships.json`; laufende Kosten wie Raten, Liegegebühren, Lebenserhaltung und die
-  Monatsabrechnung in `model/upkeep.ts`, ausgelöst, wenn Zeit vergeht, und von `stayHere()` über
-  `placeGroup`), `addDeckPlan(image)` und `removeDeckPlan(name)` (Deckpläne gehören keiner Kampagne,
-  sondern dem Entwurf; der Controller lädt die des aktiven Entwurfs über das Repository, auch nach jedem
-  Wechsel der Kampagne und jedem Abgleich neu); für Kampagnen
-  `openCampaign(id)`, `createCampaign(name)`, `renameCampaign(name)`, `deleteCampaign(id)`,
-  `exportCampaign(id)` und `importCampaign(text)`; für Missionen (`model/mission.ts`) `newMission()`,
-  `editMission(id)`, `saveMission(input)`, `deleteMission(id)`, `restoreMission(id)`,
-  `closeMissionEditor()`, `startMissionPicking(input)`, `confirmMissionPlace()` und `cancelMissionPicking()`
-  (Ort wählen auf dem Globus; die Eingabe des Editors hält der Controller darüber hinweg in
-  `missionEditor`) und `showMissionPlace(world, cell)`; die Karte bekommt beim Ziehen die offenen Missionen
-  als Handlungsfäden mit; für den Abgleich mit OneDrive `signIn()`, `signOut()`,
-  `sync()` und `resolveConflict(key, choice)`: Was je Kampagne zu tun ist, sagt das Model (`planSync` in
-  `model/sync.ts`), der Controller tut es über `Cloud` und `CampaignRepository` und hält offene Konflikte
-  (`model/draft/conflict.ts`) in seinem Zustand; im selben Lauf gleicht er die Deckpläne ab (je Platz
-  nach `planDeckSync`, Dateiformat `toDeckPlanFile`/`fromDeckPlanFile` in `model/sync.ts`; in OneDrive im
-  Unterordner `Deckplaene` des App-Ordners); die Abgleichsmarken der Kampagnen und der Deckplan-Plätze
-  merkt sich das Gerät über das Repository; `main.tsx` stößt den Abgleich an, wenn die App wieder sichtbar wird oder das Netz zurück ist; für die Charaktererschaffung `openGeneration()`,
-  `rollGeneration()`, `chooseService(id)`, `chooseSkillTable(id)`, `chooseCascade(skill)`,
-  `reenlist(wants)`, `musterOut(kind)`, `chooseGenerationWorld(id)`, `pickGenerationWorld()`,
-  `closePicker()`, `runGeneration()`, `finishGeneration(name)`, `discardGeneration()` und
-  `restartGeneration()`; für den Subsektor `chooseHex(column, row)`, `clearHex()`, `rollOccurrence()`,
-  `runOccurrence()`, `rollWorld()`, `runWorld()`, `nameWorld(name)`, `noteWorld(note)`, `discardWorld()` und
-  `closeWorld()`; für den Globus `openGlobe()` (auf der Weltkarte; erzeugt beim ersten Mal die
-  Oberflächenkarte, `model/surface-map.ts` auf dem Raster aus `model/surface-grid.ts`), `openGlobeAt(column, row)`
-  (vom Knopf ⌖ im Subsektor und beim Doppeltippen auf eine Welt; das zweite Tippen erkennt die View), `pickCell(cell)`, `rerollMap()` (gesperrt, sobald ein Ort auf die Karte zeigt),
-  `renameCity(index, name)`, `moveParty()` und `moveNpc(id)` (auf das angetippte Feld bzw. in die Stadt darauf, `model/place.ts`), NSC platzieren mit `startNpcPlacing()` (öffnet im Reiter Charaktere die NSC zum Auswählen für das angetippte Feld), `placeNpcs(ids)` und `cancelNpcPlacing()` (zurück zum Feld; ein Reiter oder ein anderes Feld bricht ab), im Reiter Begegnung das Würfelfenster eines Wurfs (`encounterRoll`, `closeEncounterRoll()`), „Manuell wählen“ (`chooseEncounter(kind)`, `closeEncounterChoice()`) und NSC dazunehmen (`startNpcJoining(manual)`, danach ebenfalls `placeNpcs(ids)` bzw. `cancelNpcPlacing()`), für Fahrten `planTrip()` (die Varianten der Route zum angetippten Feld; sie sind flüchtig und liegen im Zustand des Controllers), `chooseTripOption(index)`, `closeTripPlan()`, `startTrip()`, `driveDay()` und `cancelTrip()` (`model/trip.ts`, Fahrzeuge in `model/vehicle.ts` mit den Daten aus `src/data/vehicles.json`) und
-  `closeGlobe()`; für die Raumkarte und den Systemflug (`model/flight.ts`, Domänenmodell 2026-11-18c) `launch()` (Knopf „Starten“ im Reiter Schiff, `flightStartBlocker`/`launchWorld` in `model/flight.ts`) und `showFlight()` („Zum Flug“), `openSpace()` (setzt den Reiter Schiff, in dem `view/space/SpacePanel.tsx` die Bedienung einbettet; Knopf „Raum“ an der Weltkarte und rund am Globus; öffnet die Raumkarte der offenen Welt als Grundkarte, `OpenSpace` im Zustand), `closeSpace()`, `startFlight()`, `aimThrust(unit, thrust)` (der Finger zieht im Schubkreis; Einrasten und Vorschau rechnet das Model, gesetzt wird nichts, der gezogene Vektor liegt nur im Zustand), `setThrust(unit, thrust)` (beim Loslassen, und „Kein Schub“), `runRound()` (die Orte während der Runde liegen für die Wiedergabe im Zustand; am Gasriesen schöpft ein Schiff mit Stromlinie, `skim` in `model/flight.ts`, 2026-11-21f; Raumkampf 2026-11-21h in `model/space-combat.ts`: fremde Schiffe planen ihren Schub, nach der Bewegung `foesFire` und `settleBattle`; gefeuert wird von der Einheit der Gruppe aus), `rollShipEncounter()` (öffnet seit 2026-11-22b den Dialog der Begegnungsprüfung), `placeFoe(design, intent)`, für Schiffsbegegnungen bei Abreise und Ankunft (2026-11-22b; `model/ship-encounter.ts`, die flüchtige Prüfung `ShipEncounterCheck` in `model/draft/ship-check.ts`, im Zustand `shipCheck` und die wartende Ankunft `nextShipCheck`, Dialog `view/space/ShipCheckDialog.tsx`) `rollShipCheck()`, `skipShipCheck()` (lang gedrücktes Abbrechen), `answerSighting(toMap)`, `closeShipCheck()`, `openShipEncounter()` (Knopf „Schiff“ im Reiter Begegnung) und `departFlight()` („Springen nach …“ bzw. „Reisen nach …“ im Systemflug); `travel()` und `travelInSystem()` mit eigenem Schiff öffnen erst die Prüfung beim Start, für die Reise unterwegs (2026-11-22c, `model/voyage.ts`, `Campaign.voyage`) `travelOn()` („Weiterreisen“, je ein Tag; nach dem letzten zeigt der Dialog der Reise die Ankunft) und `oneDay()` (der Tag-Knopf in der Reihe unter dem Log, `view/oracle/OracleDock.tsx`: Weiterfahren, Weiterreisen oder 1 Tag; er ersetzt dort „Deuten“), `fireAt(target)` (feuert sofort, 2026-11-21i; die Würfe rollen in `view/space/SpaceVolley.tsx`, `volley` im Zustand, `closeVolley()`), `repairShip()`, `launchCraft(id)` und `dockCraft(id)` (Beiboote aussetzen und andocken, 2026-11-21b; nur die Einheit der Gruppe, `SystemFlight.party`, landet) und `endFlight()` (was ohne die Gruppe noch fliegt, bleibt in der Umlaufbahn); gezeichnet wird die Raumkarte mit Canvas 2D in `view/space/SpaceScreen.tsx` (Bahnvorschau und Marken aus dem Snapshot, `controller/space-view.ts`; die Welt mit dem Weltsymbol ohne angedeutete Umlaufbahnen), ihr Blatt und die Reihe unten in `view/space/SpacePanel.tsx`; `chooseHex` öffnet jedes erzeugte Feld als Weltkarte, fertig oder in Erschaffung; von dort öffnet „Öffnen“ (`openGlobe()`) den Globus, dessen Schließen-Knopf (und das Herauszoomen über den Anschlag) ruft `closeWorld()` und führt zum Subsektor; beim Öffnen einer Kampagne ist der Globus des Aufenthaltsorts die Grundkarte, wenn seine Oberflächenkarte schon entstanden ist (`home`), sonst der Subsektor; ein angetipptes Feld zeigt die View an der Stelle des Bereichs (`FieldCard`), ebenso die Weltkarte (`useWorldDock` in `view/sector/WorldSheet.tsx`, aufgerufen aus `App.tsx`): als Feld schiebbar wie jedes andere, ohne Weltsymbol, mit der Reihe Hierher reisen/Gruppe platzieren/Öffnen (`WorldActions`, wie `FieldDock`) bzw. der Würfelbühne unten; die Sektorkarte markiert die Welt und schiebt sie über das Blatt, wie Notiz/Tag/2W6/Karte im Orakel; nur aus der Heimatwelt- bzw. Welt-eines-Terms-Wahl (`picking`), wo der Subsektor selbst schon ein Blatt ist, steht sie stattdessen in einem eigenen Blatt obendrauf; neue Logeinträge bekommen in `change` den Aufenthaltsort als Ort (`stampPlaces`); gezeichnet wird er in
-  `view/sector/globe-render.ts` aus Raster und gepackter Karte im Snapshot (`controller/globe-view.ts`), mit WebGL 2 in `view/sector/globe-gl.ts` (Muster je Geländeart einmal auf der Grafikkarte gebacken, Dreiecke zwischen den Feldmitten mit ausgefransten Übergängen, das Gitter nur als zuschaltbare Ränder; aufgebaut in Schritten hinter dem Ladebalken aus `view/loading.tsx`, den die View vor dem Öffnen einer Welt zeigt), ohne WebGL 2 als Textur auf dem Prozessor. Ein Hexfeld (`model/sector.ts`) ist das System: es hält seine Welten (`World`, die Hauptwelt mit der Id des Feldes, Domänenmodell 2026-11-20b) und das Sternsystem (`model/star-system.ts`, nach Book 6 mit den Tabellen aus `src/data/stars.json`; gewürfelt im Schritt „Sternsystem würfeln“ der Weltenerschaffung, für fertige Welten ohne System beim Öffnen der Kampagne mit Würfen aus Schlüssel und Feld, `withStarSystems`); die Raumkarte rechnet die Schwerkraft von Welt und Monden (`sceneOf` in `model/flight.ts`) und zeigt alles von der Welt aus gesehen, ihre Wahl Welt/Gasriese steht im Blatt (`openSpace(world)`); die Weltkarte einer Nebenwelt öffnet `openWorld(id)` (sie hängt dann an der Id der Welt, `OpenWorld.id`), den Globus jeder Welt erzeugt erst `createGlobe()` (2026-11-20d), und „Hierher reisen“ im selben System öffnet den Dialog der Reise im System (`systemJourney` im Zustand, `chooseSystemJourneyMode(mode, craft)` (Ticket, eigenes Schiff oder ein Beiboot, 2026-11-21b), `travelInSystem`, `closeSystemJourney`; Regeln in `model/system-journey.ts`, Dialog in `view/sector/SystemJourneySheet.tsx`); der Landeplatz (2026-11-21) steht in `model/landing.ts` (`Ship.place`, `landAt` in `model/upkeep.ts`), im Snapshot als `landing`, mit `landAtPort`, `startFreeLanding`, `landHere`, `cancelFreeLanding` und dem Dialog `view/sector/LandingSheet.tsx`; jede Landung zählt `touchdown` hoch, und `view/sector/Touchdown.tsx` spielt dann über dem Globus die Landeanimation (nur CSS);
-  ein Wurf der Weltenerschaffung (`model/draft/world-roll.ts`) trägt sein Ergebnis ein und lebt nur,
-  solange Weltkarte oder Feldwahl offen sind (im Zustand des Controllers). Die Erschaffung ist gespeicherter Stand (`model/generation.ts`,
-  `model/career.ts`): Sie hält nur die Würfe, alles andere spielt `replay` daraus nach. Die View liest eine gewählte Datei nur als Text
-  ein und reicht ihn weiter (ein Bild für einen Deckplan als Data URL, große Fotos vorher auf 2048
-  Pixel verkleinert in `view/ship/deck-image.ts`); prüfen tut das Model (`fromCampaignFile`), anbieten zum Download der
-  Controller über `Download`. Offene Karte, Probe, Angriff in Vorbereitung und Schaden beim Verteilen sind Teil des
-  Models (`model/draft/`), werden aber nicht gespeichert.
-- **Er wählt, welche View zu sehen ist**: die Grundkarte (Globus der offenen Welt, sonst Subsektor) und den Reiter Log, Begegnung, Charaktere, Schiff oder Missionen, im Reiter Begegnung Begegnung oder Kampf, im Reiter Charaktere SC, Kasse oder NSC (`showScreen(screen)`, verlässt auch den Shop, lässt ein angetipptes Feld des Globus und ein gewähltes Feld des Subsektors los; im Desktop-Modus steht der Reiter wie im Ziehblatt an der Stelle des Logs in der Seitenspalte; im NSC-Screen „Alle zeigen“ mit `showAllNpcs(all)`, beim Öffnen des Reiters wieder aus, gruppiert nach `model/npcs.ts`; `newCharacter(npc, role)` öffnet den Editor für einen neuen NSC, `generateNpc(service, role, here)` erzeugt einen aus einer Laufbahn (`model/npcs.ts`, auch die Waffen erzeugter NSC) und öffnet ihn im Editor; ebenso wechselt `createPatronNpc()` gleich zu den NSC im Reiter Charaktere und öffnet den neuen NSC im Editor; „Zum Kampf“ im Begegnungs-Screen wechselt so in den Kampf-Screen, „Weiter“ in der Übersicht einer Begegnung, `closeEncounterIntro()`, bleibt im Screen), das gewählte Feld im Subsektor, die Weltkarte eines Feldes, die
-  Kampagnenwahl (`showCampaigns()`, `closeCampaigns()`) und das Ergebnis-Popup (`closeResult()`),
-  welcher Charakter im Charakter-Screen seine Details zeigt (`toggleDetails(id)`) und ob die Leiste
-  mit dem Charakter oben eingeklappt ist (`toggleStrip()`) und ob der Hinweis über den Waffen im
-  Shop weggeklickt ist (`hideShopHint()`) und auf welcher Stufe das Ziehblatt steht (`setTrayStop(stop)`: versteckt, eingeklappt, halb oder voll; die Höhe dazu rechnet die View);
-  das merkt sich das Gerät über das Repository, wie die offene Kampagne. Ebenso, ob ein Hinweis oben steht,
-  was nach einer Eingabe nicht ging (`showError(error)`, `closeNotice()`; eine verletzte Regel mit ihrer
-  Meldung, sonst „Das ging nicht: …“): `main.tsx` reicht ihm jeden Fehler, den sonst niemand auffängt
-  (`error` und `unhandledrejection` am Fenster; Fehler in Klick-Handlern meldet React dorthin), damit eine
-  Eingabe nie lautlos scheitert. Auch der Ablauf ist seine Sache: Steht nach einer Änderung
-  ein anderer Charakter oben, endet die Probe; nach der Erschaffung geht es zum Orakel-Screen, wo der
-  Neue oben steht. Die Inspirationskarte steht im Vordergrund, solange es eine offene
-  `Card` gibt; das folgt aus dem Model und braucht keinen eigenen Zustand.
+- **Er ändert das Model**, als Einziger, und speichert den Spielstand über das Repository. Die Regeln
+  selbst stehen im Model; der Controller ruft sie auf und reicht `Random` und `Clock` hinein. Was
+  nach außen geht (Speicher, Download, OneDrive über `Cloud`), läuft über die Schnittstellen aus
+  `model/ports.ts`; beim Abgleich sagt das Model, was zu tun ist (`planSync` in `model/sync.ts`), der
+  Controller tut es.
+- **Er hält, was flüchtig ist:** offene Karte, Probe, Angriff in Vorbereitung, Schaden beim Verteilen
+  und Würfe der Weltenerschaffung sind Teil des Models (`model/draft/`), werden aber nicht gespeichert;
+  sie liegen im Zustand des Controllers. Die Charaktererschaffung dagegen ist gespeicherter Stand: Sie
+  hält nur die Würfe, alles andere spielt `replay` daraus nach (`model/career.ts`).
+- **Er wählt, welche View zu sehen ist:** Grundkarte, Reiter und Umschalter (`showScreen(screen)`),
+  offene Blätter, Popups und Dialoge, die Stufe des Ziehblatts. Was das Gerät sich merken soll (offene
+  Kampagne, Ziehblatt, eingeklappte Leiste), speichert er über das Repository.
+- **Er hält den Ablauf:** Steht nach einer Änderung ein anderer Charakter oben, endet die Probe; nach
+  der Erschaffung geht es zum Log, wo der Neue oben steht. Was aus dem Model folgt (die Karte steht im
+  Vordergrund, solange es eine offene `Card` gibt), braucht keinen eigenen Zustand.
+- **Er meldet, was nicht ging** (`showError(error)`, `closeNotice()`): eine verletzte Regel
+  (`DomainError`) mit ihrer Meldung, sonst „Das ging nicht: …“. `main.tsx` reicht ihm jeden Fehler,
+  den sonst niemand auffängt (`error` und `unhandledrejection` am Fenster), damit eine Eingabe nie
+  lautlos scheitert.
+
+Die View liest eine gewählte Datei nur als Text ein und reicht ihn weiter; prüfen tut das Model
+(`fromCampaignFile` in `model/campaign-file.ts`), anbieten zum Download der Controller über `Download`.
+Wie die Bedienung aussieht, steht im [GUI-Handbuch](docs/gui-handbuch.md), nicht hier.
 
 Die View sieht das Model nur lesend (`Readonly`-Typen); ein Schreibzugriff aus der View ist ein
 Compilerfehler.
@@ -126,6 +89,34 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
   im Snapshot steht: Der Wurf ist geloggt, bevor die Würfel rollen. Sie darf den Aufruf des
   Controllers kurz aufschieben (die Karte gleitet hinaus, dann `confirmCard(question)`), aber nie ersetzen.
   Faustregel: Braucht der Controller es für eine Entscheidung, gehört es dem Controller.
+
+## Wo was liegt
+
+Je Fachbereich die wichtigsten Dateien. Allgemein: `model/campaign.ts` (die Kampagne, Charaktere,
+UPP), `model/rules.ts` (Attribute, Würfe), `model/log.ts` (die Logeinträge), `model/reference.ts`
+und `src/data/` (die Tabellen als JSON, Schemas in `data/schema.ts`), `model/errors.ts`
+(`DomainError`). Den Snapshot für die View baut `controller/snapshot.ts`, aufbereitet je Bereich in
+den `controller/*-view.ts`.
+
+| Bereich | Model | Controller | View |
+|---|---|---|---|
+| Log und Orakel (Karte, 2W6, Probe, Notiz) | `log.ts`, `card-roll.ts`, `draft/card.ts`, `draft/task.ts`; Tabellen `data/mythic*.json`, `odds.json`, `event-focus.json` | `game.ts` | `oracle/` |
+| Spielzeit | `time.ts` | `time-view.ts` | `oracle/OracleDock.tsx` |
+| Begegnungen (Personen, Patron, Gerücht, Polizei) | `encounter.ts`, `encounter-check.ts`, `patron.ts`, `npcs.ts`; `data/encounters.json` | `game.ts` | `combat/EncounterScreen.tsx`, `EncounterDock.tsx`, `EncounterRollDialog.tsx` |
+| Tiere (Tabellen, Ereignisse, Fallen, Beute) | `animals.ts`, `events.ts`, `hold.ts`, `loot.ts` | `game.ts` | `combat/LootDialogs.tsx` |
+| Kampf (Angriff, Kampfsimulation, Wunden, Heilung) | `combat.ts`, `fight.ts`, `stamina.ts`, `wounds.ts`, `draft/attack.ts`, `draft/wounding.ts`; `data/weapons.json` | `game.ts` | `combat/CombatScreen.tsx`, `FightScreen.tsx`, `Arena.tsx` |
+| Charaktere und Erschaffung | `campaign.ts`, `generation.ts`, `career.ts`, `npcs.ts`; `data/services.json`, `skills.json` | `generation-view.ts` | `characters/` |
+| Shop, Kasse, Gepäck | `shop.ts`, `stash.ts`; `data/items.json` | `game.ts` | `shop/`, `characters/FundsScreen.tsx`, `StashPanel.tsx` |
+| Missionen | `mission.ts` | `game.ts` | `missions/` |
+| Subsektor, Welten, Sternsystem | `sector.ts`, `star-system.ts`, `draft/world-roll.ts`; `data/worlds.json`, `stars.json` | `world-view.ts` | `sector/SectorScreen.tsx`, `WorldSheet.tsx` |
+| Globus und Orte | `surface-grid.ts`, `surface-map.ts`, `place.ts` | `globe-view.ts` | `sector/GlobeScreen.tsx`, `FieldDock.tsx`; gezeichnet mit WebGL 2 in `globe-gl.ts`, ohne auf dem Prozessor in `globe-render.ts` |
+| Reisen (Sprung, im System, Fahrten über Land) | `travel.ts`, `system-journey.ts`, `voyage.ts`, `trip.ts`, `trip-encounter.ts`, `vehicle.ts`; `data/vehicles.json` | `trip-view.ts` | `sector/JourneySheet.tsx`, `SystemJourneySheet.tsx`, `TripPanels.tsx` |
+| Schiff (Werft, Bewaffnung, Crew, Rechner, Kosten, Landung) | `ship.ts`, `armament.ts`, `crew.ts`, `software.ts`, `upkeep.ts`, `landing.ts`; `data/ships.json` | `ship-view.ts` | `ship/`, `sector/LandingSheet.tsx` |
+| Raumflug und Raumkampf | `flight.ts`, `space-combat.ts`, `ship-encounter.ts`, `draft/ship-check.ts` | `space-view.ts`, `ship-check-view.ts` | `space/` (Raumkarte mit Canvas 2D in `SpaceScreen.tsx`) |
+| Kampagnen, Datei, Abgleich | `campaign-file.ts`, `sync.ts`, `draft/conflict.ts`, `demo.ts`, `ports.ts` | `game.ts` | `CampaignSheet.tsx`, `Menu.tsx` |
+
+Rahmen der View: `App.tsx` (Grundkarte, Ziehblatt, Desktop-Modus), `Tray.tsx` (Ziehblatt),
+`SubTabs.tsx` (Umschalter), `Dice.tsx` (Würfel), `game-context.tsx` (Anschluss an den Controller).
 
 ## Wie die Regeln geprüft werden
 
