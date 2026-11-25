@@ -20,16 +20,15 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
 - [ ] **Farben und Stile nach dem GUI-Handbuch** ([docs/gui-handbuch.md](docs/gui-handbuch.md)):
   am 25. November 2026 der erste Durchgang – 110 feste Werte wertgleich auf Familien in `:root`
   umgestellt (`--shadow-*`, `--scrim-*`, `--sheen-*`, `--on-fill*`, `--gold-edge-*`, `--gold-glow-*`,
-  `--accent-glow-*`, `--accent-fill-*`, `--accent-edge-*`, neu `--danger`). Offen sind 104 weitere
-  feste Werte, und ihre Namen brauchen die Begriffe des Domänenmodells: Material von Würfeln und
-  Karten (`#fff`, `#d9d6cf`, `#cfcfcf`), Papiertöne (`#f3e6c8`, `rgba(228, 214, 186, .9)`), Grautöne
-  der Flächen und Kanten (`#9a9a9a`, `#333`, `#666`) sowie Blau, Grün, Orange und Violett für
-  Status auf Welt- und Kampfbildschirm. Ebenfalls offen: 14 Rückfallwerte `var(--x, #hex)`, deren
-  Variable einen anderen Wert trägt (`--muted` gegen `#9a9a9a`, `--line` gegen
-  `rgba(127, 127, 127, .3)`) – entscheide, ob die Pixel wandern oder eine eigene Variable entsteht.
-  Dazu die 40 `style={{ … }}` in den Komponenten in Klassen überführen und die 81 Canvas-Farben in
-  `SpaceScreen.tsx`, `GlobeScreen.tsx` und `icons.tsx`, die eine Palette in TypeScript brauchen,
-  weil `var()` im Canvas nicht greift.
+  `--accent-glow-*`, `--accent-fill-*`, `--accent-edge-*`, neu `--danger`) und 15 Rückfallwerte wie
+  `var(--muted, #9a9a9a)` gestrichen. Alle genannten Variablen sind in `:root` gesetzt, ein
+  Rückfall wurde also nie benutzt und seine Rücknahme bewegt keine Pixel. Offen sind 104 feste
+  Werte, und ihre Namen brauchen die Begriffe des Domänenmodells: Material von Würfeln und Karten
+  (`#fff`, `#d9d6cf`, `#cfcfcf`), Papiertöne (`#f3e6c8`, `rgba(228, 214, 186, .9)`), Grautöne der
+  Flächen und Kanten (`#9a9a9a`, `#333`, `#666`) sowie Blau, Grün, Orange und Violett für Status
+  auf Welt- und Kampfbildschirm. Dazu die 40 `style={{ … }}` in den Komponenten in Klassen
+  überführen und die 81 Canvas-Farben in `SpaceScreen.tsx`, `GlobeScreen.tsx` und `icons.tsx`, die
+  eine Palette in TypeScript brauchen, weil `var()` im Canvas nicht greift.
 
 ## Kampf
 

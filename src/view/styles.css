@@ -7951,7 +7951,7 @@ button:disabled {
 }
 
 .globe-chip.on {
-  background: var(--gold, #d8b45a);
+  background: var(--gold);
   color: var(--ink);
 }
 
@@ -7986,7 +7986,7 @@ button:disabled {
 }
 
 .globe-row.static {
-  color: var(--muted, #9a9a9a);
+  color: var(--muted);
 }
 
 .globe-dot {
@@ -8048,7 +8048,7 @@ button:disabled {
 }
 
 .globe-scale {
-  color: var(--muted, #9a9a9a);
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -8104,7 +8104,7 @@ button:disabled {
 
 .globe-sheet-sub {
   margin: 2px 0 8px;
-  color: var(--muted, #9a9a9a);
+  color: var(--muted);
   font-size: 13px;
 }
 
@@ -8151,11 +8151,11 @@ button:disabled {
 /* Das Sternsystem auf der Weltkarte (2026-11-20b): je Bahn eine Zeile, Monde eingerückt darunter. */
 .system-stars {
   margin: 0 0 8px;
-  color: var(--muted, #9a9a9a);
+  color: var(--muted);
 }
 
 .system-stars strong {
-  color: var(--text, #f0f0f0);
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -8185,13 +8185,13 @@ button:disabled {
 }
 
 .system-no {
-  color: var(--muted, #9a9a9a);
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
 .system-where {
-  color: var(--muted, #9a9a9a);
+  color: var(--muted);
   font-size: 0.8em;
   text-align: right;
   line-height: 1.25;
@@ -8232,11 +8232,11 @@ button:disabled {
 
 .system-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: var(--muted, #9a9a9a);
+  color: var(--muted);
 }
 
 .system-detail {
-  color: var(--muted, #9a9a9a);
+  color: var(--muted);
   font-size: 0.8em;
 }
 
@@ -8278,7 +8278,7 @@ button:disabled {
 }
 
 .happened-day {
-  color: var(--muted, #9a9a9a);
+  color: var(--muted);
 }
 
 /* Auf der Welt ist etwas geschehen oder es leben dort NSC. */
@@ -8295,7 +8295,7 @@ button:disabled {
 }
 
 .globe-row-text small {
-  color: var(--muted, #9a9a9a);
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -9418,7 +9418,7 @@ button:disabled {
 }
 
 .space-stats dt {
-  color: var(--muted, #8b97ad);
+  color: var(--muted);
 }
 
 .space-stats dd {
@@ -9663,7 +9663,7 @@ button:disabled {
   gap: 8px;
 }
 .armament .turret {
-  border: 1px solid var(--line, rgba(127, 127, 127, 0.3));
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 8px;
   display: grid;
