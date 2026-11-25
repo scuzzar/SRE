@@ -688,7 +688,7 @@
       "id": "2026-11-24f",
       "file": "2026-11-24f-das-dienstalter-der-nsc",
       "title": "Das Dienstalter der NSC: `Generation` bekommt `/termsGoal` (1–7, leer = so lange er kann) – ein **Lauf mit Dienstalter** würfelt genau so viele Terms, Überleben und Weiterverpflichtung entfallen, und nichts kann ihn töten (die Krise lässt das Attribut auf 1 stehen); **jeder NSC-Lauf ohne Dienstalter will bleiben**, so lange es geht – der Zufall über das Wollen fällt weg, auch beim Patron-NSC",
-      "approved": false,
+      "approved": true,
       "show": [
         "Generation",
         "Career",
@@ -701,7 +701,7 @@
       "id": "2026-11-24g",
       "file": "2026-11-24g-was-der-lauf-verschluckt",
       "title": "Was der Lauf verschluckt: `Generation` meldet `/discarded` (der neuen Werteliste `RunEnd` – gestorben, eingezogen, ohne Qualifikation). Die **Wartenscheibe** beim Erzeugen eines NSC zählt mit: oben die Scheibe, darunter „Versuche“ und „gestorben“, hochzählend; ist einer gefunden, bleibt das Ganze **eine Sekunde** stehen, dann erscheint der neue NSC",
-      "approved": false,
+      "approved": true,
       "show": [
         "Generation",
         "Career",

@@ -183,7 +183,7 @@ hide <<browser>> stereotype
     retired: boolean
   }
 ' Fahrzeuge und Wege auf der Oberfläche
-  ' Was ein verworfener Lauf eines NSC gab (2026-11-24g); die Wartenscheibe zählt mit.
+  ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
   enum SectionKind <<value>> $karte {
     card
     theme
