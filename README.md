@@ -14,6 +14,7 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 | Dokument | Inhalt |
 |---|---|
 | [docs/domain-model.md](docs/domain-model.md) | Domänenmodell: Diagramm, Regeln, Begriffe, was der Code noch nicht kann |
+| [docs/gui-handbuch.md](docs/gui-handbuch.md) | Bedienkonzept: Ziehblatt, Reiter, Reihe, Blätter, Gesten, Farben |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Technik, MVC-Aufbau, Schichten, Befehle |
 | [AGENTS.md](AGENTS.md) | Wie an der App gearbeitet wird |
 | [TODO.md](TODO.md) | Was als Nächstes ansteht |
