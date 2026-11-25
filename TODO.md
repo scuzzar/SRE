@@ -5,51 +5,26 @@ immer gilt: Was das Modell berührt, geht zuerst ins Domänenmodell und wird fre
 Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/`](docs/) (`regeln-kampf.md`, `regeln-laufbahnen.md`,
 `regeln-schiffe.md`, `regeln-sternsystem.md`).
 
-## Arbeitsweise
-
-- [ ] **Freigaberegeln für Commits aufräumen** (Owner, weil es Claudes eigene Rechte betrifft): Die
-  E-Mail steht nicht mehr im Befehl (`.gitconfig-owner`, siehe `AGENTS.md`). In
-  `.claude/settings.json` stehen unter `allow` noch die alten Regeln mit `git -c user.name=… -c
-  user.email=…`; sie durch `"Bash(git commit:*)"`, `"Bash(git merge:*)"`, `"Bash(git revert:*)"`
-  und `"Bash(cp .gitconfig-owner .git/owner.gitconfig)"`, `"Bash(git config include.path owner.gitconfig)"` ersetzen.
-
 ## Die Karte führt
 
 Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächstes:
 
 - [ ] **Entschlacken (Schritt 3):** jeden Bereich für das Ziehblatt und die Seitenspalte des Desktops
-  durchgehen: Kampf und Kampfsimulation kompakter, damit sie halb hochgezogen gehen; im
-  Desktop-Modus haben Kampf und Shop unten zwei Reihen (ihre eigene und Notiz, 2W6, Karte).
-- [ ] **Log über die Karte:** ein Tippen auf einen Logeintrag mit Ort fliegt zu seinem Feld auf dem
-  Globus.
-- [ ] **Begegnungen auf der Karte:** eine laufende Begegnung am Feld der Gruppe zeigen.
+  durchgehen: Kampf und Kampfsimulation kompakter, damit sie halb hochgezogen gehen. Die Reihe
+  unten folgt dem GUI-Handbuch: die eigene Reihe eines Bereichs ersetzt die des Logs.
 - [ ] **Bedienabläufe aus dem Domänenmodell lösen:** Die Begriffe der Oberfläche stehen seit dem
   25. November 2026 im GUI-Handbuch. In den Regeltexten von `docs/domain-model.md` sind Fachregel und
-  Bedienung noch vermischt (rund 150 Stellen mit Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt
-  zuerst nach der Rolle“). Bereich für Bereich trennen, wenn ohnehin daran gearbeitet wird: die Regel
+  Bedienung noch vermischt (rund 120 Zeilen mit Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt
+  zuerst nach der Rolle“). In einem eigenen Durchgang trennen, Bereich für Bereich: Die Regel
   bleibt im Modell, der Ablauf auf dem Bildschirm kommt ins Handbuch oder fällt weg.
 - [ ] **Farben und Stile nach dem GUI-Handbuch** ([docs/gui-handbuch.md](docs/gui-handbuch.md)): in
-  `styles.css` stehen außerhalb von `:root` noch rund 110 feste Hex-Werte und 120 feste `rgba`
+  `src/view/styles.css` stehen außerhalb von `:root` noch rund 110 feste Hex-Werte und 120 feste `rgba`
   (häufig `#9a9a9a`, `#fff`, `#333`; auch die Wartenscheibe). Auf die Variablen umstellen, fehlende
   Variablen anlegen. Dazu die rund 40 `style={{ … }}` in den Komponenten in Klassen überführen.
 
 ## Kampf
 
-### 1. Ausweichen (Evade)
-
-SR 20 (*Evade*), SR 26 (*Reloading*). Ein erster Ausschnitt (2026-11-08b) ist zurückgenommen; er
-kommt neu mit `Encounter "*" --> "*" Character : evading`.
-
-- [ ] Statt anzugreifen weicht der Kämpfer am Zug aus; das ist sein Zug. Auch Nachladen zählt als
-  Ausweichen (SR 26), ebenso eine Tür öffnen (SR 23).
-- [ ] Hausregel, wie lange: ab seinem Zug bis zu seinem nächsten Zug (die App kennt keine Ansage vor
-  der Runde). Wer angreift oder aussetzt, weicht nicht aus.
-- [ ] Wirkung: DM für den Angreifer nach Reichweite: Close/Short −1, Medium −2, Long/Very Long −4.
-  Wer ausweicht, pariert nicht. Beim Feuerstoß trifft es nur Nachbarn, die nicht ausweichen.
-- [ ] Anzeige: Knopf „Ausweichen“ neben Aussetzen, ein Zeichen hinter dem Namen, im Angriff der
-  Posten „weicht aus −2“.
-
-### 2. Weitere Regeln aus der Starter Edition
+### 1. Weitere Regeln aus der Starter Edition
 
 Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
 
@@ -62,30 +37,18 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
   −1; wer in Deckung bleibt, kann nicht angegriffen werden.
 - [ ] **Dunkelheit** (SE 5, SR 26): völlig −9 über Short, teilweise −6 über Medium (entschieden: nach
   SE); Electronic Sights heben es auf.
-- [ ] **Ungeübte Waffe** (SR 22): −5 im Angriff, +3 für den Angreifer; betrifft vor allem NSC.
-- [ ] **Besondere Fälle** (SR 26): Waffe ziehen −3, Ziehen gegeneinander (2W6 + DEX), Klinge werfen
-  (18+, 2D), Stangenwaffe werfen, Coup de Grâce (ohne Wurf).
+- [ ] **Ungeübte Waffe, Rest** (SR 22): −5 im Angriff gibt es schon (ohne natürliche Waffenkunde);
+  offen ist +3 für den Angreifer.
 - [ ] **Zubehör** (SE 4, 6, SR 25): Telescopic Sights (+4 Long/Very Long, verstellt bei 7+),
   Electronic Sights, Silencer (still, also kein Alarm), Shoulder Stock, Folding Stock.
-- [ ] **Schneller laufen** (SE 7): 3 und 4 Bands je Runde, für Tiere und Fahrzeuge.
 - [ ] **Medizinische Drogen** (SE 7): Medical Slow Drug, Erholung in etwa einem Tag.
 - [ ] **Schwerelosigkeit** (SE 5, SR 27): jede Runde 10+, sonst Kontrolle verloren.
-- [ ] **Traglast und Schwerkraft** (SE 5, SR 22): doppelte und dreifache Last, je nach Größe der Welt.
 
-### 3. Rund um den Kampf
+### 2. Rund um den Kampf
 
-- [ ] **Häufigkeit von Begegnungen** (SE 20, SR 47, 50): täglich 5+ auf 1W6 für Personen, zweimal
-  täglich für Tiere.
-- [ ] **Tierbegegnungen** (SE 18–19, SR 46–49): Tabellen je Gelände, Tierarten, Treffer und Schaden,
-  Verhalten, Fallen, Ereignisse; dazu die zwei Tier-DMs bei der Überraschung.
-- [ ] **Book 4** (später): Moral für Militär, weitere Waffen, Kampffertigkeiten, abstraktes
-  Schlachtsystem, Feldartillerie.
-
-### 4. NSC
-
-- [ ] **Weitere Laufbahnen** für Patron-NSC, die besser zu den Berufen passen als die sechs des
-  Regelwerks (heute stehen viele unter Other, siehe `docs/patron-nsc.md`), z. B. aus anderen
-  Traveller-Büchern; erst nachsehen, welche Bücher Laufbahnen oder NSC-Tabellen haben.
+- [ ] **Tierbegegnungen, Rest** (SE 18–19, SR 19–20, 46–49): Tabellen, Tierarten, Verhalten, Fallen
+  und Ereignisse stehen. Offen sind die zwei Tier-DMs bei der Überraschung (10 oder mehr Tiere −1,
+  Pouncer +1), Gewicht ±20 %, Führer und Psionik.
 
 ### Ideen, noch nicht entschieden
 
@@ -94,30 +57,3 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
   seinen Tierwerten (Hits, Angriffe, Speed), ohne Shop, Gepäck und Proben. Offen: wer es im Kampf
   steuert, ob und wie es mitreist (Passage?), wie es heilt, was aus dem Verweis auf die Tiertabelle
   seiner Welt wird, was der Editor bei einem Tier zeigt. Geht zuerst als Änderung ins Domänenmodell.
-
-- [ ] Wunden wirken laut Regel erst am Ende der Runde (SE 6); die App lässt sie sofort wirken
-  (Hausregel). Bleibt das so?
-- [ ] Pfeil zu einem Ziel außerhalb des Bildschirms (bei vielen NSC scrollt die Spalte): ein Hinweis
-  am Rand?
-- [ ] Das Fadenkreuz ⌖ in der roten Marke unten im Zug größer, wie auf den Karten?
-
-## Orakel-Screen
-
-Durchsicht vom 2026-11-14. Umgesetzt: der neue Aufbau (2026-11-14d), Notiz und Deutung ändern
-(2026-11-14e), Zufallsereignis (2026-11-14f), Karteneintrag in schmaler Spalte, Karte auf 360×640,
-Tippziele, Tempo bei langem Log, gleiche Würfe zusammengefasst. Querformat gibt es nicht (Entscheidung
-des Owners, die installierte App steht im Hochformat). Offen ist noch:
-
-- [ ] **Ereignisfokus mit Mythic GME 2e abgleichen:** Die Bereiche in `src/data/event-focus.json`
-  sind aus dem Gedächtnis übernommen; mit dem Buch prüfen.
-- [ ] **Am Gerät prüfen** (headless nicht zu sehen): Bleibt das Blatt für Notiz und Deutung über
-  der Bildschirmtastatur sichtbar?
-
-### Ideen, noch nicht entschieden
-
-- [ ] **Leiste als eine Zeile:** eingeklappt Name und UPP als Traveller-Zeile (`Kira Vant 7A8975`),
-  aufgeklappt wie heute für die Probe. Dann sieht man die Attribute, ohne dass die Leiste 250 px
-  kostet.
-- [ ] **Filter „Nur Geschichte“:** Fragen mit Antwort, Deutungen und Notizen; einfache Würfe,
-  Angriffe und Schaden ausgeblendet. Zum Nachlesen, was passiert ist.
-- [ ] **Angriffe einer Kampfrunde zusammenfassen** wie schon die 2W6 in Folge.

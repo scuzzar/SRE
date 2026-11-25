@@ -69,7 +69,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Fertigkeiten aus Book 4 im Kampf](#fertigkeiten-aus-book-4-im-kampf) | B4 10–16, 26 | ○ |
 | [Abstraktes Schlachtsystem](#abstraktes-schlachtsystem) | B4 32–35 | ○ |
 | [Feldartillerie](#feldartillerie) | B4 48–49 | ○ |
-| [Tierbegegnungen](#tierbegegnungen) | SE 18–19, SR 46–49 | ○ |
+| [Tierbegegnungen](#tierbegegnungen) | SE 18–19, SR 46–49 | ◐ (Tabellen, Tierarten, Kampf, Ereignisse ✔; Gewicht ±20 %, Führer, Psionik ○) |
 | [Fahrzeuge und Reisen über Land](#fahrzeuge-und-reisen-über-land) | SR 55–57, SA 1, 3, 7 | ✔ ✱ (Geschwindigkeit je Geländeart, Fahrt Tag für Tag, Miete; Pannen, Reichweite, Linienverkehr ○) |
 | [Bewaffnung von Small Craft](#bewaffnung-von-small-craft) | SR 32–35 | ◐ ✱ (ab Werft mit Beam Lasern, ohne Umrüsten; Raketen, Sand, Gunner ○) |
 
