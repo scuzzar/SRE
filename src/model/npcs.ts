@@ -1,7 +1,7 @@
 import { addCharacter, npcCharacters, npcRoles, roleOf, type Campaign, type Character, type CharacterId, type CharacterInput, type NpcRole, type PatronRef, type Possession } from './campaign';
 import { npcName } from './encounter';
 import { DomainError } from './errors';
-import { careerInput, runCareerIn, stateOf } from './generation';
+import { careerInput, runCareerIn, stateOf, type Generation } from './generation';
 import { checkPlace, moveNpc, type Place } from './place';
 import type { Random } from './ports';
 import { itemOf, itemOfWeapon, ref, serviceOf, type Weapon } from './reference';
@@ -66,6 +66,8 @@ export interface NpcTemplate {
   readonly title?: string;
   /** Ein verbrecherischer Patron-Beruf (`Patron.criminal`). */
   readonly criminal?: boolean;
+  /** Das **Dienstalter** (2026-11-24f): so viele Terms der Lauf würfeln soll; leer = so lange er kann. */
+  readonly termsGoal?: number;
 }
 
 /** Warum sich kein NSC erzeugen lässt; `undefined`, wenn es geht. */
@@ -81,12 +83,25 @@ export function generateNpcBlocker(campaign: Campaign): string | undefined {
  * bewaffnet sich nach dem Gesetz dieser Welt.
  */
 export function generateNpc(campaign: Campaign, template: NpcTemplate, random: Random, at?: Place): { campaign: Campaign; id: CharacterId } {
+  checkNpcRun(campaign, template, at);
+  return addNpc(campaign, template, runCareerIn(campaign.hexes, template.service, random, template.termsGoal), random, at);
+}
+
+/** Prüft Ort und Laufbahn des Erzeugens; wirft die Meldung, die der Oberfläche dann gezeigt wird. */
+export function checkNpcRun(campaign: Campaign, template: NpcTemplate, at?: Place): void {
   const blocker = at === undefined ? generateNpcBlocker(campaign) : undefined;
   if (blocker) throw new DomainError(blocker);
   serviceOf(template.service);
   if (at) checkPlace(campaign.hexes, at);
+}
+
+/**
+ * Nimmt den NSC zu einem Lauf, der schon gewürfelt ist (2026-11-24g): So lässt die Oberfläche den
+ * Lauf stückweise laufen und zeigt, was er verworfen hat, bevor sie diesen Charakter anlegt.
+ */
+export function addNpc(campaign: Campaign, template: NpcTemplate, generation: Generation, random: Random, at?: Place): { campaign: Campaign; id: CharacterId } {
+  checkNpcRun(campaign, template, at);
   const place = at?.world ?? campaign.location!.world;
-  const generation = runCareerIn(campaign.hexes, template.service, random);
   const input = careerInput(stateOf(generation), npcName(random));
   const criminal = template.criminal === true || template.role === 'enemy';
   const armed = armGenerated(input, worldOf(campaign.hexes, place), criminal, random);

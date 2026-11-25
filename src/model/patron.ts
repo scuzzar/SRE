@@ -4,7 +4,7 @@ import { DomainError } from './errors';
 import type { PatronRoll, RumorRoll } from './log';
 import type { Clock, Random } from './ports';
 import { patronOf, rumorOf, type Patron, type Rumor } from './reference';
-import { generateNpc } from './npcs';
+import { generateNpc, type NpcTemplate } from './npcs';
 import { addMission, missionPlaceBlocker, type MissionId } from './mission';
 
 /** Die beiden Patron-Listen der Patron Encounters Matrix (SE, Charts S. 20). */
@@ -110,13 +110,19 @@ export function patronNpcBlocker(campaign: Campaign, entry: PatronRoll): string 
  * *Patron als NSC*): ein erzeugter NSC in der Laufbahn des Patrons, mit der Rolle Patron und dem
  * Verweis auf seinen Patron; die Herkunft beginnt mit dem Beruf.
  */
-export function createPatronNpc(campaign: Campaign, index: number, random: Random): { campaign: Campaign; id: CharacterId } {
+/** Die Vorlage des Patron-NSC an dieser Stelle des Logs (2026-11-24g: für den Stück für Stück
+ * laufenden Lauf der Wartenscheibe). */
+export function patronNpcTemplate(campaign: Campaign, index: number): NpcTemplate {
   const entry = campaign.log[index];
   if (entry?.kind !== 'patron') throw new DomainError('An dieser Stelle des Logs steht kein Patron-Wurf.');
   const blocker = patronNpcBlocker(campaign, entry);
   if (blocker) throw new DomainError(blocker);
   const patron = patronOfRoll(entry);
-  return generateNpc(campaign, { service: patron.career!, role: 'patron', patron: { list: entry.list, roll: patronRollOf(entry) }, title: patron.name, criminal: patron.criminal }, random);
+  return { service: patron.career!, role: 'patron', patron: { list: entry.list, roll: patronRollOf(entry) }, title: patron.name, criminal: patron.criminal };
+}
+
+export function createPatronNpc(campaign: Campaign, index: number, random: Random): { campaign: Campaign; id: CharacterId } {
+  return generateNpc(campaign, patronNpcTemplate(campaign, index), random);
 }
 
 /**
