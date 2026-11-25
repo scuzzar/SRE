@@ -17,10 +17,19 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
   Bedienung noch vermischt (rund 120 Zeilen mit Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt
   zuerst nach der Rolle“). In einem eigenen Durchgang trennen, Bereich für Bereich: Die Regel
   bleibt im Modell, der Ablauf auf dem Bildschirm kommt ins Handbuch oder fällt weg.
-- [ ] **Farben und Stile nach dem GUI-Handbuch** ([docs/gui-handbuch.md](docs/gui-handbuch.md)): in
-  `src/view/styles.css` stehen außerhalb von `:root` noch rund 110 feste Hex-Werte und 120 feste `rgba`
-  (häufig `#9a9a9a`, `#fff`, `#333`; auch die Wartenscheibe). Auf die Variablen umstellen, fehlende
-  Variablen anlegen. Dazu die rund 40 `style={{ … }}` in den Komponenten in Klassen überführen.
+- [ ] **Farben und Stile nach dem GUI-Handbuch** ([docs/gui-handbuch.md](docs/gui-handbuch.md)):
+  am 25. November 2026 der erste Durchgang – 110 feste Werte wertgleich auf Familien in `:root`
+  umgestellt (`--shadow-*`, `--scrim-*`, `--sheen-*`, `--on-fill*`, `--gold-edge-*`, `--gold-glow-*`,
+  `--accent-glow-*`, `--accent-fill-*`, `--accent-edge-*`, neu `--danger`). Offen sind 104 weitere
+  feste Werte, und ihre Namen brauchen die Begriffe des Domänenmodells: Material von Würfeln und
+  Karten (`#fff`, `#d9d6cf`, `#cfcfcf`), Papiertöne (`#f3e6c8`, `rgba(228, 214, 186, .9)`), Grautöne
+  der Flächen und Kanten (`#9a9a9a`, `#333`, `#666`) sowie Blau, Grün, Orange und Violett für
+  Status auf Welt- und Kampfbildschirm. Ebenfalls offen: 14 Rückfallwerte `var(--x, #hex)`, deren
+  Variable einen anderen Wert trägt (`--muted` gegen `#9a9a9a`, `--line` gegen
+  `rgba(127, 127, 127, .3)`) – entscheide, ob die Pixel wandern oder eine eigene Variable entsteht.
+  Dazu die 40 `style={{ … }}` in den Komponenten in Klassen überführen und die 81 Canvas-Farben in
+  `SpaceScreen.tsx`, `GlobeScreen.tsx` und `icons.tsx`, die eine Palette in TypeScript brauchen,
+  weil `var()` im Canvas nicht greift.
 
 ## Kampf
 

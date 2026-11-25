@@ -249,6 +249,11 @@ Feld.
   der Waffentabelle 40 px, `ghost compact` 30–36 px. Kleiner als 30 px wird nichts, was man antippt.
 - **Farben nur über die Variablen** in `:root` von `styles.css`, keine festen Werte (noch nicht
   überall so, siehe [TODO.md](../TODO.md)); keine `style={{ … }}` in Komponenten.
+- **Wirkungen haben eigene Familien** in `:root`, die Zahl ist die Deckkraft in Prozent:
+  `--shadow-*` Erhöhung, `--scrim-*` dunkle Fläche, `--sheen-*` heller Saum und Reflex,
+  `--on-fill*` Schrift auf gefülltem Grund, `--gold-edge-*` und `--gold-glow-*` für Gold,
+  `--accent-glow-*`, `--accent-fill-*` und `--accent-edge-*` für Rot, `--danger` für Gefahren.
+  Ein neuer Wert bekommt eine neue Variable, nie eine feste Zahl in der Regel.
 - **Schrift**: IBM Plex Sans, Werte und Codes (UPP, UWP) in IBM Plex Mono; zählende Zahlen mit
   festen Ziffernbreiten, damit nichts springt.
 - **Zeichen**: ✕ schließen, ☰ Menü, Stift bearbeiten, ⌖ Ziel bzw. Aufenthaltsort, ▶ am Zug, ★ Anführer.

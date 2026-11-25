@@ -23,8 +23,72 @@
   --gold: #d9b45f;
   --gold-bright: #f5dc96;
   --gold-deep: #8a6a2a;
-  --gold-glow: rgba(233, 190, 92, 0.5);
   --gold-wash: #241e10;
+  /* Schatten: Erhöhung von Panels, Knöpfen und Schrift. Zahl = Deckkraft in Prozent. */
+  --shadow-25: rgba(0, 0, 0, 0.25);
+  --shadow-50: rgba(0, 0, 0, 0.5);
+  --shadow-60: rgba(0, 0, 0, 0.6);
+  --shadow-80: rgba(0, 0, 0, 0.8);
+  --shadow-85: rgba(0, 0, 0, 0.85);
+  --shadow-90: rgba(0, 0, 0, 0.9);
+  --shadow-solid: #000000;
+  /* Schleier: dunkle Fläche über der Karte, hinter Blatt und Popup. */
+  --scrim-25: rgba(0, 0, 0, 0.25);
+  --scrim-30: rgba(0, 0, 0, 0.3);
+  --scrim-60: rgba(0, 0, 0, 0.6);
+  --scrim-65: rgba(0, 0, 0, 0.65);
+  --scrim-72: rgba(0, 0, 0, 0.72);
+  --scrim-75: rgba(0, 0, 0, 0.75);
+  --scrim-88: rgba(0, 0, 0, 0.88);
+  --scrim-90: rgba(0, 0, 0, 0.9);
+  --scrim-94: rgba(0, 0, 0, 0.94);
+  /* Glanz: heller Ton auf dunklem Grund – Saum, Haarlinie, Reflex, Licht. */
+  --sheen-4: rgba(255, 255, 255, 0.04);
+  --sheen-6: rgba(255, 255, 255, 0.06);
+  --sheen-10: rgba(255, 255, 255, 0.1);
+  --sheen-12: rgba(255, 255, 255, 0.12);
+  --sheen-15: rgba(255, 255, 255, 0.15);
+  --sheen-16: rgba(255, 255, 255, 0.16);
+  --sheen-28: rgba(255, 255, 255, 0.28);
+  --sheen-30: rgba(255, 255, 255, 0.3);
+  --sheen-35: rgba(255, 255, 255, 0.35);
+  --sheen-55: rgba(255, 255, 255, 0.55);
+  --sheen-60: rgba(255, 255, 255, 0.6);
+  --sheen-90: rgba(255, 255, 255, 0.9);
+  /* Schrift auf gefülltem Grund: helles Feld, goldene Kante. */
+  --on-fill: #ffffff;
+  --on-fill-80: rgba(255, 255, 255, 0.8);
+  /* Gold als Kante und Glanz der Würfel, Karten und Überschriften. */
+  --gold-edge-40: rgba(217, 180, 95, 0.4);
+  --gold-edge-45: rgba(217, 180, 95, 0.45);
+  --gold-edge-50: rgba(217, 180, 95, 0.5);
+  --gold-edge-80: rgba(232, 196, 90, 0.8);
+  --gold-glow-18: rgba(233, 190, 92, 0.18);
+  --gold-glow-22: rgba(233, 190, 92, 0.22);
+  --gold-glow-30: rgba(233, 190, 92, 0.3);
+  --gold-glow-45: rgba(233, 190, 92, 0.45);
+  --gold-glow-50: rgba(233, 190, 92, 0.5);
+  --gold-bright-glow-40: rgba(245, 220, 150, 0.4);
+  /* Rot: der Akzent als Glanz, Füllung und Kante. */
+  --accent-glow-0: rgba(198, 47, 53, 0);
+  --accent-glow-18: rgba(198, 47, 53, 0.18);
+  --accent-glow-20: rgba(198, 47, 53, 0.2);
+  --accent-glow-30: rgba(198, 47, 53, 0.3);
+  --accent-glow-35: rgba(198, 47, 53, 0.35);
+  --accent-glow-45: rgba(198, 47, 53, 0.45);
+  --accent-glow-50: rgba(198, 47, 53, 0.5);
+  --accent-glow-55: rgba(198, 47, 53, 0.55);
+  --accent-glow-60: rgba(198, 47, 53, 0.6);
+  --accent-glow-95: rgba(198, 47, 53, 0.95);
+  --accent-glow-100: rgba(198, 47, 53, 1);
+  --accent-fill-30: rgba(198, 47, 53, 0.3);
+  --accent-fill-55: rgba(198, 47, 53, 0.55);
+  --accent-edge-45: rgba(198, 47, 53, 0.45);
+  --accent-text-glow-0: rgba(239, 90, 95, 0);
+  --accent-text-glow-75: rgba(239, 90, 95, 0.75);
+  --accent-text-glow-85: rgba(239, 90, 95, 0.85);
+  /* Gefahrenhinweis nach der Regeldoku. */
+  --danger: #c0392b;
   --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   color-scheme: dark;
@@ -407,7 +471,7 @@ button:disabled {
   flex-direction: column;
   background: var(--bg);
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 -6px 24px var(--shadow-60);
   transition: height var(--tray-glide);
 }
 
@@ -832,7 +896,7 @@ button:disabled {
 
 .action.draw {
   background: var(--accent);
-  color: #ffffff;
+  color: var(--on-fill);
 }
 
 .action.dice {
@@ -859,7 +923,7 @@ button:disabled {
   position: absolute;
   inset: 0;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.72);
+  background: var(--scrim-72);
   display: flex;
   flex-direction: column;
   padding-top: 10px;
@@ -927,7 +991,7 @@ button:disabled {
   font: inherit;
   color: var(--text);
   background: var(--bg);
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--line);
   border-left: 3px solid var(--accent);
   border-radius: 6px;
 }
@@ -941,12 +1005,12 @@ button:disabled {
   flex-direction: column;
   gap: 4px;
   padding: 6px;
-  background: linear-gradient(180deg, #131313, #0e0e0e);
+  background: linear-gradient(180deg, #131313, var(--card));
   border: 1px solid #333333;
   border-radius: 10px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 1px 2px rgba(0, 0, 0, 0.5);
+    inset 0 1px 0 var(--sheen-4),
+    0 1px 2px var(--shadow-50);
 }
 
 .card-stack {
@@ -1162,7 +1226,7 @@ button:disabled {
   line-height: 42px;
   text-align: center;
   color: var(--gold-bright);
-  text-shadow: 0 0 12px var(--gold-glow);
+  text-shadow: 0 0 12px var(--gold-glow-50);
 }
 
 .tile.card-roll .bell-curve {
@@ -1265,7 +1329,7 @@ button:disabled {
 }
 
 .sheet-foot .ghost {
-  border-color: #3a3a3a;
+  border-color: var(--line);
   border-radius: 8px;
 }
 
@@ -1293,8 +1357,8 @@ button:disabled {
   justify-content: center;
   border: 0;
   background: var(--accent);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(198, 47, 53, 0.35);
+  color: var(--on-fill);
+  box-shadow: 0 4px 14px var(--accent-glow-35);
   transition:
     background-color 0.15s,
     box-shadow 0.15s;
@@ -1759,7 +1823,7 @@ button:disabled {
   font-weight: 700;
   font-size: 15px;
   background: var(--accent);
-  color: #ffffff;
+  color: var(--on-fill);
 }
 
 .roll:disabled {
@@ -1773,7 +1837,7 @@ button:disabled {
   position: absolute;
   inset: 0;
   z-index: 20;
-  background: rgba(0, 0, 0, 0.72);
+  background: var(--scrim-72);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2133,7 +2197,7 @@ button:disabled {
   font-size: 14px;
   white-space: nowrap;
   pointer-events: none;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 16px var(--shadow-60);
 }
 
 .drag-ghost.ok {
@@ -2263,7 +2327,7 @@ button:disabled {
   z-index: 1;
   gap: 8px;
   padding: 10px 12px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 12px var(--shadow-50);
 }
 
 .pc-head.static {
@@ -2445,12 +2509,12 @@ button:disabled {
 
 .generation-roll.judged.success {
   border-color: var(--gold);
-  box-shadow: 0 0 24px rgba(233, 190, 92, 0.18);
+  box-shadow: 0 0 24px var(--gold-glow-18);
 }
 
 .generation-roll.judged.failure {
   border-color: var(--accent);
-  box-shadow: 0 0 24px rgba(198, 47, 53, 0.18);
+  box-shadow: 0 0 24px var(--accent-glow-18);
 }
 
 .generation-roll.judged.failure .die-face {
@@ -2470,7 +2534,7 @@ button:disabled {
 
 .generation-target {
   padding: 0 8px;
-  border: 1px solid rgba(217, 180, 95, 0.45);
+  border: 1px solid var(--gold-edge-45);
   border-radius: 8px;
   font-size: 14px;
 }
@@ -2522,7 +2586,7 @@ button:disabled {
 }
 
 .generation-main .small-label {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--on-fill-80);
   font-weight: 400;
 }
 
@@ -2576,15 +2640,15 @@ button:disabled {
   flex-direction: row;
   flex-wrap: wrap;
   column-gap: 8px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--on-fill-80);
 }
 
 .generation-main .odds-lines .met {
-  color: #ffffff;
+  color: var(--on-fill);
 }
 
 .generation-main .odds-lines .unmet {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--sheen-55);
 }
 
 .choice-grid.services button {
@@ -2736,7 +2800,7 @@ button:disabled {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.72);
+  background: var(--scrim-72);
 }
 
 .name-picker {
@@ -2891,9 +2955,9 @@ button:disabled {
   padding: 15%;
   border-radius: 14%;
   background: radial-gradient(circle at 30% 25%, #3b352b, #1b1915 72%);
-  border: 1px solid rgba(217, 180, 95, 0.5);
+  border: 1px solid var(--gold-edge-50);
   box-shadow:
-    inset 0 0 calc(var(--s) * 0.14) rgba(0, 0, 0, 0.85),
+    inset 0 0 calc(var(--s) * 0.14) var(--shadow-85),
     inset 0 1px 0 rgba(255, 240, 200, 0.12);
   transform: var(--face) translateZ(calc(var(--s) / 2));
   backface-visibility: hidden;
@@ -2906,25 +2970,25 @@ button:disabled {
 /* Überraschung: der Würfel der SC weiß mit schwarzen Augen, der der NSC schwarz mit weißen. */
 .die-white .die-face {
   background: radial-gradient(circle at 30% 25%, #ffffff, #d9d6cf 72%);
-  border-color: rgba(255, 255, 255, 0.9);
+  border-color: var(--sheen-90);
   box-shadow:
-    inset 0 0 calc(var(--s) * 0.12) rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    inset 0 0 calc(var(--s) * 0.12) var(--shadow-25),
+    inset 0 1px 0 var(--sheen-60);
 }
 
 .die-white .die-face .pip {
-  background: radial-gradient(circle at 35% 30%, #4a4a4a, #111 60%);
+  background: radial-gradient(circle at 35% 30%, #4a4a4a, var(--bg) 60%);
   box-shadow: none;
 }
 
 .die-black .die-face {
   background: radial-gradient(circle at 30% 25%, #2b2b2b, #050505 72%);
-  border-color: rgba(255, 255, 255, 0.55);
+  border-color: var(--sheen-55);
 }
 
 .die-black .die-face .pip {
   background: radial-gradient(circle at 35% 30%, #ffffff, #cfcfcf 60%);
-  box-shadow: 0 0 3px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 3px var(--sheen-35);
 }
 
 .surprise-roll .dice-stage {
@@ -2979,7 +3043,7 @@ button:disabled {
   height: 74%;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 55%, var(--gold-deep));
-  box-shadow: 0 0 3px rgba(233, 190, 92, 0.45);
+  box-shadow: 0 0 3px var(--gold-glow-45);
 }
 
 .die-shadow {
@@ -2989,7 +3053,7 @@ button:disabled {
   bottom: calc(var(--s) * -0.2);
   height: calc(var(--s) * 0.24);
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.75), transparent);
+  background: radial-gradient(closest-side, var(--scrim-75), transparent);
   animation: die-shadow 850ms both;
 }
 
@@ -3001,7 +3065,7 @@ button:disabled {
   aspect-ratio: 1;
   border-radius: 50%;
   translate: -50% -50%;
-  background: radial-gradient(closest-side, rgba(245, 220, 150, 0.4), transparent);
+  background: radial-gradient(closest-side, var(--gold-bright-glow-40), transparent);
   opacity: 0;
 }
 
@@ -3024,12 +3088,12 @@ button:disabled {
 .dice-stage.landed .die-face {
   border-color: var(--gold);
   box-shadow:
-    inset 0 0 calc(var(--s) * 0.14) rgba(0, 0, 0, 0.85),
-    0 0 calc(var(--s) * 0.25) var(--gold-glow);
+    inset 0 0 calc(var(--s) * 0.14) var(--shadow-85),
+    0 0 calc(var(--s) * 0.25) var(--gold-glow-50);
 }
 
 .dice-stage.landed .pip {
-  box-shadow: 0 0 6px var(--gold-glow);
+  box-shadow: 0 0 6px var(--gold-glow-50);
 }
 
 .dice-stage.landed .dice-flash {
@@ -3128,7 +3192,7 @@ button:disabled {
   justify-content: center;
   gap: 22px;
   padding-bottom: 60px;
-  background: radial-gradient(ellipse at 50% 45%, rgba(26, 21, 13, 0.6), rgba(0, 0, 0, 0.9) 72%);
+  background: radial-gradient(ellipse at 50% 45%, rgba(26, 21, 13, 0.6), var(--scrim-90) 72%);
   animation: fade-in 150ms ease-out both;
   cursor: pointer;
 }
@@ -3162,8 +3226,8 @@ button:disabled {
   line-height: 1;
   color: var(--gold-bright);
   text-shadow:
-    0 0 20px var(--gold-glow),
-    0 0 2px #000000;
+    0 0 20px var(--gold-glow-50),
+    0 0 2px var(--shadow-solid);
 }
 
 .dice-sum span {
@@ -3186,12 +3250,12 @@ button:disabled {
 
 .roll-result.success {
   border-color: var(--gold);
-  box-shadow: 0 0 44px rgba(233, 190, 92, 0.22);
+  box-shadow: 0 0 44px var(--gold-glow-22);
 }
 
 .roll-result.failure {
   border-color: var(--accent);
-  box-shadow: 0 0 44px rgba(198, 47, 53, 0.2);
+  box-shadow: 0 0 44px var(--accent-glow-20);
 }
 
 .roll-result.failure .die-face {
@@ -3204,9 +3268,9 @@ button:disabled {
   align-items: center;
   margin-top: 4px;
   padding: 4px 22px 6px;
-  border: 1px solid rgba(217, 180, 95, 0.45);
+  border: 1px solid var(--gold-edge-45);
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--scrim-25);
 }
 
 .roll-target span {
@@ -3249,7 +3313,7 @@ button:disabled {
   font-size: 46px;
   line-height: 1.1;
   color: var(--gold-bright);
-  text-shadow: 0 0 16px var(--gold-glow);
+  text-shadow: 0 0 16px var(--gold-glow-50);
 }
 
 .roll-result:not(.rolling) .roll-total {
@@ -3269,7 +3333,7 @@ button:disabled {
 
 .roll-part {
   padding: 3px 10px;
-  border: 1px solid rgba(217, 180, 95, 0.4);
+  border: 1px solid var(--gold-edge-40);
   border-radius: 999px;
   font-size: 13px;
   color: var(--muted);
@@ -3295,7 +3359,7 @@ button:disabled {
 .roll-part.latest {
   border-color: var(--gold);
   color: var(--text);
-  box-shadow: 0 0 12px rgba(233, 190, 92, 0.3);
+  box-shadow: 0 0 12px var(--gold-glow-30);
 }
 
 .roll-result .roll-verdict {
@@ -3304,13 +3368,13 @@ button:disabled {
   letter-spacing: 0.08em;
   line-height: 1.1;
   color: var(--gold-bright);
-  text-shadow: 0 0 24px var(--gold-glow);
+  text-shadow: 0 0 24px var(--gold-glow-50);
   opacity: 0;
 }
 
 .roll-result .roll-verdict.negative {
   color: var(--accent-text);
-  text-shadow: 0 0 20px rgba(198, 47, 53, 0.55);
+  text-shadow: 0 0 20px var(--accent-glow-55);
 }
 
 .roll-result.judged .roll-verdict {
@@ -3362,7 +3426,7 @@ button:disabled {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: radial-gradient(ellipse at 50% 45%, rgba(42, 12, 14, 0.6), rgba(0, 0, 0, 0.9) 72%);
+  background: radial-gradient(ellipse at 50% 45%, rgba(42, 12, 14, 0.6), var(--scrim-90) 72%);
   animation: fade-in 200ms ease-out both;
 }
 
@@ -3398,7 +3462,7 @@ button:disabled {
       110deg,
       transparent 38%,
       rgba(255, 236, 200, 0.16) 47%,
-      rgba(255, 255, 255, 0.28) 50%,
+      var(--sheen-28) 50%,
       rgba(255, 236, 200, 0.16) 53%,
       transparent 62%
     )
@@ -3408,7 +3472,7 @@ button:disabled {
 }
 
 .card-back {
-  --frame: #ef5a5f;
+  --frame: var(--accent-text);
   position: absolute;
   inset: 0;
   display: flex;
@@ -3417,12 +3481,12 @@ button:disabled {
   justify-content: center;
   gap: 14px;
   overflow: hidden;
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--line);
   border-radius: 10px;
   /* Rotes Leuchten in der Mitte, dunkle Ränder, darunter ein feines Hexraster wie auf einer Sektorkarte. */
   background:
-    radial-gradient(circle at 50% 50%, rgba(198, 47, 53, 0.3), transparent 45%),
-    radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.75) 100%),
+    radial-gradient(circle at 50% 50%, var(--accent-fill-30), transparent 45%),
+    radial-gradient(ellipse at 50% 50%, transparent 40%, var(--scrim-75) 100%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20.78' height='36' viewBox='0 0 20.78 36'%3E%3Cpath d='M10.39 0L20.78 6V18L10.39 24L0 18V6ZM10.39 24V36' fill='none' stroke='%23c62f35' stroke-opacity='0.16' stroke-width='1'/%3E%3C/svg%3E")
       center / 20.78px 36px,
     #0d0d0d;
@@ -3435,7 +3499,7 @@ button:disabled {
 .card-back-frame {
   position: absolute;
   inset: 10px;
-  border: 1px solid rgba(198, 47, 53, 0.45);
+  border: 1px solid var(--accent-edge-45);
   border-radius: 6px;
 }
 
@@ -3459,7 +3523,7 @@ button:disabled {
   position: relative;
   width: 148px;
   height: 148px;
-  filter: drop-shadow(0 0 14px rgba(198, 47, 53, 0.45));
+  filter: drop-shadow(0 0 14px var(--accent-glow-45));
   animation: mark-pulse 650ms ease-in-out backwards;
 }
 
@@ -3543,12 +3607,12 @@ button:disabled {
 @keyframes back-glow {
   0%,
   30% {
-    border-color: #3a3a3a;
-    box-shadow: 0 0 0 rgba(198, 47, 53, 0);
+    border-color: var(--line);
+    box-shadow: 0 0 0 var(--accent-glow-0);
   }
   52% {
     border-color: var(--frame);
-    box-shadow: 0 0 38px rgba(198, 47, 53, 0.6);
+    box-shadow: 0 0 38px var(--accent-glow-60);
   }
 }
 
@@ -3556,20 +3620,20 @@ button:disabled {
   0%,
   30% {
     transform: scale(0.9);
-    filter: drop-shadow(0 0 6px rgba(198, 47, 53, 0.3));
+    filter: drop-shadow(0 0 6px var(--accent-glow-30));
   }
   52% {
     transform: scale(1.08);
-    filter: drop-shadow(0 0 20px rgba(239, 90, 95, 0.85));
+    filter: drop-shadow(0 0 20px var(--accent-text-glow-85));
   }
 }
 
 @keyframes card-reveal {
   from {
-    filter: drop-shadow(0 0 26px rgba(239, 90, 95, 0.75)) brightness(1.35);
+    filter: drop-shadow(0 0 26px var(--accent-text-glow-75)) brightness(1.35);
   }
   to {
-    filter: drop-shadow(0 0 0 rgba(239, 90, 95, 0)) brightness(1);
+    filter: drop-shadow(0 0 0 var(--accent-text-glow-0)) brightness(1);
   }
 }
 
@@ -3881,7 +3945,7 @@ button:disabled {
   border: 1px solid var(--line-strong);
   border-radius: 10px;
   background: var(--panel);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 20px var(--shadow-60);
 }
 
 .sector-panel .sector-legend {
@@ -4221,7 +4285,7 @@ button:disabled {
 .hold-fill {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--sheen-30);
   transform: scaleX(0);
   transform-origin: left center;
   pointer-events: none;
@@ -4240,7 +4304,7 @@ button:disabled {
   flex: 0 0 auto;
   border-bottom: 1px solid var(--line);
   background: var(--deep);
-  box-shadow: 0 10px 14px -10px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 10px 14px -10px var(--shadow-90);
 }
 
 .strip-empty {
@@ -4451,7 +4515,7 @@ button:disabled {
   inset: 0;
   width: 100%;
   border: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--scrim-60);
 }
 
 .menu {
@@ -5817,7 +5881,7 @@ button:disabled {
   font-size: 14px;
   line-height: 1;
   color: var(--accent-text);
-  text-shadow: 0 0 6px rgba(198, 47, 53, 0.5);
+  text-shadow: 0 0 6px var(--accent-glow-50);
 }
 
 /* Ein SC: goldener Kreis mit Anfangsbuchstaben; zu nahe Marken stehen übereinander (--level). */
@@ -5844,7 +5908,7 @@ button:disabled {
   color: #1a1408;
   box-shadow:
     0 0 0 2px var(--bg),
-    0 0 8px 2px var(--gold-glow);
+    0 0 8px 2px var(--gold-glow-50);
 }
 
 .fighters {
@@ -6239,7 +6303,7 @@ button:disabled {
 }
 
 .role-badge.target {
-  color: #fff;
+  color: var(--on-fill);
   background: var(--accent);
   border-color: var(--accent);
 }
@@ -6255,12 +6319,12 @@ button:disabled {
 
 .fighter.turn {
   border-width: 2px;
-  box-shadow: 0 0 0 1px var(--gold-deep), 0 0 14px var(--gold-glow);
+  box-shadow: 0 0 0 1px var(--gold-deep), 0 0 14px var(--gold-glow-50);
 }
 
 .fighter.targeted {
   border-width: 2px;
-  box-shadow: 0 0 12px rgba(198, 47, 53, 0.45);
+  box-shadow: 0 0 12px var(--accent-glow-45);
 }
 
 .fighter.neighbour {
@@ -6272,11 +6336,11 @@ button:disabled {
 }
 
 .strip-card.turn {
-  box-shadow: inset 0 0 0 2px var(--gold), 0 0 14px var(--gold-glow);
+  box-shadow: inset 0 0 0 2px var(--gold), 0 0 14px var(--gold-glow-50);
 }
 
 .strip-card.targeted {
-  box-shadow: inset 0 0 0 2px var(--accent), 0 0 14px rgba(198, 47, 53, 0.5);
+  box-shadow: inset 0 0 0 2px var(--accent), 0 0 14px var(--accent-glow-50);
 }
 
 .strip-card.neighbour {
@@ -6320,7 +6384,7 @@ button:disabled {
 
 .impact-flash.damage,
 .impact-flash.hit {
-  background: rgba(198, 47, 53, 0.55);
+  background: var(--accent-fill-55);
 }
 
 .impact-flash.miss {
@@ -6341,7 +6405,7 @@ button:disabled {
   font-weight: 700;
   font-size: 22px;
   letter-spacing: 0.04em;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 2px 8px var(--shadow-80);
   opacity: 0;
   animation: impact-float 1300ms ease-out both;
   animation-delay: calc(var(--n, 0) * 250ms);
@@ -6383,8 +6447,8 @@ button:disabled {
   font-size: 20px;
   line-height: 1;
   white-space: nowrap;
-  color: #fff;
-  text-shadow: 0 0 6px rgba(198, 47, 53, 0.95), 0 0 2px rgba(198, 47, 53, 1), 0 2px 8px rgba(0, 0, 0, 0.85);
+  color: var(--on-fill);
+  text-shadow: 0 0 6px var(--accent-glow-95), 0 0 2px var(--accent-glow-100), 0 2px 8px var(--shadow-85);
   opacity: 0;
   animation: loss-float 1400ms ease-out both;
   z-index: 2;
@@ -6517,16 +6581,16 @@ button:disabled {
   --side-text: var(--gold);
   --side-ink: var(--ink);
   --side-wash: var(--gold-wash);
-  --side-glow: var(--gold-glow);
+  --side-glow: var(--gold-glow-50);
 }
 
 .arena-side.npcs,
 .fight-dock .npcs {
   --side: var(--accent);
   --side-text: var(--accent-text);
-  --side-ink: #fff;
+  --side-ink: var(--on-fill);
   --side-wash: var(--accent-wash);
-  --side-glow: rgba(198, 47, 53, 0.5);
+  --side-glow: var(--accent-glow-50);
 }
 
 .arena-label {
@@ -6669,7 +6733,7 @@ button:disabled {
 }
 
 .state-icon.serious path {
-  stroke: #fff;
+  stroke: var(--on-fill);
 }
 
 .state-icon path {
@@ -7239,7 +7303,7 @@ button:disabled {
 }
 
 .journey-berths .negative {
-  color: var(--danger, #c0392b);
+  color: var(--danger);
 }
 
 .journey-sheet {
@@ -7527,7 +7591,7 @@ button:disabled {
   width: 100%;
   min-height: 40px;
   padding: 0 12px;
-  background: linear-gradient(180deg, #131313, #0e0e0e);
+  background: linear-gradient(180deg, #131313, var(--card));
   border: 1px solid #333333;
   border-radius: 10px;
   text-align: left;
@@ -7617,7 +7681,7 @@ button:disabled {
 
 .event-hit .tile {
   border-color: var(--accent);
-  box-shadow: 0 0 10px rgba(198, 47, 53, 0.35);
+  box-shadow: 0 0 10px var(--accent-glow-35);
 }
 
 .log-event {
@@ -7805,15 +7869,15 @@ button:disabled {
   line-height: 1.15;
   padding: 4px 14px;
   border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--sheen-15);
   background: rgba(20, 22, 28, 0.85);
   color: inherit;
   text-align: left;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px var(--shadow-50);
 }
 
 .globe-title.on {
-  border-color: rgba(232, 196, 90, 0.8);
+  border-color: var(--gold-edge-80);
 }
 
 .globe-title-name,
@@ -7863,14 +7927,14 @@ button:disabled {
   min-height: 44px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--sheen-15);
   background: rgba(20, 22, 28, 0.88);
   color: inherit;
   font-size: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px var(--shadow-50);
 }
 
 .globe-chip {
@@ -7878,17 +7942,17 @@ button:disabled {
   min-height: 40px;
   padding: 0 12px;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--sheen-15);
   background: rgba(20, 22, 28, 0.88);
   color: inherit;
   font-size: 13px;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px var(--shadow-50);
 }
 
 .globe-chip.on {
   background: var(--gold, #d8b45a);
-  color: #111;
+  color: var(--ink);
 }
 
 .globe-panel {
@@ -7897,7 +7961,7 @@ button:disabled {
   overflow-y: auto;
   border-radius: 14px;
   background: rgba(20, 22, 28, 0.95);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 20px var(--shadow-60);
   padding: 6px 0;
 }
 
@@ -7918,7 +7982,7 @@ button:disabled {
 }
 
 .globe-row + .globe-row {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--sheen-6);
 }
 
 .globe-row.static {
@@ -7935,7 +7999,7 @@ button:disabled {
   justify-content: center;
   font-size: 11px;
   font-weight: 700;
-  color: #111;
+  color: var(--ink);
 }
 
 .globe-dot.party {
@@ -7973,7 +8037,7 @@ button:disabled {
   align-items: center;
   gap: 8px 12px;
   padding: 10px 14px 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--sheen-10);
 }
 
 .globe-check {
@@ -8072,7 +8136,7 @@ button:disabled {
   color: inherit;
   text-align: left;
   text-decoration: underline;
-  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-decoration-color: var(--sheen-35);
   cursor: pointer;
   font: inherit;
 }
@@ -8157,7 +8221,7 @@ button:disabled {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--sheen-30);
 }
 
 .system-text {
@@ -8280,7 +8344,7 @@ button:disabled {
   white-space: pre-wrap;
   word-break: break-word;
   font-size: 12px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--sheen-6);
   padding: 10px;
   border-radius: 8px;
   max-height: 50vh;
@@ -8311,7 +8375,7 @@ button:disabled {
   padding: 16px 18px;
   border-radius: 14px;
   background: rgba(20, 22, 28, 0.95);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 20px var(--shadow-60);
 }
 
 .loading-label {
@@ -8324,7 +8388,7 @@ button:disabled {
   height: 6px;
   border-radius: 3px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--sheen-12);
 }
 
 .loading-bar {
@@ -8339,7 +8403,7 @@ button:disabled {
   position: absolute;
   inset: 0;
   width: 40%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  background: linear-gradient(90deg, transparent, var(--sheen-55), transparent);
   animation: loading-shine 1.1s linear infinite;
 }
 
@@ -8377,7 +8441,7 @@ button:disabled {
   border: 0;
   border-radius: 20px;
   background: rgba(20, 22, 28, 0.95);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 20px var(--shadow-60);
   color: var(--text);
   font-size: 14px;
   text-align: left;
@@ -8922,7 +8986,7 @@ button:disabled {
   color: var(--text);
   border: 1px solid var(--accent);
   border-radius: 10px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 24px var(--shadow-50);
 }
 
 .notice-toast > span {
@@ -9097,7 +9161,7 @@ button:disabled {
 
 .segmented.mission-states button[data-state='failed'][aria-checked='true'] {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-fill);
 }
 
 .mission-place-rows {
@@ -9217,7 +9281,7 @@ button:disabled {
   padding: 3px 9px 3px 6px;
   border: 1px solid var(--accent);
   border-radius: 14px;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--scrim-30);
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
@@ -9245,12 +9309,12 @@ button:disabled {
 }
 
 .hex-mission line {
-  stroke: #ef5a5f;
+  stroke: var(--accent-text);
   stroke-width: 1.4;
 }
 
 .hex-mission path {
-  fill: #ef5a5f;
+  fill: var(--accent-text);
   stroke: #1a1a1a;
   stroke-width: 0.6;
 }
@@ -9420,7 +9484,7 @@ button:disabled {
   width: 30px;
   height: 18px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0) 70%);
+  background: radial-gradient(ellipse, var(--scrim-65), transparent 70%);
   animation:
     td-shadow 2.2s cubic-bezier(0.16, 0.72, 0.28, 1) both,
     td-fade 0.4s ease-in 3.4s forwards;
@@ -9684,7 +9748,7 @@ button:disabled {
 .action.fire {
   background: #b3261e;
   border-color: #ff6b6b;
-  color: #fff;
+  color: var(--on-fill);
 }
 .action.fire:disabled {
   opacity: 0.45;
@@ -9810,7 +9874,7 @@ button:disabled {
   padding-top: 28px;
   padding-bottom: 24px;
   gap: 12px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.88) 18%, rgba(0, 0, 0, 0.94));
+  background: linear-gradient(to bottom, transparent, var(--scrim-88) 18%, var(--scrim-94));
 }
 
 /* Begegnungsprüfung (2026-11-22b): Zielwert über den Würfeln, der Hinweis zum langen Druck nach kurzem Tippen hervorgehoben. */
@@ -10157,7 +10221,7 @@ button:disabled {
   padding: 16px 18px;
   border-radius: 14px;
   background: rgba(20, 22, 28, 0.95);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 6px 20px var(--shadow-60);
 }
 
 /* Das Rad: ein Kreis mit einer hellen Kante, die läuft. */
@@ -10166,7 +10230,7 @@ button:disabled {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.16);
+  border: 3px solid var(--sheen-16);
   border-top-color: var(--gold);
   animation: npc-run-spin 0.9s linear infinite;
 }
