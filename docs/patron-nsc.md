@@ -16,6 +16,10 @@ eigene Laufbahn gibt. Der **Adlige** verlangt Stand 10+: passt der gewürfelte S
 sein Lauf von vorn, er wird also nicht genommen. Der **Barbar** dient ohne Ruhestandsbezüge
 (B4 S. 9), sonst endet sein Lauf wie jeder andere.
 
+Beim Würfeln eines Patron-NSC („Als NSC“, „Als Mission“) zählt die **Wartenscheibe**
+(2026-11-24g), wie viele Läufe nötig waren und wie viele davon starben; ein **Dienstalter**
+(2026-11-24f) wird dort nicht gefragt – der Patron dient, so lange er kann.
+
 > Bis 14. November 2026 stand hier eine Tabelle mit festen Fertigkeiten und Ausrüstung je Beruf
 > (Kennzeichen 2026-11-14). Sie ist durch die Laufbahn ersetzt; im Git-Verlauf ist sie noch zu finden.
 

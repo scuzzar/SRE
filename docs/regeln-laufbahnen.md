@@ -92,6 +92,7 @@ Der Ablauf ist der bekannte (B1, SE Charts) mit vier Abweichungen:
 | Weiterverpflichtung | jeder Term; 12 genau → ein Term Zwangsdienst; misslingt sie → Ende | ✔ (nach dem 7. Term bleibt überhaupt nur eine 12, 2026-11-24e) |
 | Retirement | Dienst bis 7 Terme; **Ruhestand ab dem 5. Term möglich, nach dem 7. Pflicht**; Rentenzahlung je nach Dienstzeit und Laufbahn | ◐ (`MAX_TERMS = 7`: nach dem 7. Term bleibt nur eine 12; Pension ab 5 Terms als Notiz, Cr 4000 und je Term Cr 2000 mehr, eine Laufbahn ohne `retirement` ohne Bezüge – 2026-11-24e); gezahlt wird nicht |
 | Abmusterung | ein Wurf je Term, +1 Wurf bei Rang 1–2, +2 bei Rang 3–4, +2 und +1 DM auf Tabelle 1 bei Rang 5–6; Gamblen +1 DM auf Tabelle 2; **Tabelle 2 höchstens dreimal** | ✔ (`musterRollsOf`, `MAX_CASH_ROLLS`) |
+| **Dienstalter** eines NSC (Hausregel, nicht im Regelwerk) | – | NSC aus einer Laufbahn und Patron-NSC würfeln auf Wunsch **genau 1 bis 7 Terms** (das **Dienstalter**): ohne Überleben, ohne Weiterverpflichtung, und nichts kann sie töten – misslingt die Krise, steht das Attribut auf 1. Ohne Dienstalter **wollen sie bleiben, so lange es geht** (2026-11-24f) |
 | Alterung | ab Alter 34 und alle vier Jahre, Alterungstabelle auf Stärke, Gewandtheit, Ausdauer, Intelligenz; Attribut auf 0 → krank, Grundwurf 8+, sonst Ende ohne Weiterverpflichtung | ✔ (Alterungstabellen der Referenzdaten) |
 
 ## Würfe der zwölf Laufbahnen
@@ -277,6 +278,17 @@ Hex), Alter, Terme, Geld, Fertigkeiten mit Stufen, Sachwerte. Die App erzeugt ih
 einer Laufbahn (*NSC aus einer Laufbahn*, `docs/domain-model.md`); mit den zwölf Laufbahnen kann sie
 diese NSC **selbst würfeln** – die Beispiele bleiben dann als Vergleich und als Vorrat für den
 Abend.
+
+## Der Lauf eines NSC
+
+Erzeugt die App einen NSC aus einer Laufbahn (oder einen Patron-NSC), läuft seine Erschaffung
+**ohne Animation** durch – einen Lauf, und wenn ihn etwas verwirft, den nächsten. Verworfen wird er,
+wenn er in der Laufbahn **abgelehnt** würde (er wäre eingezogen), wenn ihm die **Qualifikation**
+fehlt (Adliger ohne Stand 10) oder wenn er **stirbt** (2026-11-24e, 2026-11-24g). Die
+**Wartenscheibe** zählt währenddessen: die Zahl des laufenden Laufs und, ab dem ersten, wie viele
+gestorben sind; ist ein Lauf gefunden, bleibt die Scheibe eine Sekunde stehen. Was sie zählt, wird
+nirgends gespeichert. Mit **Dienstalter** (1 bis 7 Terms) wirft sie nie einen Tod weg, denn der
+Lauf kann nicht sterben.
 
 ## Helden und Schurken
 

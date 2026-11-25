@@ -17,6 +17,12 @@ export interface Career {
    * vor den Welten; dann gibt es weder Heimatwelt noch Welten.
    */
   readonly worlds?: readonly string[];
+  /**
+   * Das **Dienstalter** eines NSC-Laufs (2026-11-24f): die Zahl der Terms, die der Lauf würfeln
+   * soll. Mit ihm entfallen Überleben und Weiterverpflichtung, und nichts kann töten – misslingt
+   * die Krise, steht das Attribut auf 1. Leer heißt: so lange er kann.
+   */
+  readonly termsGoal?: number;
 }
 
 export type RollKind =
@@ -298,12 +304,19 @@ class Replay {
   /**
    * `legacy`: die Regel von vor dem 27. Oktober 2026, nach der ein zweites JoT die Stufe erhöhte.
    * Ohne `worlds` stammt der Lebenslauf von vor den Welten: keine Heimatwelt, keine Welten je Term.
+   * Mit `termsGoal` (2026-11-24f) würfelt der Lauf genau so viele Terms: ohne Überleben, ohne
+   * Weiterverpflichtung und ohne Tod.
    */
   constructor(
     private readonly legacy: boolean,
     private readonly homeworld: string | undefined,
     private readonly worlds: readonly string[] | undefined,
-  ) {}
+    readonly termsGoal: number | undefined = undefined,
+  ) {
+    if (termsGoal !== undefined && (!Number.isInteger(termsGoal) || termsGoal < 1 || termsGoal > MAX_TERMS)) {
+      throw new DomainError(`Ein Dienstalter ist 1 bis ${MAX_TERMS} Terms, nicht ${termsGoal}.`);
+    }
+  }
 
   /** Nach den Attributen: die Heimatwelt, wenn sie noch fehlt, sonst die Laufbahn. */
   private afterCharacteristics(): void {
@@ -312,7 +325,13 @@ class Replay {
 
   /** Am Anfang eines Terms: seine Welt, wenn sie noch fehlt, sonst Überleben. */
   private startTerm(): void {
-    this.step = this.worlds !== undefined && this.worlds.length < this.terms ? 'world' : 'survival';
+    if (this.worlds !== undefined && this.worlds.length < this.terms) {
+      this.step = 'world';
+      return;
+    }
+    // Ein Lauf mit Dienstalter würfelt kein Überleben (2026-11-24f): er kann nicht sterben.
+    if (this.termsGoal === undefined) this.step = 'survival';
+    else this.afterSurvival();
   }
 
   apply(roll: CareerRoll, last: boolean): void {
@@ -402,7 +421,9 @@ class Replay {
       case 'crisis': {
         const crisis = this.crisis;
         if (crisis === undefined || roll.of !== crisis) throw new DomainError(`Die Krise betrifft ${crisis}.`);
-        if (successOf(this.withTarget(roll))) {
+        // Ein Lauf mit Dienstalter kann nicht sterben (2026-11-24f): die Krise lässt das Attribut
+        // auf 1 stehen, und der nächste Term beginnt.
+        if (successOf(this.withTarget(roll)) || this.termsGoal !== undefined) {
           this.set(crisis, 1, 1 - this.value(crisis));
           this.crisis = undefined;
           this.nextAging();
@@ -432,9 +453,7 @@ class Replay {
         if (stays) {
           this.beginTerm();
         } else {
-          this.musterLeft = musterRollsOf(this.terms, this.rank);
-          this.effects.push({ kind: 'muster', rolls: this.musterLeft });
-          this.step = 'muster';
+          this.leaveService();
         }
         break;
       }
@@ -591,12 +610,38 @@ class Replay {
       return;
     }
     this.agingQueue = this.terms >= 4 ? [...agingFor(this.terms)] : [];
-    this.step = this.agingQueue.length > 0 ? 'aging' : 'reenlist';
+    if (this.agingQueue.length > 0) {
+      this.step = 'aging';
+      return;
+    }
+    this.endOfTerm();
+  }
+
+  /**
+   * Am Ende eines Terms ohne offene Würfe (2026-11-24f): ein Lauf **mit** Dienstalter würfelt
+   * keine Weiterverpflichtung – er dient bis zum gewünschten Alter und mustert dann ab. Ohne
+   * Dienstalter entscheidet die Weiterverpflichtung.
+   */
+  private endOfTerm(): void {
+    if (this.termsGoal === undefined) {
+      this.step = 'reenlist';
+      return;
+    }
+    if (this.terms >= this.termsGoal) this.leaveService();
+    else this.beginTerm();
+  }
+
+  /** Die Abmusterung: so viele Würfe wie Terms, dazu die Rangzugaben. */
+  private leaveService(): void {
+    this.musterLeft = musterRollsOf(this.terms, this.rank);
+    this.effects.push({ kind: 'muster', rolls: this.musterLeft });
+    this.step = 'muster';
   }
 
   private nextAging(): void {
     this.agingQueue.shift();
-    this.step = this.agingQueue.length > 0 ? 'aging' : 'reenlist';
+    if (this.agingQueue.length > 0) this.step = 'aging';
+    else this.endOfTerm();
   }
 
   private die(): void {
@@ -698,7 +743,7 @@ class Replay {
 }
 
 function replayWith(career: Career, legacy: boolean): CareerState {
-  const r = new Replay(legacy, career.homeworld, career.worlds);
+  const r = new Replay(legacy, career.homeworld, career.worlds, career.termsGoal);
   career.rolls.forEach((roll, i) => r.apply(roll, i === career.rolls.length - 1));
   r.check();
   return r.state();

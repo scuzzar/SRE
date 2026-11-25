@@ -683,6 +683,10 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 >    Brandstifter (2026-11-24e) kommen **Cutthroat, Assassin und Embezzler** (bisher Other) und
 >    **Hijacker** (bisher Marines). Die Daten stehen schon so; 2026-11-24e hatte sie nicht genannt.
 >
+> Am 24. November 2026 freigegeben (Kennzeichen **2026-11-24f**): **Das Dienstalter der NSC**. `Generation` bekommt das Flüchtig-Feld `/termsGoal` – im Ablauf das **Dienstalter**: wie viele Terms der Lauf eines NSC würfeln soll (1 bis 7, die Termgrenze der Regel; leer = so lange er kann). **Mit Dienstalter** würfelt der Lauf genau so viele Terms: **Überleben und Weiterverpflichtung entfallen**, Rangwurf, Beförderung, Fertigkeiten, Altern und Abmusterung bleiben – und **nichts kann ihn töten**: Misslingt die Krise nach dem Altern, steht das Attribut auf 1 und der Lauf geht weiter. **Ohne Dienstalter** will der NSC bleiben, so lange es geht – die Weiterverpflichtung wird immer mit *will bleiben* gewürfelt, der Zufall über das Wollen fällt weg; überleben wird weiter gewürfelt, stirbt er, beginnt der Lauf von vorn (beim Patron-NSC ebenso wie beim erzeugten). Das Feld steht in beiden Dialogen, die einen NSC aus einer Laufbahn erzeugen: „+ Neuer NSC“ und, lange gedrückt, „NSC platzieren → Neuer NSC“. An der Erschaffung einer **Spielfigur** ändert sich nichts – dort sagt der Spieler, ob er bleibt. Der Ausschnitt dazu liegt unter [`changes/2026-11-24f-das-dienstalter-der-nsc.png`](changes/2026-11-24f-das-dienstalter-der-nsc.png).
+>
+> Am 24. November 2026 freigegeben (Kennzeichen **2026-11-24g**): **Was der Lauf verschluckt**. `Generation` meldet das Flüchtig-Feld `/discarded` – die Liste `RunEnd` sagt, *warum* ein verworfener Lauf endete: `dead` (gestorben), `drafted` (er wäre eingezogen worden), `unqualified` (die Qualifikation fehlte, der Adlige mit Stand unter 10). Beim Erzeugen eines NSC erscheint eine **Wartenscheibe**: oben die Drehung, darunter die Zahl der Versuche und darunter, wie viele davon gestorben sind – beides zählt hoch, weil zwischen den Läufen ans Bild übergeben wird (ein Lauf dauert wenige Millisekunden, ohne Abgabe wäre nie etwas zu sehen). Ist einer gefunden, **bleibt das Ganze eine Sekunde stehen**, dann erscheint der neue NSC. Scheibe und Zahlen sind flüchtig: nichts davon wird gespeichert und nichts kommt ins Log. Der Ausschnitt dazu liegt unter [`changes/2026-11-24g-was-der-lauf-verschluckt.png`](changes/2026-11-24g-was-der-lauf-verschluckt.png).
+>
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
 Die Quelle ist [`domain-model.puml`](domain-model.puml) (PlantUML). Nach jeder Änderung das Bild und
@@ -945,6 +949,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Weiterbewerbung | (Ablauf, Schritt `service`) | Scheitert die Musterung in einer Laufbahn ohne `draft`, wählt man eine andere Laufbahn und würfelt dort neu |
 | Qualifikation | `Service.needs` (`Qualification`) | Der Einstieg ohne Wurf: wer das Attribut mindestens `atLeast` hat, kommt in die Laufbahn (Adliger: SOC 10+) |
 | Rangwurf | `Service.commission` (`Service.commissionTitle`) | Der Wurf, der die unterste Rangstufe der Laufbahn gibt – bei einer Laufbahn mit Standesrängen entfällt er, wenn der Stand der Person schon einen Rang gibt; ohne `commissionTitle` heißt er „Offizierspatent“, beim Bürokraten „Gehobener Dienst“ (2026-11-24b) |
+| Laufausgang | `Generation.discarded` (`RunEnd`) | Was ein verworfener Lauf eines NSC gab (2026-11-24g): `dead` gestorben, `drafted` wäre eingezogen, `unqualified` Qualifikation gefehlt. Die Wartenscheibe zählt sie |
+| Dienstalter | `Generation.termsGoal` | Wie viele Terms der Lauf eines NSC würfeln soll (2026-11-24f): 1 bis 7, leer = so lange er kann. Mit Dienstalter entfallen Überleben und Weiterverpflichtung, und der Lauf kann nicht sterben |
 | Standesrang | `Rank.standing` | Der Stand, ab dem dieser Rang gilt (2026-11-24d): beim Adel B (11) = Knight bis F (15) = Duke; die Rangtafel nennt ihn nur dort, sonst ist er leer. Jede Beförderung auf so einen Rang gibt dem Charakter +1 Stand, höchstens 15 |
 | Rangstufe | `Rank.level` | Die Stufe eines Rangs innerhalb seiner Laufbahn; eine Laufbahn muss nicht jede Stufe haben (der Barbar kennt nur 2 und 5, 2026-11-24c) |
 | Term | (`Career./terms`) | Vier Jahre Dienst |
@@ -2213,6 +2219,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     - *Laufbahn*: Er meldet sich immer bei der Laufbahn seines Patrons. Wird er dort nicht
       genommen (er würde eingezogen), oder stirbt er in einem Term, beginnt der Lauf von vorn, mit
       neuen Attributen (Hausregel), bis er in seiner Laufbahn gedient und überlebt hat.
+    - *Dienstalter* (2026-11-24f): Er hat keines und will **bleiben, so lange es geht** – die
+      Weiterverpflichtung wird immer mit *will bleiben* gewürfelt; überleben wie die Regel, er
+      kann sterben und beginnt dann von vorn.
     - *Welten*: wie beim *Durchlaufen*, Heimatwelt eine zufällige fertige Welt des Subsektors, die
       Terms „wie zuletzt“.
     - *Name*: von der Tafel NSC, wie bei den NSC der Begegnung.
@@ -2234,10 +2243,29 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     `needs`-Qualifikation oder tot: von vorn – beim Adligen also, solange der Stand unter 10 bleibt,
     2026-11-24e),
     Name von der Tafel NSC, Ort der Aufenthaltsort, danach öffnet der Editor zum Nachbessern. Ohne
-    Aufenthaltsort geht es nicht. Er hat keinen Patron. Lange auf „NSC platzieren“ am angetippten
+    Aufenthaltsort geht es nicht. Er hat keinen Patron. **Dienstalter** (2026-11-24f): Über der Liste
+    der Laufbahnen steht das Feld „Dienstalter“ (Auswahl, leer = „so lange er kann“) mit den Chips
+    „so lange er kann“ und 1 bis 7 – leer wählt der Lauf,
+    wie lange er kommt (er will bleiben, so lange es geht, wie beim Patron-NSC), gesetzt würfelt
+    er genau so viele Terms ohne Überleben und ohne Weiterverpflichtung, und nichts kann ihn
+    töten. Das Feld steht in beiden Dialogen. Lange auf „NSC platzieren“ am angetippten
     Feld des Globus gedrückt (2026-11-17), lebt er stattdessen auf diesem Feld bzw. in der Stadt
     darauf (`Character.place` mit `cell` bzw. `city`) und bewaffnet sich nach dem Gesetz dieser Welt;
     dann geht es auch ohne Aufenthaltsort, und „leer anlegen“ gibt es dort nicht.
+  - **Der Lauf eines NSC** (2026-11-24f). Was Patron-NSC und erzeugte NSC gemeinsam haben: Die
+    Erschaffung läuft zufällig und ohne Animation in der vorgegebenen Laufbahn, bis zum Namen.
+    Der Spieler ist nie ein Schritt davon; der Würfel dahinter ist `runCareerIn`. Er
+    **will bleiben, so lange es geht** – die Weiterverpflichtung wird immer mit *will bleiben*
+    gewürfelt. Mit **Dienstalter** (`termsGoal`, 1 bis 7) entfallen Überleben und
+    Weiterverpflichtung ganz: Der Lauf würfelt Rangwurf, Beförderung, Fertigkeiten, Altern und
+    Abmusterung genau für die gewünschte Zahl Terms und **kann nicht sterben** – misslingt die
+    Krise, steht das Attribut auf 1 und der nächste Term beginnt. Ohne Dienstalter bleibt die
+    Regel: Er überlebt oder nicht; verworfen und von vorn wird der Lauf, wenn er abgelehnt
+    würde, die Qualifikation nicht mitbringt oder stirbt.
+    Während er läuft, zeigt eine **Wartenscheibe**, was sie verschluckt (2026-11-24g): oben die Drehung
+    und darunter die Zahl des laufenden Laufs („Lauf 3“), darunter „2 gestorben“ – die Zeile erscheint
+    erst ab dem ersten Todesfall. Beide zählen hoch, weil zwischen den Läufen ans Bild übergeben wird
+    (bei einem Pechvogel endet das Zögern nach 1,4 Sekunden, die Scheibe zählt dann ohne Pause weiter). Ist einer gefunden, bleibt die Scheibe **eine Sekunde** stehen, dann erscheint der NSC. Scheibe und Zahlen sind flüchtig und kommen in kein Log. Die Scheibe zeigt auch, wenn `termsGoal` gesetzt ist – dort wirft der Lauf nur Musterung und Qualifikation weg, nie den Tod.
   - **Waffen erzeugter NSC** (2026-11-14c; Patron-NSC und NSC aus einer Laufbahn, nicht die NSC
     der Begegnung, die ihre eigene Regel haben). Hausregel nach Wunsch des Owners:
     - *SOC-Stufe*: Jede Waffe hat ein Mindest-SOC (`Weapon.minSoc`): billige Nahkampfwaffen ab 0
@@ -2650,7 +2678,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        unter dem Zielwert sinkt das Attribut um `loss`. Fällt ein Attribut dadurch unter 1, folgt eine
        *Krise* (Schritt und Wurf `crisis`, 2W6, 8+): gelingt sie, steht das Attribut auf 1, sonst ist
        der Charakter tot. Die Krise stammt aus dem Vorbild, nicht aus den Charts.
-    5. *Weiterverpflichtung*: Man sagt, ob man bleiben will (`wants`), dann wird immer gewürfelt. Eine
+    5. *Weiterverpflichtung*: Man sagt, ob man bleiben will (`wants`), dann wird immer gewürfelt. Ein
+       NSC-Lauf sagt immer *will bleiben* (2026-11-24f), und ein Lauf **mit** Dienstalter würfelt
+       diesen Schritt überhaupt nicht (siehe *Der Lauf eines NSC*). Eine
        12 heißt bleiben, egal was man wollte. Sonst bleibt, wer will und den Zielwert schafft; nach dem
        7. Term bleibt nur, wer eine 12 würfelt (aus dem Vorbild, 2026-11-24e). Eine Laufbahn ohne
        `retirement` (Barbar) gibt **keine Ruhestandsbezüge**, ihr Ende ist sonst das übliche

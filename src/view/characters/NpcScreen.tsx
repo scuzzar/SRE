@@ -117,6 +117,8 @@ export function NewNpcSheet({ npcs, onClose, here }: { npcs: NpcScreenView; onCl
   const blocker = here === undefined ? npcs.generateBlocker : undefined;
   const game = useGame();
   const [role, setRole] = useState<NpcRole>('other');
+  // Das **Dienstalter** (2026-11-24f): so viele Terms der Lauf würfeln soll; leer = so lange er kann.
+  const [terms, setTerms] = useState<number | undefined>(undefined);
   return (
     <div className="overlay">
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="new-npc-title">
@@ -137,9 +139,32 @@ export function NewNpcSheet({ npcs, onClose, here }: { npcs: NpcScreenView; onCl
               ))}
             </select>
           </label>
+          <label className="field">
+            <span>Dienstalter</span>
+            <select value={terms ?? ''} onChange={(e) => setTerms(e.target.value === '' ? undefined : Number(e.target.value))}>
+              <option value="">So lange er kann</option>
+              {npcs.termsGoal.map((n) => (
+                <option key={n} value={n}>
+                  {n} {n === 1 ? 'Term' : 'Terms'}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="chips" role="group" aria-label="Schnellwahl der Terms">
+            <button type="button" aria-pressed={terms === undefined} onClick={() => setTerms(undefined)}>
+              so lange er kann
+            </button>
+            {npcs.termsGoal.map((n) => (
+              <button key={n} type="button" aria-pressed={terms === n} onClick={() => setTerms(n)}>
+                {n}
+              </button>
+            ))}
+          </div>
           <fieldset>
             <legend>Aus einer Laufbahn erzeugen</legend>
-            <p className="small-label">Die Charaktererschaffung läuft zufällig durch; danach lässt er sich im Editor nachbessern.</p>
+            <p className="small-label">
+              Die Charaktererschaffung läuft zufällig durch; danach lässt er sich im Editor nachbessern. Mit Dienstalter dient er genau so lange und kann dabei nicht sterben.
+            </p>
             {blocker && <p className="small-label">{blocker}</p>}
             <div className="npc-services">
               {npcs.services.map((sv) => (
@@ -150,7 +175,7 @@ export function NewNpcSheet({ npcs, onClose, here }: { npcs: NpcScreenView; onCl
                   disabled={blocker !== undefined}
                   onClick={() => {
                     onClose();
-                    game.generateNpc(sv.id, role, here !== undefined);
+                    void game.generateNpc(sv.id, role, here !== undefined, terms);
                   }}
                 >
                   {sv.name}

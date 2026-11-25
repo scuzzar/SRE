@@ -41,8 +41,13 @@ export interface ThrowOdds {
   readonly chance: number;
 }
 
-export function startGeneration(): Generation {
-  return { career: { rolls: [], worlds: [] } };
+/**
+ * Beginnt eine Charaktererschaffung. Mit `termsGoal` (dem **Dienstalter** eines NSC-Laufs,
+ * 2026-11-24f) würfelt sie genau so viele Terms – ohne Überleben, ohne Weiterverpflichtung,
+ * ohne Tod.
+ */
+export function startGeneration(termsGoal?: number): Generation {
+  return { career: termsGoal === undefined ? { rolls: [], worlds: [] } : { rolls: [], worlds: [], termsGoal } };
 }
 
 export function stateOf(generation: Generation): CareerState {
@@ -340,7 +345,7 @@ function withWorld(generation: Generation, state: CareerState, id: string): Gene
  * *Durchlaufen*). `undefined`, wenn der Lauf hier anhält: beim Namen, beim Tod oder ohne Welt.
  * `service` gibt die Laufbahn vor, sonst fällt sie zufällig nach der Chance der Musterung.
  */
-function runStep(generation: Generation, hexes: Campaign['hexes'], random: Random, service?: string): Generation | undefined {
+function runStep(generation: Generation, hexes: Campaign['hexes'], random: Random, options: { readonly service?: string; readonly npc?: boolean } = {}): Generation | undefined {
   const state = stateOf(generation);
   switch (state.step) {
     case 'name':
@@ -357,13 +362,15 @@ function runStep(generation: Generation, hexes: Campaign['hexes'], random: Rando
       return previous === undefined ? undefined : withWorld(generation, state, previous);
     }
     case 'service':
-      return enlist(generation, service ?? pickService(state, random), random);
+      return enlist(generation, options.service ?? pickService(state, random), random);
     case 'skill':
       return rollSkill(generation, pick(tableOptions(state).filter((o) => o.available), random).table.id, random);
     case 'cascade':
       return chooseCascade(generation, pick(cascadeOptions(generation), random).skill);
     case 'reenlist':
-      return reenlist(generation, random.int(0, 1) === 1, random);
+      // Ein NSC-Lauf (2026-11-24f) will bleiben, so lange es geht; beim *Durchlaufen* einer
+      // Spielfigur entscheidet der Zufall das Wollen.
+      return reenlist(generation, options.npc === true || random.int(0, 1) === 1, random);
     case 'muster':
       return muster(generation, canTakeCash(state) && random.int(0, 1) === 1 ? 'cash' : 'benefit', random);
     default:
@@ -399,32 +406,53 @@ export function runGeneration(campaign: Campaign, random: Random): Campaign {
   throw new DomainError('Die Erschaffung kommt beim Durchlaufen nicht zum Ende.');
 }
 
-/** Wie oft der Lauf eines Patron-NSC höchstens von vorn beginnt; bei jeder Laufbahn reicht das weit. */
-const MAX_PATRON_RUNS = 1000;
+/** Wie oft der Lauf eines NSC höchstens von vorn beginnt; bei jeder Laufbahn reicht das weit. */
+export const MAX_NPC_RUNS = 1000;
 
 /**
- * Der Lebenslauf eines Patron-NSC (siehe domain-model.md, *Patron als NSC*): ein Durchlauf in der
- * vorgegebenen Laufbahn, bis zum Namen. Wird er dort nicht genommen, passt die Qualifikation nicht
- * oder stirbt er, beginnt der Lauf von vorn (Hausregel; die Qualifikation seit 2026-11-24e, sonst
- * ist der Adlige als NSC unmöglich). Läuft für sich, ohne die Erschaffung der Kampagne zu berühren.
+ * Was ein verworfener Lauf eines NSC gab (2026-11-24g): `dead` gestorben, `drafted` er wäre
+ * eingezogen worden, `unqualified` die Qualifikation fehlte. `name` ist der gefundene Lauf.
  */
-export function runCareerIn(hexes: Campaign['hexes'], service: string, random: Random): Generation {
+export type RunEnd = 'dead' | 'drafted' | 'unqualified';
+
+/**
+ * Ein einzelner Lauf durch die Erschaffung eines NSC in der vorgegebenen Laufbahn (2026-11-24g),
+ * ohne ihn wiederholen zu lassen: bis zum Namen (`name`), oder er meldet, was ihn verworfen hat.
+ * Er will bleiben, so lange es geht (2026-11-24f); mit `termsGoal` würfelt er genau so viele
+ * Terms und kann nicht sterben. Zwischen zwei Läufen kann die Oberfläche ans Bild übergeben.
+ */
+export function runOneCareer(hexes: Campaign['hexes'], service: string, random: Random, termsGoal?: number): { end: RunEnd | 'name'; generation: Generation } {
   serviceOf(service);
   if (!hexes.some(isWorld)) throw new DomainError('Ohne fertige Welt im Subsektor gibt es keine Heimatwelt.');
-  for (let run = 0; run < MAX_PATRON_RUNS; run++) {
-    let generation = startGeneration();
-    for (let i = 0; i < MAX_RUN_STEPS; i++) {
-      const before = stateOf(generation);
-      // Ohne Qualifikation: Er würde nicht angenommen, also von vorn (wie bei der Einberufung).
-      if (before.step === 'service' && !qualified(before, serviceOf(service))) break;
-      const next = runStep(generation, hexes, random, service);
-      if (!next) break;
-      generation = next;
-      // Abgelehnt: Er würde eingezogen, also nicht in seiner Laufbahn; von vorn.
-      if (stateOf(generation).step === 'draft') break;
+  let generation = startGeneration(termsGoal);
+  for (let i = 0; i < MAX_RUN_STEPS; i++) {
+    const before = stateOf(generation);
+    // Ohne Qualifikation: Er wird nicht angenommen, also von vorn (wie bei der Einberufung).
+    if (before.step === 'service' && !qualified(before, serviceOf(service))) return { end: 'unqualified', generation };
+    const next = runStep(generation, hexes, random, { service, npc: true });
+    if (!next) {
+      const state = stateOf(generation);
+      if (state.step === 'dead') return { end: 'dead', generation };
+      return { end: 'name', generation };
     }
-    const state = stateOf(generation);
-    if (state.step === 'name' && state.service?.id === service) return generation;
+    generation = next;
+    // Abgelehnt: Er würde eingezogen, also nicht in seiner Laufbahn; von vorn.
+    if (stateOf(generation).step === 'draft') return { end: 'drafted', generation };
+  }
+  throw new DomainError('Der Lauf kommt beim Durchlaufen nicht zum Ende.');
+}
+
+/**
+ * Der Lebenslauf eines NSC (siehe domain-model.md, *Patron als NSC*, *Der Lauf eines NSC*): Läufe
+ * in der vorgegebenen Laufbahn, bis einer zum Namen kommt. Verworfen wird der Lauf, wenn er dort
+ * nicht genommen wird, wenn die Qualifikation fehlt oder wenn er stirbt (Hausregel; die
+ * Qualifikation seit 2026-11-24e, sonst ist der Adlige als NSC unmöglich). Läuft für sich, ohne die
+ * Erschaffung der Kampagne zu berühren. Wer sehen will, was verworfen wurde, nimmt `runOneCareer`.
+ */
+export function runCareerIn(hexes: Campaign['hexes'], service: string, random: Random, termsGoal?: number): Generation {
+  for (let run = 0; run < MAX_NPC_RUNS; run++) {
+    const { end, generation } = runOneCareer(hexes, service, random, termsGoal);
+    if (end === 'name') return generation;
   }
   throw new DomainError('Der Lauf des Patron-NSC kommt nicht zum Ende.');
 }

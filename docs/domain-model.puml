@@ -457,6 +457,8 @@ hide <<browser>> stereotype
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung {
     /step: GenerationStep
+    /termsGoal: number [1..7] [0..1]
+    /discarded: RunEnd[0..*]
   }
   class Career $erschaffung {
     /terms: number
@@ -1291,6 +1293,12 @@ hide <<browser>> stereotype
   enum ShipChoice <<value>> $erschaffung {
     keep
     switch
+  }
+  ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
+  enum RunEnd <<value>> $erschaffung {
+    dead
+    drafted
+    unqualified
   }
   enum GenerationStep <<value>> $erschaffung {
     characteristics

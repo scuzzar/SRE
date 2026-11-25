@@ -35,6 +35,26 @@ test('NSC: aus einer Laufbahn erzeugen, danach steht er im Editor', async ({ pag
   await expect(page.getByRole('heading', { name: 'Feind' })).toBeVisible();
 });
 
+// Das **Dienstalter** (2026-11-24f) und die **Wartenscheibe** (2026-11-24g): das Fenster fragt nach
+// dem Dienstalter, und während die Läufe laufen, zählt die Scheibe mit. Ist ein Lauf gefunden, bleibt
+// sie eine Sekunde stehen, danach steht der NSC im Editor.
+test('NSC: mit Dienstalter — die Wartenscheibe zählt die Läufe, dann steht er im Editor', async ({ page }) => {
+  await page.goto('/');
+  await openPeople(page, 'NSC');
+  await page.getByRole('button', { name: '+ Neuer NSC' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Neuer NSC' });
+  await expect(sheet.getByLabel('Dienstalter')).toHaveValue('');
+  await sheet.getByRole('button', { name: '4', exact: true }).click();
+  await expect(sheet.getByLabel('Dienstalter')).toHaveValue('4');
+  await sheet.getByRole('button', { name: 'Scouts', exact: true }).click();
+  const disc = page.getByText('Die Erschaffung läuft');
+  await expect(disc).toBeVisible();
+  await expect(page.getByText(/Lauf \d+/)).toBeVisible();
+  await expect(disc).toBeHidden({ timeout: 20_000 });
+  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  await expect(editor.getByLabel('Herkunft')).toHaveValue(/^Ex-Scouts/);
+});
+
 // Kampf mit dauerhaften NSC (2026-11-14g): Am NSC springt „In Begegnung“ in den Reiter Begegnung und
 // wählt ihn vor; er kämpft auf der Seite der NSC und führt.
 test('NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er führt die NSC an', async ({ page }) => {

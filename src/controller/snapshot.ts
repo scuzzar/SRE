@@ -229,6 +229,7 @@ import {
   farePayers,
   type Trip,
   type CheckKind,
+  MAX_TERMS,
   worldById,
   systemJourneyBlocker,
   journeyCraft,
@@ -353,6 +354,9 @@ export interface Snapshot {
   readonly trayStop: TrayStop;
   /** Die NSC-Liste: die dauerhaften NSC, nach Welt und Rolle gruppiert. */
   readonly npcs: NpcScreenView;
+  /** Der Lauf eines NSC, dem die Oberfläche zusieht: wie viele Läufe er schon verworfen hat,
+   * wie viele davon gestorben sind (2026-11-24g, *Was der Lauf verschluckt*). */
+  readonly npcRun: { readonly attempts: number; readonly deaths: number } | undefined;
   /** Der Reiter Missionen. */
   readonly missions: MissionsView;
   /** Die Toten unter „Verstorben“, getrennt von den Lebenden. */
@@ -494,6 +498,8 @@ export interface NpcScreenView {
   readonly roles: readonly NpcRole[];
   readonly services: readonly { readonly id: string; readonly name: string }[];
   readonly generateBlocker: string | undefined;
+  /** Die Wahl des **Dienstalters** eines NSC-Laufs (2026-11-24f): 1 bis 7 Terms. */
+  readonly termsGoal: readonly number[];
   /**
    * Der Reiter wählt NSC aus (NSC platzieren oder NSC dazunehmen): die Frage oben, wer schon dabei ist
    * (angehakt, gesperrt), wer sich wählen lässt (fehlt: alle) und warum die übrigen nicht.
@@ -1561,6 +1567,8 @@ export interface ControllerState {
   readonly editor: { readonly id: string | undefined; readonly error: string | undefined; readonly npc?: boolean; readonly role?: NpcRole } | undefined;
   /** Die NSC-Liste zeigt alle NSC statt nur die des Aufenthaltsorts. */
   readonly npcAll: boolean;
+  /** Der Lauf eines NSC, dem die Oberfläche zusieht (2026-11-24g): die Wartenscheibe zählt mit. */
+  readonly npcRun: { readonly attempts: number; readonly deaths: number } | undefined;
   /**
    * Der Editor einer Mission (2026-11-18): neue (`id` fehlt) oder bestehende, mit der Eingabe bis hierher
    * (sie überdauert das Ort wählen); `rev` zählt hoch, wenn der Controller die Eingabe ändert.
@@ -1685,6 +1693,8 @@ function npcScreenView(campaign: Campaign, all: boolean): Omit<NpcScreenView, 'p
     roles: npcRoles,
     services: ref.services.map((sv) => ({ id: sv.id, name: sv.name })),
     generateBlocker: generateNpcBlocker(campaign),
+    // Die Wahl des Dienstalters (2026-11-24f): 1 bis 7 Terms.
+    termsGoal: Array.from({ length: MAX_TERMS }, (_, i) => i + 1),
   };
 }
 
@@ -2843,7 +2853,8 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, landing: undefined, shipCheck: undefined, shipEncounter: undefined, space: undefined, spaceVolley: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcRun: undefined,
+    npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, termsGoal: [], placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, landing: undefined, shipCheck: undefined, shipEncounter: undefined, space: undefined, spaceVolley: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2879,6 +2890,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     focus: focusOf(campaign)?.id,
     dead: deadCharacters(campaign).map((c) => ({ id: c.id, name: c.name, background: c.background })),
     npcs: { ...npcScreenView(campaign, state.npcAll), placing: placingView(campaign, state) },
+    npcRun: state.npcRun,
     missions: missionsView(campaign, state.missionEditor),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),

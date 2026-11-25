@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { anyCharacterOf, EPOCH, keepFocus, npcRoles, validateCharacter, validName, type Stamp, type Campaign, type CampaignId, type Character, type Possession } from './campaign';
-import { replay, type Career, type CareerRoll } from './career';
+import { MAX_TERMS, replay, type Career, type CareerRoll } from './career';
 import { DomainError } from './errors';
 import { mapDirections, minMapPaths, pathKinds, scatters, type MapDirection, type PathKind } from './card-roll';
 import { animalIds, checkDamageRoll, checkVolley, filterDiceOf, ATTACK_TARGET } from './combat';
@@ -175,7 +175,8 @@ const CareerRollSchema = z.object({
   against: z.string().optional(),
   shipChoice: z.enum(['keep', 'switch']).optional(),
 });
-const CareerSchema = z.object({ rolls: z.array(CareerRollSchema), homeworld: z.string().optional(), worlds: z.array(z.string()).optional() });
+// Das Dienstalter eines NSC-Laufs (2026-11-24f) wandert mit: es gehört zum Lebenslauf.
+const CareerSchema = z.object({ rolls: z.array(CareerRollSchema), homeworld: z.string().optional(), worlds: z.array(z.string()).optional(), termsGoal: z.number().int().min(1).max(MAX_TERMS).optional() });
 
 const MapSchema = z
   .object({
@@ -670,6 +671,7 @@ function careerOf(career: z.infer<typeof CareerSchema>): Career {
   return {
     ...(career.homeworld === undefined ? {} : { homeworld: career.homeworld }),
     ...(career.worlds === undefined ? {} : { worlds: career.worlds }),
+    ...(career.termsGoal === undefined ? {} : { termsGoal: career.termsGoal }),
     rolls: career.rolls.map((roll) => Object.fromEntries(Object.entries(roll).filter(([, v]) => v !== undefined)) as unknown as CareerRoll),
   };
 }

@@ -10135,3 +10135,70 @@ button:disabled {
   background: var(--card);
   text-align: left;
 }
+
+/* --- Die Wartenscheibe (2026-11-24g, *Was der Lauf verschluckt*) ------------------------------ */
+
+/* Sie steht, während die Erschaffung eines NSC läuft, und zählt, was der Lauf verwirft. */
+.npc-run {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 6, 11, 0.55);
+}
+
+.npc-run-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(300px, calc(100% - 64px));
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: rgba(20, 22, 28, 0.95);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Das Rad: ein Kreis mit einer hellen Kante, die läuft. */
+.npc-run-wheel {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.16);
+  border-top-color: var(--gold);
+  animation: npc-run-spin 0.9s linear infinite;
+}
+
+@keyframes npc-run-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.npc-run-text {
+  display: grid;
+  gap: 2px;
+  font-size: 14px;
+}
+
+/* Die Zahlen stehen still, damit sie beim Zählen nicht springen. */
+.npc-run-count,
+.npc-run-deaths {
+  font-variant-numeric: tabular-nums;
+}
+
+.npc-run-count {
+  opacity: 0.85;
+}
+
+.npc-run-deaths {
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .npc-run-wheel {
+    animation-duration: 2.6s;
+  }
+}

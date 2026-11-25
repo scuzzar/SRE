@@ -227,6 +227,7 @@ hide <<browser>> stereotype
   class Gain <<reference>> $erschaffung
   class Place <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
+  ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
 
 ' Kampagne
 
