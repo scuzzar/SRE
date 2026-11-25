@@ -13,7 +13,7 @@ export function BellCurve({ value, weights }: { value: number; weights: readonly
     <svg className="bell-curve" viewBox="0 0 70 18" aria-hidden="true">
       {weights.map((w, i) => {
         const h = Math.max(1, (w / max) * 16);
-        return <rect key={i} x={i * 7 + 0.5} y={18 - h} width={6} height={h} rx={1} fill={i + 1 === value ? 'var(--gold-bright)' : '#444'} />;
+        return <rect key={i} x={i * 7 + 0.5} y={18 - h} width={6} height={h} rx={1} fill={i + 1 === value ? 'var(--gold-bright)' : 'var(--line-mid)'} />;
       })}
     </svg>
   );
@@ -24,7 +24,7 @@ export function ScatterRose({ value, letters = false }: { value: Scatter; letter
   const angle = angles[value];
   return (
     <svg className="roll-svg" viewBox="0 0 100 100" role="img" aria-label={`Streuwürfel: ${scatterText[value]}`}>
-      <circle cx={50} cy={50} r={38} fill="none" stroke="#3a3a3a" strokeWidth={1.5} />
+      <circle cx={50} cy={50} r={38} fill="none" stroke="var(--line)" strokeWidth={1.5} />
       {Object.entries(angles).map(([key, a]) => {
         const rad = ((a - 90) * Math.PI) / 180;
         const main = a % 90 === 0;
@@ -36,7 +36,7 @@ export function ScatterRose({ value, letters = false }: { value: Scatter; letter
               y1={50 + Math.sin(rad) * inner}
               x2={50 + Math.cos(rad) * 38}
               y2={50 + Math.sin(rad) * 38}
-              stroke={value === key ? 'currentColor' : '#555'}
+              stroke={value === key ? 'currentColor' : 'var(--line-strong)'}
               strokeWidth={main ? 2 : 1.3}
             />
             {letters && main && (
@@ -146,7 +146,7 @@ function Stair({ kind, x, up }: { kind: PathKind; x: number; up: boolean }) {
 export function MapIconSvg({ map }: { map: MapIcon }) {
   return (
     <svg className="roll-svg" viewBox="0 0 100 100" role="img" aria-label={`Kartensymbol: ${mapText(map)}`}>
-      <rect x={30} y={30} width={40} height={40} rx={3} fill="#232323" stroke="currentColor" strokeWidth={3} />
+      <rect x={30} y={30} width={40} height={40} rx={3} fill="var(--pressed)" stroke="currentColor" strokeWidth={3} />
       <Path kind={map.north} x={50} y={30} dx={0} dy={-1} />
       <Path kind={map.east} x={70} y={50} dx={1} dy={0} />
       <Path kind={map.south} x={50} y={70} dx={0} dy={1} />

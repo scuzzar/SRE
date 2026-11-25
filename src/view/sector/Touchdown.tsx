@@ -37,10 +37,10 @@ export function Touchdown({ x, y, label }: { x: number; y: number; label: string
         <svg className="td-ship" viewBox="-20 -20 40 40" width="34" height="34">
           {/* Ein Keil von oben gesehen, die Nase in Flugrichtung (nach rechts unten gedreht). */}
           <g transform="rotate(53)">
-            <path d="M17 0 L-11 -12 L-6 0 L-11 12 Z" fill="#e9e4d4" stroke="#14140f" strokeWidth="1.6" strokeLinejoin="round" />
-            <path d="M8 0 L-4 -5 L-2 0 L-4 5 Z" fill="#7fb6e0" stroke="#14140f" strokeWidth="1" strokeLinejoin="round" />
-            <rect x="-12.5" y="-9" width="3" height="5" rx="1" fill="#ffcf6a" />
-            <rect x="-12.5" y="4" width="3" height="5" rx="1" fill="#ffcf6a" />
+            <path d="M17 0 L-11 -12 L-6 0 L-11 12 Z" fill="var(--material-rumpf)" stroke="var(--material-kontur)" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d="M8 0 L-4 -5 L-2 0 L-4 5 Z" fill="var(--material-kuppel)" stroke="var(--material-kontur)" strokeWidth="1" strokeLinejoin="round" />
+            <rect x="-12.5" y="-9" width="3" height="5" rx="1" fill="var(--strahl-duese)" />
+            <rect x="-12.5" y="4" width="3" height="5" rx="1" fill="var(--strahl-duese)" />
           </g>
         </svg>
       </div>

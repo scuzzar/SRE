@@ -323,6 +323,11 @@ export function screenOfPoint(camera: Camera, view: Viewport, bx: number, by: nu
   return { x: view.width / 2 + (bx * e[0] + by * e[1] + bz * e[2]) * R, y: view.height / 2 - (bx * n[0] + by * n[1] + bz * n[2]) * R, depth };
 }
 
+/**
+ * Wie jede Atmosphäre 0 bis F leuchtet, von Globus, Grafikkarte und Weltsymbol gemeinsam benutzt.
+ * Die übrigen Eigenschaften je Atmosphäre (Breite, Dichte, Wolken) stehen bei `ATMOSPHERES` in
+ * `world-icon.ts`.
+ */
 export const ATMOSPHERE_GLOW: readonly (string | undefined)[] = [undefined, '#8fb4ff', '#9be35a', '#7fb0ff', '#a6e24a', '#6fa8ff', '#5c9cff', '#9fe03c', '#6aa6ff', '#a8dc3a', '#b56cff', '#c46cff', '#ff4fd8', '#9cc4ff', '#6fa8ff', '#d08cff'];
 
 export function rgbOf(hex: string): Rgb {

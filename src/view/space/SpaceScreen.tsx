@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { SpaceUnitView, SpaceView, WorldLook } from '../../controller';
+import { FARBTAFEL, mitDeckkraft } from '../farbtafel';
 import { useGame } from '../game-context';
 import { CloseIcon } from '../icons';
 import { worldCanvas, worldRadiusShare } from '../sector/world-icon';
@@ -14,10 +15,10 @@ const DEAD = 14;
 const MIN_TARGET = 34;
 /** So lange spielt die Karte eine Raumrunde ab, in ms. */
 const PLAY_MS = 1800;
-const OWN = '#4fd1ff';
-const WARN = '#ff5a6a';
+const OWN = FARBTAFEL.weltGlobus;
+const WARN = FARBTAFEL.statusWarnung;
 /** Fremde Schiffe im Raumkampf (2026-11-21h). */
-const FOE = '#ff6b6b';
+const FOE = FARBTAFEL.statusFeind;
 
 interface Camera {
   /** Mitte des Bildes in km. */
@@ -70,10 +71,10 @@ function drawBody(ctx: CanvasRenderingContext2D, dpr: number, look: WorldLook | 
   } else {
     ctx.beginPath();
     ctx.arc(x, y, rPx, 0, 2 * Math.PI);
-    ctx.fillStyle = 'rgba(200, 200, 210, 0.6)';
+    ctx.fillStyle = mitDeckkraft(FARBTAFEL.weltKoerper, 0.6);
     ctx.fill();
   }
-  ctx.fillStyle = 'rgba(200, 210, 230, 0.8)';
+  ctx.fillStyle = mitDeckkraft(FARBTAFEL.weltName, 0.8);
   ctx.fillText(name, x + rPx + 6, y + 4);
 }
 
@@ -172,7 +173,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
       const sx = (x: number) => w / 2 + (x - cam.cx) * cam.scale;
       const sy = (y: number) => h / 2 - (y - cam.cy) * cam.scale;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = '#04060b';
+      ctx.fillStyle = FARBTAFEL.void;
       ctx.fillRect(0, 0, w, h);
 
       const flight = view.flight;
@@ -194,11 +195,11 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
         ctx.beginPath();
         ctx.arc(sx(center.x), sy(center.y), r, 0, 2 * Math.PI);
         ctx.setLineDash([6, 6]);
-        ctx.strokeStyle = 'rgba(150, 120, 220, 0.55)';
+        ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltSprunggrenze, 0.55);
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(170, 145, 235, 0.85)';
+        ctx.fillStyle = mitDeckkraft(FARBTAFEL.weltSprungtext, 0.85);
         ctx.fillText(`Sprunggrenze ${limit.km === view.jumpLimits[0]?.km ? 10 : 100} D (DM +${limit.dm})`, sx(center.x) + 6, sy(center.y) - r - 6);
       }
 
@@ -209,7 +210,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
         ctx.beginPath();
         ctx.arc(x, y, ring.outer * cam.scale, 0, 2 * Math.PI);
         ctx.arc(x, y, ring.inner * cam.scale, 0, 2 * Math.PI, true);
-        ctx.fillStyle = 'rgba(214, 200, 170, 0.22)';
+        ctx.fillStyle = mitDeckkraft(FARBTAFEL.weltRing, 0.22);
         ctx.fill('evenodd');
       }
       // Bahnen der Monde und die Körper selbst
@@ -217,7 +218,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
         if (body.orbit) {
           ctx.beginPath();
           ctx.arc(sx(body.orbit.around.x + shift.x), sy(body.orbit.around.y + shift.y), body.orbit.distance * cam.scale, 0, 2 * Math.PI);
-          ctx.strokeStyle = 'rgba(160, 175, 200, 0.18)';
+          ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltBahn, 0.18);
           ctx.lineWidth = 1;
           ctx.stroke();
         }
@@ -230,7 +231,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
         drawBody(ctx, dpr, look, view.world.radius * cam.scale, sx(0), sy(0), view.world.name);
       } else {
         ctx.drawImage(worldCanvas(look, 128, { orbits: false }), sx(0) - 40, sy(0) - 40, 80, 80);
-        ctx.fillStyle = 'rgba(200, 210, 230, 0.8)';
+        ctx.fillStyle = mitDeckkraft(FARBTAFEL.weltName, 0.8);
         ctx.fillText(view.world.name, sx(0) + 46, sy(0) + 4);
       }
 
@@ -259,11 +260,11 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
           at = { x: a.x + (b.x - a.x) * (k - i), y: a.y + (b.y - a.y) * (k - i) };
           trail = [...trailOf({ ...unit, track: unit.track.slice(0, -1), position: unit.track.at(-1)?.position ?? unit.position, velocity: unit.track.at(-1)?.velocity ?? unit.velocity }), ...frames.slice(0, i + 1).map((f) => f[unit.index]!), at];
         }
-        path(trail, unit.foe ? 'rgba(255, 107, 107, 0.35)' : 'rgba(79, 209, 255, 0.35)', 1.2);
+        path(trail, unit.foe ? mitDeckkraft(FARBTAFEL.statusFeind, 0.35) : mitDeckkraft(FARBTAFEL.weltGlobus, 0.35), 1.2);
         // Raumkampf (2026-11-21i, Ziel 2026-11-23): die Sichtlinie zum gewählten Ziel, rot gestrichelt, wenn frei.
-        if (!playing && unit.foe && !unit.wreck && unit.sight && flight?.units[flight.party] && flight.target === unit.index) path([flight.units[flight.party]!.position, unit.position], 'rgba(255, 107, 107, 0.45)', 1, [4, 6]);
+        if (!playing && unit.foe && !unit.wreck && unit.sight && flight?.units[flight.party] && flight.target === unit.index) path([flight.units[flight.party]!.position, unit.position], mitDeckkraft(FARBTAFEL.statusFeind, 0.45), 1, [4, 6]);
         if (!playing && !unit.crashed && !unit.foe) {
-          path(unit.preview.after, 'rgba(79, 209, 255, 0.75)', 1.4, [6, 5]);
+          path(unit.preview.after, mitDeckkraft(FARBTAFEL.weltGlobus, 0.75), 1.4, [6, 5]);
           path(unit.preview.now, OWN, 2.4);
           const end = unit.preview.now.at(-1);
           if (end) {
@@ -276,7 +277,7 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
           if (unit.preview.landing !== undefined && unit.preview.impact === undefined) {
             const p = unit.preview.landing.round === 0 ? end : (unit.preview.after.at(-1) ?? end);
             if (p) {
-              ctx.fillStyle = '#7ee08a';
+              ctx.fillStyle = FARBTAFEL.statusLandung;
               ctx.font = 'bold 13px system-ui, sans-serif';
               ctx.fillText('↓ Landung', sx(p.x) + 8, sy(p.y));
               ctx.font = '11px system-ui, sans-serif';
@@ -296,10 +297,10 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
             for (let b = 1; b <= 5; b++) {
               ctx.beginPath();
               ctx.arc(sx(at.x), sy(at.y), b * view.band * cam.scale, 0, 2 * Math.PI);
-              ctx.strokeStyle = 'rgba(79, 209, 255, 0.10)';
+              ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltGlobus, 0.1);
               ctx.lineWidth = 1;
               ctx.stroke();
-              ctx.fillStyle = 'rgba(79, 209, 255, 0.4)';
+              ctx.fillStyle = mitDeckkraft(FARBTAFEL.weltGlobus, 0.4);
               ctx.fillText(`${b} RB`, sx(at.x + b * view.band) + 3, sy(at.y) - 3);
             }
           }
@@ -313,14 +314,14 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
           ctx.setLineDash([5, 5]);
           ctx.beginPath();
           ctx.arc(X, Y, R, 0, 2 * Math.PI);
-          ctx.strokeStyle = active ? 'rgba(255, 255, 255, 0.6)' : 'rgba(255, 255, 255, 0.25)';
+          ctx.strokeStyle = active ? mitDeckkraft(FARBTAFEL.onFill, 0.6) : mitDeckkraft(FARBTAFEL.onFill, 0.25);
           ctx.lineWidth = 1;
           ctx.stroke();
           ctx.restore();
           // Der Punkt „ohne Schub“: wo die Einheit ohne Schub nach der Runde stünde.
           ctx.beginPath();
           ctx.arc(X, Y, 3.5, 0, 2 * Math.PI);
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.fillStyle = mitDeckkraft(FARBTAFEL.onFill, 0.7);
           ctx.fill();
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -331,11 +332,11 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
             ctx.beginPath();
             ctx.moveTo(X + c * (R - 5), Y - s * (R - 5));
             ctx.lineTo(X + c * (R + 5), Y - s * (R + 5));
-            ctx.strokeStyle = on ? '#fff' : OWN;
+            ctx.strokeStyle = on ? FARBTAFEL.onFill : OWN;
             ctx.lineWidth = on ? 2.5 : 1.5;
             ctx.stroke();
             if (active || on) {
-              ctx.fillStyle = on ? '#fff' : OWN;
+              ctx.fillStyle = on ? FARBTAFEL.onFill : OWN;
               ctx.fillText(mark.name === 'prograd' ? 'pro' : 'retro', X + c * (R + 16), Y - s * (R + 16));
             }
           }
@@ -347,12 +348,12 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
             ctx.beginPath();
             ctx.moveTo(X, Y);
             ctx.lineTo(sx(goal.x), sy(goal.y));
-            ctx.strokeStyle = '#fff';
+            ctx.strokeStyle = FARBTAFEL.onFill;
             ctx.lineWidth = 2;
             ctx.stroke();
             ctx.beginPath();
             ctx.arc(sx(goal.x), sy(goal.y), 6, 0, 2 * Math.PI);
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = FARBTAFEL.onFill;
             ctx.fill();
             if (active) {
               ctx.font = 'bold 13px system-ui, sans-serif';
@@ -424,8 +425,8 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
           const fade = k < 350 ? 1 : 1 - (k - 350) / 350;
           ctx.save();
           ctx.globalAlpha = Math.max(0, fade);
-          ctx.strokeStyle = effect.hit ? '#ff4d4d' : 'rgba(255, 140, 140, 0.8)';
-          ctx.shadowColor = '#ff2a2a';
+          ctx.strokeStyle = effect.hit ? FARBTAFEL.strahlTreffer : mitDeckkraft(FARBTAFEL.strahlFaden, 0.8);
+          ctx.shadowColor = FARBTAFEL.strahlGlut;
           ctx.shadowBlur = effect.hit ? 14 : 6;
           ctx.lineWidth = effect.hit ? 3 : 1.6;
           ctx.beginPath();
@@ -438,8 +439,8 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
           const p = (k - 180) / 720;
           ctx.save();
           ctx.globalAlpha = 1 - p;
-          ctx.fillStyle = '#ffd27a';
-          ctx.shadowColor = '#ff7a2a';
+          ctx.fillStyle = FARBTAFEL.weltSystem;
+          ctx.shadowColor = FARBTAFEL.strahlBrand;
           ctx.shadowBlur = 20;
           ctx.beginPath();
           ctx.arc(bx, by, 4 + 18 * p, 0, 2 * Math.PI);
@@ -453,8 +454,8 @@ export function SpaceScreen({ space, shot }: { space: SpaceView; shot?: ShotEffe
           ctx.globalAlpha = Math.max(0, 1 - p * p);
           ctx.font = effect.hit ? 'bold 14px system-ui, sans-serif' : '12px system-ui, sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillStyle = effect.hit ? '#ffb4b4' : 'rgba(220, 220, 220, 0.85)';
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+          ctx.fillStyle = effect.hit ? FARBTAFEL.statusFeindLicht : mitDeckkraft(FARBTAFEL.statusDaneben, 0.85);
+          ctx.shadowColor = mitDeckkraft(FARBTAFEL.shadowSolid, 0.9);
           ctx.shadowBlur = 4;
           lines.forEach((line, i) => ctx.fillText(line, bx, by - 18 - 46 * p - i * 17));
           ctx.restore();

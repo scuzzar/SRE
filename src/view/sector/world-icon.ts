@@ -1,4 +1,5 @@
 import { landformAt, nearestCell, type WorldLook } from '../../controller';
+import { ATMOSPHERE_GLOW } from './globe-render';
 
 // Reine Darstellung: das Weltsymbol, ein kleines 3D-Bild einer Welt, Pixel für Pixel auf ein Canvas
 // gerechnet. In der Weltenerschaffung zeigt es ab der Größe, was schon gewürfelt ist; der Rest bleibt grau. Größe als Durchmesser (0 ist ein Asteroidengürtel), Atmosphäre als Leuchten am Rand,
@@ -13,8 +14,6 @@ const ORBITS_FROM_TL = 8;
 type Rgb = readonly [number, number, number];
 
 interface Atmosphere {
-  /** Farbe des Leuchtens; ohne Atmosphäre keins. */
-  readonly glow: string | undefined;
   /** Breite des Leuchtens als Anteil am Radius. */
   readonly width: number;
   /** Dichte: wie hell Leuchten und Dunst sind. */
@@ -24,24 +23,28 @@ interface Atmosphere {
   readonly cloudColor?: string;
 }
 
-/** Je Stelle 0 bis F: atembar blau, verunreinigt giftgrün, exotisch violett, ätzend mit gelben Wolken, heimtückisch magenta. */
+/**
+ * Je Stelle 0 bis F: atembar blau, verunreinigt giftgrün, exotisch violett, ätzend mit gelben
+ * Wolken, heimtückisch magenta. Welche Farbe dabei leuchtet, steht in `ATMOSPHERE_GLOW`
+ * (globe-render.ts) – Globus und Weltsymbol teilen sich dieselbe Tafel.
+ */
 const ATMOSPHERES: readonly Atmosphere[] = [
-  { glow: undefined, width: 0, density: 0, clouds: 0 },
-  { glow: '#8fb4ff', width: 0.035, density: 0.25, clouds: 0 },
-  { glow: '#9be35a', width: 0.05, density: 0.38, clouds: 0.03, cloudColor: '#e4f0c8' },
-  { glow: '#7fb0ff', width: 0.05, density: 0.38, clouds: 0.03 },
-  { glow: '#a6e24a', width: 0.08, density: 0.52, clouds: 0.12, cloudColor: '#e2efc0' },
-  { glow: '#6fa8ff', width: 0.08, density: 0.52, clouds: 0.12 },
-  { glow: '#5c9cff', width: 0.115, density: 0.66, clouds: 0.26 },
-  { glow: '#9fe03c', width: 0.115, density: 0.66, clouds: 0.26, cloudColor: '#e0ecb4' },
-  { glow: '#6aa6ff', width: 0.16, density: 0.8, clouds: 0.42 },
-  { glow: '#a8dc3a', width: 0.16, density: 0.8, clouds: 0.42, cloudColor: '#dbe6a6' },
-  { glow: '#b56cff', width: 0.13, density: 0.75, clouds: 0.34, cloudColor: '#d9c2f2' },
-  { glow: '#c46cff', width: 0.15, density: 0.82, clouds: 0.55, cloudColor: '#d8c46a' },
-  { glow: '#ff4fd8', width: 0.16, density: 0.86, clouds: 0.6, cloudColor: '#c45a96' },
-  { glow: '#9cc4ff', width: 0.21, density: 0.9, clouds: 0.8 },
-  { glow: '#6fa8ff', width: 0.06, density: 0.45, clouds: 0.1 },
-  { glow: '#d08cff', width: 0.14, density: 0.72, clouds: 0.3, cloudColor: '#b8f0ea' },
+  { width: 0, density: 0, clouds: 0 },
+  { width: 0.035, density: 0.25, clouds: 0 },
+  { width: 0.05, density: 0.38, clouds: 0.03, cloudColor: '#e4f0c8' },
+  { width: 0.05, density: 0.38, clouds: 0.03 },
+  { width: 0.08, density: 0.52, clouds: 0.12, cloudColor: '#e2efc0' },
+  { width: 0.08, density: 0.52, clouds: 0.12 },
+  { width: 0.115, density: 0.66, clouds: 0.26 },
+  { width: 0.115, density: 0.66, clouds: 0.26, cloudColor: '#e0ecb4' },
+  { width: 0.16, density: 0.8, clouds: 0.42 },
+  { width: 0.16, density: 0.8, clouds: 0.42, cloudColor: '#dbe6a6' },
+  { width: 0.13, density: 0.75, clouds: 0.34, cloudColor: '#d9c2f2' },
+  { width: 0.15, density: 0.82, clouds: 0.55, cloudColor: '#d8c46a' },
+  { width: 0.16, density: 0.86, clouds: 0.6, cloudColor: '#c45a96' },
+  { width: 0.21, density: 0.9, clouds: 0.8 },
+  { width: 0.06, density: 0.45, clouds: 0.1 },
+  { width: 0.14, density: 0.72, clouds: 0.3, cloudColor: '#b8f0ea' },
 ];
 
 interface Climate {
@@ -313,11 +316,13 @@ export function drawWorld(look: WorldLook, px: number, drawing: WorldDrawing = {
     beltLights(ctx, S, look, seed);
     return canvas;
   }
-  const atm = (look.atmosphere === undefined ? undefined : ATMOSPHERES[look.atmosphere]) ?? ATMOSPHERES[0]!;
+  const atmosphare = look.atmosphere ?? 0;
+  const atm = ATMOSPHERES[atmosphare] ?? ATMOSPHERES[0]!;
   const hydrographics = look.hydrographics ?? 0;
   const exotic = (look.atmosphere ?? 0) >= 10;
   const R = (S / 2) * (look.kind === 'small' ? 0.24 : worldRadiusShare(look.size));
-  const glow = atm.glow ? rgb(atm.glow) : undefined;
+  const glowHex = ATMOSPHERE_GLOW[atmosphare];
+  const glow = glowHex ? rgb(glowHex) : undefined;
   const G = glow ? R * atm.width * 1.8 : 0;
   const samples = samplesOf(seed);
   // Ohne Hydrographie noch kein Wasser; ohne Oberfläche nach der Hydrographie.

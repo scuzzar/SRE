@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { landformAt, type GlobeView, type LogItem, type TripPlanView, type TripView, type WorldView } from '../../controller';
+import { FARBTAFEL, mitDeckkraft } from '../farbtafel';
 import { TripHint, TripPlanCard } from './TripPanels';
 import { roleText } from '../format';
 import { useGame } from '../game-context';
@@ -807,8 +808,8 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
       ctx.lineTo(p.x + s, p.y - s * 0.2);
       ctx.lineTo(p.x + s, p.y + s);
       ctx.closePath();
-      ctx.fillStyle = 'rgba(232,226,210,0.95)';
-      ctx.strokeStyle = 'rgba(20,20,20,0.8)';
+      ctx.fillStyle = mitDeckkraft(FARBTAFEL.weltKleinstadt, 0.95);
+      ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltKonturWeich, 0.8);
       ctx.lineWidth = scale;
       ctx.fill();
       ctx.stroke();
@@ -823,11 +824,11 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fillStyle = fill;
-    ctx.strokeStyle = 'rgba(15,15,15,0.9)';
+    ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltKontur, 0.9);
     ctx.lineWidth = scale;
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#111';
+    ctx.fillStyle = FARBTAFEL.ink;
     ctx.font = `bold ${Math.round(9 * scale)}px system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -842,8 +843,8 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     ctx.lineTo(p.x + s, p.y + s * 0.8);
     ctx.lineTo(p.x - s, p.y + s * 0.8);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(214,64,36,0.95)';
-    ctx.strokeStyle = 'rgba(30,10,5,0.8)';
+    ctx.fillStyle = mitDeckkraft(FARBTAFEL.weltVulkan, 0.95);
+    ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltKonturGlut, 0.8);
     ctx.lineWidth = scale;
     ctx.fill();
     ctx.stroke();
@@ -854,8 +855,8 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     if (!p) continue;
     ctx.beginPath();
     ctx.arc(p.x, p.y, (c.rank === 'primary' ? 4 : 2.6) * scale, 0, Math.PI * 2);
-    ctx.fillStyle = c.index === 0 ? 'rgba(255,214,90,1)' : 'rgba(255,240,200,0.95)';
-    ctx.strokeStyle = 'rgba(20,20,20,0.85)';
+    ctx.fillStyle = c.index === 0 ? FARBTAFEL.weltHauptwelt : mitDeckkraft(FARBTAFEL.weltStadt, 0.95);
+    ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltKonturWeich, 0.85);
     ctx.lineWidth = scale;
     ctx.fill();
     ctx.stroke();
@@ -872,9 +873,9 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
       if (!p) continue;
       const x = p.x + 13 * scale;
       ctx.lineWidth = 3 * scale;
-      ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+      ctx.strokeStyle = mitDeckkraft(FARBTAFEL.shadowSolid, 0.75);
       ctx.strokeText(c.label, x, p.y);
-      ctx.fillStyle = 'rgba(255,248,225,0.98)';
+      ctx.fillStyle = mitDeckkraft(FARBTAFEL.weltStadttext, 0.98);
       ctx.fillText(c.label, x, p.y);
     }
   }
@@ -883,7 +884,7 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
   ctx.lineJoin = 'round';
   for (const leg of globe.route) {
     ctx.setLineDash(leg.flight ? [6 * scale, 5 * scale] : []);
-    ctx.strokeStyle = leg.flight ? 'rgba(255,255,255,0.95)' : 'rgba(110,200,255,0.95)';
+    ctx.strokeStyle = leg.flight ? mitDeckkraft(FARBTAFEL.onFill, 0.95) : mitDeckkraft(FARBTAFEL.weltGruppe, 0.95);
     ctx.lineWidth = 2.5 * scale;
     const steps = leg.flight ? flightPath(globe, camera, view, leg.cells[0]!, leg.cells.at(-1)!) : leg.cells.map((c) => at(c));
     ctx.beginPath();
@@ -901,7 +902,7 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
   }
   // Wo ich war: die gereisten Strecken, orange und gepunktet, je als Großkreis von Tag zu Tag.
   ctx.setLineDash([2 * scale, 4 * scale]);
-  ctx.strokeStyle = 'rgba(255,170,60,0.95)';
+  ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltEreignis, 0.95);
   ctx.lineWidth = 2.5 * scale;
   for (const [a, b] of globe.traceSegments) {
     ctx.beginPath();
@@ -918,12 +919,12 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     ctx.stroke();
   }
   ctx.setLineDash([]);
-  for (const v of globe.vehicles) badge(v.cell, 8, 8, 'rgba(170,230,140,0.95)', v.count > 1 ? String(v.count) : 'F');
-  for (const e of globe.events) badge(e.cell, 8, -8, 'rgba(255,170,60,0.95)', e.count > 9 ? '9+' : String(e.count));
+  for (const v of globe.vehicles) badge(v.cell, 8, 8, mitDeckkraft(FARBTAFEL.weltFahrzeug, 0.95), v.count > 1 ? String(v.count) : 'F');
+  for (const e of globe.events) badge(e.cell, 8, -8, mitDeckkraft(FARBTAFEL.weltEreignis, 0.95), e.count > 9 ? '9+' : String(e.count));
   const npcCells = new Map<number, number>();
   for (const n of globe.npcs) if (n.cell !== undefined) npcCells.set(n.cell, (npcCells.get(n.cell) ?? 0) + 1);
-  for (const [cell, count] of npcCells) badge(cell, -8, -8, 'rgba(190,150,255,0.95)', count > 1 ? String(count) : 'N');
-  if (globe.partyCell !== undefined) badge(globe.partyCell, 0, 10, 'rgba(110,200,255,1)', 'G');
+  for (const [cell, count] of npcCells) badge(cell, -8, -8, mitDeckkraft(FARBTAFEL.weltNsc, 0.95), count > 1 ? String(count) : 'N');
+  if (globe.partyCell !== undefined) badge(globe.partyCell, 0, 10, FARBTAFEL.weltGruppe, 'G');
   // Das Schiff der Gruppe, wo es steht (2026-11-21).
   // Das Schiff der Gruppe: ein gelbes Abzeichen mit dem Keil des Schiffs, etwas größer als die
   // anderen. Während der Landeanimation steht dort das landende Schiff statt des Zeichens.
@@ -935,8 +936,8 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
       const r = 9.5 * scale;
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,224,92,1)';
-      ctx.strokeStyle = 'rgba(15,15,15,0.95)';
+      ctx.fillStyle = FARBTAFEL.weltSchiff;
+      ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltKontur, 0.95);
       ctx.lineWidth = 1.5 * scale;
       ctx.fill();
       ctx.stroke();
@@ -944,7 +945,7 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
       ctx.save();
       ctx.translate(x - 6.6 * scale, y - 6.6 * scale);
       ctx.scale(0.55 * scale, 0.55 * scale);
-      ctx.strokeStyle = '#16140c';
+      ctx.strokeStyle = FARBTAFEL.weltKonturGold;
       ctx.lineWidth = 2.4;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -962,10 +963,10 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x, y - 18 * scale);
-    ctx.strokeStyle = 'rgba(15,15,15,0.9)';
+    ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltKontur, 0.9);
     ctx.lineWidth = 3.5 * scale;
     ctx.stroke();
-    ctx.strokeStyle = 'rgba(239,90,95,1)';
+    ctx.strokeStyle = FARBTAFEL.accentText;
     ctx.lineWidth = 1.8 * scale;
     ctx.stroke();
     ctx.beginPath();
@@ -975,8 +976,8 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     ctx.lineTo(x + 11 * scale, y - 10 * scale);
     ctx.lineTo(x, y - 10 * scale);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(239,90,95,1)';
-    ctx.strokeStyle = 'rgba(15,15,15,0.9)';
+    ctx.fillStyle = FARBTAFEL.accentText;
+    ctx.strokeStyle = mitDeckkraft(FARBTAFEL.weltKontur, 0.9);
     ctx.lineWidth = scale;
     ctx.fill();
     ctx.stroke();
@@ -988,7 +989,7 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
     if (p) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, 10 * scale, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+      ctx.strokeStyle = mitDeckkraft(FARBTAFEL.onFill, 0.95);
       ctx.lineWidth = 2.5 * scale;
       ctx.stroke();
     }

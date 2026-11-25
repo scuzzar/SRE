@@ -247,10 +247,19 @@ Feld.
 - **Zwei Größen von Knöpfen:** Knöpfe zum Handeln sind groß (Reihe 54–56 px, `primary` und `ghost`
   48–52 px). Kompakte Bedienelemente in Listen und Karten sind kleiner: Chips, Umschalter und Zellen
   der Waffentabelle 40 px, `ghost compact` 30–36 px. Kleiner als 30 px wird nichts, was man antippt.
-- **Farben nur über die Variablen** in `:root` von `styles.css`, keine festen Werte in den Regeln.
-  Zwei Ausnahmen bleiben: die schwarzen Haltepunkte der Log-Maske (`mask-image`) sind Maskensteuerung
-  und keine Farbe, und die Canvas-Farben in TypeScript erreicht `var()` nicht
-  (siehe [TODO.md](../TODO.md)).
+- **Farben nur über die Variablen** in `:root` von `styles.css`, keine festen Werte in den Regeln und
+  keine im Markup. Einzige Ausnahme: die schwarzen Haltepunkte der Log-Maske (`mask-image`) sind
+  Maskensteuerung und keine Farbe.
+- **Der Canvas malt nach der Farbtafel** (`src/view/farbtafel.ts`). Im Canvas greift `var()` nicht,
+  darum führt `FARBTAFEL` dieselben Namen noch einmal – `--welt-globus` wird `FARBTAFEL.weltGlobus`,
+  derselbe Wert. Ein Test rechnet jede Tafel gegen `:root`; sobald beides auseinanderläuft, fällt er
+  durch. Zeichen, die nur der Canvas kennt (Sprunggrenze, Schusstrahl, das kleine Haus einer
+  Kleinstadt), tragen keinen Namen im Stylesheet und sagen das im Kommentar. **Deckkraftstufen
+  bekommen nie einen eigenen Namen**: `mitDeckkraft(FARBTAFEL.weltGlobus, .35)` rechnet sie aus der
+  Grundfarbe, so wie im Stylesheet `rgba(79, 209, 255, .35)` dieselbe Farbe ist.
+- **Inline-SVG malt mit `var()` im Attribut** (`fill="var(--accent)"`): das tragen alle gängigen
+  Browser, und die Töne bleiben in `:root`. Im Markup steht nur, *welche* Farbe ein Teil hat; Form
+  und Breite bleiben Attribute.
 - **`style={{ … }}` trägt nie Gestaltung.** Farbe, Größe, Schrift und Abstand stehen in Klassen,
   auch die nackten Eigenschaften `left`, `top`, `width`, `transform` und `grid-template-columns`.
   Zahlen aus dem Model – Position des Zuggeists, Füllstand einer Anzeige, Fortschritt, Anzahl der
@@ -262,10 +271,10 @@ Feld.
   `--accent-glow-*`, `--accent-fill-*` und `--accent-edge-*` für Rot, `--danger` für Gefahren.
   Ein neuer Wert bekommt eine neue Variable, nie eine feste Zahl in der Regel.
 - **Stoff und Status haben eigene Familien**: `--kern-*` das warme Dunkle der Würfel und Wurfplätze,
-  `--material-*` deren Kunststoff, Augen und der Kartenrücken, `--papier-*` Kartenblatt und
-  Staub, `--welt-*` Gruppenstand, Schiffe und Markierungen auf Globus, Karte und Reiseroute,
-  `--status-*` Absicht, Gefahr und Schaden auf dem Kampfbildschirm, `--strahl-*` Triebwerk und
-  Aufschlag bei der Landung.
+  `--material-*` deren Kunststoff, Augen, der Kartenrücken und das Landefährt, `--papier-*` Kartenblatt
+  und Staub, `--welt-*` Gruppenstand, Schiffe und Markierungen auf Globus, Karte und Reiseroute,
+  `--status-*` Absicht, Gefahr und Schaden auf dem Kampfbildschirm, `--strahl-*` Triebwerk, Schuss
+  und Aufschlag, `--emblem-feld` das Feld im Emblem der App.
 - **Schrift**: IBM Plex Sans, Werte und Codes (UPP, UWP) in IBM Plex Mono; zählende Zahlen mit
   festen Ziffernbreiten, damit nichts springt.
 - **Zeichen**: ✕ schließen, ☰ Menü, Stift bearbeiten, ⌖ Ziel bzw. Aufenthaltsort, ▶ am Zug, ★ Anführer.

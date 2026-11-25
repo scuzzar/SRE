@@ -17,40 +17,18 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
   Bedienung noch vermischt (rund 120 Zeilen mit Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt
   zuerst nach der Rolle“). In einem eigenen Durchgang trennen, Bereich für Bereich: Die Regel
   bleibt im Modell, der Ablauf auf dem Bildschirm kommt ins Handbuch oder fällt weg.
-- [ ] **Farben und Stile nach dem GUI-Handbuch** ([docs/gui-handbuch.md](docs/gui-handbuch.md)):
-  am 25. November 2026 drei Durchgänge – 142 feste Werte auf Variablen in `:root` gestellt und
-  15 ungenutzte Rückfallwerte wie `var(--muted, #9a9a9a)` gestrichen, wertgleich. Familien:
-  `--shadow-*`, `--scrim-*`, `--sheen-*`, `--on-fill*`, `--gold-edge-*`,
-  `--gold-glow-*`, `--accent-glow-*`, `--accent-fill-*`, `--accent-edge-*`, `--danger`, `--void*`,
-  `--glass-*`, `--shade-*`, `--hairline`, `--line-mid`, `--line-bright`, `--pressed`. Fünf
-  Fast-Duplikate (`#131313`, `#151515`, `#1b1b1b`, `#2c2c2c`, `#2a2a2a`) führt der Owner auf die
-  bestehende Leiter zurück (`--panel`, `--raised`, `--rule-soft`, `--rule`; bis zu 3 von 255 Stufen).
-  Am 25. November 2026 ein dritter Durchgang: die übrigen 70 festen Werte des Stylesheets auf sechs
-  Familien nach den Begriffen des Owners gestellt – `--kern-*` (das warme Dunkle von Würfeln,
-  Wurfplatz und Aufsetzlinie), `--material-*` (Kunststoff der Würfel, ihre Augen, Kartenrücken),
-  `--papier-*` (Kartenblatt, Staub der Landung), `--welt-*` (Gruppenstand, Schiffe und Markierungen
-  auf Globus, Karte und Reiseroute), `--status-*` (Absicht, Gefahr, Schaden) und `--strahl-*`
-  (Triebwerk und Aufschlag), dazu `--gold-satt` für den Ladebalken. Wertgleich bewiesen: 1094
-  Farbwerte vorher gegen 1094 nachher, jede Folge identisch. Die fünf Rot-Töne bleiben fünf Stufen
-  (`--status-feind`, `-mittel`, `-hell`, `-licht`, `-45`) und `#ffffff` trägt zwei Namen
-  (`--material-glanz` an den Würfeln, `--papier` am Kartenblatt); beides entschied der Owner am
-  25. November 2026. Übrig bleiben zwei `#000` in `.log-scroll` – Haltepunkte der Maske, keine Farbe.
-  Am 25. November 2026 auch die `style={{ … }}` geräumt – zuerst die 24 gestalterischen Stellen in
-  Klassen überführt (neue Klassen `.sheet-head.centered`, `.section-title.small`, `.primary.wide`,
-  `.remove-block`, `.roll-name`, `.roll-detail`, `.name-picker-hint`, `.haptic-answer` und die
-  Mittelmarke im Lastbalken), dann die 11 Stellen, die nackt `left`, `top`, `width`, `transform`,
-  `aspect-ratio` oder `grid-template-columns` setzten, auf eigene Variablen umgestellt: `--ghost-x`
-  und `--ghost-y` (Zuggeist), `--share` (Lastanzeige), `--progress` (Wartenscheibe), `--land-x` und
-  `--land-y` (Aufsetzpunkt), `--ratio` (Seitenverhältnis der Karte), `--seg-cols` (Spaltenzahl der
-  Umschalter); die Kantenlänge des Weltsymbols steht in `.system-icon`. Das Handbuch schreibt die
-  Regel jetzt vor: `style` trägt Zahlen aus dem Model als Variable, Gestaltung nie. Übrig bleibt
-  damit nur noch eines: die 81 Canvas-Farben in `SpaceScreen.tsx` (33), `GlobeScreen.tsx` (26),
-  `icons.tsx` (12), `Touchdown.tsx` (6) und `CardRollIcons.tsx` (4), die eine Palette in TypeScript
-  brauchen, weil `var()` im Canvas nicht greift.
-- [ ] **Zwei wackelnde GUI-Tests fest gegen den Zufall:** `e2e/shop.spec.ts:131` („Gruppe platzieren")
+- [ ] **Weltfarben nach dem Model benennen:** Weltsymbol und Globus malen nach Tafeln, die das Model
+  wählt – 16 Atmosphären mit ihren Wolkenfarben, 19 Gelände- und 5 Klima-Töne in
+  `src/view/sector/world-icon.ts`. Am 25. November 2026 ist die doppelt geführte Glühtafel zusammen-
+  gelegt (`ATMOSPHERE_GLOW` in `globe-render.ts`, das Weltsymbol importiert sie jetzt). Ob diese
+  Tafeln in `src/view/farbtafel.ts` umziehen und Namen nach den Begriffen des Modells bekommen,
+  entscheidet der Owner.
+- [ ] **Drei wackelnde GUI-Tests fest gegen den Zufall:** `e2e/shop.spec.ts:131` („Gruppe platzieren")
   scheiterte am 25. November 2026 an `Keine Welt entstanden`, `e2e/encounter.spec.ts:206` (Tiertabelle)
-  wartete auf einen Wurf, den der Zufall gerade nicht brachte. Beide bestehen einzeln direkt danach
-  wieder. In beiden Tests Welt und Würfelwerkzeug so setzen, dass das Ergebnis nicht vom Zufall hängt.
+  wartete auf einen Wurf, den der Zufall gerade nicht brachte, und `e2e/space.spec.ts:127` (Beam
+  Laser) meldete in der großen Suite `Kein Ziel` statt `schon gefeuert`. Alle drei bestehen einzeln
+  direkt danach wieder. In allen drei Tests Welt und Würfelwerkzeug so setzen, dass das Ergebnis
+  nicht vom Zufall hängt.
 
 ## Kampf
 

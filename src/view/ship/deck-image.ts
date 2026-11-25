@@ -1,3 +1,5 @@
+import { FARBTAFEL } from '../farbtafel';
+
 /** Die längste Seite eines Deckplans in Pixeln; größere Bilder werden verkleinert. */
 const MAX_SIDE = 2048;
 /** Bis zu dieser Länge des Data URL bleibt ein PNG ein PNG; darüber wird es ein JPEG. */
@@ -26,7 +28,7 @@ export async function deckImage(file: File): Promise<string> {
     if (asPng.length <= MAX_PNG) return asPng;
   }
   // JPEG kennt keine Transparenz: durchsichtige Stellen eines Plans werden weiß statt schwarz.
-  context.fillStyle = '#fff';
+  context.fillStyle = FARBTAFEL.papier;
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
   return canvas.toDataURL('image/jpeg', png ? 0.9 : 0.85);
