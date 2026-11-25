@@ -2,13 +2,35 @@
 
 Das Bedienkonzept der App: **wie** die Oberfläche gebaut ist, damit jeder neue Bereich sich so
 anfühlt wie die alten. Die [README](../README.md) sagt, *was* die App kann; das
-[Domänenmodell](domain-model.md) sagt, wie es im Modell aussieht, und hat die Begriffe (Ziehblatt,
-Reiter, Würfelfenster …). Dieses Handbuch sagt, aus welchen Bausteinen die Oberfläche besteht und
-nach welchen Regeln man sie zusammensetzt.
+[Domänenmodell](domain-model.md) sagt, wie es fachlich im Modell aussieht. Dieses Handbuch sagt, aus
+welchen Bausteinen die Oberfläche besteht, nach welchen Regeln man sie zusammensetzt und wie ihre
+Teile heißen ([Begriffe der Oberfläche](#begriffe-der-oberfläche)).
 
 **Neue oder geänderte Oberfläche folgt diesem Handbuch.** Braucht etwas ein Muster, das hier nicht
 steht, kommt es zuerst hier hinein und wird mit dem Owner abgestimmt, dann gebaut (siehe
 [AGENTS.md](../AGENTS.md)).
+
+---
+
+## Begriffe der Oberfläche
+
+Die gemeinsame Sprache für die Oberfläche, wie die Tabelle „Begriffe“ im
+[Domänenmodell](domain-model.md) für die Fachlichkeit. Neue Begriffe der Oberfläche kommen zuerst
+hierher. In der Spalte *Code* steht, wo es ihn gibt, der Zustand im Controller oder die Komponente.
+
+| Deutsch | Code | Was |
+|---|---|---|
+| Grundkarte | (View) | Was auf dem Handy wie im Desktop-Modus unter allem liegt: der Globus der offenen Welt, beim Start der des Aufenthaltsorts (sobald seine Oberflächenkarte entstanden ist); mit ✕ oder ganz herausgezoomt der Subsektor, in dem ein Tippen auf eine Welt deren Globus öffnet |
+| Ziehblatt | (View, Smartphone; Stufe `TrayStop`) | Das Blatt unten über der Grundkarte, wie in einer Karten-App. Es rastet beim Loslassen immer auf einer von vier **Stufen** ein: versteckt (nur der Griff, mit Abstand zum Rand; Reihe und Reiter rutschen hinaus), eingeklappt (Kopf, Reihe und Reiter, bei einem offenen Feld auch dessen Kopfzeile), halb und voll; nach einem Wisch eine Stufe weiter in seine Richtung. Ziehen lässt es sich am Griff, an Reihe und Reitern und im Inhalt nach unten, wenn der ganz oben steht. Das Gerät merkt sich die Stufe, nicht die Höhe. Oben der Griff, darunter der gewählte Bereich oder das angetippte Feld des Globus bzw. das gewählte Feld des Subsektors (dafür fährt es mindestens auf halbe Höhe, und die Karte holt das Feld über das Blatt), darunter im Log die Reihe Notiz, Tag, 2W6, Karte (bis 2026-11-22c Notiz, Deuten, 2W6, Karte), beim angetippten Feld des Globus stattdessen die Reihe Hierhin reisen (Route der *Fahrt* planen), Gruppe setzen, *NSC platzieren*, Einkaufen, ganz unten die fünf *Reiter* Log, Begegnung, Charaktere, Schiff, Missionen |
+| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links eine Spalte mit denselben Reitern wie im Ziehblatt, darunter das Log mit dem Charakter oben; ein Reiter (oder ein angetipptes Feld des Globus bzw. ein gewähltes des Subsektors) öffnet den Bereich an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Reihe Notiz, Tag, 2W6, Karte, wo der Bereich keine eigene hat; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
+| Reiter | (View, `Screen`) | Die fünf Reiter unten im Ziehblatt bzw. oben in der Seitenspalte: Log, Begegnung, Charaktere, Schiff, Missionen (Missionen seit 2026-11-18); Begegnung und Charaktere haben oben einen Umschalter |
+| Würfelfenster | (View, `encounterRoll`) | Das Fenster nach einem Begegnungswurf: der rollende Würfel des Tests, was herauskam und was danach geht („Als NSC“, Rettungswürfe); kam es zur Begegnung, folgt ihre Übersicht. Ohne Würfel nur ein Hinweis, etwa dass der Test schon gemacht ist |
+| Weltsymbol | (View, aus `Hex`) | Das kleine 3D-Bild einer fertigen Welt aus Größe, Atmosphäre, Wasser, Bevölkerung, TL, Temperatur und Leben; auf der Sektorkarte, in der Kopfzeile und oben auf dem Globus; auf der Weltkarte nicht, dort steht es schon auf der Karte daneben. Nur Darstellung, nichts davon wird gespeichert |
+| Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
+| Raumkarte | (View, Grundkarte) | Der Raum um eine Welt, von ein paar tausend bis zu Millionen Kilometern, in 2D: die Welt als Himmelskörper, die Einheiten mit Bahnen und die Sprunggrenzen. Neben Subsektor und Globus die dritte Grundkarte; man erreicht sie über den Knopf „Raum“ (2026-11-18c) |
+| Knopf „Raum“ | (View) | Öffnet die Raumkarte einer Welt, am Globus und an der Welt im Subsektor; ein Tippen auf eine Welt öffnet weiter ihren Globus (2026-11-18c) |
+| Schubkreis | (View) | Der Kreis um eine eigene Einheit, so groß wie ihr höchster Schub; jedes Tippen oder Ziehen darin setzt den Schubvektor vom Schiff zum Finger, ohne die Einheit auszuwählen (2026-11-18c) |
+| Einrasten | (View) | Der Schubvektor springt auf eine Marke am Schubkreis, wenn er ihr auf etwa 5° nahekommt: prograd, retrograd, aufs Ziel, vom Ziel weg, angleichen (2026-11-18c) |
 
 ---
 

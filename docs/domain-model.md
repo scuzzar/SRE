@@ -736,6 +736,9 @@ gemeinsame Sprache: Wer „Probe“ sagt, meint `Task`, und umgekehrt. Begriffe 
 Traveller bleiben englisch, wie im Regelwerk: die Attributkürzel, die Namen der Fertigkeiten (Pilot,
 Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 
+Begriffe der **Oberfläche** (Grundkarte, Ziehblatt, Reiter, Würfelfenster, Globus, Raumkarte …)
+stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe der Oberfläche“.
+
 | Deutsch | Code | Was |
 |---|---|---|
 | Kampagne | `Campaign` | Alles, was zu einem Spiel gehört; die oberste Ebene |
@@ -774,9 +777,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
 | Ergebnis | `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll`, `RumorRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
-| Grundkarte | (View) | Was auf dem Handy wie im Desktop-Modus unter allem liegt: der Globus der offenen Welt, beim Start der des Aufenthaltsorts (sobald seine Oberflächenkarte entstanden ist); mit ✕ oder ganz herausgezoomt der Subsektor, in dem ein Tippen auf eine Welt deren Globus öffnet |
-| Ziehblatt | (View, Smartphone; Stufe `TrayStop`) | Das Blatt unten über der Grundkarte, wie in einer Karten-App. Es rastet beim Loslassen immer auf einer von vier **Stufen** ein: versteckt (nur der Griff, mit Abstand zum Rand; Reihe und Reiter rutschen hinaus), eingeklappt (Kopf, Reihe und Reiter, bei einem offenen Feld auch dessen Kopfzeile), halb und voll; nach einem Wisch eine Stufe weiter in seine Richtung. Ziehen lässt es sich am Griff, an Reihe und Reitern und im Inhalt nach unten, wenn der ganz oben steht. Das Gerät merkt sich die Stufe, nicht die Höhe. Oben der Griff, darunter der gewählte Bereich oder das angetippte Feld des Globus bzw. das gewählte Feld des Subsektors (dafür fährt es mindestens auf halbe Höhe, und die Karte holt das Feld über das Blatt), darunter im Log die Reihe Notiz, Tag, 2W6, Karte (bis 2026-11-22c Notiz, Deuten, 2W6, Karte), beim angetippten Feld des Globus stattdessen die Reihe Hierhin reisen (Route der *Fahrt* planen), Gruppe setzen, *NSC platzieren*, ganz unten die Reiter Log, Begegnung, Kampf, Shop, Charaktere, NSC |
-| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links eine Spalte mit denselben Reitern wie im Ziehblatt, darunter das Log mit dem Charakter oben; ein Reiter (oder ein angetipptes Feld des Globus bzw. ein gewähltes des Subsektors) öffnet den Bereich an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Reihe Notiz, Tag, 2W6, Karte, wo der Bereich keine eigene hat; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
 | Würfelwurf (2W6) | `DiceRoll` | Ein einfacher Wurf mit zwei Würfeln |
 | Inspirationskarte | `Card` | Eine gezogene Karte, solange sie offen ist |
 | Kartenauswahl | `CardPick` | Was man von einer Karte in den Log übernimmt, mit der Frage |
@@ -827,7 +827,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
 | Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery), rent (Miete je Tag eines Fahrzeugs), fare (Fahrpreis im Linienverkehr), ship (Schiff: voller Preis, Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung; welche, sagt `shipCost`) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
-| Reiter | (View, `Screen`) | Die fünf Reiter unten im Ziehblatt bzw. oben in der Seitenspalte: Log, Begegnung, Charaktere, Schiff, Missionen (Missionen seit 2026-11-18); Begegnung und Charaktere haben oben einen Umschalter |
 | Reiter Charaktere | (Reiter „Charaktere“; Screens `characters`, `npcs`, `funds`) | Oben ein Umschalter zwischen **SC** (Charakterkarten und Gruppengepäck), **Kasse** und **NSC** (die *NSC-Liste*) |
 | Shop | (Screen `shop`, `openShop`, `closeShop`) | Der Screen für den Einkauf auf dem Aufenthaltsort, ohne eigenen Reiter: „Einkaufen“ am angetippten Feld einer Stadt auf dem Globus des Aufenthaltsorts öffnet ihn an der Stelle des Felds (nur in Städten), ✕ führt dorthin zurück, ein Reiter verlässt ihn |
 | Kasse | (Screen `funds`, im Reiter Charaktere) | Stand der Gruppenkasse, freie Buchungen (Einnahme, Ausgabe, Einzahlung, Auszahlung mit einem gewählten SC) und das Kassenbuch; geht auch ohne Aufenthaltsort |
@@ -903,7 +902,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
 | Kampf | (Screen `combat`, im Reiter Begegnung unter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
 | Reiter Begegnung | (Reiter „Begegnung“; Screens `encounter`, `combat`) | Oben ein Umschalter zwischen Begegnung und *Kampf*. Unter Begegnung unten die Reihe mit den Würfen Zufall, Tiere, Patron, Gerücht, Polizei und darunter Tage vergehen und Woche beenden bzw. bei einer Fahrt Weiterfahren: die einzige Stelle, an der Zeit vergeht oder die Fahrt weitergeht (außer im Systemflug, wo je 24 Stunden ein Tag vergeht, 2026-11-18c). Jeder Wurf zeigt Test und Ergebnis im *Würfelfenster*. Das Blatt darüber hat nur Datum, laufende Fahrt, laufende Begegnung und die Einstellungen: Gelände, Würfel der Anzahl, wie viele Tage, die Haken „Manuell wählen“ und *NSC dazunehmen* |
-| Würfelfenster | (View, `encounterRoll`) | Das Fenster nach einem Begegnungswurf: der rollende Würfel des Tests, was herauskam und was danach geht („Als NSC“, Rettungswürfe); kam es zur Begegnung, folgt ihre Übersicht. Ohne Würfel nur ein Hinweis, etwa dass der Test schon gemacht ist |
 | NSC dazunehmen | (Ablauf, `startNpcJoining`) | Mit dem Haken „NSC dazunehmen“ öffnet Zufall erst die NSC-Liste zum Auswählen (wie *NSC platzieren*, nur NSC vom Aufenthaltsort); „OK“ nimmt sie zur Zufallsbegegnung dazu (`Encounter.joined`) und würfelt ohne Test, mit „Manuell wählen“ erst die Art |
 | Begegnungsart | (Karte im Reiter Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, Gerücht, später Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
 | Zufallsbegegnung | (Begegnungsart) | Personen nach der Random Encounter List (S. 21); ergibt eine Begegnung (`Encounter`) |
@@ -971,7 +969,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Nicht erzeugt | (kein `Hex`) | Ein Feld, für das noch nicht gewürfelt wurde; nur hier beginnt eine Weltenerschaffung |
 | Leer | `Hex.empty` | Ein erzeugtes Feld ohne Welt: Das Vorkommen hat keine ergeben |
 | Welt | `Hex` mit Welt | Ein Hexfeld mit Welt (Planet): Name, UWP, Basen, Gasriese, Handelscodes |
-| Weltsymbol | (View, aus `Hex`) | Das kleine 3D-Bild einer fertigen Welt aus Größe, Atmosphäre, Wasser, Bevölkerung, TL, Temperatur und Leben; auf der Sektorkarte, in der Kopfzeile und oben auf dem Globus; auf der Weltkarte nicht, dort steht es schon auf der Karte daneben. Nur Darstellung, nichts davon wird gespeichert |
 | Notiz zur Welt | `Hex.note` | Freier Text auf der Weltkarte einer fertigen Welt, z. B. „Halveks Werft am Südpol“; lässt sich jederzeit ändern |
 | Weltenerschaffung | `Hex` mit `/step` vor `done` | Eine Welt, die gerade Wurf für Wurf entsteht |
 | Wurf der Weltenerschaffung | `WorldRoll` | Ein Wurf aus der World Generation Checklist, z. B. Atmosphäre 2W6 − 7 + Größe; flüchtig, gespeichert wird nur sein Ergebnis |
@@ -1014,7 +1011,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Abgestelltes Fahrzeug | `Possession.parked` | Ein eigenes Fahrzeug, das nicht mitgefahren ist und an einem Ort steht, bis die Gruppe es dort wieder abholt |
 | Kleinstadt | `SurfaceCell.towns` | Ob auf einem Oberflächenfeld ohne Stadt eine Kleinstadt liegt (1) oder nicht (0); höchstens eine je Feld, ohne Namen |
 | Bevölkerungsmultiplikator | `Hex.populationMultiplier` | Die erste Ziffer der Einwohnerzahl, 1–9: Die Welt hat Multiplikator × 10^Bevölkerung Einwohner |
-| Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
 | Wasseranteil | `Surface.water` | Wie viel Prozent der Oberfläche Wasser ist, 0 bis 100 |
 | Tektonische Platten | `Surface.plates` | Wie viele große Platten die Kruste hat; an ihren Grenzen entstehen später Gebirge |
 | Große und kleine Kontinente | `Surface.majorContinents`, `Surface.minorContinents` | Landmassen mit mindestens bzw. unter 15 % der Landfläche |
@@ -1096,8 +1092,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Rückfeuer | `SpaceUnit.returned`, `SpaceAttack.returnFire` | Mit dem Programm Return Fire feuert eine beschossene Einheit einmal je Raumrunde zurück, auch wenn sie schon gefeuert hat (2026-11-22d) |
 | Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; über Kampagnen hinweg gehalten und mit OneDrive abgeglichen (2026-11-17), der Export nimmt sie nicht mit |
 | Deckplan-Platz | `DeckPlan.name` | Deck A, Deck B oder Deck C: der Platz eines Plans an seinem Entwurf, zugleich sein Name |
-| Raumkarte | (View, Grundkarte) | Der Raum um eine Welt, von ein paar tausend bis zu Millionen Kilometern, in 2D: die Welt als Himmelskörper, die Einheiten mit Bahnen und die Sprunggrenzen. Neben Subsektor und Globus die dritte Grundkarte; man erreicht sie über den Knopf „Raum“ (2026-11-18c) |
-| Knopf „Raum“ | (View) | Öffnet die Raumkarte einer Welt, am Globus und an der Welt im Subsektor; ein Tippen auf eine Welt öffnet weiter ihren Globus (2026-11-18c) |
 | Systemflug | `SystemFlight`, `Campaign.flight` | Was auf der Raumkarte einer Welt Raumrunde für Raumrunde läuft: in Stufe 1 nur das eigene Schiff, später mit Gegnern, Waffen und Small Craft; so heißt es immer, auch wenn gekämpft wird (Owner, 18. November 2026) |
 | Raumkampf | (Teil des `SystemFlight`) | Ein Systemflug mit Gegnern: Waffen, Raketen, Schaden; kommt ab Stufe 2. Kein eigener Begriff im Modell (2026-11-18c) |
 | Raumrunde | `SystemFlight.round` | Eine Runde des Systemflugs: 1.000 Sekunden (SR 39); nicht zu verwechseln mit der *Runde* des Personenkampfs (2026-11-18c) |
@@ -1107,8 +1101,6 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
 | Ort, Geschwindigkeit | `SpaceUnit.position`, `.velocity` (`Vec`) | Wo eine Einheit ist (km) und wie schnell in welche Richtung sie fliegt (km/s), in der Ebene mit der Welt in der Mitte (2026-11-18c) |
 | Schubvektor | `SpaceUnit.thrust` | Richtung und Stärke des Schubs für die laufende Raumrunde, in G; fest im Raum, höchstens `/maxG` lang, stufenlos in 0,1 G; nach jeder Raumrunde wieder leer (2026-11-18c) |
 | Höchster Schub | `SpaceUnit./maxG` | Die G des Maneuver Drive des Schiffs (`ShipDesign.maneuver`) (2026-11-18c) |
-| Schubkreis | (View) | Der Kreis um eine eigene Einheit, so groß wie ihr höchster Schub; jedes Tippen oder Ziehen darin setzt den Schubvektor vom Schiff zum Finger, ohne die Einheit auszuwählen (2026-11-18c) |
-| Einrasten | (View) | Der Schubvektor springt auf eine Marke am Schubkreis, wenn er ihr auf etwa 5° nahekommt: prograd, retrograd, aufs Ziel, vom Ziel weg, angleichen (2026-11-18c) |
 | Bahnvorschau | (abgeleitet, View) | Die Bahn der laufenden Raumrunde mit dem gesetzten Schubvektor und gestrichelt die nächsten fünf Raumrunden ohne Schub; gerechnet, nicht gespeichert (2026-11-18c) |
 | Spur | `SpaceUnit.track` (`TrackPoint`) | Wo eine Einheit am Ende jeder vergangenen Raumrunde war, mit ihrer Geschwindigkeit dort (2026-11-18c) |
 | Himmelskörper | (abgeleitet aus `Hex`) | Ein Körper mit Schwerkraft auf der Raumkarte; in Stufe 1 nur die Welt, mit Radius und Masse aus ihrer Größe (2026-11-18c) |

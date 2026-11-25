@@ -23,6 +23,11 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
 - [ ] **Log über die Karte:** ein Tippen auf einen Logeintrag mit Ort fliegt zu seinem Feld auf dem
   Globus.
 - [ ] **Begegnungen auf der Karte:** eine laufende Begegnung am Feld der Gruppe zeigen.
+- [ ] **Bedienabläufe aus dem Domänenmodell lösen:** Die Begriffe der Oberfläche stehen seit dem
+  25. November 2026 im GUI-Handbuch. In den Regeltexten von `docs/domain-model.md` sind Fachregel und
+  Bedienung noch vermischt (rund 150 Stellen mit Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt
+  zuerst nach der Rolle“). Bereich für Bereich trennen, wenn ohnehin daran gearbeitet wird: die Regel
+  bleibt im Modell, der Ablauf auf dem Bildschirm kommt ins Handbuch oder fällt weg.
 - [ ] **Farben und Stile nach dem GUI-Handbuch** ([docs/gui-handbuch.md](docs/gui-handbuch.md)): in
   `styles.css` stehen außerhalb von `:root` noch rund 110 feste Hex-Werte und 120 feste `rgba`
   (häufig `#9a9a9a`, `#fff`, `#333`; auch die Wartenscheibe). Auf die Variablen umstellen, fehlende

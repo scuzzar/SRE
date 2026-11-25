@@ -22,7 +22,9 @@
   oder geänderte Bereich folgt ihm und geht durch die Prüfliste am Ende. Braucht etwas ein neues
   Muster, kommt es zuerst ins Handbuch und wird mit dem Owner abgestimmt, dann gebaut.
 - Begriffe aus der Tabelle „Begriffe“ in `docs/domain-model.md` benutzen, in Code, Doku und Gespräch.
-  Neue Begriffe kommen zuerst dort hinein.
+  Neue Begriffe kommen zuerst dort hinein. **Begriffe der Oberfläche** (Ziehblatt, Reiter,
+  Würfelfenster …) stehen stattdessen im GUI-Handbuch unter „Begriffe der Oberfläche“; ins
+  Domänenmodell gehört nur die Fachlichkeit.
 - `ARCHITECTURE.md` legt die vier MVC-Regeln und die Schichtentabelle fest. Beide müssen stimmen.
 - Die README beschreibt, was die App können soll; das Domänenmodell, wie es im Modell aussieht.
   Widersprechen sie sich, nachfragen statt raten.
