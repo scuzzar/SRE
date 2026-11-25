@@ -51,7 +51,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Bewegungsstatus](#bewegungsstatus) | SR 20–21 | ◐ ✱ (Gehen, Laufen und Ausweichen je SC, die NSC als Gruppe; Ansage vor der Runde ○) |
 | [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6, SR 21–22 | ◐ |
 | [Wirkung der Attribute, Ausdauer](#wirkung-der-attribute-und-ausdauer) | SR 21–22 | ✔ ✱ |
-| [Fertigkeit, Parieren, ungeübte Waffen](#fertigkeit-parieren-und-ungeübte-waffen) | SR 22 | ◐ (Angriff und Parade ✔; ungeübt ○) |
+| [Fertigkeit, Parieren, ungeübte Waffen](#fertigkeit-parieren-und-ungeübte-waffen) | SR 22 | ◐ (Angriff und Parade ✔; ungeübt ◐: −5 im Angriff ohne natürliche Waffenkunde, +3 in der Verteidigung ○) |
 | [Feuerstoß und Schrot](#feuerstoß-und-schrot-nach-book-1) | B1, SR 26 | ✔ ✱ |
 | [Waffen- und Reichweitenmatrix](#waffen--und-reichweitenmatrix) | SE 6 | ✔ (ohne Tierwaffen und Zubehör) |
 | [Waffen und Ausrüstung](#waffen-und-ausrüstung) | SE 4, 23, SR 23–26 | ✔ (ohne Zubehör) |
@@ -566,7 +566,11 @@ beginnt mit der END, die der Kämpfer dann hat)
 
 ### Fertigkeit, Parieren und ungeübte Waffen
 
-*SR 22, „Expertise“.* App: ◐ (Angriff und Parieren ✔ ✱; ungeübt ○). ✱ Als lange Gewehre parieren Rifle,
+*SR 22, „Expertise“.* App: ◐ (Angriff und Parieren ✔ ✱; ungeübt ◐ ✱). ✱ Ungeübt: Wer aus einer
+Laufbahn ohne natürliche Waffenkunde an Schusswaffen kommt (Barbar, Bürokrat, Arzt; Supplement 4
+S. 11) und keine Stufe in der Schusswaffe hat, greift mit **−5** an (`weaponSkillDm`); Waffentabelle
+und Shop zeigen „ungeübt −5“. Alle anderen haben wie im Buch Stufe 0. Die **+3 in der Verteidigung**
+fehlt noch. ✱ Als lange Gewehre parieren Rifle,
 Carbine, Automatic Rifle und Shotgun; ein NSC pariert mit einem Gewehr mit Stufe 0, weil er nur eine
 Fertigkeit in seiner Waffe hat. Wer ausweicht, pariert nicht.
 

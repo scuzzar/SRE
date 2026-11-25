@@ -1,8 +1,9 @@
 # Regeln für Laufbahnen: die Laufbahnen der Charakter- und NSC-Erstellung
 
 Dieses Dokument ersetzt beim Entwickeln das Nachschlagen im PDF. Es sammelt die **Laufbahnen**, mit
-denen die App Charaktere und NSC erzeugt: die sechs, die gebaut sind, und die **zwölf weiteren aus
-Supplement 4 *Citizens of the Imperium***, die der Owner nachlesen will (Angabe vom 23. November 2026).
+denen die App Charaktere und NSC erzeugt: die sechs des Regelwerks und die **zwölf aus Supplement 4
+*Citizens of the Imperium***. Alle 18 sind gebaut; was davon noch fehlt, steht am Ende unter
+[Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
 Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst ins Domänenmodell
 ([`domain-model.md`](domain-model.md)); die Erschaffung selbst ist dort unter
@@ -18,7 +19,7 @@ Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst in
 
 - „2D“ heißt 2W6; „DM“ ist ein Würfelmodifikator. „7+“ ist der Zielwert, „Soc 7−“ gilt, wenn
   Social Standing **7 oder weniger** ist (in B4 mit Gedankenstrich geschrieben).
-- **Position** (*position*) ist bei B4, was bei den sechs gebauten Laufbahnen die **Offizierstelle**
+- **Position** (*position*) ist bei B4, was bei den sechs Laufbahnen des Regelwerks die **Offizierstelle**
   (`commission`) ist: der erste Rang; Promotionen bauen darauf auf.
 - **Term** = vier Jahre Dienst; Alter 18 zu Beginn, außer Belterer und Barbar (14).
 
@@ -28,7 +29,7 @@ Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst in
 
 | Regel | Quelle | App |
 |---|---|---|
-| [Die sechs gebauten Laufbahnen](#die-sechs-gebauten-laufbahnen) | SE Charts 2–3 | ✔ |
+| [Die sechs Laufbahnen des Regelwerks](#die-sechs-laufbahnen-des-regelwerks) | SE Charts 2–3 | ✔ |
 | [Die zwölf Laufbahnen von B4](#die-zwölf-laufbahnen-von-b4) | B4 1–9 | ✔ |
 | [Ablauf nach B4](#ablauf-nach-b4) | B4 2–5 | ◐ (Ablauf gebaut, vier Abweichungen) |
 | [Würfe der zwölf Laufbahnen](#würfe-der-zwölf-laufbahnen) | B4 6, 8 | ✔ |
@@ -44,7 +45,7 @@ Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst in
 Bogenwaffen mit Tabelle (B4 16–17); die Schiffsbeschreibungen der Sachwerte (B4 13–15);
 Querverweise auf Recon, Recruiting, Ship Tactics (B4 12–13).
 
-## Die sechs gebauten Laufbahnen
+## Die sechs Laufbahnen des Regelwerks
 
 **Navy, Marines, Army, Scouts, Merchants, Other** (SE Charts 2–3) stehen in `src/data/services.json`
 und sind fertig: Musterung, Einberufung, Überleben, Offizierstelle, Beförderung, Ränge mit
@@ -54,7 +55,7 @@ unter genau diesen sechs (1W6, je Laufbahn eine Zahl).
 ## Die zwölf Laufbahnen von B4
 
 B4 bringt zwölf **Charaktertypen** (B4 5) – je eine eigene Laufbahn mit denselben Würfen wie die
-sechs gebauten, aber ohne Einberufungszahl. **Alle zwölf stehen in `src/data/services.json`**
+sechs des Regelwerks, aber ohne Einberufungszahl. **Alle zwölf stehen in `src/data/services.json`**
 (Kennzeichen **2026-11-24a** und **2026-11-24c**): Musterung, Überleben, Rangwurf und Beförderung
 mit den DMs der Tabellen, Ränge mit ihren Gaben, die vier Fertigkeitstabellen, Sachwerte und Geld,
 dazu die neue Bogenwaffengruppe, die Luft- und Wasserfahrzeuge-Gruppen und der Seeker als Entwurf.
@@ -299,12 +300,9 @@ haben – Vorlagen für NSC, die niemand erzeugen soll, sondern die man aufstell
 
 ## Wo der Code noch nicht folgt
 
-- Die **sechs Laufbahnen des Regelwerks** und die **zwölf aus B4** stehen in `services.json` und
-  folgen dem Modell (Kennzeichen **2026-11-24a** und **2026-11-24c**): Gegenprobe („Stand 7−“,
-  „Stä 8−“), Term-DM, Weiterbewerbung, Ausstieg nur über die gelungene Weiterverpflichtung,
-  kein Ruhestand, natürliche Waffenkunde, Beginnsalter, Einstieg allein aus dem Stand und die
-  Rangtafel mit fehlenden Stufen (Barbar nur Warrior und Chief) sind gebaut und erprobt
-  (Tests in `model/career-b4.test.ts` und `data/data.test.ts`).
+Gebaut und erprobt sind alle 18 Laufbahnen in `services.json` (Kennzeichen **2026-11-24a** und
+**2026-11-24c**, Tests in `model/career-b4.test.ts` und `data/data.test.ts`). Offen ist nur noch:
+
 - Der **Name des Rangwurfs** (`Service.commissionTitle`, Kennzeichen **2026-11-24b**) steht nur beim
   Bürokraten („Gehobener Dienst“). B4 selbst nennt den Wurf überall nur *position*; ob Diplomat,
   Barbar und Adliger eigene Worte bekommen, ist offen. Ohne das Feld heißt er „Offizierspatent“.

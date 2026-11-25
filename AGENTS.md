@@ -12,10 +12,11 @@
   Änderung** (`docs/changes/`), auf dem alles Neue rot markiert ist; die Bereichsausschnitte
   (`docs/views/`) dienen zum Nachschlagen. Ihm nie das Gesamtbild zur Freigabe schicken. Wie man
   markiert und Ausschnitte anlegt, steht im Skill unter „Ausschnitte und Markierungen“.
-- **Regeln nachschlagen in `docs/regeln-kampf.md`**, nicht in den PDFs: Dort stehen alle Regeln und
-  Tabellen zu Kampf und Begegnungen aus der Starter Edition (Charts) und Book 4, mit Seitenangabe und
-  Stand in der App. Setzt die App eine Regel um, dort den Stand nachziehen; fehlt etwas, erst das
-  PDF lesen und es dort ergänzen.
+- **Regeln nachschlagen in den Regeldokus**, nicht in den PDFs: `docs/regeln-kampf.md` (Kampf und
+  Begegnungen), `docs/regeln-laufbahnen.md` (Laufbahnen der Erschaffung), `docs/regeln-schiffe.md`
+  (Schiffe, Raumkampf, Vektorbewegung) und `docs/regeln-sternsystem.md` (Sternsysteme nach Book 6),
+  je mit Seitenangabe und Stand in der App. Setzt die App eine Regel um, dort den Stand nachziehen;
+  fehlt etwas, erst das PDF lesen und es im passenden Regeldoku ergänzen.
 - Begriffe aus der Tabelle „Begriffe“ in `docs/domain-model.md` benutzen, in Code, Doku und Gespräch.
   Neue Begriffe kommen zuerst dort hinein.
 - `ARCHITECTURE.md` legt die vier MVC-Regeln und die Schichtentabelle fest. Beide müssen stimmen.
@@ -52,8 +53,7 @@
 ## Bauen, Testen, Anschauen
 
 - **Nach jeder Änderung an Code:** `npm run check` (Typecheck, Lint mit den
-  Schichtenregeln, Unit-Tests). GUI-Tests: `npm run test:e2e` (Playwright,
-  headless, baut und startet den Server selbst).
+  Schichtenregeln, Unit-Tests); wann zusätzlich die GUI-Tests laufen, steht oben.
 - **App headless anschauen/bedienen:** Playwright-Chromium ist installiert
   (`~/.cache/ms-playwright`). Kurzes Skript: `npm run build`, dann
   `npx vite preview --port 4173` im Hintergrund, Seite öffnen, Screenshot in

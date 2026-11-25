@@ -2,7 +2,8 @@
 
 Was als Nächstes ansteht, der Reihe nach. Erledigtes fliegt raus (der Verlauf steht in Git). Wie
 immer gilt: Was das Modell berührt, geht zuerst ins Domänenmodell und wird freigegeben, dann in den
-Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in [`docs/regeln-kampf.md`](docs/regeln-kampf.md).
+Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/`](docs/) (`regeln-kampf.md`, `regeln-laufbahnen.md`,
+`regeln-schiffe.md`, `regeln-sternsystem.md`).
 
 ## Arbeitsweise
 
