@@ -8,7 +8,6 @@ import {
   missionOf,
   missionPlaceBlocker,
   openMissions,
-  createPatronMission,
   type MissionInput,
   rollSurprise,
   alarmAfterAttack,
@@ -134,8 +133,13 @@ import {
   reenlist,
   rollDice,
   rollPatron,
-  createPatronNpc,
-  generateNpc,
+  addNpc,
+  addPatronMission,
+  checkNpcRun,
+  patronNpcTemplate,
+  runOneCareer,
+  MAX_NPC_RUNS,
+  type NpcTemplate,
   type NpcRole,
   rollRumor,
   rollAnimalEncounter,
@@ -301,6 +305,18 @@ import {
   type ShipEncounterCheck,
 } from '../model/draft';
 import { buildSnapshot, openWorldId, type ControllerState, type OpenWorld, type Screen, type Snapshot, type SyncView } from './snapshot';
+
+/** Wie lange die Wartenscheibe nach jedem verworfenen Lauf steht (2026-11-24g). */
+const NPC_PAUSE_MS = 70;
+/** Wie lange die Scheibe steht, wenn der Lauf zum Namen gefunden ist. */
+const NPC_HOLD_MS = 1000;
+/** Obergrenze des Zögerns: ein Pechvogel soll nicht zwanzig Sekunden vor der Scheibe stehen. */
+const NPC_PACE_MAX_MS = 1400;
+
+/** Gibt das Bild frei, damit die Oberfläche den Zähler der Wartenscheibe zeigen kann. */
+function repaint(ms = 0): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 import { spaceChoices, targetIndex, type OpenSpace } from './space-view';
 import type { JourneyMode } from './time-view';
 
@@ -381,6 +397,7 @@ export class GameController {
       notice: undefined,
       screen: 'oracle',
       npcAll: false,
+      npcRun: undefined,
       npcPlacing: undefined,
       missionEditor: undefined,
       globeFocus: undefined,
@@ -1517,10 +1534,12 @@ export class GameController {
    * in der Laufbahn des Patrons durch, der neue dauerhafte NSC kommt in die NSC-Liste; dorthin
    * wechselt die Ansicht auch gleich, mit dem neuen NSC schon offen im Editor.
    */
-  createPatronNpc(): void {
+  async createPatronNpc(): Promise<void> {
     const index = this.campaign.log.findLastIndex((e) => e.kind === 'patron');
     try {
-      const { campaign, id } = createPatronNpc(this.campaign, index, this.deps.random);
+      const template = patronNpcTemplate(this.campaign, index);
+      const generation = await this.npcRun(template.service);
+      const { campaign, id } = addNpc(this.campaign, template, generation, this.deps.random);
       const npc = campaign.characters.find((c) => c.id === id)!;
       // Aus dem Würfelfenster heraus schließt es sich danach.
       this.change(campaign, { patronNote: `${npc.name} (${npc.background}) steht jetzt unter Charaktere › NSC.`, encounterRoll: undefined, screen: 'npcs', npcAll: false, editor: { id, error: undefined } });
@@ -2255,6 +2274,35 @@ export class GameController {
 
   // --- Charaktere anlegen und bearbeiten -------------------------------------------------------
 
+  /**
+   * Lässt die Läufe eines NSC in einer Laufbahn nacheinander laufen und gibt ans Bild ab
+   * (2026-11-24g, siehe domain-model.md, *Was der Lauf verschluckt*): Die **Wartenscheibe** zählt,
+   * was der Lauf verwirft. Ist einer zum Namen gefunden, bleibt die Scheibe eine Sekunde stehen.
+   */
+  private async npcRun(service: string, termsGoal?: number): Promise<Generation> {
+    let attempts = 0;
+    let deaths = 0;
+    this.update({ npcRun: { attempts, deaths } });
+    try {
+      await repaint();
+      for (let run = 0; run < MAX_NPC_RUNS; run++) {
+        attempts++;
+        const { end, generation } = runOneCareer(this.campaign.hexes, service, this.deps.random, termsGoal);
+        if (end === 'dead') deaths++;
+        this.update({ npcRun: { attempts, deaths } });
+        if (end === 'name') {
+          await repaint(NPC_HOLD_MS);
+          return generation;
+        }
+        // Das Zögern hat eine Obergrenze: bei einem Pechvogel soll die Scheibe nicht endlos stehen.
+        if (attempts * NPC_PAUSE_MS <= NPC_PACE_MAX_MS) await repaint(NPC_PAUSE_MS);
+      }
+      throw new DomainError('Der Lauf des NSC kommt nicht zum Ende.');
+    } finally {
+      this.update({ npcRun: undefined });
+    }
+  }
+
   /** Öffnet den Editor für einen neuen Charakter; mit `npc` als dauerhafter NSC mit dieser Rolle auf dem Aufenthaltsort. */
   newCharacter(npc = false, role?: NpcRole): void {
     this.update({ editor: { id: undefined, error: undefined, ...(npc ? { npc, ...(role ? { role } : {}) } : {}) } });
@@ -2266,9 +2314,17 @@ export class GameController {
    * `here` (langes Drücken auf „NSC platzieren“) lebt er auf dem angetippten Feld des Globus bzw. in der
    * Stadt darauf.
    */
-  generateNpc(service: string, role: NpcRole, here = false): void {
+  generateNpc(service: string, role: NpcRole, here = false, termsGoal?: number): Promise<void> {
+    return this.runNpc({ service, role, ...(termsGoal === undefined ? {} : { termsGoal }) }, here);
+  }
+
+  /** Läuft die Erschaffung eines NSC aus einer Laufbahn, mit der Wartenscheibe davor. */
+  private async runNpc(template: NpcTemplate, here: boolean): Promise<void> {
+    const at = here ? this.pickedPlace() : undefined;
     try {
-      const { campaign, id } = generateNpc(this.campaign, { service, role }, this.deps.random, here ? this.pickedPlace() : undefined);
+      checkNpcRun(this.campaign, template, at);
+      const generation = await this.npcRun(template.service, template.termsGoal);
+      const { campaign, id } = addNpc(this.campaign, template, generation, this.deps.random, at);
       this.change(campaign, { editor: { id, error: undefined } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -2423,10 +2479,12 @@ export class GameController {
   }
 
   /** „Als Mission“ zum letzten Patron-Wurf: Patron-NSC und offene Mission; danach steht die Mission im Editor. */
-  createPatronMission(): void {
+  async createPatronMission(): Promise<void> {
     const index = this.campaign.log.findLastIndex((e) => e.kind === 'patron');
     try {
-      const { campaign, mission } = createPatronMission(this.campaign, index, this.deps.random);
+      const template = patronNpcTemplate(this.campaign, index);
+      const generation = await this.npcRun(template.service);
+      const { campaign, mission } = addPatronMission(this.campaign, template, generation, this.deps.random);
       const m = campaign.missions.find((x) => x.id === mission)!;
       this.change(campaign, { patronNote: `Mission „${m.title}“ angelegt; der Patron steht unter Charaktere › NSC.`, encounterRoll: undefined });
       this.editMission(mission);

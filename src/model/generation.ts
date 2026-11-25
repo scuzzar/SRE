@@ -411,7 +411,7 @@ export function runGeneration(campaign: Campaign, random: Random): Campaign {
 }
 
 /** Wie oft der Lauf eines NSC höchstens von vorn beginnt; bei jeder Laufbahn reicht das weit. */
-const MAX_PATRON_RUNS = 1000;
+export const MAX_NPC_RUNS = 1000;
 
 /**
  * Was ein verworfener Lauf eines NSC gab (2026-11-24g): `dead` gestorben, `drafted` er wäre
@@ -454,7 +454,7 @@ export function runOneCareer(hexes: Campaign['hexes'], service: string, random: 
  * Erschaffung der Kampagne zu berühren. Wer sehen will, was verworfen wurde, nimmt `runOneCareer`.
  */
 export function runCareerIn(hexes: Campaign['hexes'], service: string, random: Random, termsGoal?: number): Generation {
-  for (let run = 0; run < MAX_PATRON_RUNS; run++) {
+  for (let run = 0; run < MAX_NPC_RUNS; run++) {
     const { end, generation } = runOneCareer(hexes, service, random, termsGoal);
     if (end === 'name') return generation;
   }

@@ -1,10 +1,11 @@
 import { activeSkills, livingCharacters, type Campaign, type Character, type CharacterId } from './campaign';
 import { replay } from './career';
 import { DomainError } from './errors';
+import { runCareerIn, type Generation } from './generation';
 import type { PatronRoll, RumorRoll } from './log';
 import type { Clock, Random } from './ports';
 import { patronOf, rumorOf, type Patron, type Rumor } from './reference';
-import { generateNpc, type NpcTemplate } from './npcs';
+import { addNpc, generateNpc, type NpcTemplate } from './npcs';
 import { addMission, missionPlaceBlocker, type MissionId } from './mission';
 
 /** Die beiden Patron-Listen der Patron Encounters Matrix (SE, Charts S. 20). */
@@ -132,10 +133,18 @@ export function createPatronNpc(campaign: Campaign, index: number, random: Rando
  * Feld hat.
  */
 export function createPatronMission(campaign: Campaign, index: number, random: Random): { campaign: Campaign; npc: CharacterId; mission: MissionId } {
-  const { campaign: withNpc, id: npc } = createPatronNpc(campaign, index, random);
-  const entry = campaign.log[index] as PatronRoll;
+  const template = patronNpcTemplate(campaign, index);
+  return addPatronMission(campaign, template, runCareerIn(campaign.hexes, template.service, random), random);
+}
+
+/**
+ * Die Mission zum Patron aus dem Log, dessen Lauf schon gewürfelt ist (2026-11-24g): So lässt die
+ * Oberfläche erst die Läufe laufen und die Wartenscheibe zählen, bevor sie Patron und Mission anlegt.
+ */
+export function addPatronMission(campaign: Campaign, template: NpcTemplate, generation: Generation, random: Random): { campaign: Campaign; npc: CharacterId; mission: MissionId } {
+  const { campaign: withNpc, id: npc } = addNpc(campaign, template, generation, random);
   const location = withNpc.location;
   const places = location !== undefined && missionPlaceBlocker(withNpc, location) === undefined ? [{ place: location }] : [];
-  const { campaign: result, id: mission } = addMission(withNpc, { title: patronOfRoll(entry).name, text: '', state: 'open', client: npc, places });
+  const { campaign: result, id: mission } = addMission(withNpc, { title: template.title ?? 'Ohne Titel', text: '', state: 'open', client: npc, places });
   return { campaign: result, npc, mission };
 }

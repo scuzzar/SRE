@@ -85,10 +85,10 @@ export function EncounterRollDialog({ roll, view }: { roll: TripRoll; view: Snap
             <button type="button" className="ghost" onClick={() => game.closeEncounterRoll()}>
               Abbrechen
             </button>
-            <button type="button" className="ghost" disabled={asNpc.blocker !== undefined} onClick={() => game.createPatronNpc()}>
+            <button type="button" className="ghost" disabled={asNpc.blocker !== undefined} onClick={() => void game.createPatronNpc()}>
               Als NSC
             </button>
-            <button type="button" className="primary" disabled={asNpc.blocker !== undefined} onClick={() => game.createPatronMission()}>
+            <button type="button" className="primary" disabled={asNpc.blocker !== undefined} onClick={() => void game.createPatronMission()}>
               Als Mission
             </button>
           </div>

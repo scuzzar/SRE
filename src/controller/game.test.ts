@@ -645,7 +645,7 @@ describe('Begegnung und Kampfsimulation', () => {
     const campaign = appendLog(setLocation(setHexes(createCampaign(), [regina].map(hexFromFlat)), '0101'), { kind: 'patron', at: '2026-10-23T14:00:00.000Z', list: 1, dice: [1, 5], dms: [0, 0] });
     const { game } = await started(random, memoryRepository(campaign));
     expect(game.snapshot().patron?.npc).toEqual({ blocker: undefined });
-    game.createPatronNpc();
+    await game.createPatronNpc();
     // Die Ansicht wechselt gleich in die NSC-Liste, mit dem neuen NSC schon offen im Editor.
     expect(game.snapshot().screen).toBe('npcs');
     expect(game.snapshot().editor?.id).toBe(game.snapshot().npcs.worlds[0]!.roles[0]!.npcs[0]!.id);
@@ -668,13 +668,42 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().editor?.input).toMatchObject({ npc: true, role: 'contact', place: '0101' });
     game.cancelEdit();
     // Aus einer Laufbahn erzeugt: er steht danach im Editor, mit Attributen im Reiter.
-    game.generateNpc('scouts', 'ally');
+    await game.generateNpc('scouts', 'ally');
     const editor = game.snapshot().editor!;
     expect(editor.input).toMatchObject({ npc: true, role: 'ally', place: '0101' });
     expect(editor.input.background).toMatch(/^Ex-Scouts/);
     const ally = game.snapshot().npcs.worlds[0]!.roles.find((r) => r.role === 'ally')!.npcs[0]!;
     expect(ally.id).toBe(editor.id);
     expect(ally.upp.str).toBeGreaterThan(0);
+  });
+
+  it('NSC mit Dienstalter: die Wartenscheibe steht, solange die Läufe laufen, und er dient genau so lange', async () => {
+    let seed = 5;
+    const random: Random = {
+      int(min: number, max: number) {
+        seed = (seed * 1103515245 + 12345) % 2 ** 31;
+        return min + (Math.floor(seed / 65536) % (max - min + 1));
+      },
+    };
+    const campaign = setLocation(setHexes(createCampaign(), [hexFromFlat(regina)]), '0101');
+    const { game } = await started(random, memoryRepository(campaign));
+    const run = game.generateNpc('scouts', 'ally', false, 4);
+    // Die Scheibe steht, solange die Läufe laufen (2026-11-24g, *Was der Lauf verschluckt*).
+    expect(game.snapshot().npcRun).toEqual({ attempts: 0, deaths: 0 });
+    await run;
+    expect(game.snapshot().npcRun).toBeUndefined();
+    const id = game.snapshot().editor!.id!;
+    const career = game['campaign'].characters.find((c) => c.id === id)!.career!;
+    expect(career.termsGoal).toBe(4);
+    expect(career.rolls.some((r) => r.kind === 'survival')).toBe(false);
+    expect(career.rolls.some((r) => r.kind === 'reenlist')).toBe(false);
+  });
+
+  it('Ohne fertige Welt: Der Lauf bleibt stehen, die Scheibe verschwindet wieder', async () => {
+    const { game } = await started(fixedRandom(6), memoryRepository(createCampaign()));
+    await game.generateNpc('scouts', 'ally');
+    expect(game.snapshot().npcRun).toBeUndefined();
+    expect(game.snapshot().editor).toBeUndefined();
   });
 
   it('Würfelfenster: Der Test steht mit Würfeln im Fenster, die Übersicht folgt erst danach; schon getestet steht als Hinweis da', async () => {
@@ -2097,7 +2126,7 @@ describe('Orte (2026-11-14j)', () => {
     const { game } = await started({ int: (min, max) => min + ((seed = (seed * 16807) % 2147483647) % (max - min + 1)) });
     openWithGlobe(game, 4, 5);
     game.pickCell(game.snapshot().globe!.cities[0]!.cell);
-    game.generateNpc('scouts', 'enemy', true);
+    await game.generateNpc('scouts', 'enemy', true);
     const npc = game.snapshot().editor!.id!;
     game.cancelEdit();
     game.toggleJoining(npc);
@@ -2143,7 +2172,7 @@ describe('Orte (2026-11-14j)', () => {
     openWithGlobe(game, 4, 5);
     const capital = game.snapshot().globe!.cities[0]!;
     game.pickCell(capital.cell);
-    game.generateNpc('scouts', 'enemy', true);
+    await game.generateNpc('scouts', 'enemy', true);
     const id = game.snapshot().editor!.id!;
     expect(game['campaign'].characters.find((c) => c.id === id)!.place).toEqual({ world: '0405', city: 0 });
     expect(game.snapshot().globe!.picked!.npcs.map((n) => n.id)).toEqual([id]);

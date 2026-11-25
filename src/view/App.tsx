@@ -36,6 +36,7 @@ import { TripRollDialog } from './sector/TripPanels';
 import { FieldDock } from './sector/FieldDock';
 import { SpaceScreen, type ShotEffect } from './space/SpaceScreen';
 import { LoadingOverlay } from './loading';
+import { NpcRunDisc } from './NpcRunDisc';
 import { Tray } from './Tray';
 import { SpaceVolley } from './space/SpaceVolley';
 
@@ -264,6 +265,7 @@ export function App() {
       {view.shipCheck && <ShipCheckDialog key={`${view.shipCheck.kicker}-${view.shipCheck.phase}-${view.shipCheck.dice ? 'r' : 'n'}`} check={view.shipCheck} />}
       {view.spaceVolley && <SpaceVolley key={view.spaceVolley.key} volley={view.spaceVolley} onShot={setShot} onDone={() => game.closeVolley()} />}
       <LoadingOverlay />
+      <NpcRunDisc run={view.npcRun} />
       {view.campaignSheet && <CampaignSheet key={view.campaign.id} sheet={view.campaignSheet} campaigns={view.campaigns} open={view.campaign} sync={view.sync} conflicts={view.conflicts} />}
       {view.notice && <NoticeToast text={view.notice} />}
       {view.elsewhere && <ElsewhereDialog />}
