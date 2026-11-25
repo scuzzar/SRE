@@ -33,6 +33,18 @@
 - **Jeder Zweig bekommt immer einen sprechenden Namen**, der sagt, woran darin gearbeitet wird
   (z. B. `kampf-begegnungen`, nie `test` oder `neu`). Das gilt für neue Zweige ebenso wie für
   Worktrees.
+- **GUI-Tests laufen lokal, wenn Code geändert ist** – nicht bei jeder Änderung:
+  `npm run test:e2e` (oder `CI=1 npx playwright test`) muss vollständig grün sein, bevor etwas
+  gepusht wird, das `src/`, `e2e/`, `playwright.config.ts`, `package.json` oder eine Bau- und
+  CI-Konfiguration ändert. Die schlanke Push-CI prüft nur Typecheck, Lint und Unit-Tests und ersetzt
+  die lokalen GUI-Tests nicht. **Reine Doku- und Modelländerungen** (`docs/`, `README.md`,
+  `AGENTS.md`, `ARCHITECTURE.md`, Kommentare im Code) brauchen keine GUI-Tests; `npm run check`
+  bleibt, wo Code mitgezogen ist. Ein bekannter Wackelkandidat gilt als grün, wenn er einzeln
+  nachgespielt besteht – dann nachziehen, nicht den Lauf wiederholen.
+- **`main` füllt nur der Owner**: Auf `origin/main` pushen und nach `main` mergen darf ich nur nach
+  ausdrücklicher Weisung im laufenden Gespräch. Grüne Tests, eine geschickte Vorschau und ein
+  „umsetzen“ sind **keine** Freigabe für `main`. Weicht `origin/main` von `main` ab (andere
+  Sitzung, anderer Zweig), zuerst fragen – nie einfach zusammenführen und pushen.
 - **Nach jeder Änderung an der App eine Vorschau schicken**: mit `npm run build:single` die ganze
   App als eine HTML-Datei bauen (`dist-single/index.html`), in den Scratchpad kopieren und dem
   Owner zum direkten Öffnen schicken. Dazu kurz sagen, was man zum Ausprobieren antippen muss.
