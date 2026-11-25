@@ -23,6 +23,10 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
 - [ ] **Log über die Karte:** ein Tippen auf einen Logeintrag mit Ort fliegt zu seinem Feld auf dem
   Globus.
 - [ ] **Begegnungen auf der Karte:** eine laufende Begegnung am Feld der Gruppe zeigen.
+- [ ] **Farben und Stile nach dem GUI-Handbuch** ([docs/gui-handbuch.md](docs/gui-handbuch.md)): in
+  `styles.css` stehen außerhalb von `:root` noch rund 110 feste Hex-Werte und 120 feste `rgba`
+  (häufig `#9a9a9a`, `#fff`, `#333`; auch die Wartenscheibe). Auf die Variablen umstellen, fehlende
+  Variablen anlegen. Dazu die rund 40 `style={{ … }}` in den Komponenten in Klassen überführen.
 
 ## Kampf
 

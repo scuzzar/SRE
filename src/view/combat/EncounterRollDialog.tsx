@@ -82,7 +82,7 @@ export function EncounterRollDialog({ roll, view }: { roll: TripRoll; view: Snap
           // Beim Patron: „Als NSC“ legt ihn an und schließt das Fenster, „Als Mission“ dazu eine Mission
           // mit ihm als Auftraggeber (2026-11-18), „Abbrechen“ schließt nur.
           <div className="encounter-choice-actions patron-actions">
-            <button type="button" className="ghost" onClick={() => game.closeEncounterRoll()}>
+            <button type="button" className="ghost" data-escape onClick={() => game.closeEncounterRoll()}>
               Abbrechen
             </button>
             <button type="button" className="ghost" disabled={asNpc.blocker !== undefined} onClick={() => void game.createPatronNpc()}>
@@ -93,7 +93,8 @@ export function EncounterRollDialog({ roll, view }: { roll: TripRoll; view: Snap
             </button>
           </div>
         ) : (
-          <button type="button" className="primary" onClick={() => game.closeEncounterRoll()}>
+          // Esc schließt erst, wenn der Wurf steht; vorher springt es wie ein Tippen zum Ergebnis.
+          <button type="button" className="primary" data-escape={landed || undefined} onClick={() => game.closeEncounterRoll()}>
             {roll.encounter ? 'Zur Begegnung' : 'Weiter'}
           </button>
         )}

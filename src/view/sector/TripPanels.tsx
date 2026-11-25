@@ -189,7 +189,8 @@ export function TripRollDialog({ roll }: { roll: TripRoll }) {
         <p className={landed ? 'surprise-verdict shown' : 'surprise-verdict'} aria-live="polite">
           {landed ? `${total} (${roll.target}+ nötig) · ${roll.text}` : ''}
         </p>
-        <button type="button" className="primary" onClick={() => game.closeTripRoll()}>
+        {/* Esc schließt erst, wenn der Wurf steht; vorher springt es wie ein Tippen zum Ergebnis. */}
+        <button type="button" className="primary" data-escape={landed || undefined} onClick={() => game.closeTripRoll()}>
           {roll.encounter ? 'Zur Begegnung' : 'Weiter'}
         </button>
       </section>

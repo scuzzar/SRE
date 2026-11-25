@@ -34,7 +34,7 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 - Unter allem liegt die **Grundkarte**: der Globus der offenen Welt, beim Start der des Aufenthaltsorts. Weiter herausgezoomt (✕, −, Mausrad, zwei Finger) kommt man zum **Subsektor**.
 - Auf dem Smartphone liegt unten ein **Ziehblatt** wie in einer Karten-App, mit vier Stufen (versteckt, eingeklappt, halb, voll) und fünf Reitern: **Log, Begegnung, Charaktere, Schiff, Missionen**.
 - Ein angetipptes Feld des Globus zeigt, was dort ist und geschah, mit der Reihe **Hierhin reisen**, **Gruppe setzen**, **NSC platzieren** und **Einkaufen**.
-- Im **Desktop-Modus** stehen dieselben Bereiche in einer Spalte links, die Karte füllt den Rest. Tastatur: K Karte, W Würfeln, N Notiz, D Deuten, Ziffern für die Reiter, Esc schließt.
+- Im **Desktop-Modus** stehen dieselben Bereiche in einer Spalte links, die Karte füllt den Rest. Tastatur: K Karte, W Würfeln, N Notiz, T ein Tag, Ziffern für die Reiter, Esc schließt. Wie die Oberfläche aufgebaut ist, steht im [GUI-Handbuch](docs/gui-handbuch.md).
 - Das **Menü ☰** führt zu Kampagnen, Export und dem Bildschirm „Über“ (Installieren, Vibration, Quellen).
 
 ### Kampagnen und Speicherung
@@ -45,7 +45,7 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 
 ### Log und Orakel
 
-- Der **Log** wächst wie ein Chat von unten; das Neueste steht groß da, Älteres als kompakte Zeile. Unten die Reihe **Notiz, Deuten, 2W6, Karte**. Jedes Ergebnis lässt sich **deuten**, Notizen und Deutungen lassen sich ändern.
+- Der **Log** wächst wie ein Chat von unten; das Neueste steht groß da, Älteres als kompakte Zeile. Unten die Reihe **Notiz, Tag, 2W6, Karte** (Tag lässt einen Tag vergehen). Jedes Ergebnis lässt sich am Ergebnis selbst **deuten**, Notizen und Deutungen lassen sich ändern.
 - Oben steht der **Charakter oben** mit UPP und Fertigkeiten; Wischen wechselt den Charakter.
 - **Ja/Nein-Orakel** auf der Karte: ein Wurf, die Antwort für drei Stufen (Hoch 75 %, Mittel 50 %, Gering 25 %), sechs Antworten von **Ja!** bis **Nein!** nach Mythic.
 - **Zufallsereignis** wie bei Mythic bei einem Pasch bis 55, mit Ereignisfokus; ein Handlungsfaden lost eine offene Mission aus.

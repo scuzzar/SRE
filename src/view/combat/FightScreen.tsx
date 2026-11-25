@@ -588,7 +588,8 @@ export function SurpriseDialog({ sim }: { sim: SimView }) {
             ? `Überraschung: die ${sideName[sim.surprise]}! Sie ziehen allein, bis zum Alarm.`
             : `Keine Überraschung (3 oder mehr Unterschied nötig) – die ${sideName[sim.first]} ziehen zuerst.`}
         </p>
-        <button type="button" className="primary" onClick={() => game.closeSurprise()}>
+        {/* Esc schließt erst, wenn der Wurf steht; vorher springt es wie ein Tippen zum Ergebnis. */}
+        <button type="button" className="primary" data-escape={landed || undefined} onClick={() => game.closeSurprise()}>
           Kampf beginnen
         </button>
       </section>

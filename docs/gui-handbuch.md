@@ -97,8 +97,13 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 ### Reihe (unten, zum Handeln)
 
 - Über den Reitern, im Daumenbereich: **drei bis fünf gleich breite Knöpfe mit Symbol und kurzem
-  Wort**. Im Log *Notiz, Deuten, 2W6, Karte*; im Reiter Begegnung die Würfe *Zufall, Tiere, Patron,
-  Gerücht, Polizei*; am angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen*.
+  Wort**. Im Log *Notiz, Tag, 2W6, Karte* (aus „2W6“ wird mit vorbereiteter Probe „Probe“); am
+  angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen*.
+- Hat ein Bereich zwei Arten von Handlungen, bekommt er **zwei Reihen** übereinander, nie eine mit
+  mehr als fünf Knöpfen: im Reiter Begegnung oben die Würfe *Zufall, Tiere, Patron, Gerücht,
+  Polizei*, darunter die Zeit *Tage vergehen, Woche beenden* (auf einer Fahrt *Weiterfahren*).
+- **Deuten** sitzt nicht in der Reihe, sondern am Ergebnis im Log (am neuesten immer, ein älteres
+  klappt man auf).
 - Jeder Bereich mit eigenen Handlungen bringt seine eigene Reihe mit; wo er keine hat, bleibt die
   des Logs.
 - **Während eines Ablaufs** (Route planen, NSC wählen, Ort wählen) ersetzt die Reihe ihre Knöpfe durch
@@ -109,11 +114,31 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 
 ### Blatt (Sheet) im Vordergrund
 
-- Für alles, was man ausfüllt oder wählt: Notiz, Deutung, Editor, „Neuer NSC“, Buchung, Bestellung.
-- Aufbau: oben Titel und ✕; darin die Felder (`label.field`, Auswahl als `select`); unten
-  **„Abbrechen“** (`ghost`) links und die eine Hauptaktion (`primary`) rechts.
-- Es dunkelt die App ab (`overlay`); Esc oder ✕ schließt es wie „Abbrechen“.
+Für alles, was man ausfüllt oder wählt. Es dunkelt die App ab (`overlay`); die Felder sind
+`label.field`, eine Auswahl ist ein `select`. Es gibt **zwei Bauarten**, nach Größe:
+
+```
+A: großes Blatt                      B: kleines Blatt
+┌──────────────────────────────┐     ┌──────────────────────────────┐
+│ Charakter bearbeiten       ✕ │     │ Notiz                        │
+│ Name  [______________]       │     │ [__________________________] │
+│ UPP   [______________]       │     │                              │
+│ …  (scrollt)                 │     │ [ Abbrechen ]   [ Notieren ] │
+│                [ Speichern ] │     └──────────────────────────────┘
+└──────────────────────────────┘
+```
+
+- **A, groß** (viele Felder, scrollt): oben Titel und **✕**, unten die eine Hauptaktion
+  (`primary`). Das ✕ bleibt erreichbar, auch wenn unten weggescrollt ist. So gebaut: Charakter-Editor,
+  Erschaffung, Neuer NSC, Kampagnen, Heilung, Mission, Kaufen und Verkaufen, Reise, Systemflug,
+  Inspirationskarte, Ortswahl im Sektor.
+- **B, klein** (eine kurze Eingabe oder Entscheidung): kein ✕, unten **„Abbrechen“** (`ghost`) links
+  und die Hauptaktion (`primary`) rechts, beide im Daumenbereich. So gebaut: Notiz und Deutung, Name
+  von der Karte, Beute, Wahl der Begegnungsart, Würfelfenster beim Patron.
+- In beiden schließt **Esc** wie ✕ bzw. „Abbrechen“: Der Knopf trägt `data-escape`.
 - Ein Blatt öffnet höchstens ein weiteres (die Karte über dem Editor); tiefer wird nicht gestapelt.
+- Ein Blatt, das man nur entscheiden kann (Wunden verteilen, Landeplatz), hat weder ✕ noch
+  „Abbrechen“; Esc springt dort nur zum Ergebnis.
 
 ### Ergebnis-Popup und Würfelbühne
 
@@ -121,7 +146,8 @@ Smartphone                          Desktop-Modus (ab 1024 px)
   rollen die Würfel, dann jeder DM einzeln mit Namen, zuletzt das **Urteil** (Erfolg golden,
   Fehlschlag rot).
 - Ein Tippen springt zum Urteil, noch ein Tippen bzw. **„Weiter“** schließt. Das Ergebnis steht dann
-  schon im Log.
+  schon im Log. Esc wirkt genauso: Solange der Wurf rollt, springt es zum Ergebnis, danach schließt es
+  (der Knopf trägt `data-escape` erst, wenn der Wurf steht).
 - Das **Würfelfenster** ist dieselbe Bühne für Tests von Begegnungen: Würfel, was herauskam, was
   danach geht („Als NSC“, „Zur Begegnung“).
 
@@ -144,6 +170,9 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 - Listen sind **gruppiert** (nach Rolle, Welt, Zustand); Erledigtes und Totes steht **eingeklappt**
   darunter.
 - **Chips** für kurze Verweise mit Etikett („Treffpunkt · Startown“); ein Tippen führt zum Ziel.
+- **Anlegen am Ende der Liste**: Neues legt ein breiter Knopf unter der Liste an (`add-character`):
+  „+ Neuer Charakter“, „+ Nach Regeln erschaffen“, „+ Neuer NSC“, „+ Neue Mission“. Er gehört zur
+  Liste, nicht in die Reihe.
 
 ### Hinweis
 
@@ -164,8 +193,9 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 | **Ziehen** | Das Blatt; Gegenstände im Gepäck und Personen auf Posten (kurz halten, dann ziehen; gleich wischen scrollt) |
 | **Zwei Finger / Mausrad** | Zoomen auf der Karte |
 
-**Tastatur** (Desktop): K Karte, W Würfeln, N Notiz, D Deuten, Ziffern für die Reiter, Esc schließt das
-oberste Popup (der Knopf mit `data-escape`). Solange man in ein Feld tippt, gehören die Tasten dem
+**Tastatur** (Desktop): K Karte, W Würfeln (2W6 oder die vorbereitete Probe), N Notiz, T ein Tag,
+Ziffern für die Reiter, Esc schließt das oberste Popup (der Knopf mit `data-escape`). Ein Kürzel steht
+im Titel des Knopfs („Notiz (N)“). Solange man in ein Feld tippt, gehören die Tasten dem
 Feld.
 
 ---
@@ -191,8 +221,12 @@ Feld.
   Hand, wer am Zug ist.
 - **Rot** (`--accent`) für die andere Seite und Gefahr: NSC im Kampf, Ziel, Fehlschlag,
   Zufallsereignis, Missionen auf der Karte.
-- **Hauptaktion** (`primary`) hell gefüllt, Nebenaktion (`ghost`) ohne Füllung. Knöpfe sind
-  mindestens 48 px hoch.
+- **Hauptaktion** (`primary`) hell gefüllt, Nebenaktion (`ghost`) ohne Füllung.
+- **Zwei Größen von Knöpfen:** Knöpfe zum Handeln sind groß (Reihe 54–56 px, `primary` und `ghost`
+  48–52 px). Kompakte Bedienelemente in Listen und Karten sind kleiner: Chips, Umschalter und Zellen
+  der Waffentabelle 40 px, `ghost compact` 30–36 px. Kleiner als 30 px wird nichts, was man antippt.
+- **Farben nur über die Variablen** in `:root` von `styles.css`, keine festen Werte (noch nicht
+  überall so, siehe [TODO.md](../TODO.md)); keine `style={{ … }}` in Komponenten.
 - **Schrift**: IBM Plex Sans, Werte und Codes (UPP, UWP) in IBM Plex Mono; zählende Zahlen mit
   festen Ziffernbreiten, damit nichts springt.
 - **Zeichen**: ✕ schließen, ☰ Menü, Stift bearbeiten, ⌖ Ziel bzw. Aufenthaltsort, ▶ am Zug, ★ Anführer.
@@ -220,10 +254,13 @@ Feld.
 ## Prüfliste für einen neuen Bereich
 
 - [ ] Hängt an einem bestehenden Reiter (Umschalter oder Blatt), kein neuer Reiter.
-- [ ] Handlungen in einer Reihe unten, Wahl oben; im Ablauf „Abbrechen“ und Bestätigung.
+- [ ] Handlungen in einer Reihe unten (höchstens fünf Knöpfe, sonst zwei Reihen), Wahl oben; im
+      Ablauf „Abbrechen“ und Bestätigung; Anlegen am Ende der Liste.
+- [ ] Blatt in Bauart A (groß, ✕ oben) oder B (klein, „Abbrechen“ unten).
 - [ ] Geht auf halber Höhe des Ziehblatts und im Desktop-Modus in der Spalte.
 - [ ] Jeder gesperrte Knopf sagt, warum; jeder Fehler steht als Hinweis da.
 - [ ] Jede Wahl hat genau ein Bedienelement.
 - [ ] Würfe als Popup oder Würfelfenster, überspringbar; Ergebnis im Log.
-- [ ] Gold für die eigene Seite, Rot für die andere; Begriffe aus dem Domänenmodell.
+- [ ] Gold für die eigene Seite, Rot für die andere, Farben nur über Variablen; Begriffe aus dem
+      Domänenmodell.
 - [ ] Esc schließt, Tastatur stört nicht beim Tippen.
