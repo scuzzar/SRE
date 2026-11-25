@@ -192,7 +192,7 @@ function WeaponCounter({ shop, hintHidden, onBuy }: { shop: ShopView; hintHidden
                 <span role="cell" className="shop-name">
                   <span className="shop-label">{w.item.label}</span>
                   <Meta
-                    parts={[w.skill, w.characteristic]}
+                    parts={[w.skill, w.unskilled, w.characteristic]}
                     banned={w.item.banned}
                   />
                 </span>

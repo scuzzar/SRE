@@ -665,6 +665,23 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Am 24. November 2026 freigegeben (Kennzeichen **2026-11-24e**): **Der Barbar ohne Ruhestand und der NSC-Lauf mit Qualifikation**. `Service.retirement` sagt künftig nur noch aus, ob es für die Laufbahn einen **Ruhestand mit Bezügen** gibt: `false` (der Barbar, B4 S. 9 „Barbarians cannot retire“) heißt **keine Ruhestandsbezüge**, sein Ende ist sonst das übliche. Bis jetzt hieß `retirement === false` „die Person geht nie weg“ – und weil das vor der Obergrenze von sieben Terms griff, kam ein Barbar nie zur Abmusterung: ein NSC in dieser Laufbahn war unmöglich. Neu gefasst auch das Ende nach dem **siebenten Term**: dort bleibt nur, wer eine **12** würfelt (B1 S. 7: “retirement is mandatory … persons who throw 12 may continue“); bis jetzt blieb, wer sieben Terme gedient hatte, unabhängig vom Wurf. Ein **Lauf** (die zufällig durchlaufene Erschaffung eines NSC) würfelt **von vorn**, wenn die Werte die `needs`-Qualifikation nicht erfüllen – beim Adligen Stand 10+ – statt abzubrechen, wie das bei abgelehnter Musterung schon heute geschieht. Und die **Patron-Reihen** (`Patron.career`) wählen jetzt aus **allen achtzehn** Laufbahnen statt nur aus sechs: Schmuggler und Pirat → Pirate, Schurke/Swindler/Unterwelt/Brandstifter → Rogue, Gelehrter/Forscher/Professor/Wissenschaftler → Scientist, Noble/Playboy/Émigré → Noble, Clerk/Administrator/Gouverneur/Government Official/Bürokrat → Bureaucrat, Belter → Belter, Hunter → Hunter, Pilot → Flyer, Barbarian → Barbarian, Doctor → Doctor, Diplomat → Diplomat, Crewmember → Sailor; die übrigen Zeilen bleiben, wo sie waren. Beim *Durchlaufen* schließlich wählt der Zufall nur
 > eine Laufbahn, deren Qualifikation die gewürfelten Werte erfüllen – die Liste graut dieselben
 > aus. Der Ausschnitt dazu liegt unter [`changes/2026-11-24e-der-barbar-ohne-ruhestand.png`](changes/2026-11-24e-der-barbar-ohne-ruhestand.png).
+
+> Am 25. November 2026 freigegeben (Kennzeichen **2026-11-25a**): **Der
+> Knight aus dem Rangwurf, der Bürokrat im Ruhestand und die übrigen Patron-Reihen.** Das Bild
+> ändert sich dadurch nicht; es sind drei Regeln im Text.
+> 1. **Der Rangwurf hebt den Stand auf den Standesrang.** Gibt der Rangwurf einen Rang mit
+>    `Rank.standing` und liegt der eigene Stand darunter, steigt er auf diesen Wert: der Adlige mit
+>    Stand 10 wird Knight **und** hat Stand 11. Bis jetzt blieb er bei 10, und Rang und Stand lagen
+>    danach dauerhaft eine Stufe auseinander (ein Baron mit Stand 11). Beförderungen geben weiter
+>    +1 Stand.
+> 2. **Der Bürokrat (`freeExit` false) nur vor dem Ruhestand.** Wer bleiben will, bleibt; wer weg
+>    will, braucht die gelungene Weiterverpflichtung – aber nur unter fünf Terms. Ab fünf Terms (dem
+>    Ruhestand, ab dem es Bezüge gibt) gilt für ihn das Übliche. Der alte Text „gleich was man
+>    wollte“ ist damit klargestellt: Er hieß wörtlich, dass auch gehen muss, wer bleiben will und den
+>    Wurf schafft; so war es nie gemeint.
+> 3. **Die übrigen verbrecherischen Patron-Reihen → Rogue.** Zu Schurke, Swindler, Unterwelt und
+>    Brandstifter (2026-11-24e) kommen **Cutthroat, Assassin und Embezzler** (bisher Other) und
+>    **Hijacker** (bisher Marines). Die Daten stehen schon so; 2026-11-24e hatte sie nicht genannt.
 >
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -2208,8 +2225,8 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     „Patron“ und den Aufenthaltsort als Ort.
     - *Laufbahn je Patron* ist eine Hausregel (Referenzdaten an den Zeilen der Patron-Listen,
       Zuordnung in [`patron-nsc.md`](patron-nsc.md)); ein Beruf, der mehrfach vorkommt, hat
-      überall dieselbe. Die Rumor-Zeilen haben keine. Es gibt heute nur die sechs Laufbahnen des
-      Regelwerks; weitere, die besser passen, kommen später dazu.
+      überall dieselbe. Die Rumor-Zeilen haben keine. Zur Wahl stehen alle achtzehn Laufbahnen
+      (2026-11-24e, ergänzt 2026-11-25a).
   - **NSC aus einer Laufbahn** (2026-11-14c). „+ Neuer NSC“ in der NSC-Liste fragt zuerst nach der
     **Rolle** und bietet dann an: leer anlegen (Editor wie bisher) oder **aus einer Laufbahn
     erzeugen**. Erzeugt wird wie beim Patron-NSC, nur in der gewählten Laufbahn: Die
@@ -2619,7 +2636,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        Nobles haben 5):
        Beförderung, einmal je Term, auch im Term des Patents; sie gibt die **nächste vorhandene Stufe** (beim Barbar von Warrior auf Chief). Bei einem Rang mit Standesrang gibt sie **+1 Stand**
        (2026-11-24d), der Lebenslauf führt ihn wie jeden Attributszuwachs; über 15 steigt der Stand
-       nicht. Der Einstieg über den Stand gibt ihn dagegen nicht – dort ist der Stand die Grundlage. Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
+       nicht. Der Einstieg über den Stand gibt ihn dagegen nicht – dort ist der Stand die Grundlage.
+       Gibt der *Rangwurf* einen Standesrang und liegt der Stand darunter, steigt er auf dessen Wert
+       (2026-11-25a: der Adlige mit Stand 10 wird Knight mit Stand 11). Dann die Fertigkeiten: im ersten Term 2, danach 1, bei den Scouts immer 2
        (`skillsPerTerm`); +1 für Patent, +1 für Beförderung. Für jede wählt man eine Tabelle; die
        vierte (`minEdu` 8) nur mit EDU 8+, gemessen vor dem Wurf. Ein Rang bringt, was in ihm steht
        (`grants`, z. B. Navy Captain +1 SOC). Was bei der Musterung mitgeht (`onEnlistment`) und was
@@ -2636,7 +2655,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
        7. Term bleibt nur, wer eine 12 würfelt (aus dem Vorbild, 2026-11-24e). Eine Laufbahn ohne
        `retirement` (Barbar) gibt **keine Ruhestandsbezüge**, ihr Ende ist sonst das übliche
        (2026-11-24e; vorher blieb sie bis zum 7. Term und dann ganz). Eine ohne `freeExit` (Bürokrat)
-       lässt vor dem Ruhestand nur weg, wenn die Weiterverpflichtung gelingt, gleich was man wollte.
+       lässt **vor dem Ruhestand** (unter fünf Terms) nur weg, wenn die Weiterverpflichtung gelingt:
+       wer bleiben will, bleibt, wer weg will, braucht den gelungenen Wurf; ab fünf Terms gilt für
+       sie das Übliche (2026-11-25a).
        Wer bleibt, beginnt den nächsten Term (3.), alle anderen mustern ab.
     6. *Abmusterung*: so viele Würfe wie Terms, dazu +1 bei Rang 1–2, +2 bei Rang 3–4, +3 bei Rang
        5–6. Je Wurf wählt man Geld oder Sachwerte; Geld höchstens dreimal. DM +1 auf Geld mit

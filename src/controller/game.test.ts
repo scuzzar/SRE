@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { addShip, appendLog, book, createCampaign, currentEncounter, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rangeBetween, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random, hexFromFlat, mainWorld, rollStarSystem } from '../model';
+import { addCharacter, careerInput, enlist, muster, reenlist, rollNext, rollSkill, stateOf, type Generation, addShip, appendLog, book, createCampaign, currentEncounter, DEMO_FUNDS, fromCampaignFile, ref, rollEncounter, rangeBetween, rollSurprise, setHexes, setLocation, toCampaignFile, type CampaignRepository, type Random, hexFromFlat, mainWorld, rollStarSystem } from '../model';
 import { countingKeys, fixedClock, fixedRandom, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 import { surfaceLines } from './world-view';
@@ -537,7 +537,7 @@ describe('Shop und Gruppenkasse', () => {
     expect(shop.owner).toBe('c1');
     // Kira hat Auto Pistol-1 und DEX 9: Die Automatic Pistol steht fett, mit DEX +1.
     expect(shop.weapons.find((w) => w.item.id === 'automatic-pistol')).toMatchObject({ attack: 'shot', wounds: 3, skill: 'Auto Pistol-1', ammo: { id: 'automatic-pistol-ammo', rounds: 15, price: 10 } });
-    expect(shop.weapons.find((w) => w.item.id === 'rifle')).toMatchObject({ skill: undefined, ammo: { owned: 2 } });
+    expect(shop.weapons.find((w) => w.item.id === 'rifle')).toMatchObject({ skill: undefined, unskilled: undefined, ammo: { owned: 2 } });
     expect(shop.weapons.find((w) => w.item.id === 'dagger')).toMatchObject({ attack: 'swing', ammo: undefined });
     expect(shop.armor.find((a) => a.id === 'jack')).toMatchObject({ owned: 1 });
     expect(shop.gear.map((g) => g.kind)).toEqual(['equipment', 'vehicle', 'passage']);
@@ -2403,5 +2403,35 @@ describe('Nebenwelten und Reise im System (2026-11-20d)', () => {
     expect(game.snapshot().location).toBe(body.id);
     expect(game.snapshot().world).toMatchObject({ hasMap: true });
     expect(game.snapshot().world?.surface).toBeDefined();
+  });
+});
+
+describe('ohne natürliche Waffenkunde (Supplement 4 S. 11)', () => {
+  /** Ein Bürokrat nach einem Term, mit dem Lebenslauf am Charakter. */
+  function bureaucrat(): Generation {
+    let g: Generation = { career: { rolls: [] } };
+    for (const [a, b] of [[3, 4], [5, 5], [4, 4], [4, 5], [3, 4], [2, 3]] as [number, number][]) g = rollNext(g, fixedRandom(a, b));
+    g = enlist(g, 'bureaucrat', fixedRandom(2, 2));
+    g = rollNext(g, fixedRandom(6, 6));
+    g = rollNext(g, fixedRandom(1, 1));
+    g = rollSkill(g, 'bureaucrat.personal', fixedRandom(1));
+    g = rollSkill(g, 'bureaucrat.personal', fixedRandom(2));
+    g = reenlist(g, false, fixedRandom(2, 2));
+    return muster(g, 'cash', fixedRandom(3));
+  }
+
+  it('zeigt dem Bürokraten im Shop „ungeübt −5“ an Schusswaffen, nicht an Klingen', async () => {
+    const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 5, government: 4, law: 5, tech: 7 } };
+    const g = bureaucrat();
+    const base = setHexes(createCampaign(), [regina].map(hexFromFlat));
+    const { campaign, id } = addCharacter(base, careerInput(stateOf(g), 'Amtsverweser'), g.career);
+    const { game } = await started(fixedRandom(), memoryRepository(campaign));
+    game.chooseHex(1, 1);
+    game.stayHere();
+    game.focusCharacter(id);
+    const shop = game.snapshot().shop!;
+    expect(shop.owner).toBe(id);
+    expect(shop.weapons.find((w) => w.item.id === 'rifle')).toMatchObject({ skill: undefined, unskilled: 'ungeübt −5' });
+    expect(shop.weapons.find((w) => w.item.id === 'dagger')).toMatchObject({ unskilled: undefined });
   });
 });

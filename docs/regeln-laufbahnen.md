@@ -139,7 +139,7 @@ term**, a character must successfully throw his service's survival number“), u
 
 Adlige stehen **nur** Menschen mit Stand 10+ offen, und zwar automatisch (kein Wurf); ihr Rang folgt
 dem Adelsrang des Stands: mit Stand 11 oder höher steht die Person **gleich bei der Musterung** auf
-dem Rang des Stands, der **Rangwurf entfällt**; mit Stand 10 wird er gewürfelt und gibt Knight. Jede
+dem Rang des Stands, der **Rangwurf entfällt**; mit Stand 10 wird er gewürfelt und gibt Knight, und der Stand steigt dabei auf 11 (✱ Kennzeichen **2026-11-25a**). Jede
 Beförderung auf so einen Rang gibt **+1 Stand** (✱ Hausregel der App, höchstens 15; Kennzeichen
 **2026-11-24d**). \* Bürokraten müssen ihre
 Weiterverpflichtung würfeln, um vor dem Ruhestand ausscheiden zu dürfen.
@@ -226,9 +226,9 @@ Fertigkeit darin genommen werden. Neu sind die Sachwerte der Laufbahn selbst:
 |---|---|---|
 | **Belterer**, **Barbar** | beginnen mit **14** statt 18 | B4 2 |
 | **Belter** | Überleben-DM **+1 je laufendem Term** statt fester DM: schon der **erste Term +1**, der zweite +2, der siebente +7 | B4 6 |
-| **Adliger** | nur für Stand 10+, automatisch; der Rang folgt dem Stand (B 11 … F 15) und der Rangwurf entfällt; ✱ je Beförderung auf so einen Rang **+1 Stand**, höchstens 15 | B4 8, The Traveller Book S. 27 |
+| **Adliger** | nur für Stand 10+, automatisch; der Rang folgt dem Stand (B 11 … F 15) und der Rangwurf entfällt; ✱ mit Stand 10 gibt der Rangwurf Knight und hebt den Stand auf 11; ✱ je Beförderung auf so einen Rang **+1 Stand**, höchstens 15 | B4 8, The Traveller Book S. 27 |
 | **Barbar** | kann **nicht in den Ruhestand**: er bekommt **keine Ruhestandsbezüge**, sein Dienstende ist sonst das übliche (2026-11-24e) | B4 9 |
-| **Bürokrat** | muss die **Weiterverpflichtung würfeln**, um vor dem Ruhestand wegzudürfen: wer bleiben will, bleibt, und wer weg will, braucht den gelungenen Wurf | B4 8 |
+| **Bürokrat** | muss die **Weiterverpflichtung würfeln**, um vor dem Ruhestand wegzudürfen: wer bleiben will, bleibt, und wer weg will, braucht den gelungenen Wurf; ab fünf Terms gilt das Übliche (2026-11-25a) | B4 8 |
 | **Barbar, Bürokrat, Arzt** | haben **keine natürliche Waffenkunde** an Schusswaffen: gelten als völlig ungebildet (DM −5 beim Schießen, B1 30) | B4 11 |
 | **Arzt** | Medical 3+ heißt **Doctor**, Gewandtheit 8+ zusätzlich **Surgeon**; unter Medical 3 ist es Ordnungsperson, Sanitäter oder Pfleger | B4 26 |
 | **alle zwölf** | jedes Kapitel setzt voraus, dass die Person **abgemustert** hat; der SL darf sie trotzdem im Dienst verwenden | B4 18 ff. |

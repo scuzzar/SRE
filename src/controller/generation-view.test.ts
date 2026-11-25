@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { addShip, chooseShipGain, createCampaign, enlist, muster, reenlist, rollNext, rollSkill, serviceOf, type Generation } from '../model';
 import { fixedRandom } from '../model/testing';
-import { careerLines, commissionTitle } from './generation-view';
+import { careerLines, commissionTitle, generationView } from './generation-view';
 
 /**
  * Der Rangwurf heißt nach der Laufbahn (Kennzeichen 2026-11-24b): der Bürokrat steigt in den
@@ -67,5 +67,29 @@ describe('der Ship-Vorteil im Lebenslauf', () => {
     expect(careerLines(taken.generation!.career).find((l) => l.kind === 'benefit')!.result).toBe('Seeker genommen');
     const kept = chooseShipGain({ ...withTrader, generation: belterMitSeeker() }, 'keep');
     expect(careerLines(kept.generation!.career).find((l) => l.kind === 'benefit')!.result).toBe('Seeker ausgeschlagen');
+  });
+});
+
+describe('die Weiterverpflichtung in der Oberfläche', () => {
+  it('lässt den Barbaren abmustern wie jeden anderen, nur ohne Bezüge (2026-11-24e)', () => {
+    let g = enlist(kira(), 'barbarian', fixedRandom(3, 3)); // Musterung 5+
+    g = rollNext(g, fixedRandom(6, 6)); // Überleben 6+
+    g = rollNext(g, fixedRandom(1, 1)); // Rangwurf 6+ misslingt
+    g = rollSkill(g, 'barbarian.personal', fixedRandom(1));
+    g = rollSkill(g, 'barbarian.personal', fixedRandom(2));
+    const view = generationView(g, [], undefined);
+    expect(view.action).toEqual(expect.objectContaining({ kind: 'reenlist', last: false, freeExit: true }));
+    expect(view.prompt).toMatch(/keine Ruhestandsbezüge/);
+  });
+
+  it('sagt dem Bürokraten vor dem Ruhestand, dass nur der gelungene Wurf ihn gehen lässt', () => {
+    let g = enlist(kira(), 'bureaucrat', fixedRandom(2, 2));
+    g = rollNext(g, fixedRandom(6, 6));
+    g = rollNext(g, fixedRandom(1, 1));
+    g = rollSkill(g, 'bureaucrat.personal', fixedRandom(1));
+    g = rollSkill(g, 'bureaucrat.personal', fixedRandom(2));
+    const view = generationView(g, [], undefined);
+    expect(view.action).toEqual(expect.objectContaining({ kind: 'reenlist', freeExit: false }));
+    expect(view.prompt).toMatch(/nur der gelungene Wurf/);
   });
 });

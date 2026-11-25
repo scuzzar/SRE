@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addCharacter, createCampaign } from './campaign';
-import { ageOf, MAX_TERMS, pensionOf, replay, standingRank, termDmOf, throwConditions, throwDm, type TermDm } from './career';
+import { ageOf, MAX_TERMS, pensionOf, RETIREMENT_TERMS, replay, standingRank, termDmOf, throwConditions, throwDm, type TermDm } from './career';
 import {
   cascadeOptions,
   careerInput,
@@ -122,6 +122,9 @@ describe('Laufbahnen aus Citizens of the Imperium', () => {
       const noble = kira([[3, 4], [5, 5], [4, 4], [4, 5], [3, 4], [5, 5]]);
       expect(serviceOptions(stateOf(noble)).find((o) => o.service.id === 'other')!.available).toBe(true);
       expect(stateOf(enlist(noble, 'other', fixedRandom(6, 6))).service?.id).toBe('other');
+      // Auch ein gespeicherter Lebenslauf kommt an der Qualifikation nicht vorbei.
+      const forged = { rolls: [...kira().career.rolls, { kind: 'enlistment' as const, for: 'other', dice: [6, 6], dm: 0, target: 3 }] };
+      expect(() => replay(forged)).toThrow(/SOC 10\+/);
     } finally {
       if (had === undefined) delete (other as { needs?: unknown }).needs;
       else other.needs = had;
@@ -145,6 +148,25 @@ describe('Laufbahnen aus Citizens of the Imperium', () => {
     // Ruhestand lässt ihn eben nur der *gelungene* Wurf weg, gleich was er wollte (S. 8).
     expect(stateOf(reenlist(atReenlist(), true, fixedRandom(2, 2)))).toMatchObject({ step: 'survival', terms: 2 });
     expect(stateOf(reenlist(atReenlist(), true, fixedRandom(1, 1)))).toMatchObject({ step: 'survival', terms: 2 });
+  });
+
+  it('lässt den Bürokrat ab dem Ruhestand gehen wie jeden anderen (S. 8: nur *vor* dem Ruhestand)', () => {
+    // Fünf Terms Bürokrat; jede Weiterverpflichtung will bleiben und würfelt die 12.
+    let g = enlist(kira(), 'bureaucrat', fixedRandom(2, 2));
+    for (let i = 0; i < 60; i++) {
+      const state = stateOf(g);
+      if (state.terms >= RETIREMENT_TERMS && state.step === 'reenlist') break;
+      if (state.step === 'survival' || state.step === 'aging' || state.step === 'crisis') g = rollNext(g, fixedRandom(6, 6));
+      else if (state.step === 'commission' || state.step === 'promotion') g = rollNext(g, fixedRandom(1, 1));
+      else if (state.step === 'skill') g = rollSkill(g, 'bureaucrat.personal', fixedRandom(1));
+      else if (state.step === 'reenlist') g = reenlist(g, true, fixedRandom(6, 6));
+      else throw new Error(`unerwarteter Schritt ${state.step}`);
+    }
+    expect(stateOf(g)).toMatchObject({ step: 'reenlist', terms: RETIREMENT_TERMS });
+    // Will weg, der Wurf misslingt (2 < 3+): im Ruhestand darf er trotzdem gehen.
+    expect(stateOf(reenlist(g, false, fixedRandom(1, 1))).step).toBe('muster');
+    // Will bleiben und der Wurf misslingt: wie überall endet der Dienst.
+    expect(stateOf(reenlist(g, true, fixedRandom(1, 1))).step).toBe('muster');
   });
 
   it('gibt eine Laufbahn ohne Ruhestand keine Bezüge und lässt sie abmustern wie jede andere (B4 S. 9, 2026-11-24e)', () => {
@@ -305,7 +327,7 @@ describe('Standesränge des Adels (2026-11-24d)', () => {
     expect(stateOf(g).step).toBe('promotion');
   });
 
-  it('lässt den Adligen mit Stand 10 den Rangwurf würfeln, ohne dass der Stand steigt', () => {
+  it('lässt den Adligen mit Stand 10 den Rangwurf würfeln; als Knight hat er Stand 11 (2026-11-25a)', () => {
     let g = enlist(kiraMit([5, 5]), 'noble', fixedRandom(1, 1));
     expect(stateOf(g).rank).toBe(0);
     g = rollNext(g, fixedRandom(3, 3));
@@ -313,7 +335,11 @@ describe('Standesränge des Adels (2026-11-24d)', () => {
     g = rollNext(g, fixedRandom(1, 5));
     const state = stateOf(g);
     expect(state.rank).toBe(1);
-    expect(state.upp.soc).toBe(10);
+    expect(state.upp.soc).toBe(11);
+    // Die Beförderung danach (12+) gibt wie immer +1: Baron mit 12, Rang und Stand passen zusammen.
+    expect(state.step).toBe('promotion');
+    g = rollNext(g, fixedRandom(6, 6));
+    expect(stateOf(g)).toMatchObject({ rank: 2, upp: { soc: 12 } });
   });
 
   it('gibt jede Beförderung auf einen Standesrang +1 Stand (Baron mit 12 wird Marquis mit 13)', () => {

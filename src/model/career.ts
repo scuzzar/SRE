@@ -172,6 +172,9 @@ export const MAX_CASH_ROLLS = 3;
 export const CRISIS_TARGET = 8;
 /** Nach so vielen Terms geht es nur noch mit einer 12 weiter. */
 export const MAX_TERMS = 7;
+
+/** Ab so vielen Terms kann man in den Ruhestand treten und bekommt Bezüge (B1 S. 7). */
+export const RETIREMENT_TERMS = 5;
 const MAX_VALUE = 15;
 
 const uppKey = { STR: 'str', DEX: 'dex', END: 'end', INT: 'int', EDU: 'edu', SOC: 'soc' } as const;
@@ -227,7 +230,7 @@ export function ageOf(terms: number, service?: Service): number {
  */
 export function pensionOf(terms: number, dead: boolean, service?: Service): number {
   if (service?.retirement === false) return 0;
-  return dead || terms < 5 ? 0 : 4000 + 2000 * (terms - 5);
+  return dead || terms < RETIREMENT_TERMS ? 0 : 4000 + 2000 * (terms - RETIREMENT_TERMS);
 }
 
 /** Abmusterungswürfe: einer je Term, dazu +1 bei Rang 1–2, +2 bei Rang 3–4, +3 bei Rang 5–6. */
@@ -329,6 +332,10 @@ class Replay {
       }
       case 'enlistment': {
         const service = serviceOf(this.need(roll.for, 'die Laufbahn'));
+        // Die Qualifikation (der Adlige: Stand 10+) gilt auch für einen gespeicherten Lebenslauf.
+        if (service.needs && this.value(service.needs.characteristic) < service.needs.atLeast) {
+          throw new DomainError(`${service.name} steht nur Menschen mit ${service.needs.characteristic} ${service.needs.atLeast}+ offen.`);
+        }
         // Eine Laufbahn ohne Einberufungszahl (die zwölf aus Supplement 4) würfelt keine Einberufung:
         // abgelehnt heißt, dass man sich anderweitig bewirbt.
         if (successOf(this.withTarget(roll))) this.enter(service, false, roll.chosen, last);
@@ -410,15 +417,16 @@ class Replay {
         const made = successOf(this.withTarget(roll)) === true;
         const service = this.service!;
         // Nach dem siebenten Term endet der Dienst; nur eine 12 hält weiter im Dienst (B1 S. 7).
-        // Bürokrat: vor dem Ruhestand lässt nur die *gelungene* Weiterverpflichtung weg, gleich was
-        // man wollte (Supplement 4 S. 8). Eine Laufbahn ohne `retirement` (der Barbar) endet wie
-        // jede andere; ihr fehlen nur die Ruhestandsbezüge (Supplement 4 S. 9, 2026-11-24e).
+        // Bürokrat: vor dem Ruhestand (unter fünf Terms) braucht, wer weg will, die gelungene
+        // Weiterverpflichtung; wer bleiben will, bleibt (Supplement 4 S. 8). Ab dem Ruhestand gilt
+        // für ihn das Übliche. Eine Laufbahn ohne `retirement` (der Barbar) endet wie jede andere;
+        // ihr fehlen nur die Ruhestandsbezüge (Supplement 4 S. 9, 2026-11-24e).
         const stays =
           sum === 12
             ? true
             : this.terms >= MAX_TERMS
               ? false
-              : service.freeExit === false
+              : service.freeExit === false && this.terms < RETIREMENT_TERMS
                 ? roll.wants === true || !made
                 : roll.wants && made;
         if (stays) {
@@ -568,6 +576,11 @@ class Replay {
     this.effects.push({ kind: 'rank', level, title: rank.title });
     // Standesränge: jede Beförderung auf so einen Rang gibt +1 Stand (2026-11-24d), über 15 hinaus nicht.
     if (wasPromotion && rank.standing !== undefined && this.value('SOC') < MAX_VALUE) this.set('SOC', this.value('SOC') + 1, 1);
+    // Der Rangwurf auf einen Standesrang hebt den Stand auf dessen Wert (2026-11-25a: der Adlige
+    // mit Stand 10 wird Knight mit Stand 11), damit Rang und Stand zusammenpassen.
+    if (!wasPromotion && rank.standing !== undefined && this.value('SOC') < rank.standing) {
+      this.set('SOC', rank.standing, rank.standing - this.value('SOC'));
+    }
     // Auch die Rang-Gabe kann eine Kaskade sein (der Barbar als Warrior: Blade Combat-1).
     return rank.grants === undefined ? true : this.gain(rank.grants, chosen, last, false);
   }

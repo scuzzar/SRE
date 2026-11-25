@@ -583,14 +583,6 @@ function Actions({ action, disabled, onRun }: { action: GenerationAction; disabl
             <span className="small-label">nur eine 12 verlängert</span>
           </span>
         </HoldButton>
-      ) : !action.quit ? (
-        <HoldButton className="roll generation-main" busy={disabled} onPress={() => game.reenlist(true)} onHold={onRun}>
-          <DiceIcon />
-          <span>
-            Weiterdienen
-            <span className="small-label">diese Laufbahn tritt nicht in den Ruhestand</span>
-          </span>
-        </HoldButton>
       ) : (
         <div className="choice-grid" role="group" aria-label="Weiterverpflichtung">
           <button type="button" aria-disabled={disabled || undefined} onClick={() => game.reenlist(false)}>
