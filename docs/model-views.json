@@ -696,6 +696,19 @@
         "Character",
         "Patron"
       ]
+    },
+    {
+      "id": "2026-11-24g",
+      "file": "2026-11-24g-was-der-lauf-verschluckt",
+      "title": "Was der Lauf verschluckt: `Generation` meldet `/discarded` (der neuen Werteliste `RunEnd` – gestorben, eingezogen, ohne Qualifikation). Die **Wartenscheibe** beim Erzeugen eines NSC zählt mit: oben die Scheibe, darunter „Versuche“ und „gestorben“, hochzählend; ist einer gefunden, bleibt das Ganze **eine Sekunde** stehen, dann erscheint der neue NSC",
+      "approved": false,
+      "show": [
+        "Generation",
+        "Career",
+        "Character",
+        "Patron",
+        "RunEnd"
+      ]
     }
   ]
 }

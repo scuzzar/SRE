@@ -156,6 +156,7 @@ hide <<browser>> stereotype
 ' Fahrzeuge und Wege auf der Oberfläche
   class Vehicle <<reference>> $logistik
   class TripDay $logistik
+  ' Was ein verworfener Lauf eines NSC gab (2026-11-24g); die Wartenscheibe zählt mit.
 
 ' Kampagne
 Campaign "1" *-- "*" Booking : bookings {ordered}

@@ -149,6 +149,7 @@ hide <<browser>> stereotype
   class Place <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
   class TripDay $logistik
+  ' Was ein verworfener Lauf eines NSC gab (2026-11-24g); die Wartenscheibe zählt mit.
   enum Characteristic <<value>> $charakter
 
 ' Kampagne

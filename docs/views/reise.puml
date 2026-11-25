@@ -157,6 +157,7 @@ hide <<browser>> stereotype
 ' Referenzdaten
   class Item <<reference>> $shop
 ' Fahrzeuge und Wege auf der Oberfläche
+  ' Was ein verworfener Lauf eines NSC gab (2026-11-24g); die Wartenscheibe zählt mit.
 
 ' Kampagne
 

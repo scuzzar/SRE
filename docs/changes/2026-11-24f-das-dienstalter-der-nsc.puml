@@ -92,6 +92,7 @@ hide <<browser>> stereotype
   class Generation $erschaffung {
     /step: GenerationStep
     $new("2026-11-24f", "/termsGoal: number [1..7] [0..1]")
+    $new("2026-11-24g", "/discarded: RunEnd[0..*]")
   }
   class Career $erschaffung
   class CareerRoll $erschaffung
@@ -109,6 +110,7 @@ hide <<browser>> stereotype
 
 ' Referenzdaten
 ' Fahrzeuge und Wege auf der Oberfläche
+  ' Was ein verworfener Lauf eines NSC gab (2026-11-24g); die Wartenscheibe zählt mit.
   enum GenerationStep <<value>> $erschaffung
 
 ' Kampagne
