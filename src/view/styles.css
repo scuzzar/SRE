@@ -2225,6 +2225,8 @@ button:disabled {
 /* Das Schild, das beim Ziehen dem Zeiger folgt. */
 .drag-ghost {
   position: fixed;
+  left: var(--ghost-x);
+  top: var(--ghost-y);
   z-index: 50;
   transform: translate(-50%, calc(-100% - 14px));
   padding: 4px 10px;
@@ -2273,6 +2275,7 @@ button:disabled {
 .stash-bar > span {
   position: absolute;
   inset: 0 auto 0 0;
+  width: var(--share);
   background: var(--muted);
 }
 
@@ -4223,6 +4226,8 @@ button:disabled {
 .sector-viewport {
   position: relative;
   width: 100%;
+  /* Als Grundkarte füllt die Karte ihren Platz und nennt kein Seitenverhältnis (`--ratio` fehlt). */
+  aspect-ratio: var(--ratio, auto);
   overflow: hidden;
   touch-action: none;
   border: 1px solid var(--rule);
@@ -5018,7 +5023,8 @@ button:disabled {
 
 .segmented {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Vier Felder von Haus aus, so viele wie das Modell Schiffe oder Reisearten liefert: `--seg-cols`. */
+  grid-template-columns: repeat(var(--seg-cols, 4), minmax(0, 1fr));
   border: 1px solid var(--line-strong);
 }
 
@@ -8263,8 +8269,11 @@ button:disabled {
   min-width: 0;
 }
 
+/* Die feste Kantenlänge des Weltsymbols in der Liste; WorldIcon rechnet in demselben Maß. */
 .system-icon {
   flex: none;
+  width: 24px;
+  height: 24px;
 }
 
 .system-dot {
@@ -8453,6 +8462,7 @@ button:disabled {
 .loading-bar {
   position: absolute;
   inset: 0;
+  transform: scaleX(var(--progress));
   transform-origin: left center;
   background: #e8c45a;
   transition: transform 0.2s ease-out;
@@ -9494,6 +9504,8 @@ button:disabled {
    Triebwerk bremst zuletzt hell, beim Aufsetzen wirbelt Staub auf. Aufgesetzt wird nach 2,2 s. */
 .touchdown {
   position: absolute;
+  left: var(--land-x);
+  top: var(--land-y);
   width: 0;
   height: 0;
   pointer-events: none;

@@ -1,5 +1,5 @@
 /** Der Reiter Computer: CPU, Speicher und Archiv des Rechners, Umstecken durch Ziehen, Kauf in der Werft (2026-11-22d). */
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { ProgramRow, ShipView, SoftwareOfferRow, SoftwareSlot, VesselSoftwareRow } from '../../controller';
 import { useGame } from '../game-context';
 import { mcr, softwarePrice } from '../format';
@@ -36,7 +36,7 @@ export function ComputerTab({ ship, onOpenProgram, onOpenYard }: { readonly ship
   return (
     <div className="computer">
       {boats.length > 1 && (
-        <div className="segmented" style={{ gridTemplateColumns: `repeat(${boats.length}, minmax(0, 1fr))` }} role="tablist" aria-label="Schiff">
+        <div className="segmented" style={{ '--seg-cols': boats.length } as CSSProperties} role="tablist" aria-label="Schiff">
           {boats.map((c, i) => (
             <button type="button" key={c.shipId} role="tab" aria-selected={i === vessel} onClick={() => setVessel(i)}>
               {c.name}
@@ -84,7 +84,7 @@ export function ComputerTab({ ship, onOpenProgram, onOpenYard }: { readonly ship
         </>
       )}
       {drag.dragging !== undefined && (
-        <div className={`drag-ghost${drag.dragging.refused ? ' refused' : ''}`} style={{ left: drag.dragging.x, top: drag.dragging.y }}>
+        <div className={`drag-ghost${drag.dragging.refused ? ' refused' : ''}`} style={{ '--ghost-x': `${drag.dragging.x}px`, '--ghost-y': `${drag.dragging.y}px` } as CSSProperties}>
           {gezogene}
         </div>
       )}

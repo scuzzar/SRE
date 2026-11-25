@@ -3,8 +3,9 @@ import type { WorldLook } from '../../controller';
 import { worldCanvas } from './world-icon';
 
 /**
- * Das Weltsymbol als Canvas. Mit `size` in CSS-Pixeln fest so groß, ohne füllt es die Breite seines
- * Platzes (quadratisch) und rechnet in der Auflösung, die es dort braucht.
+ * Das Weltsymbol als Canvas. `size` ist die Kantenlänge in CSS-Pixeln, in der das Symbol rechnet;
+ * wie groß es auf dem Bildschirm steht, entscheidet die Klasse (`.system-icon`). Ohne `size` füllt es
+ * die Breite seines Platzes (quadratisch) und rechnet in der Auflösung, die es dort braucht.
  */
 export function WorldIcon({ look, size, className, label }: { look: WorldLook; size?: number; className?: string; label?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -25,7 +26,6 @@ export function WorldIcon({ look, size, className, label }: { look: WorldLook; s
     <canvas
       ref={ref}
       className={className ? `world-icon ${className}` : 'world-icon'}
-      style={size === undefined ? undefined : { width: size, height: size }}
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}

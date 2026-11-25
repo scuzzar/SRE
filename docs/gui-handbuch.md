@@ -248,7 +248,12 @@ Feld.
   48–52 px). Kompakte Bedienelemente in Listen und Karten sind kleiner: Chips, Umschalter und Zellen
   der Waffentabelle 40 px, `ghost compact` 30–36 px. Kleiner als 30 px wird nichts, was man antippt.
 - **Farben nur über die Variablen** in `:root` von `styles.css`, keine festen Werte (noch nicht
-  überall so, siehe [TODO.md](../TODO.md)); keine `style={{ … }}` in Komponenten.
+  überall so, siehe [TODO.md](../TODO.md)).
+- **`style={{ … }}` trägt nie Gestaltung.** Farbe, Größe, Schrift und Abstand stehen in Klassen,
+  auch die nackten Eigenschaften `left`, `top`, `width`, `transform` und `grid-template-columns`.
+  Zahlen aus dem Model – Position des Zuggeists, Füllstand einer Anzeige, Fortschritt, Anzahl der
+  Felder – kommen als eigene Variable herein (`--ghost-x`, `--share`, `--progress`, `--seg-cols`,
+  `--face`, `--deal`, `--hold-ms`); die Eigenschaft, die sie benutzt, steht in der Klasse.
 - **Wirkungen haben eigene Familien** in `:root`, die Zahl ist die Deckkraft in Prozent:
   `--shadow-*` Erhöhung, `--scrim-*` dunkle Fläche, `--sheen-*` heller Saum und Reflex,
   `--on-fill*` Schrift auf gefülltem Grund, `--gold-edge-*` und `--gold-glow-*` für Gold,

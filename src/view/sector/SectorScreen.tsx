@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { HexView, SelectedHexView, Snapshot } from '../../controller';
 import { useGame } from '../game-context';
@@ -418,7 +418,7 @@ function ZoomableMap({ fill, focus, children }: { fill: boolean; /** Das gewähl
       <div
         ref={box}
         className="sector-viewport"
-        style={fill ? undefined : { aspectRatio: `${WIDTH.toFixed(1)} / ${HEIGHT.toFixed(1)}` }}
+        style={fill ? undefined : ({ '--ratio': `${WIDTH.toFixed(1)} / ${HEIGHT.toFixed(1)}` } as CSSProperties)}
         onPointerDown={(e) => {
           if (e.pointerType === 'mouse' && e.button !== 0) return;
           cancelAnimationFrame(glide.current);

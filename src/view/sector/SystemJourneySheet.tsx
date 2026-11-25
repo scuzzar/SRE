@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { SystemJourneyView } from '../../controller';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -44,7 +45,7 @@ export function SystemJourneySheet({ journey }: { journey: SystemJourneyView }) 
         ) : (
           <>
             <p className="journey-facts">{journey.distance} · beschleunigen bis zur Mitte, dann abbremsen (T = 2·√(D/A))</p>
-            <div className="segmented" style={{ gridTemplateColumns: `repeat(${journey.options.length}, minmax(0, 1fr))` }} role="radiogroup" aria-label="Art zu reisen">
+            <div className="segmented" style={{ '--seg-cols': journey.options.length } as CSSProperties} role="radiogroup" aria-label="Art zu reisen">
               {journey.options.map((o) => (
                 <button key={`${o.mode}-${o.craft ?? ''}`} type="button" role="radio" aria-checked={o === chosen} disabled={o.blocker !== undefined} title={o.blocker} onClick={() => game.chooseSystemJourneyMode(o.mode, o.craft)}>
                   {o.button}

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import type { EquipSlotView, StashView } from '../../controller';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -134,7 +134,7 @@ export function StashDrag({ children }: { children: ReactNode }) {
     <DragContext.Provider value={{ dragged, over, bind }}>
       {children}
       {dragged && ghost && (
-        <div className={accepts(dragged, over) ? 'drag-ghost ok' : 'drag-ghost'} style={{ left: Math.min(Math.max(ghost.x, 90), window.innerWidth - 90), top: ghost.y }} aria-hidden="true">
+        <div className={accepts(dragged, over) ? 'drag-ghost ok' : 'drag-ghost'} style={{ '--ghost-x': `${Math.min(Math.max(ghost.x, 90), window.innerWidth - 90)}px`, '--ghost-y': `${ghost.y}px` } as CSSProperties} aria-hidden="true">
           {dragged.label}
         </div>
       )}
@@ -211,7 +211,7 @@ export function StashPack({ stash }: { stash: StashView }) {
             Last <b>{kg(stash.load)}</b> / {kg(stash.capacity)} kg
           </span>
           <span className={['stash-bar', stash.burden > 0 ? `burden-${stash.burden}` : ''].filter(Boolean).join(' ')} aria-hidden="true">
-            <span style={{ width: `${Math.min(100, (ratio / 2) * 100)}%` }} />
+            <span style={{ '--share': `${Math.min(100, (ratio / 2) * 100)}%` } as CSSProperties} />
             <i />
           </span>
           {stash.burden > 0 && (

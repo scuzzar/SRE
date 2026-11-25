@@ -1,5 +1,5 @@
 /** Der Reiter Crew: die Posten des Schiffs, Zuweisung über das Blatt, Umziehen durch Ziehen (2026-11-22d). */
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { CrewPostRow, VesselCrewRow } from '../../controller';
 import { useGame } from '../game-context';
 import { CloseIcon, PlusIcon } from '../icons';
@@ -49,7 +49,7 @@ export function CrewTab({ crews, onOpenPost, onOpenPerson }: { readonly crews: r
   return (
     <div className="crew">
       {crews.length > 1 && (
-        <div className="segmented" style={{ gridTemplateColumns: `repeat(${crews.length}, minmax(0, 1fr))` }} role="tablist" aria-label="Schiff">
+        <div className="segmented" style={{ '--seg-cols': crews.length } as CSSProperties} role="tablist" aria-label="Schiff">
           {crews.map((c, i) => (
             <button type="button" key={c.shipId} role="tab" aria-selected={i === vessel} onClick={() => setVessel(i)}>
               {c.name}
@@ -111,7 +111,7 @@ export function CrewTab({ crews, onOpenPost, onOpenPerson }: { readonly crews: r
       </div>
 
       {drag.dragging !== undefined && (
-        <div className={`drag-ghost${drag.dragging.refused ? ' refused' : ''}`} style={{ left: drag.dragging.x, top: drag.dragging.y }}>
+        <div className={`drag-ghost${drag.dragging.refused ? ' refused' : ''}`} style={{ '--ghost-x': `${drag.dragging.x}px`, '--ghost-y': `${drag.dragging.y}px` } as CSSProperties}>
           {gezogene}
         </div>
       )}

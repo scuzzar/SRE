@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore, type CSSProperties } from 'react';
 
 // Reine Darstellung: ein kurzer Ladebalken für Arbeit, die die Seite eine Weile blockiert, etwa wenn
 // eine Welt zum ersten Mal ihre Oberflächenkarte bekommt und der Globus seine Grafik aufbaut. Der
@@ -71,7 +71,7 @@ export function LoadingOverlay() {
       <div className="loading-card">
         <span className="loading-label">{loading.label}</span>
         <span className="loading-track" aria-hidden>
-          <span className="loading-bar" style={{ transform: `scaleX(${Math.max(0.04, loading.progress)})` }} />
+          <span className="loading-bar" style={{ '--progress': `${Math.max(0.04, loading.progress)}` } as CSSProperties} />
           <span className="loading-shine" />
         </span>
       </div>

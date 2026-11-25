@@ -23,7 +23,7 @@ const PUFFS: readonly (readonly [number, number])[] = [
  */
 export function Touchdown({ x, y, label }: { x: number; y: number; label: string }) {
   return (
-    <div className="touchdown" style={{ left: x, top: y }} aria-hidden>
+    <div className="touchdown" style={{ '--land-x': `${x}px`, '--land-y': `${y}px` } as CSSProperties} aria-hidden>
       <div className="td-dust">
         <span className="td-ring" />
         <span className="td-ring td-ring-2" />
