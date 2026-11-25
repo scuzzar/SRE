@@ -576,6 +576,11 @@ class Replay {
     this.effects.push({ kind: 'rank', level, title: rank.title });
     // Standesränge: jede Beförderung auf so einen Rang gibt +1 Stand (2026-11-24d), über 15 hinaus nicht.
     if (wasPromotion && rank.standing !== undefined && this.value('SOC') < MAX_VALUE) this.set('SOC', this.value('SOC') + 1, 1);
+    // Der Rangwurf auf einen Standesrang hebt den Stand auf dessen Wert (2026-11-25a: der Adlige
+    // mit Stand 10 wird Knight mit Stand 11), damit Rang und Stand zusammenpassen.
+    if (!wasPromotion && rank.standing !== undefined && this.value('SOC') < rank.standing) {
+      this.set('SOC', rank.standing, rank.standing - this.value('SOC'));
+    }
     // Auch die Rang-Gabe kann eine Kaskade sein (der Barbar als Warrior: Blade Combat-1).
     return rank.grants === undefined ? true : this.gain(rank.grants, chosen, last, false);
   }

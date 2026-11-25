@@ -327,7 +327,7 @@ describe('Standesränge des Adels (2026-11-24d)', () => {
     expect(stateOf(g).step).toBe('promotion');
   });
 
-  it('lässt den Adligen mit Stand 10 den Rangwurf würfeln, ohne dass der Stand steigt', () => {
+  it('lässt den Adligen mit Stand 10 den Rangwurf würfeln; als Knight hat er Stand 11 (2026-11-25a)', () => {
     let g = enlist(kiraMit([5, 5]), 'noble', fixedRandom(1, 1));
     expect(stateOf(g).rank).toBe(0);
     g = rollNext(g, fixedRandom(3, 3));
@@ -335,7 +335,11 @@ describe('Standesränge des Adels (2026-11-24d)', () => {
     g = rollNext(g, fixedRandom(1, 5));
     const state = stateOf(g);
     expect(state.rank).toBe(1);
-    expect(state.upp.soc).toBe(10);
+    expect(state.upp.soc).toBe(11);
+    // Die Beförderung danach (12+) gibt wie immer +1: Baron mit 12, Rang und Stand passen zusammen.
+    expect(state.step).toBe('promotion');
+    g = rollNext(g, fixedRandom(6, 6));
+    expect(stateOf(g)).toMatchObject({ rank: 2, upp: { soc: 12 } });
   });
 
   it('gibt jede Beförderung auf einen Standesrang +1 Stand (Baron mit 12 wird Marquis mit 13)', () => {

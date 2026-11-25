@@ -666,7 +666,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > eine Laufbahn, deren Qualifikation die gewürfelten Werte erfüllen – die Liste graut dieselben
 > aus. Der Ausschnitt dazu liegt unter [`changes/2026-11-24e-der-barbar-ohne-ruhestand.png`](changes/2026-11-24e-der-barbar-ohne-ruhestand.png).
 
-> **Entwurf vom 25. November 2026, wartet auf Freigabe** (Kennzeichen **2026-11-25a**): **Der
+> Am 25. November 2026 freigegeben (Kennzeichen **2026-11-25a**): **Der
 > Knight aus dem Rangwurf, der Bürokrat im Ruhestand und die übrigen Patron-Reihen.** Das Bild
 > ändert sich dadurch nicht; es sind drei Regeln im Text.
 > 1. **Der Rangwurf hebt den Stand auf den Standesrang.** Gibt der Rangwurf einen Rang mit
