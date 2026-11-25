@@ -457,6 +457,7 @@ hide <<browser>> stereotype
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung {
     /step: GenerationStep
+    $new("2026-11-24f", "/termsGoal: number [1..7] [0..1]")
   }
   class Career $erschaffung {
     /terms: number
