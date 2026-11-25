@@ -28,6 +28,9 @@
 - `ARCHITECTURE.md` legt die vier MVC-Regeln und die Schichtentabelle fest. Beide müssen stimmen.
 - Die README beschreibt, was die App können soll; das Domänenmodell, wie es im Modell aussieht.
   Widersprechen sie sich, nachfragen statt raten.
+- **Die To-Do (`TODO.md`) nachziehen:** Ist ein Punkt umgesetzt, fliegt er im selben Commit raus
+  oder wird auf den offenen Rest gekürzt. Neue Aufgaben und Ideen kommen dort hinein, nicht nur ins
+  Gespräch.
 - **Commits laufen unter dem Namen des Owners**: Autor und Committer
   `Scuzzar <scuzzarGalaxy@googlemail.com>`, nie Claude. **Nie Name oder E-Mail in den Befehl
   schreiben** (kein `-c user.email=…`), sonst muss der Owner den Befehl eigens freigeben. Stattdessen
