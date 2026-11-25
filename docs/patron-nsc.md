@@ -2,7 +2,8 @@
 
 **Hausregel, am 14. November 2026 freigegeben** (Kennzeichen 2026-11-14b im
 [Domänenmodell](domain-model.md), siehe dort *Patron als NSC*), Laufbahnen seit
-[Kennzeichen 2026-11-24e](domain-model.md) auf alle achtzehn gefasst. Die Regeln geben den Patrons
+[Kennzeichen 2026-11-24e](domain-model.md) auf alle achtzehn gefasst (ergänzt im Entwurf 2026-11-25a:
+Cutthroat, Assassin, Embezzler und Hijacker → Rogue). Die Regeln geben den Patrons
 der Patron Encounters Matrix (SE, Charts S. 20) keine Werte. Jeder Patron verweist deshalb auf eine
 Laufbahn (`Patron.career`); ein Patron-NSC durchläuft in ihr zufällig die Charaktererschaffung und
 bekommt so Attribute, Fertigkeiten, Besitz und Lebenslauf. Ein Beruf, der auf beiden Listen oder
