@@ -2226,8 +2226,9 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     `needs`-Qualifikation oder tot: von vorn – beim Adligen also, solange der Stand unter 10 bleibt,
     2026-11-24e),
     Name von der Tafel NSC, Ort der Aufenthaltsort, danach öffnet der Editor zum Nachbessern. Ohne
-    Aufenthaltsort geht es nicht. Er hat keinen Patron. **Dienstalter** (2026-11-24f): Unter der
-    Laufbahn steht das Feld „Dienstalter (Terms)“ mit den Chips 1 bis 7 – leer wählt der Lauf,
+    Aufenthaltsort geht es nicht. Er hat keinen Patron. **Dienstalter** (2026-11-24f): Über der Liste
+    der Laufbahnen steht das Feld „Dienstalter“ (Auswahl, leer = „so lange er kann“) mit den Chips
+    „so lange er kann“ und 1 bis 7 – leer wählt der Lauf,
     wie lange er kommt (er will bleiben, so lange es geht, wie beim Patron-NSC), gesetzt würfelt
     er genau so viele Terms ohne Überleben und ohne Weiterverpflichtung, und nichts kann ihn
     töten. Das Feld steht in beiden Dialogen. Lange auf „NSC platzieren“ am angetippten
@@ -2244,7 +2245,10 @@ Vacc Suit, Jack-of-all-Trades, …), Terms, Cr.
     Krise, steht das Attribut auf 1 und der nächste Term beginnt. Ohne Dienstalter bleibt die
     Regel: Er überlebt oder nicht; verworfen und von vorn wird der Lauf, wenn er abgelehnt
     würde, die Qualifikation nicht mitbringt oder stirbt.
-    Während er läuft, zeigt eine **Wartenscheibe**, was sie verschluckt (2026-11-24g): die Drehung oben, darunter „Versuche“, darunter „gestorben“; jeder verworfene Lauf zählt hoch, weil zwischen den Läufen ans Bild übergeben wird. Ist einer gefunden, bleibt die Scheibe **eine Sekunde** stehen, dann erscheint der NSC. Scheibe und Zahlen sind flüchtig und kommen in kein Log. Die Scheibe zeigt auch, wenn `termsGoal` gesetzt ist – dort wirft der Lauf nur Musterung und Qualifikation weg, nie den Tod.
+    Während er läuft, zeigt eine **Wartenscheibe**, was sie verschluckt (2026-11-24g): oben die Drehung
+    und darunter die Zahl des laufenden Laufs („Lauf 3“), darunter „2 gestorben“ – die Zeile erscheint
+    erst ab dem ersten Todesfall. Beide zählen hoch, weil zwischen den Läufen ans Bild übergeben wird
+    (bei einem Pechvogel endet das Zögern nach 1,4 Sekunden, die Scheibe zählt dann ohne Pause weiter). Ist einer gefunden, bleibt die Scheibe **eine Sekunde** stehen, dann erscheint der NSC. Scheibe und Zahlen sind flüchtig und kommen in kein Log. Die Scheibe zeigt auch, wenn `termsGoal` gesetzt ist – dort wirft der Lauf nur Musterung und Qualifikation weg, nie den Tod.
   - **Waffen erzeugter NSC** (2026-11-14c; Patron-NSC und NSC aus einer Laufbahn, nicht die NSC
     der Begegnung, die ihre eigene Regel haben). Hausregel nach Wunsch des Owners:
     - *SOC-Stufe*: Jede Waffe hat ein Mindest-SOC (`Weapon.minSoc`): billige Nahkampfwaffen ab 0
