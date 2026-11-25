@@ -18,18 +18,23 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
   zuerst nach der Rolle“). In einem eigenen Durchgang trennen, Bereich für Bereich: Die Regel
   bleibt im Modell, der Ablauf auf dem Bildschirm kommt ins Handbuch oder fällt weg.
 - [ ] **Farben und Stile nach dem GUI-Handbuch** ([docs/gui-handbuch.md](docs/gui-handbuch.md)):
-  am 25. November 2026 zwei Durchgänge – 142 feste Werte auf Variablen in `:root` gestellt, wertgleich
-  bis auf fünf zusammengeführte Stufen, und 15 ungenutzte Rückfallwerte wie `var(--muted, #9a9a9a)`
-  gestrichen. Familien: `--shadow-*`, `--scrim-*`, `--sheen-*`, `--on-fill*`, `--gold-edge-*`,
+  am 25. November 2026 drei Durchgänge – 142 feste Werte auf Variablen in `:root` gestellt und
+  15 ungenutzte Rückfallwerte wie `var(--muted, #9a9a9a)` gestrichen, wertgleich. Familien:
+  `--shadow-*`, `--scrim-*`, `--sheen-*`, `--on-fill*`, `--gold-edge-*`,
   `--gold-glow-*`, `--accent-glow-*`, `--accent-fill-*`, `--accent-edge-*`, `--danger`, `--void*`,
   `--glass-*`, `--shade-*`, `--hairline`, `--line-mid`, `--line-bright`, `--pressed`. Fünf
   Fast-Duplikate (`#131313`, `#151515`, `#1b1b1b`, `#2c2c2c`, `#2a2a2a`) führt der Owner auf die
   bestehende Leiter zurück (`--panel`, `--raised`, `--rule-soft`, `--rule`; bis zu 3 von 255 Stufen).
-  Offen sind 72 feste Werte, und ihre Namen brauchen die Begriffe des Domänenmodells: Material von
-  Würfeln und Karten (`#050505`, `#2b2b2b`, `#4a4a4a`, `#cfcfcf`, `#d9d6cf`, `#fff`, `#0d0d0d`),
-  Papiertöne (`#f3e6c8`, `rgba(228, 214, 186, .9)`, `rgba(238, 224, 196, .85)`), Welt- und Icon-Töne
-  (`#1a1a1a`, `#262626`, `#4a4844`, `#77736c`) sowie Blau, Grün, Orange, Gelb und Violett für Status
-  auf Welt-, Karten- und Kampfbildschirm (`#6ec8ff`, `#7ee08a`, `#ffaa3c`, `#be96ff`, `#ff6b6b` …).
+  Am 25. November 2026 ein dritter Durchgang: die übrigen 70 festen Werte des Stylesheets auf sechs
+  Familien nach den Begriffen des Owners gestellt – `--kern-*` (das warme Dunkle von Würfeln,
+  Wurfplatz und Aufsetzlinie), `--material-*` (Kunststoff der Würfel, ihre Augen, Kartenrücken),
+  `--papier-*` (Kartenblatt, Staub der Landung), `--welt-*` (Gruppenstand, Schiffe und Markierungen
+  auf Globus, Karte und Reiseroute), `--status-*` (Absicht, Gefahr, Schaden) und `--strahl-*`
+  (Triebwerk und Aufschlag), dazu `--gold-satt` für den Ladebalken. Wertgleich bewiesen: 1094
+  Farbwerte vorher gegen 1094 nachher, jede Folge identisch. Die fünf Rot-Töne bleiben fünf Stufen
+  (`--status-feind`, `-mittel`, `-hell`, `-licht`, `-45`) und `#ffffff` trägt zwei Namen
+  (`--material-glanz` an den Würfeln, `--papier` am Kartenblatt); beides entschied der Owner am
+  25. November 2026. Übrig bleiben zwei `#000` in `.log-scroll` – Haltepunkte der Maske, keine Farbe.
   Am 25. November 2026 auch die `style={{ … }}` geräumt – zuerst die 24 gestalterischen Stellen in
   Klassen überführt (neue Klassen `.sheet-head.centered`, `.section-title.small`, `.primary.wide`,
   `.remove-block`, `.roll-name`, `.roll-detail`, `.name-picker-hint`, `.haptic-answer` und die
@@ -38,9 +43,10 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
   und `--ghost-y` (Zuggeist), `--share` (Lastanzeige), `--progress` (Wartenscheibe), `--land-x` und
   `--land-y` (Aufsetzpunkt), `--ratio` (Seitenverhältnis der Karte), `--seg-cols` (Spaltenzahl der
   Umschalter); die Kantenlänge des Weltsymbols steht in `.system-icon`. Das Handbuch schreibt die
-  Regel jetzt vor: `style` trägt Zahlen aus dem Model als Variable, Gestaltung nie. Übrig bleiben die
-  81 Canvas-Farben in `SpaceScreen.tsx`, `GlobeScreen.tsx` und `icons.tsx`, die eine Palette in
-  TypeScript brauchen, weil `var()` im Canvas nicht greift.
+  Regel jetzt vor: `style` trägt Zahlen aus dem Model als Variable, Gestaltung nie. Übrig bleibt
+  damit nur noch eines: die 81 Canvas-Farben in `SpaceScreen.tsx` (33), `GlobeScreen.tsx` (26),
+  `icons.tsx` (12), `Touchdown.tsx` (6) und `CardRollIcons.tsx` (4), die eine Palette in TypeScript
+  brauchen, weil `var()` im Canvas nicht greift.
 - [ ] **Zwei wackelnde GUI-Tests fest gegen den Zufall:** `e2e/shop.spec.ts:131` („Gruppe platzieren")
   scheiterte am 25. November 2026 an `Keine Welt entstanden`, `e2e/encounter.spec.ts:206` (Tiertabelle)
   wartete auf einen Wurf, den der Zufall gerade nicht brachte. Beide bestehen einzeln direkt danach

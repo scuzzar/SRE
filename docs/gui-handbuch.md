@@ -247,8 +247,10 @@ Feld.
 - **Zwei Größen von Knöpfen:** Knöpfe zum Handeln sind groß (Reihe 54–56 px, `primary` und `ghost`
   48–52 px). Kompakte Bedienelemente in Listen und Karten sind kleiner: Chips, Umschalter und Zellen
   der Waffentabelle 40 px, `ghost compact` 30–36 px. Kleiner als 30 px wird nichts, was man antippt.
-- **Farben nur über die Variablen** in `:root` von `styles.css`, keine festen Werte (noch nicht
-  überall so, siehe [TODO.md](../TODO.md)).
+- **Farben nur über die Variablen** in `:root` von `styles.css`, keine festen Werte in den Regeln.
+  Zwei Ausnahmen bleiben: die schwarzen Haltepunkte der Log-Maske (`mask-image`) sind Maskensteuerung
+  und keine Farbe, und die Canvas-Farben in TypeScript erreicht `var()` nicht
+  (siehe [TODO.md](../TODO.md)).
 - **`style={{ … }}` trägt nie Gestaltung.** Farbe, Größe, Schrift und Abstand stehen in Klassen,
   auch die nackten Eigenschaften `left`, `top`, `width`, `transform` und `grid-template-columns`.
   Zahlen aus dem Model – Position des Zuggeists, Füllstand einer Anzeige, Fortschritt, Anzahl der
@@ -259,6 +261,11 @@ Feld.
   `--on-fill*` Schrift auf gefülltem Grund, `--gold-edge-*` und `--gold-glow-*` für Gold,
   `--accent-glow-*`, `--accent-fill-*` und `--accent-edge-*` für Rot, `--danger` für Gefahren.
   Ein neuer Wert bekommt eine neue Variable, nie eine feste Zahl in der Regel.
+- **Stoff und Status haben eigene Familien**: `--kern-*` das warme Dunkle der Würfel und Wurfplätze,
+  `--material-*` deren Kunststoff, Augen und der Kartenrücken, `--papier-*` Kartenblatt und
+  Staub, `--welt-*` Gruppenstand, Schiffe und Markierungen auf Globus, Karte und Reiseroute,
+  `--status-*` Absicht, Gefahr und Schaden auf dem Kampfbildschirm, `--strahl-*` Triebwerk und
+  Aufschlag bei der Landung.
 - **Schrift**: IBM Plex Sans, Werte und Codes (UPP, UWP) in IBM Plex Mono; zählende Zahlen mit
   festen Ziffernbreiten, damit nichts springt.
 - **Zeichen**: ✕ schließen, ☰ Menü, Stift bearbeiten, ⌖ Ziel bzw. Aufenthaltsort, ▶ am Zug, ★ Anführer.
