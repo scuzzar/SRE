@@ -18,17 +18,25 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
   zuerst nach der Rolle“). In einem eigenen Durchgang trennen, Bereich für Bereich: Die Regel
   bleibt im Modell, der Ablauf auf dem Bildschirm kommt ins Handbuch oder fällt weg.
 - [ ] **Farben und Stile nach dem GUI-Handbuch** ([docs/gui-handbuch.md](docs/gui-handbuch.md)):
-  am 25. November 2026 der erste Durchgang – 110 feste Werte wertgleich auf Familien in `:root`
-  umgestellt (`--shadow-*`, `--scrim-*`, `--sheen-*`, `--on-fill*`, `--gold-edge-*`, `--gold-glow-*`,
-  `--accent-glow-*`, `--accent-fill-*`, `--accent-edge-*`, neu `--danger`) und 15 Rückfallwerte wie
-  `var(--muted, #9a9a9a)` gestrichen. Alle genannten Variablen sind in `:root` gesetzt, ein
-  Rückfall wurde also nie benutzt und seine Rücknahme bewegt keine Pixel. Offen sind 104 feste
-  Werte, und ihre Namen brauchen die Begriffe des Domänenmodells: Material von Würfeln und Karten
-  (`#fff`, `#d9d6cf`, `#cfcfcf`), Papiertöne (`#f3e6c8`, `rgba(228, 214, 186, .9)`), Grautöne der
-  Flächen und Kanten (`#9a9a9a`, `#333`, `#666`) sowie Blau, Grün, Orange und Violett für Status
-  auf Welt- und Kampfbildschirm. Dazu die 40 `style={{ … }}` in den Komponenten in Klassen
-  überführen und die 81 Canvas-Farben in `SpaceScreen.tsx`, `GlobeScreen.tsx` und `icons.tsx`, die
-  eine Palette in TypeScript brauchen, weil `var()` im Canvas nicht greift.
+  am 25. November 2026 zwei Durchgänge – 142 feste Werte auf Variablen in `:root` gestellt, wertgleich
+  bis auf fünf zusammengeführte Stufen, und 15 ungenutzte Rückfallwerte wie `var(--muted, #9a9a9a)`
+  gestrichen. Familien: `--shadow-*`, `--scrim-*`, `--sheen-*`, `--on-fill*`, `--gold-edge-*`,
+  `--gold-glow-*`, `--accent-glow-*`, `--accent-fill-*`, `--accent-edge-*`, `--danger`, `--void*`,
+  `--glass-*`, `--shade-*`, `--hairline`, `--line-mid`, `--line-bright`, `--pressed`. Fünf
+  Fast-Duplikate (`#131313`, `#151515`, `#1b1b1b`, `#2c2c2c`, `#2a2a2a`) führt der Owner auf die
+  bestehende Leiter zurück (`--panel`, `--raised`, `--rule-soft`, `--rule`; bis zu 3 von 255 Stufen).
+  Offen sind 72 feste Werte, und ihre Namen brauchen die Begriffe des Domänenmodells: Material von
+  Würfeln und Karten (`#050505`, `#2b2b2b`, `#4a4a4a`, `#cfcfcf`, `#d9d6cf`, `#fff`, `#0d0d0d`),
+  Papiertöne (`#f3e6c8`, `rgba(228, 214, 186, .9)`, `rgba(238, 224, 196, .85)`), Welt- und Icon-Töne
+  (`#1a1a1a`, `#262626`, `#4a4844`, `#77736c`) sowie Blau, Grün, Orange, Gelb und Violett für Status
+  auf Welt-, Karten- und Kampfbildschirm (`#6ec8ff`, `#7ee08a`, `#ffaa3c`, `#be96ff`, `#ff6b6b` …).
+  Dazu die 40 `style={{ … }}` in den Komponenten in Klassen überführen und die 81 Canvas-Farben in
+  `SpaceScreen.tsx`, `GlobeScreen.tsx` und `icons.tsx`, die eine Palette in TypeScript brauchen,
+  weil `var()` im Canvas nicht greift.
+- [ ] **Zwei wackelnde GUI-Tests fest gegen den Zufall:** `e2e/shop.spec.ts:131` („Gruppe platzieren")
+  scheiterte am 25. November 2026 an `Keine Welt entstanden`, `e2e/encounter.spec.ts:206` (Tiertabelle)
+  wartete auf einen Wurf, den der Zufall gerade nicht brachte. Beide bestehen einzeln direkt danach
+  wieder. In beiden Tests Welt und Würfelwerkzeug so setzen, dass das Ergebnis nicht vom Zufall hängt.
 
 ## Kampf
 
