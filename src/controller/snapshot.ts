@@ -58,6 +58,7 @@ import {
   ranges,
   weaponOf,
   weaponSkill,
+  weaponSkillDm,
   armedWeaponsOf,
   wieldedWeapon,
   canGoUnskilled,
@@ -1223,6 +1224,8 @@ export interface ShopWeapon {
   readonly skill: string | undefined;
   /** Der DM seines Attributs (STR beim Hieb, DEX beim Schuss), wenn er nicht 0 ist (DEX +1). */
   readonly characteristic: string | undefined;
+  /** „ungeübt −5“, wenn er ohne natürliche Waffenkunde und ohne Fertigkeit ist (Supplement 4 S. 11). */
+  readonly unskilled: string | undefined;
 }
 
 export interface BookingItem {
@@ -1950,13 +1953,15 @@ function damageView(campaign: Campaign, index: number, hit: AttackResult): NonNu
 
 function weaponLabel(character: Character, weaponId: string): WeaponChoice {
   const weapon = weaponOf(weaponId);
-  const level = weaponSkill(character, weapon)?.level ?? 0;
+  // Ohne natürliche Waffenkunde (Barbar, Bürokrat, Arzt) steht ungeübt −5 statt einer Stufe 0.
+  const level = weaponSkillDm(character, weapon);
   const skill = skillOf(weapon.uses);
+  const tag = (name: string) => (level < 0 ? `${name} −${-level}` : `${name}-${level}`);
   return {
     id: weapon.id,
     name: weaponName(weapon.id),
-    skill: `${skill.name}-${level}`,
-    short: `${skill.short}-${level}`,
+    skill: tag(skill.name),
+    short: tag(skill.short),
     wielded: wieldedWeapon(character).id === weapon.id,
   };
 }
@@ -2553,6 +2558,7 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
     const weapon = weaponOf(o.item.weapon);
     const magazine = weapon.ammo === undefined ? undefined : offer.find((a) => a.item.id === weapon.ammo);
     const level = owner && weaponSkill(owner, weapon)?.level;
+    const unskilledDm = owner && level === undefined ? weaponSkillDm(owner, weapon) : 0;
     const characteristic = attackCharacteristic(weapon);
     const dm = owner ? characteristicAttackDm(weapon, owner.upp[characteristic.toLowerCase() as keyof Upp]) : 0;
     return [
@@ -2563,6 +2569,7 @@ function shopView(campaign: Campaign, error: string | undefined): ShopView {
         ammo: magazine && weapon.rounds !== undefined ? { ...shopItem(magazine), rounds: weapon.rounds } : undefined,
         skill: level === undefined ? undefined : `${skillOf(weapon.uses).name}-${level}`,
         characteristic: dm === 0 ? undefined : `${characteristic} ${dm > 0 ? '+' : '−'}${Math.abs(dm)}`,
+        unskilled: unskilledDm < 0 ? `ungeübt −${-unskilledDm}` : undefined,
       },
     ];
   });

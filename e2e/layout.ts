@@ -7,12 +7,12 @@ import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Zeit für schwere Läufe (Globus, Shop mit vielen Gegenständen, Raumkarte). Lokal gilt der
- * Wert; auf dem Runner, wo die Suite auf zwei Kernen läuft und die App als ein Bundle lädt, das
- * Dreifache. Ein `test.setTimeout` allein überschreibt nämlich die Zeit aus
- * `playwright.config.ts` – und die ist auf dem Runner höher als die Grundzeit hier.
+ * Wert; mit `CI` derselbe Faktor wie in `playwright.config.ts`, das Vierfache. Ein
+ * `test.setTimeout` allein überschreibt nämlich die Zeit aus der Konfiguration – mit einem
+ * kleineren Faktor fiele ein schwerer Lauf unter die Zeit eines gewöhnlichen.
  */
 export function schwererLauf(ms: number) {
-  test.setTimeout(process.env.CI ? ms * 3 : ms);
+  test.setTimeout(process.env.CI !== undefined ? ms * 4 : ms);
 }
 
 /** Der gerade gewählte Bereich: auf dem Smartphone der Inhalt des Ziehblatts, im Desktop-Modus der Inhalt der Seitenspalte. */

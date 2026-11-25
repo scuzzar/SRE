@@ -1,6 +1,5 @@
 import {
   ageOf,
-  canQuit,
   canTakeCash,
   cascadeOf,
   cascadeOptions,
@@ -14,6 +13,7 @@ import {
   uwpCode,
   MAX_CASH_ROLLS,
   MAX_TERMS,
+  RETIREMENT_TERMS,
   musterSources,
   nextThrow,
   pensionOf,
@@ -81,7 +81,7 @@ export type GenerationAction =
       /** Bei Blade und Gun Combat je Waffe das nötige und vorteilhafte Attribut, gemessen am UPP jetzt. */
       readonly options: readonly { readonly skill: string; readonly name: string; readonly item: string | undefined; readonly characteristic: WeaponCharacteristic | undefined }[];
     }
-  | { readonly kind: 'reenlist'; readonly odds: ThrowOdds; readonly last: boolean; readonly quit: boolean; readonly freeExit: boolean }
+  | { readonly kind: 'reenlist'; readonly odds: ThrowOdds; readonly last: boolean; readonly freeExit: boolean }
   | {
       readonly kind: 'muster';
       readonly left: number;
@@ -447,14 +447,16 @@ export function generationView(generation: Generation, hexes: readonly Hex[], er
     case 'reenlist': {
       const service = state.service!;
       const last = state.terms >= MAX_TERMS;
+      // Vor dem Ruhestand braucht der Bürokrat zum Gehen den gelungenen Wurf, danach nicht mehr.
+      const freeExit = service.freeExit || state.terms >= RETIREMENT_TERMS;
       prompt = last
         ? `Ende von ${term}: nach ${MAX_TERMS} Terms bleibt nur, wer eine 12 würfelt`
-        : service.freeExit === false
+        : !freeExit
           ? `Ende von ${term}: weiterverpflichten? Weg lässt dich hier nur der gelungene Wurf`
           : service.retirement === false
             ? `Ende von ${term}: weiterverpflichten? ${service.name} zahlt keine Ruhestandsbezüge`
             : `Ende von ${term}: weiterverpflichten?`;
-      action = { kind: 'reenlist', odds: odds!, last, quit: canQuit(state), freeExit: service.freeExit };
+      action = { kind: 'reenlist', odds: odds!, last, freeExit };
       break;
     }
     case 'muster':

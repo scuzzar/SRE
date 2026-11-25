@@ -96,10 +96,6 @@ export function serviceOptions(state: CareerState): readonly { readonly service:
   }));
 }
 
-/** Ob die Laufbahn von sich aus in den Ruhestand tritt und vor dem Ruhestand ausscheiden darf. */
-export function canQuit(state: CareerState): boolean {
-  return state.step === 'reenlist' && state.service?.retirement !== false;
-}
 
 /** Die Fertigkeitstabellen der Laufbahn; die mit `minEdu` nur mit genug EDU. */
 export function tableOptions(state: CareerState): readonly { readonly table: Table; readonly available: boolean }[] {

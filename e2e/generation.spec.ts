@@ -277,8 +277,18 @@ test('Automatik der Musterung: der Flyer wählt sein Luftfahrzeug, ehe der Term 
   for (const c of ['STR', 'DEX', 'END', 'INT', 'EDU', 'SOC']) await dialog.getByRole('button', { name: `${c} würfeln` }).click();
   await dialog.getByRole('button', { name: /^Regina/ }).click();
 
-  // Flyer: die Automatik Air Craft-1 fragt sofort nach dem Luftfahrzeug.
-  await dialog.getByRole('group', { name: 'Laufbahn' }).getByRole('button').nth(12).click();
+  // Flyer: die Automatik Air Craft-1 fragt sofort nach dem Luftfahrzeug. Die Musterung ist
+  // gewürfelt; abgelehnt heißt weiterbewerben, also so oft, bis der Flyer ihn nimmt.
+  const popup = page.getByRole('alertdialog');
+  const rejected = dialog.getByText(/abgelehnt/);
+  for (let i = 0; i < 20; i++) {
+    if (await popup.isVisible()) await popup.click();
+    const before = await rejected.count();
+    await dialog.getByRole('group', { name: 'Laufbahn' }).getByRole('button').nth(12).click();
+    await expect.poll(async () => (await prompt.innerText()).includes('Air Craft') || (await rejected.count()) > before).toBe(true);
+    if ((await prompt.innerText()).includes('Air Craft')) break;
+  }
+  if (await popup.isVisible()) await popup.click();
   await expect(prompt).toContainText('Air Craft: Fertigkeit wählen');
   const craft = dialog.getByRole('group', { name: 'Air Craft' });
   await expect(craft.getByRole('button')).toHaveCount(3);
@@ -313,13 +323,21 @@ test('Rangstufen des Barbars: Warrior auf Stufe 2 mit Blade Combat, dann Beförd
       await services.getByRole('button').nth(13).click();
       return;
     }
+    // Weiterdienen, nicht abmustern: auch der Barbar darf gehen (2026-11-24e), soll hier aber bleiben.
+    const stay = dialog.getByRole('button', { name: 'Weiterverpflichten' });
+    if (await stay.isVisible().catch(() => false)) {
+      await stay.click();
+      return;
+    }
     await dialog.locator('.generation-dock button:not([disabled])').first().click();
   }
 
   const seen: string[] = [];
   let warrior = false;
-  // Der Barbar würfelt frei: bis zu vier Läufe, bis einer eine Position erreicht.
-  for (let attempt = 0; attempt < 4 && !warrior; attempt++) {
+  let mustered = false;
+  // Der Barbar würfelt frei: bis zu vier Läufe, bis einer eine Position erreicht. Neu beginnen gibt
+  // es nur nach dem Tod; endet der Dienst mit der Abmusterung, ist Schluss.
+  for (let attempt = 0; attempt < 4 && !warrior && !mustered; attempt++) {
     if (attempt > 0) {
       await dialog.getByRole('group', { name: 'Nach dem Tod' }).getByRole('button', { name: /Neu beginnen/ }).click();
       for (const c of ['STR', 'DEX', 'END', 'INT', 'EDU', 'SOC']) await dialog.getByRole('button', { name: `${c} würfeln` }).click();
@@ -333,7 +351,11 @@ test('Rangstufen des Barbars: Warrior auf Stufe 2 mit Blade Combat, dann Beförd
         warrior = true;
         break;
       }
-      if (/Gestorben|Übernehmen/.test(text)) break;
+      if (/Gestorben/.test(text)) break;
+      if (/Übernehmen/.test(text)) {
+        mustered = true;
+        break;
+      }
       await weiter();
     }
   }

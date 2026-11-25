@@ -282,6 +282,8 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
 });
 
 test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des Felds; NSC platzieren wählt in der NSC-Liste aus, Hierhin reisen plant die Route', async ({ page }) => {
+  // Zwei Globen hintereinander: auf dem Desktop knapp 30 s, also schwer.
+  schwererLauf(60_000);
   await page.goto('/');
   // Ein NSC auf Kessra, dem Aufenthaltsort, noch ohne Feld.
   await openPeople(page, 'NSC');

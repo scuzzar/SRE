@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { openTab, revealed, openHomeGlobe } from './layout';
+import { openTab, revealed, openHomeGlobe, schwererLauf } from './layout';
 
 // Missionen (2026-11-18): der Reiter Missionen mit Editor, Orte immer als Feld auf dem Globus, „Missionen
 // hier“ am Feld.
 test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Feld wiederfinden', async ({ page }) => {
+  // Globus, Editor und Globus-Auswahl: auf dem Desktop über 40 s, also schwer.
+  schwererLauf(90_000);
   await page.goto('/');
   // Die Gruppe landet an einem Hafen von Kessra (Landeplatz, 2026-11-21); ohne Feld gäbe es keinen Aufenthaltsort als Missionsort.
   await openHomeGlobe(page);
