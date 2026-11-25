@@ -49,7 +49,7 @@ export function NameFromCard({ onPick, disabled = false }: { onPick: (name: stri
           <section className="name-picker" role="dialog" aria-modal="true" aria-labelledby="name-picker-title" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-head">
               <h2 id="name-picker-title">Name von der Karte</h2>
-              <span className="muted" style={{ fontSize: 13 }}>
+              <span className="muted name-picker-hint">
                 Vorname und Nachname antippen
               </span>
             </div>

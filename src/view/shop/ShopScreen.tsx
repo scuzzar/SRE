@@ -311,7 +311,7 @@ function BannedDialog({ item, shop, owner, onClose }: { item: ShopItem; shop: Sh
   return (
     <div className="modal">
       <section className="result shop-buy" role="dialog" aria-modal="true" aria-labelledby="buy-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
+        <div className="sheet-head centered">
           <h2 id="buy-title" className="shop-buy-title">{item.label}</h2>
           <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
             <CloseIcon />
@@ -363,7 +363,7 @@ function SellDialog({ selling, shop, onClose }: { selling: Selling; shop: ShopVi
     return (
       <div className="modal">
         <section className="result shop-buy" role="dialog" aria-modal="true" aria-labelledby="sell-title">
-          <div className="sheet-head" style={{ alignItems: 'center' }}>
+          <div className="sheet-head centered">
             <h2 id="sell-title" className="shop-buy-title">
               {item.label} verkaufen
             </h2>
@@ -414,7 +414,7 @@ function SellDialog({ selling, shop, onClose }: { selling: Selling; shop: ShopVi
   return (
     <div className="modal">
       <section className="result shop-buy" role="dialog" aria-modal="true" aria-labelledby="sell-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
+        <div className="sheet-head centered">
           <h2 id="sell-title" className="shop-buy-title">
             {item.label} verkaufen
           </h2>

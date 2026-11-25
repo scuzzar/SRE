@@ -23,7 +23,7 @@ export function JourneySheet({ journey }: { journey: JourneyView }) {
   return (
     <div className="modal">
       <section className="result journey-sheet" role="dialog" aria-modal="true" aria-labelledby="journey-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
+        <div className="sheet-head centered">
           <h2 id="journey-title" className="journey-title">
             {result ? (result.arrived ? 'Angekommen' : 'Unterwegs') : journey.mode === 'ship' ? 'Sprung' : 'Reise'}: {journey.fromName} → {journey.toName}
           </h2>

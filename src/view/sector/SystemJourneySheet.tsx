@@ -20,7 +20,7 @@ export function SystemJourneySheet({ journey }: { journey: SystemJourneyView }) 
   return (
     <div className="modal">
       <section className="result journey-sheet" role="dialog" aria-modal="true" aria-labelledby="system-journey-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
+        <div className="sheet-head centered">
           <h2 id="system-journey-title" className="journey-title">
             {result ? (result.arrived ? 'Angekommen' : 'Unterwegs') : 'Reise im System'}: {journey.fromName} → {journey.toName}
           </h2>

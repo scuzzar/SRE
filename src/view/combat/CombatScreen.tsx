@@ -304,7 +304,7 @@ export function HealDialog({ patient, healing, note, onClose }: { patient: Patie
   return (
     <div className="modal">
       <section className="result heal" role="dialog" aria-modal="true" aria-labelledby="heal-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
+        <div className="sheet-head centered">
           <h2 id="heal-title" className="shop-buy-title">
             {patient.name} heilen
           </h2>

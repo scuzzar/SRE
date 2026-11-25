@@ -100,7 +100,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
   return (
     <div className="overlay">
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
+        <div className="sheet-head centered">
           <h2 id="editor-title">{isNew ? (editor.input.npc ? 'Neuer NSC' : 'Neuer Charakter') : 'Charakter bearbeiten'}</h2>
           <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={cancel}>
             <CloseIcon />
@@ -372,7 +372,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
             </label>
           )}
           {!isNew && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="remove-block">
               {confirmRemove ? (
                 <button type="button" className="ghost danger" onClick={() => game.removeCharacter(editor.id!)}>
                   {editor.inLog ? 'Wirklich ausblenden?' : 'Wirklich löschen?'}
@@ -395,7 +395,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
             Abbrechen
           </button>
           <span className="count" />
-          <button type="button" className="primary" style={{ padding: '0 24px' }} onClick={save}>
+          <button type="button" className="primary wide" onClick={save}>
             Speichern
           </button>
         </div>

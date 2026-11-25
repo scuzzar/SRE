@@ -272,6 +272,11 @@ button:disabled {
   font-weight: 600;
 }
 
+/* Die Überschrift über einer Liste im Blatt, eine Stufe kleiner als zwischen Bereichen. */
+.section-title.small {
+  font-size: 11px;
+}
+
 .kicker {
   font-size: 11px;
   letter-spacing: 0.1em;
@@ -967,6 +972,11 @@ button:disabled {
 .sheet-head h2 {
   margin: 0;
   font-size: 16px;
+}
+
+/* Kopf mit Knöpfen statt Text neben dem Titel: die fluchten auf Mitte, nicht auf die Grundlinie. */
+.sheet-head.centered {
+  align-items: center;
 }
 
 .sheet-body {
@@ -1885,11 +1895,23 @@ button:disabled {
   font-size: 16px;
 }
 
+/* Der Knopf am Blattrand, breit genug für sein langes Wort. */
+.primary.wide {
+  padding: 0 24px;
+}
+
 .form {
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 4px 16px 16px;
+}
+
+/* Der Knopf, ein Eintrag loszuwerden, mit seinem Hinweis direkt darunter. */
+.remove-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .field {
@@ -2262,10 +2284,12 @@ button:disabled {
   background: var(--accent);
 }
 
+/* Die Marke in der Mitte: ab hier trägt die Last den Charakter. */
 .stash-bar > i {
   position: absolute;
   top: -3px;
   bottom: -3px;
+  left: 50%;
   width: 2px;
   background: var(--text);
 }
@@ -2838,6 +2862,10 @@ button:disabled {
   padding-right: 4px;
 }
 
+.name-picker-hint {
+  font-size: 13px;
+}
+
 .name-choices .card-grid {
   gap: 4px;
 }
@@ -2886,6 +2914,11 @@ button:disabled {
 
 .about p {
   margin: 0 0 8px;
+}
+
+/* Die Antwort auf den Vibrationsversuch rückt vom Knopf ab. */
+.about .haptic-answer {
+  margin-top: 8px;
 }
 
 .about a {
@@ -3277,6 +3310,12 @@ button:disabled {
   filter: saturate(0.4) brightness(0.75);
 }
 
+/* Was gewürfelt wird, zwischen Kicker und Zielwert. */
+.roll-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .roll-target {
   display: flex;
   flex-direction: column;
@@ -3424,6 +3463,11 @@ button:disabled {
 
 .roll-result.judged .roll-after {
   animation: fade-up 240ms 200ms ease-out both;
+}
+
+/* Die Rechnung unter dem Urteil, lesbarer als die beschrifteten Teile darüber. */
+.roll-detail {
+  font-size: 14px;
 }
 
 /* Inspirationskarte, so inszeniert wie der Würfelwurf: Die Karte fliegt mit dem Rücken nach oben

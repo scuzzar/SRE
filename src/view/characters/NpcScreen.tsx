@@ -122,7 +122,7 @@ export function NewNpcSheet({ npcs, onClose, here }: { npcs: NpcScreenView; onCl
   return (
     <div className="overlay">
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="new-npc-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
+        <div className="sheet-head centered">
           <h2 id="new-npc-title">{here === undefined ? 'Neuer NSC' : `Neuer NSC ${here}`}</h2>
           <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={onClose}>
             <CloseIcon />

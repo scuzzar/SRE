@@ -30,9 +30,15 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
   Papiertöne (`#f3e6c8`, `rgba(228, 214, 186, .9)`, `rgba(238, 224, 196, .85)`), Welt- und Icon-Töne
   (`#1a1a1a`, `#262626`, `#4a4844`, `#77736c`) sowie Blau, Grün, Orange, Gelb und Violett für Status
   auf Welt-, Karten- und Kampfbildschirm (`#6ec8ff`, `#7ee08a`, `#ffaa3c`, `#be96ff`, `#ff6b6b` …).
-  Dazu die 40 `style={{ … }}` in den Komponenten in Klassen überführen und die 81 Canvas-Farben in
-  `SpaceScreen.tsx`, `GlobeScreen.tsx` und `icons.tsx`, die eine Palette in TypeScript brauchen,
-  weil `var()` im Canvas nicht greift.
+  Am 25. November 2026 auch die gestalterischen `style={{ … }}` in Klassen überführt – 24 Stellen,
+  neue Klassen `.sheet-head.centered`, `.section-title.small`, `.primary.wide`, `.remove-block`,
+  `.roll-name`, `.roll-detail`, `.name-picker-hint`, `.haptic-answer` und die Mittelmarke im
+  Lastbalken. Offen bleiben 16 `style={{ … }}`, die Zahlen aus dem Model tragen (Position des
+  Zuggeists, Breite der Lastanzeige, `--face`, `--deal`, `--n`, `--level`, `--hold-ms`, Spaltenzahl
+  der Umschalter), und 13 weitere `style={ … }` für die Strahlen des Kampfstands; für beide braucht
+  das Handbuch erst eine Regel, wie mit Werten aus dem Model umzugehen ist. Dazu die 81
+  Canvas-Farben in `SpaceScreen.tsx`, `GlobeScreen.tsx` und `icons.tsx`, die eine Palette in
+  TypeScript brauchen, weil `var()` im Canvas nicht greift.
 - [ ] **Zwei wackelnde GUI-Tests fest gegen den Zufall:** `e2e/shop.spec.ts:131` („Gruppe platzieren")
   scheiterte am 25. November 2026 an `Keine Welt entstanden`, `e2e/encounter.spec.ts:206` (Tiertabelle)
   wartete auf einen Wurf, den der Zufall gerade nicht brachte. Beide bestehen einzeln direkt danach

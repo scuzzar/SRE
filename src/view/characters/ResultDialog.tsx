@@ -57,7 +57,7 @@ export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
         }}
       >
         <span className="kicker">{result.kind === 'attack' ? (result.fire === 'burst' ? 'Feuerstoß' : result.fire === 'shotgun' ? 'Schrotschuss' : 'Angriff') : 'Probe'}</span>
-        <span style={{ fontSize: 15, fontWeight: 600 }}>{rollTitle(result)}</span>
+        <span className="roll-name">{rollTitle(result)}</span>
         {attack && (
           <ol className="roll-parts" aria-hidden="true">
             {parts.map((part, i) => (
@@ -95,7 +95,7 @@ export function ResultDialog({ result }: { result: TaskItem | AttackItem }) {
         </h2>
         {result.kind === 'attack' && result.rest.length > 0 && phase >= VERDICT && <VolleyRolls rest={result.rest} />}
         <div className="roll-after">
-          <span id="result-detail" className="mono muted" style={{ fontSize: 14 }}>
+          <span id="result-detail" className="mono muted roll-detail">
             {result.kind === 'attack' ? `2W6: ${a} + ${b} = ${a + b}, braucht ${Math.max(2, result.need)}+` : taskDetail(result)}
           </span>
           {/* Für Screenreader: Die Teile des DM stehen oben schon sichtbar, aber dort nur für das Auge. */}

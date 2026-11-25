@@ -201,7 +201,7 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
   return (
     <div className="overlay">
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="mission-editor-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
+        <div className="sheet-head centered">
           <h2 id="mission-editor-title">{isNew ? 'Neue Mission' : 'Mission bearbeiten'}</h2>
           <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={() => game.closeMissionEditor()}>
             <CloseIcon />
@@ -333,7 +333,7 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
             {!here && missions.hereBlocker && <p className="small-label">{missions.hereBlocker}</p>}
           </fieldset>
           {!isNew && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="remove-block">
               {confirmRemove ? (
                 <button type="button" className="ghost danger" onClick={() => game.deleteMission(editor.id!)}>
                   {editor.inLog ? 'Wirklich ausblenden?' : 'Wirklich löschen?'}
@@ -353,7 +353,7 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
             Abbrechen
           </button>
           <span className="count" />
-          <button type="button" className="primary" style={{ padding: '0 24px' }} onClick={save}>
+          <button type="button" className="primary wide" onClick={save}>
             Speichern
           </button>
         </div>

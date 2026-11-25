@@ -55,7 +55,7 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
           <StashPack stash={view.stash} />
           {view.dead.length > 0 && (
             <div className="fallen">
-              <h3 className="section-title" style={{ fontSize: 11 }}>
+              <h3 className="section-title small">
                 Verstorben
               </h3>
               <ul>
@@ -83,7 +83,7 @@ export function CharactersScreen({ view }: { view: Snapshot }) {
           )}
           {view.retired.length > 0 && (
             <div className="retired">
-              <h3 className="section-title" style={{ fontSize: 11 }}>
+              <h3 className="section-title small">
                 Ausgeblendet
               </h3>
               <ul>

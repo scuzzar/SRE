@@ -31,7 +31,7 @@ export function CampaignSheet({
   return (
     <div className="overlay">
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="campaigns-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
+        <div className="sheet-head centered">
           <h2 id="campaigns-title">Kampagnen</h2>
           <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={() => game.closeCampaigns()}>
             <CloseIcon />

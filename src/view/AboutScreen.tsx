@@ -168,7 +168,7 @@ function Vibration() {
         </button>
       )}
       {answer && (
-        <p className="muted" role="status" style={{ marginTop: 8 }}>
+        <p className="muted haptic-answer" role="status">
           {answer}
         </p>
       )}

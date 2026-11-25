@@ -80,7 +80,7 @@ export function GenerationSheet({ generation, log }: { generation: GenerationVie
       }}
     >
       <section className="sheet generation" role="dialog" aria-modal="true" aria-labelledby="generation-title">
-        <div className="sheet-head" style={{ alignItems: 'center' }}>
+        <div className="sheet-head centered">
           <h2 id="generation-title">Charaktererschaffung</h2>
           <span className="header-right">
             {confirmDiscard ? (
@@ -329,7 +329,7 @@ export function CareerList({
   return (
     <section className="career" aria-label="Lebenslauf">
       {heading && (
-        <h3 className="section-title" style={{ fontSize: 11 }}>
+        <h3 className="section-title small">
           Lebenslauf
         </h3>
       )}

@@ -212,7 +212,7 @@ export function StashPack({ stash }: { stash: StashView }) {
           </span>
           <span className={['stash-bar', stash.burden > 0 ? `burden-${stash.burden}` : ''].filter(Boolean).join(' ')} aria-hidden="true">
             <span style={{ width: `${Math.min(100, (ratio / 2) * 100)}%` }} />
-            <i style={{ left: '50%' }} />
+            <i />
           </span>
           {stash.burden > 0 && (
             <span className="stash-burden" role="status">
