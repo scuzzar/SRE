@@ -5,10 +5,7 @@ immer gilt: Was das Modell berührt, geht zuerst ins Domänenmodell und wird fre
 Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/`](docs/) (`regeln-kampf.md`, `regeln-laufbahnen.md`,
 `regeln-schiffe.md`, `regeln-sternsystem.md`).
 
-## Die Karte führt
-
-Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächstes:
-
+## UI
 - [ ] **Entschlacken (Schritt 3):** jeden Bereich für das Ziehblatt und die Seitenspalte des Desktops
   durchgehen: Kampf und Kampfsimulation kompakter, damit sie halb hochgezogen gehen. Die Reihe
   unten folgt dem GUI-Handbuch: die eigene Reihe eines Bereichs ersetzt die des Logs.
