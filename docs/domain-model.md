@@ -1298,7 +1298,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   - Jede `Card` würfelt beim Ziehen einmal 1 bis 100 (`oracle`). Das **Orakelfeld** der Karte zeigt
     daraus die Antwort für alle drei Stufen nebeneinander, wie die *Likely Odds* des GMA. Weil es
     ein Wurf ist, widersprechen sich die Stufen nie: Sagt Gering Ja, sagen es auch Mittel und Hoch.
-  - Man tippt die Stufe an, die zur Frage passt (`pickedOdds`), höchstens eine. Beim Bestätigen
+  - Man wählt die Stufe, die zur Frage passt (`pickedOdds`), höchstens eine. Beim Bestätigen
     steht die Antwort **in der Kartenauswahl** (`CardPick`): der Wurf (`oracle`), die Stufe
     (`odds`) und ihre Chance von damals (`chance`). Eine Frage, ein Logeintrag, eine Deutung:
     Antwort und gewählte Felder stehen im selben Kasten. Eine Kartenauswahl braucht mindestens
@@ -1318,12 +1318,11 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     | Mittel (50 %) | 1–10 | 11–40 | 41–50 | 51–60 | 61–90 | 91–100 |
     | Gering (25 %) | 1–5 | 6–20 | 21–25 | 26–40 | 41–85 | 86–100 |
 
-  - **Den Knopf „Ja/Nein“ gibt es nicht mehr**, auch nicht in der Leiste der Charaktererschaffung:
-    Wer das Orakel fragt, zieht eine Karte. Die Frage schreibt man oben auf die offene Karte
-    (`Card.question`, freiwillig, wie bisher).
-  - **Die gewählte Stufe der Kampagne (`Campaign.odds`) gilt nur noch für Proben.** Die App zeigt
-    die Auswahl erst, wenn am Charakter oben eine Fertigkeit gewählt ist. Sie bleibt stehen wie
-    bisher.
+  - **Eine eigene Ja/Nein-Frage gibt es nicht mehr**, auch nicht in der Charaktererschaffung: Wer
+    das Orakel fragt, zieht eine Karte. Die Frage gehört zur offenen Karte (`Card.question`,
+    freiwillig, wie bisher).
+  - **Die gewählte Stufe der Kampagne (`Campaign.odds`) gilt nur noch für Proben.** Sie bleibt
+    stehen wie bisher.
   - **Alte Antworten** (die frühere `OracleAnswer`, vor 2026-11-14d) werden beim Laden und beim
     Import zu Kartenauswahlen ohne Felder: Frage, Wurf, Stufe und Chance bleiben, ihre Stelle im Log
     auch, also auch ihre Deutungen. Ja bleibt Ja, Nein bleibt Nein; weil `/answer` aus Wurf und
@@ -1333,11 +1332,10 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   - Ist der Orakelwurf der Karte ein **Pasch bis 55** (11, 22, 33, 44, 55; `/randomEvent`), passiert
     etwas Unerwartetes, unabhängig von der Antwort. Die Karte würfelt dann gleich beim Ziehen, nach
     dem Orakelwurf, den **Ereignisfokus** 1–100 (`eventFocus`); ohne Pasch gibt es keinen.
-  - Wie bei Mythic gilt es nur für eine Frage: **Erst wenn man eine Stufe im Orakelfeld gewählt hat**,
-    zeigt die Karte über dem Orakelfeld ein rotes Band „Zufallsereignis“ mit dem Fokus (etwa „NSC
-    handelt“) und hebt das Feld *Zufallsereignis* (Aktion, Beschreibung) hervor; das sind schon
-    Mythics Bedeutungstabellen für Ereignisse. Was man davon nutzt, tippt man wie sonst an. Vorher
-    verrät die Karte nichts (Entscheidung des Owners).
+  - Wie bei Mythic gilt es nur für eine Frage: **Erst wenn eine Stufe im Orakelfeld gewählt ist**,
+    gibt es das Ereignis mit seinem Fokus (etwa „NSC handelt“); das Feld *Zufallsereignis* (Aktion,
+    Beschreibung) der Karte sind schon Mythics Bedeutungstabellen dafür, man wählt daraus wie aus
+    jedem Feld. Vorher gibt es kein Ereignis (Entscheidung des Owners).
   - In den Log kommt das Ereignis ebenso nur mit gewählter Stufe: Die Kartenauswahl hält den
     Fokuswurf fest (`eventFocus`), und der Fokus (`/focus`) folgt aus den Referenzdaten. Der Log zeigt „Zufallsereignis: NSC handelt“
     im Kasten der Antwort.
@@ -1351,39 +1349,33 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   - Die Bereiche des Ereignisfokus sind aus dem Gedächtnis nach Mythic GME 2e übernommen; beim
     nächsten Blick ins Buch abgleichen (steht in der To-do).
 - **Deutungen und Notizen.** Beide sind ein `Note` mit Text, der nicht leer ist (Leerraum am Rand
-  fällt weg). Seit 2026-11-14d schreibt man sie in einem eigenen Blatt: *Deuten* sitzt am Ergebnis,
-  *Notiz* unten in der Knopfreihe; die Frage schreibt man auf die Karte. Seit 2026-11-22c gibt es
-  unten in der Aktionsleiste kein *Deuten* mehr (dort steht der Knopf für einen Tag, siehe *Zeit vergehen
-  lassen*).
+  fällt weg). Die Frage gehört zur Karte, nicht in eine Notiz.
   - Eine **Deutung** verweist auf genau ein Ergebnis (`interprets`): eine Orakelantwort, einen Wurf,
     eine Kartenauswahl, eine Probe, einen Angriff oder einen Schadenswurf, nie auf eine Notiz oder Deutung, und immer auf einen
-    früheren Eintrag. Man deutet das Ergebnis, an dem man auf *Deuten* tippt: am neuesten steht der
-    Knopf immer, ein älteres klappt man dafür im Log auf. Ein Ergebnis kann mehrere Deutungen haben.
+    früheren Eintrag, das man dafür auswählt. Ein Ergebnis kann mehrere Deutungen haben.
   - Eine **Notiz** verweist auf nichts; sie steht für sich im Log.
   - Wie jeder Logeintrag wird ein `Note` angehängt. Seit 2026-11-14e lässt sich
-    sein **Text ändern**: Der Stift an der Notiz oder Deutung öffnet das Blatt mit dem alten Text;
-    Speichern ersetzt den Text und setzt `editedAt`, der Log zeigt dann „geändert“ mit der Uhrzeit.
+    sein **Text ändern**: Das ersetzt den Text und setzt `editedAt` (der Zeitpunkt der Änderung).
     Zeitpunkt, Stelle im Log und das gedeutete Ergebnis bleiben; ein leerer Text geht nicht (dafür
     gibt es Löschen). Alle anderen Logeinträge bleiben unveränderlich.
-  - Der Log zeigt eine Deutung direkt unter ihrem Ergebnis, im selben Kasten, auch wenn sie später
-    geschrieben wurde; ihre eigene Zeit behält sie. Das ist Sache der Anzeige: Die Reihenfolge im Log
-    bleibt die der Ereignisse.
-  - **Ein Ergebnis löschen löscht seine Deutungen mit.** Die Rückfrage sagt das („Eintrag mit
-    1 Deutung endgültig löschen?“). Eine Deutung allein lässt sich löschen, ihr Ergebnis bleibt. Außer
+  - Eine Deutung behält ihre eigene Zeit; die Reihenfolge im Log bleibt die der Ereignisse, auch
+    wenn die Anzeige sie bei ihrem Ergebnis zeigt.
+  - **Ein Ergebnis löschen löscht seine Deutungen mit.** Eine Deutung allein lässt sich löschen, ihr
+    Ergebnis bleibt. Außer
     dem Schadenswurf (siehe *Angriff*) ist das die einzige Stelle, an der ein Logeintrag auf einen
     anderen verweist; die Regel *Worauf der
     Log verweist, wird nie gelöscht* gilt für Charaktere und Referenzdaten, nicht für den Log selbst.
   - Die **Kampagnendatei** enthält Deutungen und Notizen; beim Import muss jede Deutung auf ein
     früheres Ergebnis derselben Datei verweisen, sonst wird nichts importiert.
-  - Auch die Leiste der Charaktererschaffung hat *Deuten* und *Notiz*. Weil sie den Log nicht
-    zeigt, gilt eine Deutung dort immer dem neuesten Ergebnis; die Leiste sagt, welchem.
+  - Auch in der Charaktererschaffung gibt es Deutungen und Notizen; eine Deutung gilt dort immer dem
+    neuesten Ergebnis.
 - **Karte ziehen.** Ziehen legt eine `Card` an: für jedes Feld aller Bereiche aus jeder seiner
   Spalten einen nicht ausgeblendeten Eintrag zufällig (`drawn`), die Themen-Tafeln eingeschlossen,
   in der Reihenfolge der Bereiche, Felder und Spalten. Ein Feld mit zwei Spalten zieht so ein
   **Paar**. Ausgeblendete Felder übergeht es (siehe *Einträge austauschen*).
   Eine gestellte Frage geht auf die Karte über. Die Namen stehen auf der Themen-Tafel *NSC* in
   sechs Feldern; jedes zieht ein Paar aus Vor- und Nachname (siehe *Namen*).
-- **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Antippen nimmt ein gezogenes Feld
+- **Die Karte ist offen, bis man sie bestätigt oder verwirft.** Man nimmt ein gezogenes Feld
   in die Auswahl (`picked`) auf oder wieder heraus, mit allem, was es gezogen hat: Ein Paar nimmt
   man immer ganz, nie einen Begriff allein. Ausgewählt sein kann nur ein Feld, das gezogen wurde. *Verwerfen* schließt die Karte ohne Logeintrag. *Neu ziehen* ersetzt sie durch eine neue;
   die Auswahl geht verloren, die Frage bleibt.
@@ -1401,7 +1393,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   - **Jack-of-all-Trades** zählt in jeder Probe als Stufe 0: DM ±0, egal welche Stufe der Charakter
     darin hat. Wer es hat (nicht ausgeblendet), nimmt es für alles, wofür ihm die Fertigkeit fehlt;
     „ohne Fertigkeit“ gibt es für ihn nicht. Weil seine Stufe nichts ändert, zeigt die App sie
-    nicht: auf der Karte „JoT“, in der Probe „Jack-of-all-Trades ±0“.
+    nicht.
   - Erst danach lassen sich Attribute dazuwählen. Ein gewähltes Attribut gibt +1 ab `bonusFrom` (9),
     −1 bis `malusUpTo` (5), sonst ±0. Attribute mit ±0 sind nicht wählbar.
   - Der Zielwert kommt aus der gewählten Stufe. Der nötige Wurf ist Zielwert minus DM, die
@@ -2557,14 +2549,12 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Behandlung mit Tagen (`dice`) war die einer schweren Wunde. Die Kampagnendatei prüft das nicht
     nach, denn ein später gelöschter Schadenswurf oder geänderte Attribute ändern rückwirkend, was
     der Log ergibt; sie prüft nur, dass Tage zu einer Behandlung gehören und 5W6 sind.
-- **Charakter oben.** Oben im Orakel-Screen steht ein Charakter der Kampagne, der **Charakter oben**
-  (`focus`); für ihn würfelt man Proben, ohne den Screen zu wechseln. Wischen zeigt den nächsten
-  bzw. vorigen. Infrage kommen nur Lebende, die nicht ausgeblendet sind, in der Reihenfolge der
-  Charaktere der Kampagne.
+- **Charakter oben.** Ein Charakter der Kampagne ist der **Charakter oben** (`focus`); für ihn
+  würfelt man Proben. Infrage kommen nur Lebende, die nicht ausgeblendet sind, in der Reihenfolge
+  der Charaktere der Kampagne.
   - Die Kampagne speichert ihn, er übersteht also einen Neustart und steht in der Kampagnendatei.
     Er verweist immer auf einen Charakter derselben Kampagne, der lebt und nicht ausgeblendet ist.
-    Keinen gibt es nur, wenn es keinen solchen Charakter gibt; dann bietet der Orakel-Screen oben an,
-    einen anzulegen oder nach Regeln zu erschaffen.
+    Keinen gibt es nur, wenn es keinen solchen Charakter gibt.
   - Stirbt der Charakter oben, wird er ausgeblendet oder gelöscht, rückt der nächste Lebende nach,
     hinter dem letzten der vorige. Ein neuer Charakter, von Hand angelegt oder aus der Erschaffung
     übernommen, wird zum Charakter oben. Wird ein Toter wieder lebendig oder ein Ausgeblendeter
@@ -2572,8 +2562,6 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     dieser.
   - Kampagnen und Kampagnendateien von vor dieser Regel haben keinen Charakter oben; sie bekommen
     den ersten Lebenden, der nicht ausgeblendet ist.
-  - Der Charakter-Screen bleibt für die Verwaltung: anlegen, nach Regeln erschaffen, bearbeiten,
-    Details mit Lebenslauf, Verstorbene. Proben würfelt man dort nicht mehr.
 - **Charakter.** Charaktere legt man in der App an und bearbeitet sie, von Hand oder über die
   Charaktererschaffung (siehe dort). Die sechs UPP-Werte liegen zwischen 0 und 15. Eine
   Fertigkeit kommt bei einem Charakter höchstens einmal vor, ihre Stufe ist 0 oder mehr; Fertigkeiten
