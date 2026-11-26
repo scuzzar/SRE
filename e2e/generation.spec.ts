@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { characters, host } from './layout';
+import { characters, host, wuerfelgleich } from './layout';
 
 async function openCharacters(page: Page) {
   await page.goto('/');
@@ -215,6 +215,8 @@ test.describe('mit Animation', () => {
 });
 
 test('Laufbahnen aus Supplement 4: Pirate und Bureaucrat in der Wahl, der Bürokrat braucht den gelungenen Wurf (2026-11-24a)', async ({ page }) => {
+  // Fest gewürfelt (2026-11-26): Der Bürokrat überlebt den ersten Term jedes Mal.
+  await wuerfelgleich(page);
   await campaignWithWorld(page);
   await host(page).getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
   const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
@@ -260,7 +262,7 @@ test('Laufbahnen aus Supplement 4: Pirate und Bureaucrat in der Wahl, der Bürok
   for (let i = 0; i < 60; i++) {
     const text = await prompt.innerText();
     if (text.startsWith('Ende von Term 1')) break;
-    if (text.startsWith('Gestorben')) test.skip(true, 'der Bürokrat ist im ersten Term gestorben');
+    expect(text, 'Mit diesen Würfeln überlebt der Bürokrat den ersten Term').not.toMatch(/^Gestorben/);
     if (text.includes('Gehobener Dienst')) rangwurf = text;
     await weiter();
   }
@@ -300,6 +302,8 @@ test('Automatik der Musterung: der Flyer wählt sein Luftfahrzeug, ehe der Term 
 });
 
 test('Rangstufen des Barbars: Warrior auf Stufe 2 mit Blade Combat, dann Beförderung (2026-11-24c)', async ({ page }) => {
+  // Fest gewürfelt (2026-11-26): Der Barbar erreicht jedes Mal die Position Warrior.
+  await wuerfelgleich(page);
   await campaignWithWorld(page);
   await host(page).getByRole('button', { name: '+ Nach Regeln erschaffen' }).click();
   const dialog = page.getByRole('dialog', { name: 'Charaktererschaffung' });
@@ -361,7 +365,7 @@ test('Rangstufen des Barbars: Warrior auf Stufe 2 mit Blade Combat, dann Beförd
   }
   // Die Rangtafel des Barbars kennt nur Warrior und Chief; kein Rang einer anderen Laufbahn taucht auf.
   expect(seen.filter((t) => /Ensign|Clerk|Henchman|Lieutenant|Captain|Pilot ·/.test(t))).toEqual([]);
-  if (!warrior) test.skip(true, 'der Barbar hat im geprüften Lauf keine Position erreicht');
+  expect(warrior, 'Mit diesen Würfeln erreicht der Barbar die Position Warrior').toBe(true);
   // Die Gabe des Warrior ist eine Gruppe: Blade Combat-1 fragt nach der Klinge.
   const blade = dialog.getByRole('group', { name: 'Blade Combat' });
   await expect(blade.getByRole('button').first()).toBeVisible();

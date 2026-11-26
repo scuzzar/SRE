@@ -11,13 +11,6 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
   keinen eigenen Namen in den Begriffen der Oberfläche (`docs/gui-handbuch.md`). Owner schlägt vor,
   dann ins Handbuch und in die Kommentare.
 
-## Tests
-
-- [ ] **Die zwei Laufbahn-Tests fest würfeln** (`e2e/generation.spec.ts`): Sie steigen aus, wenn
-  der Lauf zufällig ungünstig ausgeht (der Bürokrat stirbt im ersten Term, der Barbar erreicht keine
-  Position), und zählen dann als übersprungen. Mit `wuerfelgleich` wie die drei Wackelkandidaten vom
-  26. November 2026, so dass sie jedes Mal laufen.
-
 ## Kampf
 
 ### 1. Weitere Regeln aus der Starter Edition
