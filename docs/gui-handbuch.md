@@ -319,37 +319,6 @@ Feld.
 
 ---
 
-## Abläufe je Bereich
-
-Wie man auf dem Bildschirm tut, was das [Domänenmodell](domain-model.md) als Regel festlegt. Die
-Regel steht dort, der Ablauf hier (getrennt seit 26. November 2026, siehe To-do).
-
-### Log
-
-- **Orakel:** Eine Frage stellt man, indem man eine Karte zieht (*Karte* in der Aktionsleiste); die
-  Frage schreibt man oben auf die offene Karte. Das Orakelfeld zeigt die Antwort für alle drei
-  Stufen; man tippt die passende an.
-- **Zufallsereignis:** Erst wenn eine Stufe gewählt ist, zeigt die Karte über dem Orakelfeld ein
-  rotes Band „Zufallsereignis“ mit dem Fokus und hebt das Feld *Zufallsereignis* hervor; vorher
-  verrät sie nichts.
-- **Karte:** Ein Tipp nimmt ein gezogenes Feld in die Auswahl oder heraus. *Bestätigen* ist
-  ausgegraut, bis etwas gewählt ist; *Verwerfen* und *Neu ziehen* stehen daneben.
-- **Deutung und Notiz:** *Deuten* sitzt am Ergebnis im Log (am neuesten immer, ein älteres klappt
-  man auf), *Notiz* in der Aktionsleiste; beide öffnen einen Kurzdialog. Der Stift an einer Notiz
-  oder Deutung öffnet ihn mit dem alten Text zum Ändern, der Log zeigt danach „geändert“ mit der
-  Uhrzeit. Eine Deutung steht im selben Kasten wie ihr Ergebnis, auch wenn sie später kam.
-- **Löschen:** Die Rückfrage nennt die Deutungen, die mitgehen („Eintrag mit 1 Deutung endgültig
-  löschen?“).
-- **Probe:** Ein Tipp auf eine Fertigkeit in der Charakterleiste bereitet die Probe vor; erst dann
-  werden die Attribute Kästchen zum Dazuwählen und die Stufe erscheint über der Aktionsleiste, aus
-  *2W6* wird *Probe*. Jack-of-all-Trades heißt auf der Karte „JoT“, in der Probe
-  „Jack-of-all-Trades ±0“.
-- **Charakterleiste:** Wischen wechselt den Charakter oben. Gibt es keinen lebenden Charakter,
-  bietet sie an, einen anzulegen oder nach Regeln zu erschaffen. Proben würfelt man nur hier, nicht
-  im Bereich Charaktere, der zum Verwalten dient.
-- **Charaktererschaffung:** Ihre Aktionsleiste hat *Deuten* und *Notiz*; sie sagt, welchem
-  Ergebnis die Deutung gilt.
-
 ## Texte
 
 - Deutsch, kurz, mit den Begriffen aus der Tabelle „Begriffe“ im Domänenmodell; Regelbegriffe aus
