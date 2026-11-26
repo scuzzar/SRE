@@ -14,6 +14,17 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
   Bedienung noch vermischt (rund 120 Zeilen mit Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt
   zuerst nach der Rolle“). In einem eigenen Durchgang trennen, Bereich für Bereich: Die Regel
   bleibt im Modell, der Ablauf auf dem Bildschirm kommt ins Handbuch oder fällt weg.
+- [ ] **Name für die Blätter im Bereich Schiff:** Werft, Software-Werft, das Blatt am Posten und am
+  Programm stehen an der Stelle des Bereichs, ähnlich wie ein Feld (`SheetFrame`), haben aber noch
+  keinen eigenen Namen in den Begriffen der Oberfläche (`docs/gui-handbuch.md`). Owner schlägt vor,
+  dann ins Handbuch und in die Kommentare.
+
+## Tests
+
+- [ ] **Die zwei Laufbahn-Tests fest würfeln** (`e2e/generation.spec.ts`): Sie steigen aus, wenn
+  der Lauf zufällig ungünstig ausgeht (der Bürokrat stirbt im ersten Term, der Barbar erreicht keine
+  Position), und zählen dann als übersprungen. Mit `wuerfelgleich` wie die drei Wackelkandidaten vom
+  26. November 2026, so dass sie jedes Mal laufen.
 
 ## Kampf
 
