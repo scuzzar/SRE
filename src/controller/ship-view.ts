@@ -90,7 +90,7 @@ const softwareKinds: Record<SoftwareKind, string> = { offensive: 'Offensiv', def
 
 /** Ein Posten im Unterreiter Crew (2026-11-22d): Stelle, Name, Besetzung und was die Fertigkeit wert ist. */
 export interface CrewPostRow {
-  /** Die Stelle in `Ship.crew`; das Blatt am Posten arbeitet mit ihr. */
+  /** Die Stelle in `Ship.crew`; die Detailseite am Posten arbeitet mit ihr. */
   readonly at: number;
   readonly role: CrewRole;
   /** Der Name des Posten, beim Gunner mit Nummer: „Gunner 2“. */

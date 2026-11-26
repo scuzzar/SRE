@@ -13,7 +13,7 @@ import { deckImage } from './deck-image';
 /** Die Ansicht unter den Kacheln: eigene Deckpläne, die Crew und der Rechner. */
 type Tab = 'deck' | 'crew' | 'computer';
 
-/** Das Blatt, das als Feld an der Stelle des Bereichs steht; die Werft ist ein Blatt, kein eigener Unterreiter. */
+/** Die Detailseite, die an der Stelle des Bereichs steht; die Werft ist eine, kein eigener Unterreiter. */
 type Sheet =
   | { readonly kind: 'yard' }
   | { readonly kind: 'buy'; readonly design: string; readonly method: 'cash' | 'bank' }
@@ -31,7 +31,7 @@ type Boat = NonNullable<ShipView['ship']>;
 /**
  * Der Bereich Schiff: oben die Leiste mit Name (Stift zum Umbenennen) und Entwurf, dazu die Kasse;
  * darunter die Stände als Kacheln und zwei Ansichten – die eigenen Deckpläne und die Details.
- * Unten im Dock: Bearbeiten, Treibstoff und die goldene Werft. Die Werft und die übrigen Blätter
+ * Unten im Dock: Bearbeiten, Treibstoff und die goldene Werft. Die Werft und die übrigen Detailseiten
  * stehen als Feld an der Stelle des Bereichs, im Ziehblatt; in der Werft wird bar oder über die Bank gekauft.
  */
 export function ShipScreen({ view }: { view: Snapshot }) {
@@ -43,7 +43,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
   if (ship === undefined) return null;
   const boat = ship.ship;
   const deck = sheet?.kind === 'deck' ? ship.deckPlans.find((p) => p.name === sheet.name) : undefined;
-  // Die Blätter von Crew und Rechner brauchen das Schiff aus der Liste der Schiffe, den Posten
+  // Die Detailseiten von Crew und Rechner brauchen das Schiff aus der Liste der Schiffe, den Posten
   // oder das Programm daraus.
   const vessel = boat !== undefined && sheet !== undefined && 'shipId' in sheet ? sheet.shipId : undefined;
   const crewBoat = vessel === undefined || boat === undefined ? undefined : boat.crews.find((c) => c.shipId === vessel);
@@ -51,7 +51,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
   const compBoat = vessel === undefined || boat === undefined ? undefined : boat.computers.find((c) => c.shipId === vessel);
   const program = sheet?.kind === 'program' ? compBoat?.programs.find((p) => p.id === sheet.program) : undefined;
   const buying = sheet?.kind === 'buy' ? ship.yard.find((d) => d.designId === sheet.design) : undefined;
-  // Ein offenes Blatt steht wie ein angetipptes Feld an der Stelle des Bereichs: im Ziehblatt, das sich
+  // Eine offene Detailseite steht wie ein angetipptes Feld an der Stelle des Bereichs: im Ziehblatt, das sich
   // ziehen lässt, über der Karte; im Desktop-Modus in der Seitenspalte.
   const field =
     sheet?.kind === 'yard' ? (
@@ -506,7 +506,7 @@ function YardTable({ title, rows, funds, onBuy }: { title: string; rows: readonl
   );
 }
 
-/** Die Werft als Blatt: Reparatur und Bewaffnung des eigenen Schiffs (2026-11-21g/h), dann die Standardentwürfe und die Small Craft (2026-11-21c), der Preis als Knopf. */
+/** Die Werft als Detailseite: Reparatur und Bewaffnung des eigenen Schiffs (2026-11-21g/h), dann die Standardentwürfe und die Small Craft (2026-11-21c), der Preis als Knopf. */
 function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: ShipYardRow) => void; onClose: () => void }) {
   return (
     <SheetFrame title="Werft" aside="Standardentwürfe · SR 33–37" onClose={onClose}>
@@ -632,9 +632,6 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
           >
             {retiring ? 'Wirklich ausblenden?' : 'Ausblenden'}
           </button>
-          <button type="button" className="action soft" onClick={onClose}>
-            Abbrechen
-          </button>
           <button
             type="button"
             className="action gold"
@@ -738,9 +735,6 @@ function FuelSheet({ boat, ship, onClose }: { boat: Boat; ship: ShipView; onClos
       onClose={onClose}
       foot={
         <>
-          <button type="button" className="action soft" onClick={onClose}>
-            Abbrechen
-          </button>
           <button
             type="button"
             className="action gold"
@@ -796,9 +790,6 @@ function RenameSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
       onClose={onClose}
       foot={
         <>
-          <button type="button" className="action soft" onClick={onClose}>
-            Abbrechen
-          </button>
           <button
             type="button"
             className="action gold"

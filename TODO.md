@@ -5,12 +5,6 @@ immer gilt: Was das Modell berührt, geht zuerst ins Domänenmodell und wird fre
 Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/`](docs/) (`regeln-kampf.md`, `regeln-laufbahnen.md`,
 `regeln-schiffe.md`, `regeln-sternsystem.md`).
 
-## UI
-- [ ] **Name für die Blätter im Bereich Schiff:** Werft, Software-Werft, das Blatt am Posten und am
-  Programm stehen an der Stelle des Bereichs, ähnlich wie ein Feld (`SheetFrame`), haben aber noch
-  keinen eigenen Namen in den Begriffen der Oberfläche (`docs/gui-handbuch.md`). Owner schlägt vor,
-  dann ins Handbuch und in die Kommentare.
-
 ## Kampf
 
 ### 1. Weitere Regeln aus der Starter Edition

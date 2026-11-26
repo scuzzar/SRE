@@ -39,7 +39,7 @@ export interface CrewPost {
   readonly who?: CharacterId;
 }
 
-/** Die Stelle eines Posten in `crewOf`; dasselbe Feld, das auch das Blatt der Oberfläche öffnet. */
+/** Die Stelle eines Posten in `crewOf`; dasselbe Feld, das auch die Detailseite der Oberfläche öffnet. */
 export type PostIndex = number;
 
 /** Ein Posten mit dem Schiff, an dem er liegt, und seiner Stelle dort. */
@@ -162,7 +162,7 @@ function withCrew(campaign: Campaign, ship: Ship, crew: readonly CrewPost[]): Ca
 }
 
 /**
- * Besetzt einen Posten mit einem Charakter, der seinen bisherigen Posten behält (das Blatt am
+ * Besetzt einen Posten mit einem Charakter, der seinen bisherigen Posten behält (die Detailseite am
  * Posten der Oberfläche): so bekommt ein Charakter über alle eigenen Schiffe hinweg bis zu zwei
  * Posten. `who` fehlt gibt den Posten frei; wer den Posten verliert, wird frei.
  */

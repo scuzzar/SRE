@@ -18,8 +18,8 @@ const inSlot = (boat: VesselSoftwareRow, slot: SoftwareSlot): readonly ProgramRo
 
 /**
  * CPU, Speicher und Archiv des Rechners untereinander (Vorbild docs/mock/computer-programme.html).
- * Die Blätter dazu öffnet der Bereich Schiff, sie stehen dort an der Stelle des Bereichs wie die
- * übrigen Blätter; `onOpenProgram` nennt das Schiff, `onOpenYard` führt in die Software-Werft.
+ * Die Detailseiten dazu öffnet der Bereich Schiff, an der Stelle des Bereichs wie die
+ * übrigen; `onOpenProgram` nennt das Schiff, `onOpenYard` führt in die Software-Werft.
  */
 export function ComputerTab({ ship, onOpenProgram, onOpenYard }: { readonly ship: ShipView; readonly onOpenProgram: (shipId: string, program: string) => void; readonly onOpenYard: () => void }) {
   const game = useGame();
@@ -97,7 +97,7 @@ function used(boat: VesselSoftwareRow, slot: SoftwareSlot): number {
   return inSlot(boat, slot).reduce((sum, p) => sum + p.space, 0);
 }
 
-/** Das Blatt am Programm: umstecken in eine der drei Ablagen, oder wegwerfen. */
+/** Die Detailseite am Programm: umstecken in eine der drei Ablagen, oder wegwerfen. */
 export function ProgramSheet({ boat, program, onClose }: { readonly boat: VesselSoftwareRow; readonly program: ProgramRow; readonly onClose: () => void }) {
   const game = useGame();
   return (

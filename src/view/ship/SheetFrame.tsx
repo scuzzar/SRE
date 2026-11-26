@@ -2,9 +2,10 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { CloseIcon } from '../icons';
 
 /**
- * Ein Blatt des Bereichs Schiff, als Feld an der Stelle des Bereichs wie das angetippte Feld des Globus:
- * oben Titel und ✕ (am Kopf lässt sich das Ziehblatt fassen), darunter der Inhalt, unten im Dock die
- * Knöpfe. Esc schließt es wie das ✕. `className` steht für Blätter mit zweispaltigen Tabellen.
+ * Eine **Detailseite** des Bereichs Schiff (GUI-Handbuch): an der Stelle des Bereichs wie das
+ * angetippte Feld des Globus, oben Titel und ✕ (am Kopf lässt sich das Ziehblatt fassen), darunter der
+ * Inhalt, unten die Aktionsleiste mit der Handlung. Zurück geht es nur mit ✕ oder Esc, ein
+ * „Abbrechen“ gibt es nicht (2026-11-26). `className` steht für Detailseiten mit zweispaltigen Tabellen.
  */
 export function SheetFrame({ title, aside, onClose, foot, className, children }: { title: string; aside?: string; onClose: () => void; foot?: ReactNode; className?: string; children: ReactNode }) {
   const close = useRef(onClose);
