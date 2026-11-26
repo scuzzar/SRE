@@ -169,6 +169,8 @@ Smartphone                          Desktop-Modus (ab 1024 px)
   Zurück geht es mit ✕ oder Esc; ein „Abbrechen“ daneben gibt es nicht. Innerhalb einer Detailseite
   führt ein Schritt zurück mit „←“ und dem Ziel („← Werft“).
 - Ein Tipp in die Navigationsleiste verlässt sie, wie ✕.
+- Ein **Editor** (Charakter, Mission) als Detailseite zieht das Ziehblatt beim Öffnen ganz hoch; ein
+  Feld nur auf halbe Höhe, damit die Karte daneben sichtbar bleibt.
 
 ### Dialog und Kurzdialog
 

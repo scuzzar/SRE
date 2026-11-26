@@ -52,7 +52,7 @@ function atTop(el: Element): boolean {
  * solange gezogen wird `tray-dragging` (nichts gleitet hinterher). Während des Ziehens schreibt das
  * Blatt seine Höhe unmittelbar ins DOM, ohne React.
  */
-export function Tray({ head, body, foot, bar, stop, raise }: { head: ReactNode; body: ReactNode; foot: ReactNode; bar: ReactNode; stop: TrayStop; /** Wechselt der Wert (ein Feld ist angetippt), fährt das Blatt mindestens auf halbe Höhe, damit man es sieht. */ raise?: string | number | undefined }) {
+export function Tray({ head, body, foot, bar, stop, raise, expand }: { head: ReactNode; body: ReactNode; foot: ReactNode; bar: ReactNode; stop: TrayStop; /** Wechselt der Wert (ein Feld ist angetippt), fährt das Blatt mindestens auf halbe Höhe, damit man es sieht. */ raise?: string | number | undefined; /** Wechselt der Wert (ein Editor geht auf), fährt das Blatt ganz hoch (2026-11-26). */ expand?: string | undefined }) {
   const game = useGame();
   const tray = useRef<HTMLElement>(null);
   const top = useRef<HTMLDivElement>(null);
@@ -153,6 +153,15 @@ export function Tray({ head, body, foot, bar, stop, raise }: { head: ReactNode; 
     if (raise === undefined || stop === 'half' || stop === 'full') return;
     game.setTrayStop('half');
   }, [raise, stop, game]);
+
+  // Ein Editor braucht den ganzen Platz: Geht er auf, fährt das Blatt ganz hoch.
+  const expandedFor = useRef(expand);
+  useEffect(() => {
+    if (expand === expandedFor.current) return;
+    expandedFor.current = expand;
+    if (expand === undefined || stop === 'full') return;
+    game.setTrayStop('full');
+  }, [expand, stop, game]);
 
   // Nach dem Ziehen löst das Loslassen über einem Knopf keinen Klick aus.
   const swallowClick = useRef(false);

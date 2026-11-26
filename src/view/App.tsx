@@ -236,7 +236,8 @@ export function App() {
           {base}
           <Tray
             stop={view.trayStop}
-            raise={view.editor ? `editor-${view.editor.id ?? 'new'}` : detail && view.missions.editor ? `mission-${view.missions.editor.rev}` : view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && (!view.globe || view.worldCard) ? view.world.id : undefined)}
+            expand={view.editor ? `editor-${view.editor.id ?? 'new'}` : detail && view.missions.editor ? `mission-${view.missions.editor.id ?? 'new'}` : undefined}
+            raise={view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && (!view.globe || view.worldCard) ? view.world.id : undefined)}
             head={banners}
             body={body}
             foot={detail ? undefined : foot}
