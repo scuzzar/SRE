@@ -686,6 +686,20 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > Am 24. November 2026 freigegeben (Kennzeichen **2026-11-24f**): **Das Dienstalter der NSC**. `Generation` bekommt das Flüchtig-Feld `/termsGoal` – im Ablauf das **Dienstalter**: wie viele Terms der Lauf eines NSC würfeln soll (1 bis 7, die Termgrenze der Regel; leer = so lange er kann). **Mit Dienstalter** würfelt der Lauf genau so viele Terms: **Überleben und Weiterverpflichtung entfallen**, Rangwurf, Beförderung, Fertigkeiten, Altern und Abmusterung bleiben – und **nichts kann ihn töten**: Misslingt die Krise nach dem Altern, steht das Attribut auf 1 und der Lauf geht weiter. **Ohne Dienstalter** will der NSC bleiben, so lange es geht – die Weiterverpflichtung wird immer mit *will bleiben* gewürfelt, der Zufall über das Wollen fällt weg; überleben wird weiter gewürfelt, stirbt er, beginnt der Lauf von vorn (beim Patron-NSC ebenso wie beim erzeugten). Das Feld steht in beiden Dialogen, die einen NSC aus einer Laufbahn erzeugen: „+ Neuer NSC“ und, lange gedrückt, „NSC platzieren → Neuer NSC“. An der Erschaffung einer **Spielfigur** ändert sich nichts – dort sagt der Spieler, ob er bleibt. Der Ausschnitt dazu liegt unter [`changes/2026-11-24f-das-dienstalter-der-nsc.png`](changes/2026-11-24f-das-dienstalter-der-nsc.png).
 >
 > Am 24. November 2026 freigegeben (Kennzeichen **2026-11-24g**): **Was der Lauf verschluckt**. `Generation` meldet das Flüchtig-Feld `/discarded` – die Liste `RunEnd` sagt, *warum* ein verworfener Lauf endete: `dead` (gestorben), `drafted` (er wäre eingezogen worden), `unqualified` (die Qualifikation fehlte, der Adlige mit Stand unter 10). Beim Erzeugen eines NSC erscheint eine **Wartenscheibe**: oben die Drehung, darunter die Zahl der Versuche und darunter, wie viele davon gestorben sind – beides zählt hoch, weil zwischen den Läufen ans Bild übergeben wird (ein Lauf dauert wenige Millisekunden, ohne Abgabe wäre nie etwas zu sehen). Ist einer gefunden, **bleibt das Ganze eine Sekunde stehen**, dann erscheint der neue NSC. Scheibe und Zahlen sind flüchtig: nichts davon wird gespeichert und nichts kommt ins Log. Der Ausschnitt dazu liegt unter [`changes/2026-11-24g-was-der-lauf-verschluckt.png`](changes/2026-11-24g-was-der-lauf-verschluckt.png).
+
+> Am 26. November 2026 vorgeschlagen, **wartet auf Freigabe** (Kennzeichen **2026-11-26**): **Beide
+> Hände, keine Wahl im Angriff.** Neu an der Waffe `twoHanded` (zweihändig): Gewehre (Carbine, Rifle,
+> Automatic Rifle, Shotgun, Submachinegun, Laser Carbine, Laser Rifle), Bögen und Armbrüste sowie die
+> Stangenwaffen Halberd und Pike. Wer eine zweihändige Primärwaffe hat, greift in der Kampfsimulation
+> nur mit ihr an – Sekundärwaffe und Hände entfallen als Angriff (Owner: „man kann bei Gewehr keine
+> zweite Waffe in die Hand nehmen“). Am Angriff in Vorbereitung entfallen zwei Wahlen: `burst` –
+> beim Automatic Rifle sind **Feuerstoß** und **Einzelschuss** zwei Angriffe mit je eigenem nötigem
+> Wurf statt einer Feuerart, die man vorher wählt; und `weakened` – ein Schlag oder Hieb ist
+> **geschwächt** nur noch, wenn die Combat-Schläge aufgebraucht sind, freiwillig schwächen geht
+> nicht mehr (Hausregel, SR 22 erlaubt es). Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-26-beide-haende-keine-wahl.png`](changes/2026-11-26-beide-haende-keine-wahl.png).
+> **Offene Frage:** Ist die zweihändige Waffe leer und kein Magazin mehr da, greift der Kämpfer dann
+> mit Sekundärwaffe bzw. Händen an (Empfehlung), oder kann er nur noch ausweichen und aussetzen?
 >
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -796,7 +810,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Nötiges Attribut | `Weapon.required`, `requiredDm` | Darunter gibt es den DM, z. B. Cutlass unter STR 7: −2 |
 | Vorteilhaftes Attribut | `Weapon.advantageous`, `advantageousDm` | Ab da gibt es den DM, z. B. Cutlass ab STR 11: +2 |
 | Schaden | `Weapon.wounds` | Wie viele W6 ein Treffer verursacht, z. B. Rifle 3W6 |
-| Feuerstoß | `Weapon.burst`, `Attack.burst` | Automatisches Feuer: 4 Schuss auf einmal, zwei Würfe auf das Ziel und Würfe auf Nachbarn (Book 1, Book 4 S. 31) |
+| Feuerstoß | `Weapon.burst` | Automatisches Feuer: 4 Schuss auf einmal, zwei Würfe auf das Ziel und Würfe auf Nachbarn (Book 1, Book 4 S. 31); beim Automatic Rifle ein eigener Angriff neben dem Einzelschuss (2026-11-26) |
+| Zweihändig | `Weapon.twoHanded` | Eine Waffe, die beide Hände braucht (Gewehre, Bögen, Armbrüste, Halberd, Pike); wer sie als Primärwaffe hat, greift nur mit ihr an (2026-11-26) |
 | Einzelschuss | `Weapon.single` | Ein Schuss einer Waffe, die auch Feuerstöße kann; sie nimmt dann die Zeile einer anderen Waffe der Matrix, z. B. Automatic Rifle die des Rifle |
 | Nachbar | `Weapon.neighbours`, `AttackResult./neighbour` | Ein weiterer Kämpfer aus der Partei des Ziels, den ein Feuerstoß (der darüber und der darunter in der Liste) oder ein Schrotschuss (bis 3, ausgelost) mit trifft |
 | Garbe | `AttackResult.volley` | Alle Würfe eines Feuerstoßes oder Schrotschusses; die weiteren Würfe verweisen auf den ersten |
@@ -884,7 +899,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Schlagart | `AttackResult.strike`, `Strike` | Wie ein Schlag oder Hieb zählt: Überraschung, Combat, geschwächt oder Special (SR 22) |
 | Combat-Schläge | `/blows` | Wie viele volle Schläge und Hiebe ein Kämpfer in der laufenden Begegnung noch hat: END zu Beginn der Begegnung minus die Combat-Schläge und die Läufe (beim SC seine, beim NSC die der Gruppe) |
 | Lauf | `Distance.runs`, `Encounter.npcRuns` | Eine Runde, in der ein SC bzw. die NSC-Gruppe 2 Bands gelaufen ist; kostet den SC bzw. jeden NSC einen Combat-Schlag |
-| Geschwächter Schlag | `Strike.weakened`, `Weapon.weakened`, `Attack.weakened` | Ein Schlag oder Hieb ohne volle Kraft, mit dem DM der Waffe; zählt nicht gegen die END |
+| Geschwächter Schlag | `Strike.weakened`, `Weapon.weakened` | Ein Schlag oder Hieb ohne volle Kraft, mit dem DM der Waffe, sobald die Combat-Schläge aufgebraucht sind; zählt nicht gegen die END |
 | Parade | (Regel) | Wer mit Faust oder Klinge angegriffen wird und selbst Faust, Klinge oder ein Gewehr führt, zieht seine Stufe darin vom Wurf ab (SR 22) |
 | Partei | `Side` | Die SC (`pcs`) oder die NSC der Begegnung (`npcs`) |
 | Runde, Zug | `round`, `acted`, `/turn` | Eine Kampfrunde, in der jeder Kämpfer einmal dran ist; wer gerade dran ist |
@@ -1465,6 +1480,10 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   Primärwaffe, Sekundärwaffe und Händen. Ist die Waffe in der Hand nach einer Änderung im Editor
   oder einem Verkauf keine der beiden mehr, nimmt der Charakter seine Primärwaffe in die Hand; hat
   er keine, die Hände.
+- **Beide Hände** (2026-11-26). Eine zweihändige Waffe (`Weapon.twoHanded`) braucht beide Hände:
+  Wer sie als Primärwaffe hat, greift in der Kampfsimulation nur mit ihr an, Sekundärwaffe und Hände
+  bietet die App ihm dort nicht an. Eine Sekundärwaffe darf er trotzdem haben (etwa die Blade am
+  Gürtel); in der Waffentabelle nimmt er sie wie bisher in die Hand.
 - **Kauf einer Waffe.** Kauft man eine Waffe für einen SC, wird sie seine
   Primärwaffe und er nimmt sie in die Hand; seine bisherige Primärwaffe kommt ins Gepäck, die
   Sekundärwaffe bleibt. Weitere Stück derselben Waffe gehen ins Gepäck.
@@ -1523,11 +1542,10 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     `single` gibt es keinen Einzelschuss (die Submachinegun schießt nur Feuerstöße). `neighbours`
     sagt, wie viele **Nachbarn** ein Schuss bzw. Feuerstoß höchstens mit trifft: Shotgun 3,
     Automatic Rifle und Submachinegun 2.
-  - **Feuerart wählen**: Bei einer Waffe mit `burst` und `single` wählt man im Angriff in
-    Vorbereitung Feuerstoß oder Einzelschuss (`Attack.burst`, flüchtig; vorgewählt ist der
-    Feuerstoß, auch wenn ein NSC dran ist). Bei einer Waffe nur mit `burst` ist es immer ein
-    Feuerstoß, sonst immer ein Einzelschuss. Wechselt die Waffe in der Hand, gilt wieder die
-    Vorwahl.
+  - **Feuerstoß oder Einzelschuss** (2026-11-26, bis dahin eine Wahl am Angriff in Vorbereitung):
+    Eine Waffe mit `burst` und `single` bietet **zwei Angriffe**, Feuerstoß und Einzelschuss, je mit
+    eigenem nötigem Wurf; der Kämpfer wählt mit dem Angriff selbst, nicht vorher. Bei einer Waffe nur
+    mit `burst` ist es immer ein Feuerstoß, sonst immer ein Einzelschuss.
   - **Einzelschuss** mit `single`: DMs gegen Rüstung und nach Reichweite kommen aus der Zeile von
     `single` (Book 1: „auto rifle uses the rifle row on the table when firing single shots“);
     Fertigkeit, nötiges und vorteilhaftes Attribut, Schaden und Munition von der Waffe in der Hand.
@@ -2490,8 +2508,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   - *Schlagart* (`AttackResult.strike`, nur bei Schlägen und Hieben): **Überraschung** (`surprise`),
     solange die Partei des Angreifers Überraschung hat; **Special** (`special`) gegen ein Ziel, das
     bewusstlos oder schwer verwundet ist (Stärke zählt dort nicht); **geschwächt** (`weakened`), wenn
-    der Angreifer keine Combat-Schläge mehr hat oder ihn freiwillig schwächt (`Attack.weakened`,
-    damit er nicht gegen die END zählt); sonst **Combat** (`combat`). Ein NSC schwächt nie freiwillig.
+    der Angreifer keine Combat-Schläge mehr hat; sonst **Combat** (`combat`). Freiwillig schwächen geht
+    nicht (Hausregel, 2026-11-26; SR 22 erlaubt es, um END zu sparen).
   - *Combat-Schläge* (`/blows` an SC und NSC): END zu Beginn der Begegnung, also die END mit den
     Wunden, die vor dem ersten Logeintrag der Begegnung (nach `Encounter.at`) bestanden, minus die
     Angriffe dieses Kämpfers in der Begegnung mit der Schlagart Combat und minus die Läufe (beim SC
