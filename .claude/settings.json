@@ -2,9 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(git -c user.name=Scuzzar -c user.email=scuzzarGalaxy@googlemail.com commit:*)",
-      "Bash(git -c user.name=Scuzzar -c user.email=scuzzarGalaxy@googlemail.com merge:*)",
-      "Bash(git -c user.name=Scuzzar -c user.email=scuzzarGalaxy@googlemail.com revert:*)",
+      "Bash(git commit:*)",
+      "Bash(git merge:*)",
+      "Bash(git revert:*)",
+      "Bash(cp .gitconfig-owner .git/owner.gitconfig)",
+      "Bash(git config include.path owner.gitconfig)",
       "Bash(git push -u origin:*)",
       "Bash(git push -q origin:*)",
       "Bash(git push origin:*)",
