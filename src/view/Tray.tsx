@@ -154,13 +154,23 @@ export function Tray({ head, body, foot, bar, stop, raise, expand }: { head: Rea
     game.setTrayStop('half');
   }, [raise, stop, game]);
 
-  // Ein Editor braucht den ganzen Platz: Geht er auf, fährt das Blatt ganz hoch.
+  // Ein Editor braucht den ganzen Platz: Geht er auf, fährt das Blatt ganz hoch; geht er zu (auch
+  // für das Wählen eines Orts auf dem Globus), fährt es zurück auf die Stufe von vorher, damit die
+  // Karte wieder zu sehen ist.
   const expandedFor = useRef(expand);
+  const before = useRef<TrayStop | undefined>(undefined);
   useEffect(() => {
     if (expand === expandedFor.current) return;
+    const was = expandedFor.current;
     expandedFor.current = expand;
-    if (expand === undefined || stop === 'full') return;
-    game.setTrayStop('full');
+    if (expand !== undefined) {
+      if (was === undefined) before.current = stop;
+      if (stop !== 'full') game.setTrayStop('full');
+      return;
+    }
+    const back = before.current;
+    before.current = undefined;
+    if (back !== undefined && back !== 'full' && stop === 'full') game.setTrayStop(back);
   }, [expand, stop, game]);
 
   // Nach dem Ziehen löst das Loslassen über einem Knopf keinen Klick aus.
