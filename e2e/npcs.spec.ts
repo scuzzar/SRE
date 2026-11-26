@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { openPeople, openCombat } from './layout';
 
-// NSC im Reiter Charaktere: neue NSC mit Rolle, leer oder aus einer Laufbahn erzeugt; sie stehen dort nach
+// NSC im Bereich Charaktere: neue NSC mit Rolle, leer oder aus einer Laufbahn erzeugt; sie stehen dort nach
 // Rolle gruppiert, mit Attributen, nicht mehr im Charakter-Screen.
 test('NSC: leer anlegen mit Rolle, er steht unter seiner Rolle', async ({ page }) => {
   await page.goto('/');
@@ -55,7 +55,7 @@ test('NSC: mit Dienstalter — die Wartenscheibe zählt die Läufe, dann steht e
   await expect(editor.getByLabel('Herkunft')).toHaveValue(/^Ex-Scouts/);
 });
 
-// Kampf mit dauerhaften NSC (2026-11-14g): Am NSC springt „In Begegnung“ in den Reiter Begegnung und
+// Kampf mit dauerhaften NSC (2026-11-14g): Am NSC springt „In Begegnung“ in den Bereich Begegnung und
 // wählt ihn vor; er kämpft auf der Seite der NSC und führt.
 test('NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er führt die NSC an', async ({ page }) => {
   await page.goto('/');
@@ -68,7 +68,7 @@ test('NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er führt
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await page.getByRole('button', { name: 'Tenzin Thorsen in Begegnung' }).click();
 
-  // Im Reiter Begegnung steht, wer dazukommt; mit „Manuell wählen“ öffnet Zufall die Auswahl der Art.
+  // Im Bereich Begegnung steht, wer dazukommt; mit „Manuell wählen“ öffnet Zufall die Auswahl der Art.
   await expect(page.getByRole('status', { name: 'Kommen dazu' })).toContainText('Tenzin Thorsen · Anführer');
   await page.getByRole('checkbox', { name: /^Manuell wählen/ }).check();
   await page.getByRole('region', { name: 'Begegnung und Zeit' }).getByRole('button', { name: /^Zufallsbegegnung würfeln/ }).click();

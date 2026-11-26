@@ -7,7 +7,7 @@ import { SubTabs, peopleParts } from "../SubTabs";
 
 /**
  * Der Charakter-Screen zum Verwalten: anlegen, nach Regeln erschaffen, bearbeiten, Details mit
- * Lebenslauf, Ausrüstung und Gruppengepäck, Verstorbene und Ausgeblendete; oben der Umschalter auf NSC und Kasse. Proben würfelt man oben im Orakel-Screen.
+ * Lebenslauf, Ausrüstung und Gruppengepäck, Verstorbene und Ausgeblendete; oben der Unterreiter auf NSC und Kasse. Proben würfelt man oben im Orakel-Screen.
  */
 export function CharactersScreen({ view }: { view: Snapshot }) {
   const game = useGame();

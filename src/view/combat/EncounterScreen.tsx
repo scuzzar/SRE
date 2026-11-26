@@ -6,9 +6,9 @@ import { TripBar } from '../sector/TripPanels';
 import { distancesText, EncounterIntro } from './FightScreen';
 import { SubTabs, encounterParts } from '../SubTabs';
 
-/** Was im Reiter Begegnung eingestellt ist, aber nur in der Ansicht lebt: die Haken und wie viele Tage. */
+/** Was im Bereich Begegnung eingestellt ist, aber nur in der Ansicht lebt: die Haken und wie viele Tage. */
 export interface EncounterOptions {
-  /** Wie viele Tage vergehen sollen; der Knopf dazu steht unten in der Reihe. */
+  /** Wie viele Tage vergehen sollen; der Knopf dazu steht unten in der Aktionsleiste. */
   readonly days: number;
   /** „Manuell wählen“: Zufall und Tiere öffnen die Auswahl der Art bzw. Zeile statt des Wurfs. */
   readonly manual: boolean;
@@ -17,8 +17,8 @@ export interface EncounterOptions {
 }
 
 /**
- * Der Reiter Begegnung als Blatt: Die Würfe stehen unten in der Reihe (`EncounterDock`) und zeigen ihr
- * Ergebnis im Würfelfenster. Auf dem Blatt bleibt, was gerade läuft (Fahrt, Begegnung mit Zum Kampf,
+ * Der Bereich Begegnung als Blatt: Die Würfe stehen unten in der Aktionsleiste (`EncounterDock`) und zeigen ihr
+ * Ergebnis in der Würfelbühne. Auf dem Blatt bleibt, was gerade läuft (Fahrt, Begegnung mit Zum Kampf,
  * Übersicht und Beenden), das Datum und was man einstellt: Gelände, Würfel der Anzahl, „Manuell wählen“,
  * „NSC dazunehmen“ und wie viele Tage vergehen sollen. Ohne Aufenthaltsort fragt es danach.
  */
@@ -165,7 +165,7 @@ function QuantityPick({ combat }: { combat: CombatView }) {
 /**
  * Die Spielzeit: Datum mit Wochentag (änderbar, solange es geht) und wie viele Tage vergehen sollen.
  * Die Knöpfe dazu (Tage vergehen, Woche beenden, bei einer Fahrt Weiterfahren) stehen unten in der
- * Reihe `EncounterDock`; Hinweise des Controllers stehen hier.
+ * Aktionsleiste `EncounterDock`; Hinweise des Controllers stehen hier.
  */
 function TimeBar({ time, days, onDays, trip }: { time: TimeView; days: number; onDays: (days: number) => void; trip: boolean }) {
   const game = useGame();

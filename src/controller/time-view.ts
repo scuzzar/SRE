@@ -314,7 +314,7 @@ export interface SystemJourneyItem {
   readonly encounterRolls: string | undefined;
 }
 
-/** Die Spielzeit oben im Reiter Begegnung. */
+/** Die Spielzeit oben im Bereich Begegnung. */
 export interface TimeView {
   /** „Sonntag, 008-1105“. */
   readonly label: string;
@@ -333,7 +333,7 @@ export interface TimeView {
   /** Unterwegs (2026-11-22c): wohin und wie viele Reisetage noch fehlen; „Woche beenden“ ist dann gesperrt. */
   readonly voyage: { readonly to: string; readonly left: number } | undefined;
   /**
-   * Der Knopf für einen Tag (2026-11-22c), im Reiter Begegnung und in der Reihe unter dem Log: während
+   * Der Knopf für einen Tag (2026-11-22c), im Bereich Begegnung und in der Aktionsleiste unter dem Log: während
    * einer Fahrt „Weiterfahren“, unterwegs „Weiterreisen“, sonst „1 Tag“; gesperrt mit Grund.
    */
   readonly oneDay: { readonly kind: 'trip' | 'voyage' | 'day'; readonly label: string; readonly blocker: string | undefined };

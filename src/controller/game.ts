@@ -491,7 +491,7 @@ export class GameController {
     try {
       if (this.writable) this.update({ stripCollapsed: await this.deps.repository.loadStripCollapsed() });
     } catch {
-      // Ob die Leiste eingeklappt war, ist nur eine Bequemlichkeit; dann ist sie offen.
+      // Ob die Charakterleiste eingeklappt war, ist nur eine Bequemlichkeit; dann ist sie offen.
     }
     try {
       if (this.writable) this.update({ shopHintHidden: await this.deps.repository.loadShopHintHidden() });
@@ -842,7 +842,7 @@ export class GameController {
     this.setMark({ ...markOf(campaign, next), ...(gone ? { deleted: true } : {}) });
   }
 
-  /** Gleicht die Deckpläne ab (2026-11-17): je Platz, was `planDeckSync` sagt; danach zeigt der Reiter den neuen Stand. */
+  /** Gleicht die Deckpläne ab (2026-11-17): je Platz, was `planDeckSync` sagt; danach zeigt der Bereich Schiff den neuen Stand. */
   private async syncDecks(problems: string[]): Promise<void> {
     const remote = await this.deps.cloud!.listDeckPlans();
     const plans = await this.deps.repository.listDeckPlans();
@@ -1064,14 +1064,14 @@ export class GameController {
   }
 
   /**
-   * Das Würfelfenster eines Begegnungswurfs: mit Test die Würfel und was herauskam, ohne Test nur der
+   * Die Würfelbühne eines Begegnungswurfs: mit Test die Würfel und was herauskam, ohne Test nur der
    * Hinweis. `encounter`: Danach folgt die Übersicht der Begegnung.
    */
   private shown(kind: CheckKind, check: EncounterCheck | undefined, text: string, encounter = false): Pick<ControllerState, 'encounterRoll' | 'encounterChoice'> {
     return { encounterRoll: { kind, dice: check?.dice ?? [], target: check?.target ?? 0, passed: check?.passed ?? false, text, encounter }, encounterChoice: undefined };
   }
 
-  /** Schließt das Würfelfenster eines Begegnungswurfs; kam es zur Begegnung, folgt ihre Übersicht. */
+  /** Schließt die Würfelbühne eines Begegnungswurfs; kam es zur Begegnung, folgt ihre Übersicht. */
   closeEncounterRoll(): void {
     const roll = this.state.encounterRoll;
     if (!roll) return;
@@ -1371,7 +1371,7 @@ export class GameController {
   }
 
   /**
-   * „Schiffsbegegnung“ von Hand (2026-11-22b): im Reiter Begegnung und im Systemflug. Läuft ein
+   * „Schiffsbegegnung“ von Hand (2026-11-22b): im Bereich Begegnung und im Systemflug. Läuft ein
    * Systemflug, öffnet es seine Raumkarte und würfelt dort.
    */
   openShipEncounter(): void {
@@ -1391,7 +1391,7 @@ export class GameController {
     try {
       const after = departFromFlight(this.campaign, this.deps.random, this.deps.clock);
       // Die Reise ist unterwegs; die Prüfung der Ankunft kommt nach ihren Tagen (2026-11-22c).
-      this.change(after, { space: undefined, notice: `Unterwegs nach ${worldOf(after.hexes, voyageEntry(after).to).name}: „Weiterreisen“ unter dem Log oder im Reiter Begegnung.` });
+      this.change(after, { space: undefined, notice: `Unterwegs nach ${worldOf(after.hexes, voyageEntry(after).to).name}: „Weiterreisen“ unter dem Log oder im Bereich Begegnung.` });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ notice: error.message });
@@ -1468,11 +1468,11 @@ export class GameController {
 
   showScreen(screen: Screen): void {
     // Ein angetipptes Feld des Globus oder ein gewähltes Feld des Subsektors steht an der Stelle des
-    // Bereichs; ein Reiter lässt es los.
+    // Bereichs; ein Tipp in die Navigationsleiste lässt es los.
     const released = { globe: this.state.globe && { picked: undefined }, selected: undefined, worldError: this.state.globe ? this.state.worldError : undefined };
     // Die NSC-Liste zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
-    // Ein Reiter bricht auch NSC platzieren ab und verlässt den Shop.
-    // Ein Reiter bricht auch das Ort wählen einer Mission ab; der Editor bleibt mit seiner Eingabe.
+    // Ein Tipp in die Navigationsleiste bricht auch NSC platzieren ab und verlässt den Shop.
+    // Ein Tipp in die Navigationsleiste bricht auch das Ort wählen einer Mission ab; der Editor bleibt mit seiner Eingabe.
     const editor = this.state.missionEditor;
     const mission = editor?.picking ? { missionEditor: { ...editor, picking: false, rev: editor.rev + 1 } } : {};
     this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released, ...mission } : { screen, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released, ...mission });
@@ -1502,7 +1502,7 @@ export class GameController {
     return city ? undefined : 'Einkaufen geht nur in einer Stadt.';
   }
 
-  /** ✕ im Shop: zurück zum Feld bzw. in den Reiter, aus dem „Einkaufen“ kam. */
+  /** ✕ im Shop: zurück zum Feld bzw. in den Bereich, aus dem „Einkaufen“ kam. */
   closeShop(): void {
     const from = this.state.shopFrom;
     if (!from) return this.showScreen('oracle');
@@ -1516,7 +1516,7 @@ export class GameController {
     this.update({ joining, combatNote: undefined });
   }
 
-  /** „In Begegnung“ in der NSC-Liste: wählt den NSC in der Karte Zufallsbegegnung vor und springt in den Reiter Begegnung. */
+  /** „In Begegnung“ in der NSC-Liste: wählt den NSC in der Karte Zufallsbegegnung vor und springt in den Bereich Begegnung. */
   joinEncounter(id: string): void {
     const joining = this.state.joining.includes(id) ? this.state.joining : [...this.state.joining, id];
     this.update({ joining, combatNote: undefined, screen: 'encounter' });
@@ -1544,7 +1544,7 @@ export class GameController {
       const generation = await this.npcRun(template.service);
       const { campaign, id } = addNpc(this.campaign, template, generation, this.deps.random);
       const npc = campaign.characters.find((c) => c.id === id)!;
-      // Aus dem Würfelfenster heraus schließt es sich danach.
+      // Aus der Würfelbühne heraus schließt es sich danach.
       this.change(campaign, { patronNote: `${npc.name} (${npc.background}) steht jetzt unter Charaktere › NSC.`, encounterRoll: undefined, screen: 'npcs', npcAll: false, editor: { id, error: undefined } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -1561,7 +1561,7 @@ export class GameController {
     this.change(setFocus(this.campaign, id), { task: undefined, attack: undefined, ...(npcTurn ? { simTarget: id } : {}) });
   }
 
-  /** Klappt die Leiste mit dem Charakter oben ein oder auf; das Gerät merkt es sich. */
+  /** Klappt die Charakterleiste ein oder auf; das Gerät merkt es sich. */
   toggleStrip(): void {
     const stripCollapsed = !this.state.stripCollapsed;
     this.update({ stripCollapsed });
@@ -1720,7 +1720,7 @@ export class GameController {
       }
       const rolled = rollEncounter(base, this.deps.random, this.deps.clock, roll, undefined, terrain, joined);
       const prepared = rolled.encounter ? this.prepareTurn(rolled.campaign, undefined) : { campaign: rolled.campaign, simTarget: undefined };
-      // Mit Test zeigt erst das Würfelfenster den Test, die Übersicht folgt danach; ohne Test gleich die Übersicht.
+      // Mit Test zeigt erst die Würfelbühne den Test, die Übersicht folgt danach; ohne Test gleich die Übersicht.
       const outcome = rolled.encounter ? `Wurf ${rolled.roll}: eine Begegnung!` : `Wurf ${rolled.roll}: keine Begegnung.`;
       this.change(prepared.campaign, {
         ...(rolled.encounter ? { joining: [] } : {}),
@@ -1790,7 +1790,7 @@ export class GameController {
   }
 
   /**
-   * Schließt die Übersicht der Begegnung; der Reiter bleibt. Nach dem Würfeln ist das der Reiter
+   * Schließt die Übersicht der Begegnung; der Bereich bleibt. Nach dem Würfeln ist das der Bereich
    * Begegnung: Nicht jede Begegnung wird ein Kampf, dorthin geht es erst mit „Zum Kampf“.
    */
   /** Der erste Wurf im Kampf: die Überraschung (S. 5). Danach ist der Erste am Zug; der Wurf steht im Vordergrund. */
@@ -1849,7 +1849,7 @@ export class GameController {
     this.inFight(() => this.change(setQuantityDie(this.campaign, die), { combatNote: undefined }));
   }
 
-  /** Beendet die laufende Begegnung; der Kampf zeigt wieder die Waffentabelle, der Reiter Begegnung die Auswahl. */
+  /** Beendet die laufende Begegnung; der Kampf zeigt wieder die Waffentabelle, der Bereich Begegnung die Auswahl. */
   endEncounter(): void {
     this.change(endEncounter(this.campaign), { attack: undefined, combatNote: undefined, simTarget: undefined, encounterIntro: false });
   }
@@ -1939,7 +1939,7 @@ export class GameController {
 
   /**
    * Der Kämpfer am Zug greift sein Ziel an. Daneben beendet den Zug gleich; ein Treffer erst mit dem
-   * Schaden. Wer für den Zug oben stehen muss, kommt vorher nach oben (auch nach Wischen in der Leiste).
+   * Schaden. Wer für den Zug oben stehen muss, kommt vorher nach oben (auch nach Wischen in der Charakterleiste).
    */
   fightAttack(): void {
     this.inFight(() => this.attackFrom(this.campaign));
@@ -2103,7 +2103,7 @@ export class GameController {
     this.inShip(() => retireShip(this.campaign));
   }
 
-  /** Benennt das Schiff um; der Stift am Namen im Reiter Schiff. */
+  /** Benennt das Schiff um; der Stift am Namen im Bereich Schiff. */
   renameShip(name: string): void {
     this.inShip(() => renameShip(this.campaign, activeShip(this.campaign).id, name));
   }
@@ -2383,14 +2383,14 @@ export class GameController {
     return openMissions(this.campaign).map((m) => m.id);
   }
 
-  /** „+ Neue Mission“: der Editor im Reiter Missionen, mit dem Aufenthaltsort als erstem Ort, wenn er ein Feld hat. */
+  /** „+ Neue Mission“: der Editor im Bereich Missionen, mit dem Aufenthaltsort als erstem Ort, wenn er ein Feld hat. */
   newMission(): void {
     const location = this.campaign.location;
     const places = location !== undefined && missionPlaceBlocker(this.campaign, location) === undefined ? [{ place: location }] : [];
     this.openMissionEditor(undefined, { title: '', text: '', state: 'open', places, people: [] });
   }
 
-  /** Öffnet eine Mission im Editor (aus dem Reiter, vom Feld, aus dem Log oder dem NSC-Editor). */
+  /** Öffnet eine Mission im Editor (aus dem Bereich, vom Feld, aus dem Log oder dem NSC-Editor). */
   editMission(id: string): void {
     const { title, text, state, client, places, people } = missionOf(this.campaign, id);
     this.openMissionEditor(id, { title, text, state, ...(client === undefined ? {} : { client }), places, people });
@@ -2468,7 +2468,7 @@ export class GameController {
   }
 
   /**
-   * Ein Ort einer Mission (Chip im Reiter): öffnet den Globus seiner Welt mit dem Feld angetippt; der
+   * Ein Ort einer Mission (Chip im Bereich): öffnet den Globus seiner Welt mit dem Feld angetippt; der
    * Globus fliegt hin und zoomt hinein (`globeFocus`). Steht das Blatt ganz oben, geht es auf halbe Höhe,
    * damit man die Karte sieht.
    */
@@ -2729,11 +2729,11 @@ export class GameController {
     // Die Raumkarte um die Welt der offenen Weltkarte (Owner, 21. November 2026); im Blatt lassen sich die übrigen wählen.
     const id = world ?? openWorldId(at);
     if (!spaceChoices(hex, openWorldId(at)).some((c) => c.id === id)) throw new DomainError('Um einen Ring gibt es keine Raumkarte.');
-    // Die Bedienung des Systemflugs steht im Reiter Schiff (Owner, 21. November 2026).
+    // Die Bedienung des Systemflugs steht im Bereich Schiff (Owner, 21. November 2026).
     this.update({ space: { world: id }, globe: this.state.globe && { picked: undefined }, screen: 'ship', shipError: undefined });
   }
 
-  /** „Starten“ im Reiter Schiff: Raumkarte um die Welt des Schiffs und gleich der Systemflug (Owner, 21. November 2026). */
+  /** „Starten“ im Bereich Schiff: Raumkarte um die Welt des Schiffs und gleich der Systemflug (Owner, 21. November 2026). */
   launch(): void {
     const world = launchWorld(this.campaign);
     const blocker = world === undefined ? 'Die Gruppe hat kein Schiff.' : flightStartBlocker(this.campaign, world);
@@ -2745,7 +2745,7 @@ export class GameController {
     this.startFlight();
   }
 
-  /** „Zum Flug“ im Reiter Schiff: die Raumkarte des laufenden Systemflugs. */
+  /** „Zum Flug“ im Bereich Schiff: die Raumkarte des laufenden Systemflugs. */
   showFlight(): void {
     const world = this.campaign.flight?.world;
     if (world !== undefined) this.openSpaceAround(world);
@@ -3033,7 +3033,7 @@ export class GameController {
     const plan = draft?.options[draft.chosen];
     if (!plan) return;
     try {
-      // Weiter geht es im Reiter Begegnung, der einzigen Stelle zum Weiterfahren.
+      // Weiter geht es im Bereich Begegnung, der einzigen Stelle zum Weiterfahren.
       this.change(startTrip(this.campaign, plan), { tripPlan: undefined, tripNote: undefined, screen: 'encounter', globe: this.state.globe && { picked: undefined } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -3074,7 +3074,7 @@ export class GameController {
     }
   }
 
-  /** Schließt den Würfeldialog des Reisetags; kam es zur Begegnung, folgt ihre Übersicht im Reiter Begegnung. */
+  /** Schließt den Würfeldialog des Reisetags; kam es zur Begegnung, folgt ihre Übersicht im Bereich Begegnung. */
   closeTripRoll(): void {
     const roll = this.state.tripRoll;
     if (!roll) return;
@@ -3156,7 +3156,7 @@ export class GameController {
     });
   }
 
-  /** „Abbrechen“ beim Auswählen in der NSC-Liste: zurück zum Feld bzw. in den Reiter Begegnung, ohne etwas zu ändern. */
+  /** „Abbrechen“ beim Auswählen in der NSC-Liste: zurück zum Feld bzw. in den Bereich Begegnung, ohne etwas zu ändern. */
   cancelNpcPlacing(): void {
     if (this.state.npcJoining) {
       this.update({ npcJoining: undefined, screen: 'encounter' });
@@ -3274,7 +3274,7 @@ export class GameController {
     }
   }
 
-  /** Führt eine Eingabe im Reiter Schiff aus; verletzt sie eine Regel, steht das dort. */
+  /** Führt eine Eingabe im Bereich Schiff aus; verletzt sie eine Regel, steht das dort. */
   private inShip(step: () => Campaign): void {
     try {
       this.change(step(), { shipError: undefined });
@@ -3337,7 +3337,7 @@ export class GameController {
     return next === campaign ? campaign : touched(next, this.deps.clock);
   }
 
-  /** Läuft eine Fahrt, öffnet die Kampagne im Reiter Begegnung, wo es weitergeht. */
+  /** Läuft eine Fahrt, öffnet die Kampagne im Bereich Begegnung, wo es weitergeht. */
   private landing(campaign: Campaign): Pick<ControllerState, 'screen'> | Record<string, never> {
     return campaign.trip ? { screen: 'encounter' } : {};
   }

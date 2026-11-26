@@ -90,7 +90,7 @@ export interface Character {
   readonly wields?: string;
   /** Die getragene Rüstung: ein Gegenstand mit Rüstungsklasse aus seinem Besitz; fehlt sie, Nothing. */
   readonly wears?: string;
-  /** Ein dauerhafter NSC, kein SC: nicht in der Leiste oben, nicht im Shop. */
+  /** Ein dauerhafter NSC, kein SC: nicht in der Charakterleiste, nicht im Shop. */
   readonly npc: boolean;
   /** Nur bei dauerhaften NSC: seine Rolle; fehlt sie (NSC von früher), gilt Sonstige. */
   readonly role?: NpcRole;

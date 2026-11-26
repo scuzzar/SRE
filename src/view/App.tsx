@@ -41,8 +41,8 @@ import { Tray } from './Tray';
 import { SpaceVolley } from './space/SpaceVolley';
 
 /**
- * Die fünf Reiter im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. Im
- * Reiter Begegnung schaltet man oben zwischen Begegnung und Kampf um, im Reiter Charaktere zwischen
+ * Die fünf Bereiche der Navigationsleiste im Ziehblatt bzw. oben in der Seitenspalte des Desktops, in dieser Reihenfolge. Im
+ * Bereich Begegnung schaltet man oben zwischen Begegnung und Kampf um, im Bereich Charaktere zwischen
  * SC, Kasse und NSC (`also`); den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des
  * Aufenthaltsorts.
  */
@@ -54,13 +54,13 @@ const areas: readonly { readonly id: Screen; readonly label: string; readonly Ic
   { id: 'missions', label: 'Missionen', Icon: MissionsIcon },
 ];
 
-/** Der Reiter, zu dem ein Screen gehört; der Shop und „Über die App“ gehören zu keinem. */
+/** Der Bereich, zu dem ein Screen gehört; der Shop und „Über die App“ gehören zu keinem. */
 const areaOf = (screen: Screen) => areas.find((a) => a.id === screen || a.also?.includes(screen));
 
 export function App() {
   const game = useGame();
   const view = useSnapshot();
-  // Desktop-Modus (ab 1024 px): links eine Spalte mit den Reitern und darunter dem Log oder dem
+  // Desktop-Modus (ab 1024 px): links eine Spalte mit der Navigationsleiste und darunter dem Log oder dem
   // gewählten Bereich bzw. Feld, rechts die Grundkarte. Auf dem Smartphone liegt die Grundkarte unter
   // dem Ziehblatt.
   const desktop = useIsDesktop();
@@ -68,18 +68,18 @@ export function App() {
   const [menu, setMenu] = useState(false);
   // Wen der Heilen-Dialog im Kampf zeigt.
   const [patient, setPatient] = useState<Patient | undefined>(undefined);
-  // Was im Reiter Begegnung eingestellt ist (wie viele Tage, Manuell wählen, NSC dazunehmen): reine
-  // Darstellung, auf dem Blatt gewählt, von der Reihe unten benutzt.
+  // Was im Bereich Begegnung eingestellt ist (wie viele Tage, Manuell wählen, NSC dazunehmen): reine
+  // Darstellung, auf dem Blatt gewählt, von der Aktionsleiste unten benutzt.
   const [encounterOptions, setEncounterOptions] = useState<EncounterOptions>({ days: 1, manual: false, withNpcs: false });
   // Ob der Hinweis „OneDrive hat dich abgemeldet“ weggeklickt ist; reine Darstellung, beim nächsten
   // Start kommt er wieder, solange die Anmeldung fehlt.
   const [syncHintClosed, setSyncHintClosed] = useState(false);
   // Der Platz im Ziehblatt bzw. Panel, in den der Subsektor sein gewähltes Feld zeichnet.
   const [fieldSlot, setFieldSlot] = useState<HTMLDivElement | null>(null);
-  // Esc schließt das oberste Popup; die Ziffern wählen den Reiter an dieser Stelle.
+  // Esc schließt das oberste Popup; die Ziffern wählen den Bereich an dieser Stelle.
   useEscapeCloses(menu);
   useShortcuts(Object.fromEntries(areas.map((a, i) => [String(i + 1), () => game.showScreen(a.id)])));
-  // Die Weltkarte eines gewählten Feldes, als Feld und als Reihe unten, wie beim Globus; ohne Globus,
+  // Die Weltkarte eines gewählten Feldes, als Feld und als Aktionsleiste unten, wie beim Globus; ohne Globus,
   // sonst zeigt der seine eigene (`panel === 'world'`).
   // Auf dem Globus steht dieselbe Weltkarte im Blatt, wenn man oben auf den Namen tippt (Owner, 21. November 2026).
   const worldDock = useWorldDock(view.world && (!view.globe || view.worldCard) ? view.world : undefined, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays, view.globe !== undefined);
@@ -90,7 +90,7 @@ export function App() {
   if (!view.ready) return <div className="app" aria-busy="true" />;
   const closeResult = () => game.closeResult();
 
-  // Den Sektor gibt es nicht mehr als Reiter: Er ist die Grundkarte ohne Globus. Wer dort noch steht,
+  // Den Sektor gibt es nicht mehr als Bereich: Er ist die Grundkarte ohne Globus. Wer dort noch steht,
   // sieht das Log.
   const screen: Screen = view.screen === 'sector' ? 'oracle' : view.screen;
   // Ein angetipptes Feld des Globus steht an der Stelle des Bereichs, ebenso eine gewählte Weltkarte
@@ -98,7 +98,7 @@ export function App() {
   // `.field-slot` freihält). Für die Heimatwelt- bzw. Welt-eines-Terms-Wahl (`picking`) steht der
   // Subsektor schon selbst in einem Blatt; die neue Welt bekommt dort ein eigenes, obendrauf.
   const globeField = view.globe?.picked ? <FieldCard globe={view.globe} error={view.world?.error} log={view.log} logDays={view.logDays} tripPlan={view.tripPlan} /> : undefined;
-  // Die Bedienung der Raumkarte steht im Reiter Schiff (Owner, 21. November 2026), nicht mehr an der Stelle des Bereichs.
+  // Die Bedienung der Raumkarte steht im Bereich Schiff (Owner, 21. November 2026), nicht mehr an der Stelle des Bereichs.
   const field = globeField ?? (view.picking ? undefined : worldDock.field) ?? (!view.globe && view.selected ? <div ref={setFieldSlot} className="field-slot" /> : undefined);
   const area = (
     <>
@@ -125,8 +125,8 @@ export function App() {
           aria-current={open ? 'page' : undefined}
           title={`${label} (${i + 1})`}
           aria-keyshortcuts={String(i + 1)}
-          // Im Desktop-Modus führt ein zweiter Klick auf den offenen Reiter zurück zum Log; sonst
-          // bleibt ein offener Reiter, wie er ist (im Reiter Charaktere etwa bei NSC oder Kasse).
+          // Im Desktop-Modus führt ein zweiter Klick auf den offenen Bereich zurück zum Log; sonst
+          // bleibt ein offener Bereich, wie er ist (im Bereich Charaktere etwa bei NSC oder Kasse).
           onClick={() => game.showScreen(open ? (desktop ? 'oracle' : screen) : id)}
         >
           <Icon />
@@ -163,12 +163,12 @@ export function App() {
     </>
   );
 
-  // Die Reihe Notiz, Tag, Würfeln, Karte: im Ziehblatt nur im Log, die übrigen Reiter haben unten
+  // Die Aktionsleiste Notiz, Tag, Würfeln, Karte: im Ziehblatt nur im Log, die übrigen Bereiche haben unten
   // Platz für ihre eigenen Knöpfe; in der Seitenspalte des Desktops unter jedem Bereich, der keine
-  // eigene Reihe hat. Beim angetippten Feld des Globus steht dort stattdessen die Reihe des Felds.
+  // eigene Aktionsleiste hat. Beim angetippten Feld des Globus steht dort stattdessen die Aktionsleiste des Felds.
   const dock = <OracleDock view={view} shortcuts />;
   const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcs={view.npcs} missionPicking={view.missions.picking} /> : undefined;
-  // Im Reiter Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
+  // Im Bereich Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
   const encounterDock = screen === 'encounter' && field === undefined ? <EncounterDock view={view} options={encounterOptions} /> : undefined;
   // Beim Landeplatz auf dem Globus steht unten „Hier landen“ (2026-11-21).
   const landingDock = view.landing?.picking && view.globe ? <LandingDock globe={view.globe} /> : undefined;
@@ -195,7 +195,7 @@ export function App() {
     </div>
   );
 
-  // Was unter den Reitern steht: das angetippte Feld, sonst das Log oder der gewählte Bereich.
+  // Was unter der Navigationsleiste steht: das angetippte Feld, sonst das Log oder der gewählte Bereich.
   const body = <div className="screen-host">{field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>;
   const areaTitle = screen === 'shop' ? 'Shop' : screen === 'about' ? 'Über die App' : (areaOf(screen)?.label ?? '');
 
@@ -203,8 +203,8 @@ export function App() {
     <div className={desktop ? 'app map-app desktop' : 'app map-app'}>
       {desktop ? (
         <>
-          {/* Eine Spalte: oben die Reiter, darunter das Log oder an seiner Stelle der gewählte Bereich
-              bzw. das angetippte Feld; ✕ oder ein zweiter Klick auf den Reiter führt zum Log zurück. */}
+          {/* Eine Spalte: oben die Navigationsleiste, darunter das Log oder an seiner Stelle der gewählte Bereich
+              bzw. das angetippte Feld; ✕ oder ein zweiter Klick auf den Bereich führt zum Log zurück. */}
           <aside className="side-panel" aria-label="Seitenspalte">
             {banners}
             {nav}

@@ -675,7 +675,7 @@ export function GlobeScreen({
 /**
  * Das angetippte Feld des Globus mit allem, was dort ist, und dem, was dort geschah. Es steht im
  * Ziehblatt bzw. in der Seitenspalte des Desktops an der Stelle des Bereichs; ✕ lässt das Feld los. Was man am
- * Feld tun kann (hinreisen, Gruppe setzen, NSC platzieren), steht darunter in der Reihe `FieldDock`.
+ * Feld tun kann (hinreisen, Gruppe setzen, NSC platzieren), steht darunter in der Aktionsleiste `FieldDock`.
  * Der Name beim Umbenennen ist reine Darstellung.
  */
 export function FieldCard({

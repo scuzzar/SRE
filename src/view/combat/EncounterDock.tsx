@@ -9,10 +9,10 @@ import { BadgeIcon, BriefcaseIcon, CalendarIcon, ClockIcon, EncounterIcon, PawIc
 type Check = ChecksView[keyof ChecksView] | undefined;
 
 /**
- * Die Reihe unten im Reiter Begegnung, im Stil der Orakel-Reihe: oben die Würfe der Begegnungen
+ * Die Aktionsleiste unten im Bereich Begegnung, im Stil der Aktionsleiste des Logs: oben die Würfe der Begegnungen
  * (Zufall, Tiere, Patron, Gerücht, Polizei), darunter die Zeit (Tage vergehen, Woche beenden) bzw.
  * bei laufender Fahrt „Weiterfahren“. Das ist die einzige Stelle, an der man weiterfährt oder Zeit
- * vergehen lässt. Ein Wurf zeigt sein Ergebnis im Würfelfenster; mit den Haken auf dem Blatt öffnet
+ * vergehen lässt. Ein Wurf zeigt sein Ergebnis in der Würfelbühne; mit den Haken auf dem Blatt öffnet
  * Zufall erst die NSC-Liste zum Dazunehmen bzw. Zufall und Tiere die Auswahl der Art. Jeder
  * Begegnungsknopf zeigt, wie oft im Zeitraum schon getestet wurde; ist die Regel erfüllt, würfelt nur
  * der lange Druck noch einmal. Reine Darstellung: Was die Knöpfe bewirken, entscheidet der Controller.
@@ -82,7 +82,7 @@ export function EncounterDock({ view, options }: { view: Snapshot; /** Auf dem B
 }
 
 /**
- * Ein Test als Knopf der Reihe: Symbol, ein Wort, darunter wie oft schon („heute 1×“). Noch nicht
+ * Ein Test als Knopf der Aktionsleiste: Symbol, ein Wort, darunter wie oft schon („heute 1×“). Noch nicht
  * erfüllt ist er hervorgehoben, erfüllt gedämpft; dann würfelt nur der lange Druck.
  */
 function Test({ icon, title, label, check, disabled, onPress, onHold }: { icon: ReactNode; title: string; label: string; check: Check; disabled: boolean; onPress: () => void; onHold: () => void }) {

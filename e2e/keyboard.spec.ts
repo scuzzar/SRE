@@ -56,9 +56,9 @@ test('Esc schließt das Ergebnis einer Probe wie „Weiter“', async ({ page })
   await expect(oracle(page).locator('.entry').last()).toContainText('Kira Vant · Pilot-2');
 });
 
-// Die Würfelfenster (Begegnung, Fahrt, Überraschung): Esc springt erst zum Ergebnis und schließt dann
+// Die Würfelbühne (Begegnung, Fahrt, Überraschung): Esc springt erst zum Ergebnis und schließt dann
 // wie „Weiter“ bzw. „Abbrechen“ (GUI-Handbuch, *Blatt im Vordergrund*).
-test('Esc schließt das Würfelfenster einer Begegnung, sobald der Wurf steht', async ({ page }) => {
+test('Esc schließt die Würfelbühne einer Begegnung, sobald der Wurf steht', async ({ page }) => {
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   await page.getByRole('region', { name: 'Begegnung und Zeit' }).getByRole('button', { name: /Patron würfeln/ }).click();
   const roll = page.getByRole('dialog', { name: 'Patron' });

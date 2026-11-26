@@ -1989,13 +1989,13 @@ jetzt:
 Aus den drei Heften nicht in diesem Dokument, weil sie nicht zum Kampf gehören:
 
 - **SE, Begegnungen ohne Kampf (S. 20–21):** Routine (bei Bedarf), Legal (täglich Gesetzesstufe oder
-  mehr auf 2W6, sonst Verhör; **Stand in der App:** Begegnungsart *Polizei* im Reiter Begegnung,
+  mehr auf 2W6, sonst Verhör; **Stand in der App:** Begegnungsart *Polizei* im Bereich Begegnung,
   auf Wunsch des Owners einmal je Woche, mit Reaktion des Polizisten; Regeln in `domain-model.md`
   unter *Test*), Patron (wöchentlich 5+ auf 1W6, *Patron Encounters Matrix* mit zwei
   Listen), Rumor (wöchentlich 7+ auf 2W6, *Rumors Matrix* und *Rumor List*), Adventure (führt die
   Spielleitung). **Stand in der App:** Die *Patron Encounters Matrix* mit beiden Listen und ihren DMs
-  ist im Reiter Begegnung (Begegnungsart *Patron*; Regeln in `domain-model.md` unter *Patron*, Listen in
-  `src/data/encounters.json`), mit dem wöchentlichen Test 5+ davor; die Liste wählt ein Würfel (Hausregel). Auch die Zufallsbegegnung beginnt mit ihrem täglichen Test 5+. Die *Rumors Matrix* mit der *Rumor List* ist ebenfalls im Reiter Begegnung (Begegnungsart *Gerücht*, Test 7+ auf 2W6; Regeln unter *Gerücht*); eine Rumor-Zeile des Patrons würfelt sie gleich mit. Zu einem gewürfelten Patron legt „Als NSC“ einen dauerhaften NSC an, der die Charaktererschaffung in der Laufbahn seines Patrons zufällig durchläuft (Hausregel, Zuordnung in `docs/patron-nsc.md`; die Regeln geben den Patrons keine Werte). Die vier ausgearbeiteten Aufträge des
+  ist im Bereich Begegnung (Begegnungsart *Patron*; Regeln in `domain-model.md` unter *Patron*, Listen in
+  `src/data/encounters.json`), mit dem wöchentlichen Test 5+ davor; die Liste wählt ein Würfel (Hausregel). Auch die Zufallsbegegnung beginnt mit ihrem täglichen Test 5+. Die *Rumors Matrix* mit der *Rumor List* ist ebenfalls im Bereich Begegnung (Begegnungsart *Gerücht*, Test 7+ auf 2W6; Regeln unter *Gerücht*); eine Rumor-Zeile des Patrons würfelt sie gleich mit. Zu einem gewürfelten Patron legt „Als NSC“ einen dauerhaften NSC an, der die Charaktererschaffung in der Laufbahn seines Patrons zufällig durchläuft (Hausregel, Zuordnung in `docs/patron-nsc.md`; die Regeln geben den Patrons keine Werte). Die vier ausgearbeiteten Aufträge des
   Regelhefts (SR S. 65–66: *The Newlyweds*, *The Nervous Merchant*, *The Lady in White Robes*,
   *The Raggedy Old Man*) sind nicht in der App.
 - **SE:** Charaktererschaffung (S. 1–3), Reisen und Schiffe (S. 8–11), Raumkampf (S. 12–13), Welten

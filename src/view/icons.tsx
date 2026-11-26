@@ -214,7 +214,7 @@ export function BriefcaseIcon() {
   );
 }
 
-/** Eine Fahne: eine Mission (Reiter, Ort auf der Karte, Handlungsfaden). */
+/** Eine Fahne: eine Mission (Bereich, Ort auf der Karte, Handlungsfaden). */
 export function FlagIcon() {
   return (
     <svg {...base} strokeLinecap="round" strokeLinejoin="round">
@@ -224,7 +224,7 @@ export function FlagIcon() {
   );
 }
 
-/** Eine Fahne für die Reiterleiste, so groß wie die anderen Reiter-Symbole. */
+/** Eine Fahne für die Navigationsleiste, so groß wie die anderen Symbole dort. */
 export function MissionsIcon() {
   return (
     <svg {...base} width={22} height={22} strokeLinecap="round" strokeLinejoin="round">
@@ -344,7 +344,7 @@ export function LightbulbIcon() {
   );
 }
 
-/** Das Schiff für den Reiter: ein Raumschiff von oben, wie im Mock gezeichnet. */
+/** Das Schiff für die Navigationsleiste: ein Raumschiff von oben, wie im Mock gezeichnet. */
 export function ShipIcon() {
   return (
     <svg {...base} strokeLinecap="round" strokeLinejoin="round">

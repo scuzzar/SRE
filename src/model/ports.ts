@@ -9,7 +9,7 @@ import type { CloudFile, DeckFile, DeckMark, SyncMark } from './sync';
 
 /**
  * Die Stufen des Ziehblatts auf dem Smartphone, von unten nach oben: versteckt (nur der Griff),
- * eingeklappt (Kopf, Fuß und Reiter), halb und voll. Gemerkt wird die Stufe, nicht die Höhe in Pixeln:
+ * eingeklappt (Kopf, Aktionsleiste und Navigationsleiste), halb und voll. Gemerkt wird die Stufe, nicht die Höhe in Pixeln:
  * Die rechnet die Ansicht jedes Mal aus dem Platz und dem Inhalt aus.
  */
 export const TRAY_STOPS = ['hidden', 'collapsed', 'half', 'full'] as const;
@@ -40,7 +40,7 @@ export interface CampaignRepository {
   /** Welche Kampagne offen ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */
   loadOpen(): Promise<CampaignId | undefined>;
   saveOpen(id: CampaignId): Promise<void>;
-  /** Ob die Leiste mit dem Charakter oben eingeklappt ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */
+  /** Ob die Charakterleiste eingeklappt ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */
   loadStripCollapsed(): Promise<boolean>;
   saveStripCollapsed(collapsed: boolean): Promise<void>;
   /** Ob der Hinweis über den Waffen im Shop weggeklickt ist, merkt sich das Gerät; zum Spielstand gehört es nicht. */

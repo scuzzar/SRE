@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// Wo etwas steht, hängt vom Layout ab: Auf dem Smartphone liegt unten das Ziehblatt mit den Reitern
-// (Log ist einer davon) und der Reihe Notiz, 2W6, Karte; im Desktop-Modus steht links eine Spalte
-// mit denselben Reitern, darunter das Log oder an seiner Stelle der Bereich. Diese Helfer halten die
+// Wo etwas steht, hängt vom Layout ab: Auf dem Smartphone liegt unten das Ziehblatt mit der Navigationsleiste
+// (Log ist einer davon) und der Aktionsleiste Notiz, 2W6, Karte; im Desktop-Modus steht links eine Spalte
+// mit derselben Navigationsleiste, darunter das Log oder an seiner Stelle der Bereich. Diese Helfer halten die
 // Tests davon frei.
 
 /**
@@ -18,13 +18,13 @@ export function schwererLauf(ms: number) {
 /** Der gerade gewählte Bereich: auf dem Smartphone der Inhalt des Ziehblatts, im Desktop-Modus der Inhalt der Seitenspalte. */
 export const host = (page: Page) => page.locator('.screen-host');
 
-/** Log und die Reihe Notiz, 2W6, Karte: die Seitenspalte, sonst das Ziehblatt. */
+/** Log und die Aktionsleiste Notiz, 2W6, Karte: die Seitenspalte, sonst das Ziehblatt. */
 export const oracle = (page: Page) => page.locator('.side-panel, .app:not(:has(.side-panel)) .tray');
 
-/** Wo der Charakter oben steht: im gewählten Reiter, im Ziehblatt wie in der Seitenspalte. */
+/** Wo der Charakter oben steht: im gewählten Bereich, im Ziehblatt wie in der Seitenspalte. */
 export const characters = (page: Page) => page.locator('.screen-host');
 
-/** Zum Log mit dem Charakter oben wechseln, über den Reiter Log. */
+/** Zum Log mit dem Charakter oben wechseln, über den Bereich Log. */
 export async function openOracle(page: Page) {
   await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Log', exact: true }).click();
 }
@@ -58,22 +58,22 @@ export async function revealed(card: ReturnType<Page['getByRole']>) {
   await card.locator('.sheet-foot .count').click();
 }
 
-/** Einen der fünf Reiter wählen: Log, Begegnung, Kampf, Schiff, Charaktere. */
+/** Einen der fünf Bereiche in der Navigationsleiste wählen: Log, Begegnung, Charaktere, Schiff, Missionen. */
 export async function openTab(page: Page, name: string) {
   await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name, exact: true }).click();
 }
 
-/** In einem Reiter mit Umschalter oben (Begegnung, Charaktere) einen Teil wählen; der Reiter öffnet sich dafür, wenn nötig. */
+/** In einem Bereich mit Unterreiter oben (Begegnung, Charaktere) einen Teil wählen; der Bereich öffnet sich dafür, wenn nötig. */
 export async function openPart(page: Page, area: 'Begegnung' | 'Charaktere', part: string) {
   const tab = page.getByRole('tablist', { name: area }).getByRole('tab', { name: part, exact: true });
   if ((await tab.count()) === 0) await openTab(page, area);
   await tab.click();
 }
 
-/** Im Reiter Charaktere oben auf SC, NSC oder Kasse umschalten. */
+/** Im Bereich Charaktere oben auf SC, NSC oder Kasse umschalten. */
 export const openPeople = (page: Page, part: 'SC' | 'NSC' | 'Kasse') => openPart(page, 'Charaktere', part);
 
-/** Im Reiter Begegnung oben auf Kampf umschalten. */
+/** Im Bereich Begegnung oben auf Kampf umschalten. */
 export const openCombat = (page: Page) => openPart(page, 'Begegnung', 'Kampf');
 
 /**

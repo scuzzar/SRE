@@ -38,8 +38,8 @@ function atTop(el: Element): boolean {
 /**
  * Das Ziehblatt auf dem Smartphone, wie in einer Karten-App: liegt unten über der Grundkarte und
  * rastet auf vier Stufen ein (`TrayStop`): versteckt (nur der Griff, mit Abstand zum Rand), eingeklappt
- * (Kopf, Fuß und Reiter; ist ein Feld offen, auch dessen Kopfzeile), halb und voll. Ziehen lässt es
- * sich am Kopf und am Fuß (Reihe Notiz, Würfeln, Karte und Reiter), und im Inhalt nach unten, wenn
+ * (Kopf, Aktionsleiste und Navigationsleiste; ist ein Feld offen, auch dessen Feldkopf), halb und voll. Ziehen lässt es
+ * sich am Kopf und am Fuß (Aktionsleiste Notiz, Würfeln, Karte und Navigationsleiste), und im Inhalt nach unten, wenn
  * der schon ganz oben steht. Beim Loslassen rastet es immer ein: nach einem Wisch eine Stufe weiter in
  * seine Richtung, sonst an der nächsten. Ein Tippen auf den Griff holt es aus dem Versteck auf
  * eingeklappt, wechselt zwischen eingeklappt und halb und geht von voll auf halb; mit dem Fokus auf dem
@@ -47,7 +47,7 @@ function atTop(el: Element): boolean {
  * (`setTrayStop`), die Höhe dazu rechnet das Blatt jedes Mal aus Platz und Inhalt.
  *
  * Die Höhe steht als `--tray-h` am Elternteil, damit Knöpfe der Grundkarte darüber bleiben; was das
- * Blatt sonst immer belegt (Griff und Reiter), als `--tray-floor`, damit sich der Globus darüber
+ * Blatt sonst immer belegt (Griff und Navigationsleiste), als `--tray-floor`, damit sich der Globus darüber
  * zentriert. Steht es über halb, trägt das Elternteil `data-tray-high` (die Zoom-Knöpfe gehen weg),
  * solange gezogen wird `tray-dragging` (nichts gleitet hinterher). Während des Ziehens schreibt das
  * Blatt seine Höhe unmittelbar ins DOM, ohne React.
@@ -60,7 +60,7 @@ export function Tray({ head, body, foot, bar, stop, raise }: { head: ReactNode; 
   const bottom = useRef<HTMLDivElement>(null);
   const tabs = useRef<HTMLDivElement>(null);
   const grip = useRef<HTMLButtonElement>(null);
-  // Platz des Elternteils, Kopf, Fuß (mit Reiter), Reiter allein, Griff, die Kopfzeile eines offenen
+  // Platz des Elternteils, Kopf, Fuß (mit Navigationsleiste), Navigationsleiste allein, Griff, der Feldkopf eines offenen
   // Felds im Inhalt und der Rand unten (Home-Leiste).
   const [size, setSize] = useState({ room: 0, head: 0, foot: 0, tabs: 0, grip: 0, peek: 0, safe: 0 });
   useLayoutEffect(() => {
@@ -73,7 +73,7 @@ export function Tray({ head, body, foot, bar, stop, raise }: { head: ReactNode; 
       const peekEl = content.querySelector('[data-tray-peek]');
       let peek = 0;
       if (peekEl) {
-        // Wie weit die Kopfzeile unter dem Anfang des Inhalts endet, auch wenn der gerade gescrollt ist.
+        // Wie weit der Feldkopf unter dem Anfang des Inhalts endet, auch wenn der gerade gescrollt ist.
         let scrolled = 0;
         for (let p = peekEl.parentElement; p && p !== content; p = p.parentElement) scrolled += p.scrollTop;
         peek = Math.max(0, Math.round(peekEl.getBoundingClientRect().bottom - content.getBoundingClientRect().top + scrolled));
@@ -116,7 +116,7 @@ export function Tray({ head, body, foot, bar, stop, raise }: { head: ReactNode; 
   const ready = size.room > 0;
 
   // Schreibt eine Höhe ins DOM: das Blatt selbst, die Variablen am Elternteil, versteckt oder nicht,
-  // wie weit Fuß und Reiter noch zu sehen sind.
+  // wie weit Fuß und Navigationsleiste noch zu sehen sind.
   const apply = (h: number) => {
     const el = tray.current;
     const parent = el?.parentElement;
@@ -127,7 +127,7 @@ export function Tray({ head, body, foot, bar, stop, raise }: { head: ReactNode; 
     const shown = heights.collapsed - heights.hidden > 1 ? (h - heights.hidden) / (heights.collapsed - heights.hidden) : 1;
     el.style.setProperty('--tray-foot', String(Math.min(1, Math.max(0, shown))));
     parent.style.setProperty('--tray-h', `${Math.round(h)}px`);
-    // Griff und Reiter belegt das Blatt immer, außer es ist (teils) versteckt: Darüber zentriert sich der Globus.
+    // Griff und Navigationsleiste belegt das Blatt immer, außer es ist (teils) versteckt: Darüber zentriert sich der Globus.
     parent.style.setProperty('--tray-floor', `${Math.round(Math.min(size.head + size.tabs, h))}px`);
     parent.toggleAttribute('data-tray-high', h > heights.half + 8);
   };

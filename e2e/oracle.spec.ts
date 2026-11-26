@@ -314,13 +314,13 @@ test('Eine ältere Karte ohne Frage zeigt ihre Felder in der Zeile nur einmal', 
   await page.screenshot({ path: process.env.SHOT ?? 'test-results/karte-zeile.png' });
 });
 
-test('Ein Tag mit dem Knopf in der Reihe unten (2026-11-22c, statt Deuten): ein Logeintrag Zeit', async ({ page }) => {
+test('Ein Tag mit dem Knopf in der Aktionsleiste unten (2026-11-22c, statt Deuten): ein Logeintrag Zeit', async ({ page }) => {
   await oracle(page).getByRole('button', { name: '1 Tag vergehen lassen' }).click();
   await expect(entries(page).last()).toContainText('Zeit');
 });
 
-test('Die Reihe unten steht auf dem Smartphone nur im Log', async ({ page }, testInfo) => {
-  testInfo.skip(testInfo.project.name !== 'mobil', 'Im Desktop-Modus steht sie unter jedem Bereich ohne eigene Reihe');
+test('Die Aktionsleiste unten steht auf dem Smartphone nur im Log', async ({ page }, testInfo) => {
+  testInfo.skip(testInfo.project.name !== 'mobil', 'Im Desktop-Modus steht sie unter jedem Bereich ohne eigene Aktionsleiste');
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
   await expect(oracle(page).getByRole('button', { name: '2W6', exact: true })).toBeVisible();
   for (const name of ['Begegnung', 'Charaktere', 'Schiff']) {
@@ -335,7 +335,7 @@ test('Die Reihe unten steht auf dem Smartphone nur im Log', async ({ page }, tes
   await expect(page.getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
 });
 
-test('Ziehblatt ganz hinunter: Reihe und Reiter rutschen mit hinaus, nur der Griff bleibt; ein Tippen holt es zurück', async ({ page }, testInfo) => {
+test('Ziehblatt ganz hinunter: Aktionsleiste und Navigationsleiste rutschen mit hinaus, nur der Griff bleibt; ein Tippen holt es zurück', async ({ page }, testInfo) => {
   testInfo.skip(testInfo.project.name !== 'mobil', 'Das Ziehblatt gibt es nur auf dem Smartphone');
   const viewport = page.viewportSize()!;
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
@@ -345,7 +345,7 @@ test('Ziehblatt ganz hinunter: Reihe und Reiter rutschen mit hinaus, nur der Gri
   await page.mouse.down();
   await page.mouse.move(box.x + box.width / 2, viewport.height - 2, { steps: 8 });
   await page.mouse.up();
-  // Reiter und Würfel liegen unter dem Bildschirmrand, der Griff steht unten.
+  // Navigationsleiste und Würfel liegen unter dem Bildschirmrand, der Griff steht unten.
   await expect.poll(async () => (await nav.boundingBox())!.y).toBeGreaterThanOrEqual(viewport.height);
   await expect.poll(async () => (await oracle(page).getByRole('button', { name: '2W6', exact: true }).boundingBox())!.y).toBeGreaterThanOrEqual(viewport.height);
   expect((await grip.boundingBox())!.y).toBeLessThan(viewport.height);

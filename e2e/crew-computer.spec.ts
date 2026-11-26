@@ -1,11 +1,11 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { expandTray, openPeople, openTab } from './layout';
 
-// Crew und Rechner im Reiter Schiff (Änderung 2026-11-22d, SR 33 und SE 10–13). Die Demo-Yacht
+// Crew und Rechner im Bereich Schiff (Änderung 2026-11-22d, SR 33 und SE 10–13). Die Demo-Yacht
 // „Kestrel“ hat ein Geschütz, darum stehen Pilot und Gunner schon da; der Rechner Modell/1 hat zwei
 // CPU-Plätze und vier Plätze im Speicher.
 
-/** Den Reiter unter den Kacheln öffnen: Deckplan, Details, Crew oder Computer. */
+/** Den Unterreiter unter den Kacheln öffnen: Deckplan, Details, Crew oder Computer. */
 async function openShipPart(page: Page, part: string) {
   await openTab(page, 'Schiff');
   await expandTray(page);

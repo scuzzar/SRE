@@ -1,4 +1,4 @@
-/** Der Reiter Computer: CPU, Speicher und Archiv des Rechners, Umstecken durch Ziehen, Kauf in der Werft (2026-11-22d). */
+/** Der Unterreiter Computer: CPU, Speicher und Archiv des Rechners, Umstecken durch Ziehen, Kauf in der Werft (2026-11-22d). */
 import { useState, type CSSProperties } from 'react';
 import type { ProgramRow, ShipView, SoftwareOfferRow, SoftwareSlot, VesselSoftwareRow } from '../../controller';
 import { useGame } from '../game-context';
@@ -18,7 +18,7 @@ const inSlot = (boat: VesselSoftwareRow, slot: SoftwareSlot): readonly ProgramRo
 
 /**
  * CPU, Speicher und Archiv des Rechners untereinander (Vorbild docs/mock/computer-programme.html).
- * Die Blätter dazu öffnet der Reiter Schiff, sie stehen dort an der Stelle des Reiters wie die
+ * Die Blätter dazu öffnet der Bereich Schiff, sie stehen dort an der Stelle des Bereichs wie die
  * übrigen Blätter; `onOpenProgram` nennt das Schiff, `onOpenYard` führt in die Software-Werft.
  */
 export function ComputerTab({ ship, onOpenProgram, onOpenYard }: { readonly ship: ShipView; readonly onOpenProgram: (shipId: string, program: string) => void; readonly onOpenYard: () => void }) {

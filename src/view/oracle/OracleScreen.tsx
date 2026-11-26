@@ -7,13 +7,13 @@ import { NoteSheet } from './NoteSheet';
 import { OracleDock } from './OracleDock';
 
 /**
- * Orakel und Proben auf einem Screen: oben der Charakter oben, darunter der Log, unten eine Reihe mit
+ * Orakel und Proben auf einem Screen: oben der Charakter oben, darunter der Log, unten eine Aktionsleiste mit
  * drei Knöpfen: Notiz, Würfeln, Karte (`OracleDock`). Das Orakel steht auf der Karte; die Frage schreibt man dort.
  * Notiz und Deutung schreibt man in einem eigenen Blatt; welches Blatt offen ist,
- * ist reine Darstellung. Als Reiter Log im Ziehblatt bzw. in der Seitenspalte des Desktops steht die Reihe
+ * ist reine Darstellung. Als Bereich Log im Ziehblatt bzw. in der Seitenspalte des Desktops steht die Aktionsleiste
  * unten fest unter allem (`dock={false}`).
  */
-export function OracleScreen({ view, dock = true }: { view: Snapshot; /** Ohne die Reihe unten: Im Ziehblatt und in der Seitenspalte steht sie fest unter allem. */ dock?: boolean }) {
+export function OracleScreen({ view, dock = true }: { view: Snapshot; /** Ohne die Aktionsleiste unten: Im Ziehblatt und in der Seitenspalte steht sie fest unter allem. */ dock?: boolean }) {
   // Das offene Blatt: Notiz, Deutung zum Ergebnis an dieser Stelle des Logs, oder den Text der Notiz
   // bzw. Deutung an dieser Stelle ändern.
   const [sheet, setSheet] = useState<{ readonly reading?: number; readonly edit?: number } | undefined>(undefined);

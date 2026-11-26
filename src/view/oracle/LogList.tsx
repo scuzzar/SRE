@@ -728,7 +728,7 @@ export function JourneyBody({ item }: { item: JourneyItem }) {
         </span>
       )}
       {item.encounterRolls && <span className="entry-detail">{item.encounterRolls}</span>}
-      {!item.arrived && <span className="entry-detail">Unterwegs · noch {item.left === 1 ? '1 Tag' : `${item.left} Tage`}: „Weiterreisen“ unter dem Log oder im Reiter Begegnung</span>}
+      {!item.arrived && <span className="entry-detail">Unterwegs · noch {item.left === 1 ? '1 Tag' : `${item.left} Tage`}: „Weiterreisen“ unter dem Log oder im Bereich Begegnung</span>}
       {item.arrived && item.berths.length > 0 && (
         <ul className="journey-berths">
           {item.berths.map((b, i) => (

@@ -15,7 +15,7 @@ interface Setting {
 
 /** Unter diesem Schlüssel steht, welche Kampagne zuletzt offen war. */
 const OPEN = 'open';
-/** Unter diesem Schlüssel steht, ob die Leiste mit dem Charakter oben eingeklappt ist. */
+/** Unter diesem Schlüssel steht, ob die Charakterleiste eingeklappt ist. */
 const STRIP = 'strip-collapsed';
 const SHOP_HINT = 'shop-hint-hidden';
 // Früher stand hier der Anteil der Höhe unter 'tray-height'; der neue Schlüssel lässt den alten Wert liegen.

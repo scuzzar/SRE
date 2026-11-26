@@ -313,7 +313,7 @@ function EncounterChoice({ space }: { space: SpaceView }) {
 }
 
 /**
- * Die Reihe unten auf der Raumkarte (2026-11-23, Entwurf: docs/mock/raumkampf-ui.html): Launch, Anlanden
+ * Die Aktionsleiste unten auf der Raumkarte (2026-11-23, Entwurf: docs/mock/raumkampf-ui.html): Launch, Anlanden
  * und Entern links, rechts der eine Knopf durch die Phasen – „Bewegen“ führt den Schub aus, im Raumkampf
  * folgt „End Turn“ mit dem Feuer der fremden Schiffe. Ohne Systemflug: der Start.
  */
@@ -335,7 +335,7 @@ export function SpaceDock({ space }: { space: SpaceView }) {
   const thrust = flight.phase === 'thrust';
   const launchable = flight.launchable;
   const dock = flight.dock;
-  // Der eine Platz in der Reihe: „Andocken“ zurück zum Mutterschiff, sobald die Gruppe in einem Small
+  // Der eine Platz in der Aktionsleiste: „Andocken“ zurück zum Mutterschiff, sobald die Gruppe in einem Small
   // Craft sitzt, sonst „Launch“ aus dem Stapel (2026-11-23). Auf der Welt aufsetzen heißt im Modell
   // „Landen“ und bleibt die Landeautomatik. Der Knopf ist in beiden Phasen zu haben: Wer heimfliegt,
   // dockt auch nach dem Feuer noch an. Weiter als 100 km weg ist kein Grund: „Andocken“ setzt dann

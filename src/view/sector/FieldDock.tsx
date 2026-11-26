@@ -6,7 +6,7 @@ import { useGame } from '../game-context';
 import { CheckIcon, CloseIcon, FlagIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
 
 /**
- * Die Reihe unten beim angetippten Feld des Globus, an der Stelle der Reihe Notiz, Tag, 2W6,
+ * Die Aktionsleiste unten beim angetippten Feld des Globus, an der Stelle der Aktionsleiste Notiz, Tag, 2W6,
  * Karte und im selben Stil: Hierhin reisen (die Route zum Feld planen, `planTrip`), Gruppe setzen
  * (ohne Fahrt und ohne Zeit, `moveParty`) und NSC platzieren (öffnet die NSC-Liste zum Auswählen,
  * `startNpcPlacing`; mit „OK“ oder „Abbrechen“ geht es zurück zum Feld; lange gedrückt erzeugt es einen
@@ -39,7 +39,7 @@ export function FieldDock({ globe, trip, tripPlan, npcs, missionPicking }: { glo
   const npcBlocker = npcTotal === 0 ? 'Noch keine NSC' : npcTotal <= picked.npcs.length ? 'Alle NSC sind schon hier' : undefined;
   const shopBlocker = !globe.partyHere ? 'Einkaufen geht nur auf der Welt der Gruppe' : picked.city === undefined ? 'Einkaufen geht nur in einer Stadt' : undefined;
   const placeName = picked.cities[0] === undefined ? 'auf diesem Feld' : `in ${picked.cities[0].name}`;
-  // Warum man nicht hinreisen kann, steht auf dem Handy (ohne Titel beim Zeigen) über der Reihe, wenn
+  // Warum man nicht hinreisen kann, steht auf dem Handy (ohne Titel beim Zeigen) über der Aktionsleiste, wenn
   // es nicht schon das Feld selbst zeigt (Gruppe hier, Route oder Fahrt im Blatt).
   const hint = !globe.partyHere
     ? 'Die Gruppe ist nicht auf dieser Welt; hinreisen geht nur auf ihrer Welt.'
@@ -66,7 +66,7 @@ export function FieldDock({ globe, trip, tripPlan, npcs, missionPicking }: { glo
       </section>
     );
   }
-  // Wird eine Route geplant, ersetzen „Losfahren“ und „Abbrechen“ die Knöpfe der Reihe.
+  // Wird eine Route geplant, ersetzen „Losfahren“ und „Abbrechen“ die Knöpfe der Aktionsleiste.
   if (tripPlan) {
     const ready = tripPlan.options[tripPlan.chosen] !== undefined;
     return (

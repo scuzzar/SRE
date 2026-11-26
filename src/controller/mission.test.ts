@@ -26,7 +26,7 @@ async function onField(cell = 10) {
 }
 
 describe('Missionen (2026-11-18)', () => {
-  it('„+ Neue Mission“ öffnet den Editor im Reiter Missionen, mit dem Feld der Gruppe als erstem Ort', async () => {
+  it('„+ Neue Mission“ öffnet den Editor im Bereich Missionen, mit dem Feld der Gruppe als erstem Ort', async () => {
     const game = await onField();
     game.newMission();
     const view = game.snapshot();
@@ -70,7 +70,7 @@ describe('Missionen (2026-11-18)', () => {
     expect(game.snapshot().screen).toBe('missions');
   });
 
-  it('ein Reiter bricht das Ort wählen ab, die Eingabe bleibt', async () => {
+  it('ein Tipp in die Navigationsleiste bricht das Ort wählen ab, die Eingabe bleibt', async () => {
     const game = await onField();
     game.newMission();
     game.startMissionPicking({ title: 'X', text: '', state: 'open', places: [] });
@@ -106,7 +106,7 @@ describe('Missionen (2026-11-18)', () => {
     expect(game.snapshot().globeFocus).toBeUndefined();
   });
 
-  it('Beteiligte (2026-11-18b): SC oder NSC mit Etikett, in Reiter und Charakter-Editor', async () => {
+  it('Beteiligte (2026-11-18b): SC oder NSC mit Etikett, im Bereich Missionen und im Charakter-Editor', async () => {
     const game = await onField();
     const kira = game.snapshot().characters.find((c) => c.name === 'Kira Vant')!;
     expect(game.snapshot().missions.persons[0]).toMatchObject({ group: 'SC' });

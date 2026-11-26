@@ -306,7 +306,7 @@ export interface Snapshot {
   readonly storageError: string | undefined;
   /** Ein anderes Fenster der App schreibt den Spielstand; dieses speichert nichts, bis es übernimmt. */
   readonly elsewhere: boolean;
-  /** Was nach einer Eingabe nicht ging, als Hinweis zum Wegklicken; sonst `undefined`. */
+  /** Was nach einer Eingabe nicht ging, als Meldung zum Wegklicken; sonst `undefined`. */
   readonly notice: string | undefined;
   readonly screen: Screen;
   readonly odds: readonly OddsChoice[];
@@ -314,7 +314,7 @@ export interface Snapshot {
   readonly log: readonly LogItem[];
   /** Je Logeintrag das Datum seines Spieltags („Montag, 002-1105“); fehlt bei Einträgen von vor der Spielzeit. */
   readonly logDays: readonly (string | undefined)[];
-  /** Die Spielzeit oben im Reiter Begegnung; fehlt nur ohne Kampagne. */
+  /** Die Spielzeit oben im Bereich Begegnung; fehlt nur ohne Kampagne. */
   readonly time: TimeView | undefined;
   /** Je Test, wie oft er in seinem Zeitraum schon gewürfelt ist. */
   readonly checks: ChecksView | undefined;
@@ -332,7 +332,7 @@ export interface Snapshot {
   readonly tripNote: string | undefined;
   /** Der Würfeldialog des Begegnungstests eines Reisetags. */
   readonly tripRoll: TripRoll | undefined;
-  /** Das Würfelfenster eines Begegnungswurfs aus dem Reiter Begegnung. */
+  /** Die Würfelbühne eines Begegnungswurfs aus dem Bereich Begegnung. */
   readonly encounterRoll: TripRoll | undefined;
   /** „Manuell wählen“: die Auswahl der Art bzw. Zeile ist offen. */
   readonly encounterChoice: 'random' | 'animal' | undefined;
@@ -346,7 +346,7 @@ export interface Snapshot {
   readonly characters: readonly CharacterView[];
   /** Der Charakter oben im Orakel-Screen; fehlt, wenn es keinen Lebenden gibt. */
   readonly focus: string | undefined;
-  /** Die Leiste mit dem Charakter oben ist eingeklappt. */
+  /** Die Charakterleiste ist eingeklappt. */
   readonly stripCollapsed: boolean;
   /** Der Hinweis über den Waffen im Shop ist weggeklickt. */
   readonly shopHintHidden: boolean;
@@ -357,26 +357,26 @@ export interface Snapshot {
   /** Der Lauf eines NSC, dem die Oberfläche zusieht: wie viele Läufe er schon verworfen hat,
    * wie viele davon gestorben sind (2026-11-24g, *Was der Lauf verschluckt*). */
   readonly npcRun: { readonly attempts: number; readonly deaths: number } | undefined;
-  /** Der Reiter Missionen. */
+  /** Der Bereich Missionen. */
   readonly missions: MissionsView;
   /** Die Toten unter „Verstorben“, getrennt von den Lebenden. */
   readonly dead: readonly { readonly id: string; readonly name: string; readonly background: string }[];
   readonly retired: readonly { readonly id: string; readonly name: string }[];
   readonly task: TaskView | undefined;
-  /** Der Kampf (im Reiter Begegnung) für den Charakter oben; fehlt, wenn es keinen Lebenden gibt. */
+  /** Der Kampf (im Bereich Begegnung) für den Charakter oben; fehlt, wenn es keinen Lebenden gibt. */
   readonly combat: CombatView | undefined;
-  /** Der Bereich Patron im Reiter Begegnung; fehlt nur ohne Kampagne. */
+  /** Der Bereich Patron im Bereich Begegnung; fehlt nur ohne Kampagne. */
   readonly patron: PatronView | undefined;
-  /** Die Begegnungsart Gerücht im Reiter Begegnung; fehlt nur ohne Kampagne. */
+  /** Die Begegnungsart Gerücht im Bereich Begegnung; fehlt nur ohne Kampagne. */
   readonly rumor: RumorView | undefined;
-  /** Shop (mit „Einkaufen“ am Feld) und Kasse (im Reiter Charaktere): Kasse und Angebot auf dem Aufenthaltsort. */
+  /** Shop (mit „Einkaufen“ am Feld) und Kasse (im Bereich Charaktere): Kasse und Angebot auf dem Aufenthaltsort. */
   readonly shop: ShopView | undefined;
-  /** Der Reiter Schiff: Stände des aktiven Schiffs, Deckpläne und die Werft. */
+  /** Der Bereich Schiff: Stände des aktiven Schiffs, Deckpläne und die Werft. */
   readonly ship: ShipView | undefined;
   readonly stash: StashView;
   /** Der Aufenthaltsort der Gruppe, als Feld (0304). */
   readonly location: string | undefined;
-  /** Das Ergebnis-Popup nach einer Probe oder einem Angriff, bzw. der Schadenswurf im Vordergrund. */
+  /** Das Würfelbühne nach einer Probe oder einem Angriff, bzw. der Schadenswurf im Vordergrund. */
   readonly result: TaskItem | AttackItem | DamageItem | undefined;
   readonly editor: EditorView | undefined;
   /** Die feste Liste der Fertigkeiten, für den Editor. */
@@ -401,7 +401,7 @@ export interface Snapshot {
   readonly landing: LandingView | undefined;
   /** Der Dialog der Begegnungsprüfung (2026-11-22b): vor dem Wurf auf der Starship Encounter Table, danach sein Ergebnis. */
   readonly shipCheck: ShipCheckView | undefined;
-  /** Der Knopf „Schiff“ im Reiter Begegnung (2026-11-22b): nur mit eigenem Schiff; warum er gerade nicht würfeln kann. */
+  /** Der Knopf „Schiff“ im Bereich Begegnung (2026-11-22b): nur mit eigenem Schiff; warum er gerade nicht würfeln kann. */
   readonly shipEncounter: { readonly blocker: string | undefined } | undefined;
   /** Die Raumkarte einer Welt ist die Grundkarte (vor Globus und Subsektor), mit dem Systemflug, wenn er dort läuft (2026-11-18c). */
   readonly space: SpaceView | undefined;
@@ -466,8 +466,8 @@ export interface ItemChoice {
 }
 
 /**
- * Was im Ziehblatt bzw. in der Seitenspalte steht. Die Reiter sind Log, Begegnung, Charaktere und
- * Schiff; im Reiter Begegnung schaltet man zwischen `encounter` und `combat` (Kampf) um, im Reiter
+ * Was im Ziehblatt bzw. in der Seitenspalte steht. Die Bereiche sind Log, Begegnung, Charaktere und
+ * Schiff; im Bereich Begegnung schaltet man zwischen `encounter` und `combat` (Kampf) um, im Bereich
  * Charaktere zwischen `characters` (SC), `funds` (Kasse) und `npcs` (NSC). Den Shop öffnet „Einkaufen“ am Feld bzw. an der Weltkarte des Aufenthaltsorts.
  */
 export type Screen = 'oracle' | 'encounter' | 'combat' | 'shop' | 'ship' | 'characters' | 'npcs' | 'funds' | 'missions' | 'sector' | 'about';
@@ -485,9 +485,9 @@ export interface NpcItem {
 
 /** Die NSC-Liste (siehe domain-model.md, *NSC-Liste*). */
 export interface NpcScreenView {
-  /** „Alle zeigen“ ist an; beim Öffnen des Reiters ist es aus. */
+  /** „Alle zeigen“ ist an; beim Öffnen des Bereichs ist es aus. */
   readonly all: boolean;
-  /** Der Name des Aufenthaltsorts; fehlt er, zeigt der Reiter immer alle. */
+  /** Der Name des Aufenthaltsorts; fehlt er, zeigt der Bereich immer alle. */
   readonly here: string | undefined;
   /** Je Welt (ohne Ort: `name` fehlt) die NSC nach Rolle; ohne „Alle zeigen“ nur eine Gruppe. */
   readonly worlds: readonly { readonly key: string; readonly name: string | undefined; readonly roles: readonly { readonly role: NpcRole; readonly npcs: readonly NpcItem[] }[] }[];
@@ -501,7 +501,7 @@ export interface NpcScreenView {
   /** Die Wahl des **Dienstalters** eines NSC-Laufs (2026-11-24f): 1 bis 7 Terms. */
   readonly termsGoal: readonly number[];
   /**
-   * Der Reiter wählt NSC aus (NSC platzieren oder NSC dazunehmen): die Frage oben, wer schon dabei ist
+   * Der Bereich wählt NSC aus (NSC platzieren oder NSC dazunehmen): die Frage oben, wer schon dabei ist
    * (angehakt, gesperrt), wer sich wählen lässt (fehlt: alle) und warum die übrigen nicht.
    */
   readonly placing: { readonly question: string; readonly here: readonly string[]; readonly allowed: readonly string[] | undefined; readonly notAllowed: string; readonly ok: string } | undefined;
@@ -593,13 +593,13 @@ export interface RumorItem {
   readonly general: boolean;
 }
 
-/** Die Begegnungsart Gerücht im Reiter Begegnung: der letzte Gerüchte-Wurf im Log und der Test des letzten Wurfs. */
+/** Die Begegnungsart Gerücht im Bereich Begegnung: der letzte Gerüchte-Wurf im Log und der Test des letzten Wurfs. */
 export interface RumorView {
   readonly last: RumorItem | undefined;
   readonly note: string | undefined;
 }
 
-/** Der Bereich Patron im Reiter Begegnung: je Liste die DMs der lebenden SC, dazu der letzte Patron-Wurf im Log. */
+/** Der Bereich Patron im Bereich Begegnung: je Liste die DMs der lebenden SC, dazu der letzte Patron-Wurf im Log. */
 export interface PatronView {
   readonly lists: readonly { readonly list: number; readonly parts: readonly { readonly die: 0 | 1; readonly label: string; readonly dm: number }[] }[];
   readonly last: PatronItem | undefined;
@@ -1166,7 +1166,7 @@ export interface CombatView {
   readonly canAttack: boolean;
   /** Feuerstoß oder Schrot der Waffe des Angreifers. */
   readonly fire: FireView | undefined;
-  /** Die laufende Begegnung: Mit ihr zeigt der Reiter die Kampfsimulation statt der Waffentabelle. */
+  /** Die laufende Begegnung: Mit ihr zeigt der Kampf die Kampfsimulation statt der Waffentabelle. */
   readonly sim: SimView | undefined;
   /** Die Geländearten; `animals`: Gibt es dort Tiere? */
   readonly terrains: readonly { readonly id: string; readonly name: string; readonly dm: number; readonly animals: boolean }[];
@@ -1388,7 +1388,7 @@ export interface CharacterView {
   readonly current: Upp;
   /** Die getragene Rüstung; fehlt, wenn er keine trägt. Anlegen lässt sie sich nur im Editor. */
   readonly armor: string | undefined;
-  /** Primärwaffe, Sekundärwaffe und Hände, mit der in der Hand; für die Leiste im Kampf, auch auf den Nachbarkarten. */
+  /** Primärwaffe, Sekundärwaffe und Hände, mit der in der Hand; für die Charakterleiste im Kampf, auch auf den Nachbarkarten. */
   readonly weapons: readonly WeaponChoice[];
 }
 
@@ -1417,7 +1417,7 @@ export interface EditorView {
   readonly missions: readonly { readonly id: string; readonly title: string; readonly state: MissionState; readonly as: string }[];
 }
 
-/** Ein Ort einer Mission, wie Reiter und Editor ihn zeigen. */
+/** Ein Ort einer Mission, wie Bereich und Editor ihn zeigen. */
 export interface MissionPlaceView {
   readonly place: Place;
   readonly label: string | undefined;
@@ -1435,7 +1435,7 @@ export interface MissionPersonView {
   readonly dead: boolean;
 }
 
-/** Eine Mission im Reiter Missionen. */
+/** Eine Mission im Bereich Missionen. */
 export interface MissionItem {
   readonly id: string;
   readonly title: string;
@@ -1449,7 +1449,7 @@ export interface MissionItem {
   readonly here: boolean;
 }
 
-/** Der Reiter Missionen (siehe domain-model.md, *Missionen*). */
+/** Der Bereich Missionen (siehe domain-model.md, *Missionen*). */
 export interface MissionsView {
   readonly open: readonly MissionItem[];
   readonly done: readonly MissionItem[];
@@ -1508,7 +1508,7 @@ export interface ControllerState {
   readonly attack: Attack | undefined;
   /** Was im Shop zuletzt nicht ging. */
   readonly shopError: string | undefined;
-  /** Was im Reiter Schiff zuletzt nicht ging. */
+  /** Was im Bereich Schiff zuletzt nicht ging. */
   readonly shipError: string | undefined;
   /** Die Deckpläne des aktiven Schiffs: Geräte-Daten je Entwurf, gehören nicht zum Spielstand. */
   readonly deckPlans: readonly DeckPlan[];
@@ -1556,13 +1556,13 @@ export interface ControllerState {
   readonly surpriseShown: boolean;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
   readonly opened: string | undefined;
-  /** Die Leiste mit dem Charakter oben ist eingeklappt; das Gerät merkt es sich. */
+  /** Die Charakterleiste ist eingeklappt; das Gerät merkt es sich. */
   readonly stripCollapsed: boolean;
   /** Der Hinweis über den Waffen im Shop ist weggeklickt; das Gerät merkt es sich. */
   readonly shopHintHidden: boolean;
   /** Auf welcher Stufe das Ziehblatt steht; das Gerät merkt es sich. */
   readonly trayStop: TrayStop;
-  /** Index des Logeintrags, dessen Ergebnis-Popup offen ist. */
+  /** Index des Logeintrags, dessen Würfelbühne offen ist. */
   readonly result: number | undefined;
   readonly editor: { readonly id: string | undefined; readonly error: string | undefined; readonly npc?: boolean; readonly role?: NpcRole } | undefined;
   /** Die NSC-Liste zeigt alle NSC statt nur die des Aufenthaltsorts. */
@@ -1577,20 +1577,20 @@ export interface ControllerState {
   readonly missionEditor: { readonly id: string | undefined; readonly draft: MissionInput; readonly rev: number; readonly error: string | undefined; readonly picking: boolean } | undefined;
   /**
    * NSC platzieren: Die NSC-Liste wählt NSC für dieses Feld des Globus aus (Welt als Feld des
-   * Subsektors, Oberflächenfeld) und kehrt danach in den Reiter `screen` zum Feld zurück.
+   * Subsektors, Oberflächenfeld) und kehrt danach in den Bereich `screen` zum Feld zurück.
    */
   readonly npcPlacing: { readonly world: string; readonly cell: number; readonly screen: Screen } | undefined;
   /**
    * Der Shop ist mit „Einkaufen“ am Feld bzw. an der Weltkarte geöffnet: woher man kam, damit ✕ dorthin
-   * zurückführt (Reiter, angetipptes Feld des Globus, Weltkarte und gewähltes Feld des Subsektors).
+   * zurückführt (Bereich, angetipptes Feld des Globus, Weltkarte und gewähltes Feld des Subsektors).
    */
   readonly shopFrom: { readonly screen: Screen; readonly picked: number | undefined; readonly world: OpenWorld | undefined; readonly selected: ControllerState['selected'] } | undefined;
   /**
    * NSC dazunehmen: Die NSC-Liste wählt die NSC für die nächste Zufallsbegegnung aus; danach geht es
-   * zurück in den Reiter Begegnung, mit `manual` zur Auswahl der Art, sonst gleich zum Wurf.
+   * zurück in den Bereich Begegnung, mit `manual` zur Auswahl der Art, sonst gleich zum Wurf.
    */
   readonly npcJoining: { readonly manual: boolean } | undefined;
-  /** Das Würfelfenster eines Begegnungswurfs (Test mit Würfeln oder nur ein Hinweis); danach ggf. die Übersicht. */
+  /** Die Würfelbühne eines Begegnungswurfs (Test mit Würfeln oder nur ein Hinweis); danach ggf. die Übersicht. */
   readonly encounterRoll: TripRoll | undefined;
   /** „Manuell wählen“: Die Auswahl der Art (Zufallsbegegnung) bzw. Zeile (Tiere) ist offen. */
   readonly encounterChoice: 'random' | 'animal' | undefined;

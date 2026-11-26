@@ -747,7 +747,7 @@ Wie eine Karten-App (Owner, 14. November 2026):
   - Ein Tippen auf eine Zeile dreht die Karte dorthin, zoomt hinein und wählt das Feld.
 - **Unten fährt ein Feld herein**, sobald ein Feld angetippt ist: Gelände, Lage, Temperatur, Städte,
   Kleinstädte, Vulkan, Fluss, Straße, Gruppe und NSC dort, die Knöpfe „Gruppe hierher“ und „NSC
-  hierher“, „Was hier geschah“ und darunter die Reihe **Notiz, Deuten, 2W6, Karte**, damit man zum Würfeln
+  hierher“, „Was hier geschah“ und darunter die Aktionsleiste **Notiz, Deuten, 2W6, Karte**, damit man zum Würfeln
   den Globus nicht verlassen muss. Schließen mit dem X oder erneutem Antippen des Feldes. Im
   Desktop-Modus fährt das Feld **links** herein wie in einer Karten-App, statt unten über die ganze Breite.
 - Gerechnet wie das Weltsymbol (`src/view/sector/world-icon.ts`) Pixel für Pixel aus einer Textur

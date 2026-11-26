@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 // Zwei Fenster derselben App auf einem Gerät: Nur eines speichert (Web Locks); und was nach einer
-// Eingabe schiefgeht, steht als Hinweis da.
+// Eingabe schiefgeht, steht als Meldung da.
 
 const elsewhere = (page: Page) => page.getByRole('alertdialog', { name: 'In einem anderen Fenster offen' });
 
@@ -22,7 +22,7 @@ test('Ein zweites Fenster speichert nicht, bis es übernimmt; dann steht das ers
   await expect(elsewhere(page)).toBeVisible();
 });
 
-test('Ein Fehler, den niemand auffängt, steht oben als Hinweis; ✕ nimmt ihn weg', async ({ page }) => {
+test('Ein Fehler, den niemand auffängt, steht oben als Meldung; ✕ nimmt sie weg', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('navigation', { name: 'Bereiche' })).toBeVisible();
   await page.evaluate(() => setTimeout(() => {

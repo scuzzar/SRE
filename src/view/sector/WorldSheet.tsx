@@ -31,17 +31,17 @@ function dmText(line: WorldLine): string {
 /**
  * Die Weltkarte an der Stelle des Bereichs, schiebbar wie jedes angetippte Feld (Hexfeld im
  * Subsektor, Feld auf dem Globus): oben die Welt, wie sie gerade steht (UWP im Klartext, Basen,
- * Handelscodes); wieder geöffnet zeigt sie nur die Werte. Unten, wie die Reihe Notiz, Tag, 2W6,
+ * Handelscodes); wieder geöffnet zeigt sie nur die Werte. Unten, wie die Aktionsleiste Notiz, Tag, 2W6,
  * Karte im Orakel: Solange sie entsteht, die Würfelbühne und der Knopf für den nächsten Wurf, wie in
  * der Charaktererschaffung; danach Hierher reisen, Gruppe platzieren und Öffnen
  * (`WorldActions`). Eingetragen ist ein Wurf schon, bevor die Würfel rollen; die Karte zeigt den
  * neuen Stand erst, wenn das Ergebnis unten feststeht. Ein Tippen irgendwo beendet die Animation.
  *
  * Eine andere Welt (oder keine mehr) fängt frisch an, wie neu geöffnet; das gleicht einem Neustart
- * über `key`, ohne dass dafür eine eigene Stelle im Baum nötig wäre, denn Feld und Reihe unten
+ * über `key`, ohne dass dafür eine eigene Stelle im Baum nötig wäre, denn Feld und Aktionsleiste unten
  * stehen an zwei verschiedenen Stellen (`App.tsx`), aus demselben Aufruf. Für eine neue Welt aus der
  * Heimatwelt- bzw. Welt-eines-Terms-Wahl (`picking`), wo der Subsektor selbst schon ein Blatt ist,
- * baut `App.tsx` aus Feld und Reihe unten stattdessen ein eigenes Blatt obendrauf (`title` nennt es).
+ * baut `App.tsx` aus Feld und Aktionsleiste unten stattdessen ein eigenes Blatt obendrauf (`title` nennt es).
  */
 export function useWorldDock(
   world: WorldView | undefined,
@@ -122,7 +122,7 @@ export function useWorldDock(
   );
 
   // Eine ältere Welt ohne Temperatur ist schon fertig (canNote), würfelt aber noch nach: dann stehen
-  // Würfelbühne und die Reihe Hierher reisen/Gruppe platzieren/Öffnen zusammen unten.
+  // Würfelbühne und die Aktionsleiste Hierher reisen/Gruppe platzieren/Öffnen zusammen unten.
   const rollDock = hasRoll || fresh ? (
     <section className="generation-dock" aria-label="Weltenerschaffung" onClickCapture={skipTap}>
       {latest && <RollStage key={latest.index} line={latest} animate={animate} onSettled={setSettled} skips={skips} />}
@@ -384,7 +384,7 @@ export function SystemSection({ system }: { system: SystemView }) {
 }
 
 /**
- * Die Reihe an der Welt, wie die Reihe am angetippten Feld des Globus (`FieldDock`) und im Stil von
+ * Die Aktionsleiste an der Welt, wie die Aktionsleiste am angetippten Feld des Globus (`FieldDock`) und im Stil von
  * Notiz, Tag, 2W6, Karte im Orakel: Hierher reisen (eine Woche im Sprung; was nicht geht, ist
  * ausgegraut, der Grund steht darüber), Gruppe platzieren (ohne Reise und ohne Zeit, wie „Gruppe
  * setzen“ am Feld; ist die Gruppe schon hier, ausgegraut) und Öffnen (die Hexkarte der Welt, nicht
@@ -440,7 +440,7 @@ export function WorldActions({ world, here, travel, onGlobe = false }: { world: 
  * gespeichert wird beim Verlassen des Feldes, also auch, wenn man die Weltkarte schließt.
  */
 /**
- * Welt und System als Reiter der Weltkarte (Owner, 21. November 2026): „Welt“ zeigt Werte,
+ * Welt und System als Unterreiter der Weltkarte (Owner, 21. November 2026): „Welt“ zeigt Werte,
  * Oberfläche, Name, Notiz und Verlauf, „System“ die Übersicht des Sternsystems. Ohne System nur die
  * Welt. Eine andere Welt beginnt wieder bei „Welt“ (der Aufrufer gibt die Welt als `key`).
  */

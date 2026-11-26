@@ -6,7 +6,7 @@ async function openCharacters(page: Page) {
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
 }
 
-/** Die Leiste oben im Orakel-Screen; nur der Charakter oben ist für Screenreader und Tests sichtbar. */
+/** Die Charakterleiste im Orakel-Screen; nur der Charakter oben ist für Screenreader und Tests sichtbar. */
 const strip = (page: Page) => characters(page).getByRole('region', { name: 'Spielercharaktere' });
 const top = (page: Page, name: string) => strip(page).getByRole('article', { name });
 const dock = (page: Page) => oracle(page).getByRole('region', { name: 'Orakel und Proben' });
@@ -214,7 +214,7 @@ test('Tot: im Editor markieren, steht unter „Verstorben“, rückt oben weiter
   await expect(page.getByText('Verstorben')).toBeHidden();
 });
 
-test('Ohne lebenden Charakter bietet die Leiste an, einen anzulegen', async ({ page }) => {
+test('Ohne lebenden Charakter bietet die Charakterleiste an, einen anzulegen', async ({ page }) => {
   await openCharacters(page);
   for (const name of ['Kira Vant', 'Jonas Reyl']) {
     await card(page, name).getByRole('button', { name: 'Bearbeiten' }).click();

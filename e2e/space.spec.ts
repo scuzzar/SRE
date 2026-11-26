@@ -89,7 +89,7 @@ test('Beiboot im Systemflug aussetzen und mit „Andocken“ wieder an Bord (202
   await expect(boot(/^Andocken/)).toHaveAttribute('title', /Zu weit weg/);
 });
 
-test('Systemflug aus dem Reiter Schiff: „Starten“ öffnet die Raumkarte, die Bedienung steht im Reiter Schiff (Owner, 21. November 2026)', async ({ page }) => {
+test('Systemflug aus dem Bereich Schiff: „Starten“ öffnet die Raumkarte, die Bedienung steht im Bereich Schiff (Owner, 21. November 2026)', async ({ page }) => {
   await page.goto('/');
   await openHomeGlobe(page);
   await openTab(page, 'Schiff');

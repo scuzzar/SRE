@@ -23,7 +23,7 @@ export function recordArrivalRoll(campaign: Campaign, dice: Dice): Campaign {
   return { ...campaign, log: campaign.log.map((e, i) => (i === index ? { ...entry, arrivalRoll: dice } : e)) };
 }
 
-/** Warum der Knopf „Schiffsbegegnung“ im Reiter Begegnung gerade nichts würfeln kann; `undefined`, wenn er kann (2026-11-22b). */
+/** Warum der Knopf „Schiffsbegegnung“ im Bereich Begegnung gerade nichts würfeln kann; `undefined`, wenn er kann (2026-11-22b). */
 export function manualEncounterBlocker(campaign: Campaign): string | undefined {
   if (campaign.flight !== undefined) return undefined;
   const world = launchWorld(campaign);

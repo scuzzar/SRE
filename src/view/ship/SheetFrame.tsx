@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { CloseIcon } from '../icons';
 
 /**
- * Ein Blatt des Reiters Schiff, als Feld an der Stelle des Reiters wie das angetippte Feld des Globus:
+ * Ein Blatt des Bereichs Schiff, als Feld an der Stelle des Bereichs wie das angetippte Feld des Globus:
  * oben Titel und ✕ (am Kopf lässt sich das Ziehblatt fassen), darunter der Inhalt, unten im Dock die
  * Knöpfe. Esc schließt es wie das ✕. `className` steht für Blätter mit zweispaltigen Tabellen.
  */

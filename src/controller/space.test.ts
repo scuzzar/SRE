@@ -32,7 +32,7 @@ describe('Raumkarte und Systemflug', () => {
     expect(repository.saved!.flight?.round).toBe(1);
   });
 
-  it('„Starten“ im Reiter Schiff öffnet die Raumkarte um die Welt des Schiffs und beginnt den Flug; die Bedienung steht im Reiter Schiff (Owner, 21. November 2026)', async () => {
+  it('„Starten“ im Bereich Schiff öffnet die Raumkarte um die Welt des Schiffs und beginnt den Flug; die Bedienung steht im Bereich Schiff (Owner, 21. November 2026)', async () => {
     const repository = memoryRepository();
     const game = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
     await game.init();

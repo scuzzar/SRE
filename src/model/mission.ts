@@ -67,7 +67,7 @@ export function openMissions(campaign: Campaign): readonly Mission[] {
   return campaign.missions.filter((m) => m.state === 'open' && !m.retired);
 }
 
-/** Die Missionen, die der Reiter zeigt (nicht ausgeblendet), in einem Zustand. */
+/** Die Missionen, die der Bereich zeigt (nicht ausgeblendet), in einem Zustand. */
 export function missionsIn(campaign: Campaign, state: MissionState): readonly Mission[] {
   return campaign.missions.filter((m) => m.state === state && !m.retired);
 }

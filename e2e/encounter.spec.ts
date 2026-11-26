@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { schwererLauf, entries, expandTray, host, openOracle, openSector, openCombat, openPart, land, wuerfelgleich } from './layout';
 
-test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
+test('Begegnung im eigenen Bereich; Kampf: Waffentabelle ohne Begegnung, mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
   // Ein langer Ablauf mit vielen Würfen und Zügen.
   // Auf dem Desktop allein schon 45–55 s.
   schwererLauf(90_000);
@@ -40,7 +40,7 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await openCombat(page);
   await expect(page.locator('.combat-table')).toBeVisible();
   await expect(dock(page)).toHaveCount(0);
-  // Begegnung (Umschalter oben): Gelände und Würfel stehen auf dem Blatt, der Ort steht schon (kein Auswahlfeld mehr).
+  // Begegnung (Unterreiter oben): Gelände und Würfel stehen auf dem Blatt, der Ort steht schon (kein Auswahlfeld mehr).
   await openPart(page, 'Begegnung', 'Begegnung');
   await expect(page.getByLabel('Die Gruppe ist auf')).toHaveCount(0);
   expect(worldId).not.toBe('');
@@ -60,13 +60,13 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(intro.locator('.intro-npcs li').first()).toContainText('Anführer');
   const npcs = await intro.locator('.intro-npcs li').count();
   await intro.getByRole('button', { name: 'Weiter' }).click();
-  // „Weiter“ führt zurück in den Reiter Begegnung; nicht jede Begegnung wird ein Kampf. Erst „Zum Kampf“ wechselt.
+  // „Weiter“ führt zurück in den Bereich Begegnung; nicht jede Begegnung wird ein Kampf. Erst „Zum Kampf“ wechselt.
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Begegnung' })).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('.encounter-running')).toContainText('Thugs');
   await page.locator('.encounter-running').getByRole('button', { name: 'Zum Kampf' }).click();
   await expect(page.getByRole('navigation').getByRole('button', { name: 'Begegnung' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('tablist', { name: 'Begegnung' }).getByRole('tab', { name: 'Kampf' })).toHaveAttribute('aria-selected', 'true');
-  // Zwei Spalten: links die SC, rechts die NSC; die Leiste oben gibt es im Kampf nicht.
+  // Zwei Spalten: links die SC, rechts die NSC; die Charakterleiste gibt es im Kampf nicht.
   await expect(host(page).locator('.strip')).toHaveCount(0);
   await expect(page.locator('.fcard.pcs')).toHaveCount(2);
   await expect(page.locator('.fcard.npcs')).toHaveCount(npcs);
@@ -146,7 +146,7 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(page.locator('.fcard.npcs')).toHaveCount(before - chosen);
   await expect(page.getByRole('region', { name: 'Übernehmen' })).toHaveCount(0);
 
-  // Unter Begegnung (Umschalter oben) steht die laufende Begegnung knapp; „Zum Kampf“ führt zurück.
+  // Unter Begegnung (Unterreiter oben) steht die laufende Begegnung knapp; „Zum Kampf“ führt zurück.
   await openPart(page, 'Begegnung', 'Begegnung');
   await expect(page.locator('.encounter-running')).toContainText('Thugs');
   await page.locator('.encounter-running').getByRole('button', { name: 'Zum Kampf' }).click();
@@ -158,13 +158,13 @@ test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Bege
   await expect(dock(page).getByRole('button', { name: /^Zufallsbegegnung würfeln/ })).toBeEnabled();
 });
 
-test('Patron und Gerücht: unten würfeln, das Würfelfenster zeigt Test und Ergebnis; erst der Test, beim Patron wählt ein Würfel die Liste; die Würfe stehen im Log', async ({ page }) => {
+test('Patron und Gerücht: unten würfeln, die Würfelbühne zeigt Test und Ergebnis; erst der Test, beim Patron wählt ein Würfel die Liste; die Würfe stehen im Log', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
-  // Die Würfe stehen unten in der Reihe; das Blatt hat nur noch die Einstellungen.
+  // Die Würfe stehen unten in der Aktionsleiste; das Blatt hat nur noch die Einstellungen.
   await expect(dock(page).getByRole('button', { name: /^Zufallsbegegnung würfeln/ })).toBeVisible();
   // Jonas Reyl hat Admin-1: Der Patron-Wurf zählt es mit (steht im Log).
-  // Der Test besteht bei 5+ auf 1W6; das Würfelfenster zeigt Würfel und Ergebnis. Würfeln, bis ein Patron kommt.
+  // Der Test besteht bei 5+ auf 1W6; die Würfelbühne zeigt Würfel und Ergebnis. Würfeln, bis ein Patron kommt.
   // Der erste Test der Woche geht mit Tippen, jeder weitere nur lange gedrückt.
   const roll = page.getByRole('dialog', { name: 'Patron' });
   await dock(page).getByRole('button', { name: /Patron würfeln/ }).click();
@@ -190,7 +190,7 @@ test('Patron und Gerücht: unten würfeln, das Würfelfenster zeigt Test und Erg
   await expect(editor).toBeVisible();
   await editor.getByRole('button', { name: 'Schließen' }).click();
   await expect(editor).toBeHidden();
-  // Dahinter steht die NSC-Liste; die Würfe gehen im Reiter Begegnung weiter.
+  // Dahinter steht die NSC-Liste; die Würfe gehen im Bereich Begegnung weiter.
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   // Gerücht: Test 7+ auf 2W6, dann die Art nach der Rumors Matrix.
   const rumor = page.getByRole('dialog', { name: 'Gerücht' });
@@ -258,7 +258,7 @@ test('Tiere: Gelände auf dem Blatt; die Tiertabelle entsteht beim ersten Wurf, 
   await expect(page.getByRole('dialog')).toContainText(`Wurf ${option}`);
 });
 
-/** Die Reihe unten im Reiter Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren. */
+/** Die Aktionsleiste unten im Bereich Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren. */
 const dock = (page: Page) => page.getByRole('region', { name: 'Begegnung und Zeit' });
 
 /** Langes Drücken auf einen Knopf (HoldButton): drücken, warten, bis er sich gefüllt hat, loslassen. */

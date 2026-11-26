@@ -14,7 +14,7 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 | Dokument | Inhalt |
 |---|---|
 | [docs/domain-model.md](docs/domain-model.md) | Domänenmodell: Diagramm, Regeln, Begriffe, was der Code noch nicht kann |
-| [docs/gui-handbuch.md](docs/gui-handbuch.md) | Bedienkonzept: Ziehblatt, Reiter, Reihe, Blätter, Gesten, Farben |
+| [docs/gui-handbuch.md](docs/gui-handbuch.md) | Bedienkonzept: Ziehblatt, Navigationsleiste, Aktionsleiste, Dialoge, Gesten, Farben |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Technik, MVC-Aufbau, Schichten, Befehle |
 | [AGENTS.md](AGENTS.md) | Wie an der App gearbeitet wird |
 | [TODO.md](TODO.md) | Was als Nächstes ansteht |
@@ -32,9 +32,9 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 ### Bedienung: Die Karte führt
 
 - Unter allem liegt die **Grundkarte**: der Globus der offenen Welt, beim Start der des Aufenthaltsorts. Weiter herausgezoomt (✕, −, Mausrad, zwei Finger) kommt man zum **Subsektor**.
-- Auf dem Smartphone liegt unten ein **Ziehblatt** wie in einer Karten-App, mit vier Stufen (versteckt, eingeklappt, halb, voll) und fünf Reitern: **Log, Begegnung, Charaktere, Schiff, Missionen**.
-- Ein angetipptes Feld des Globus zeigt, was dort ist und geschah, mit der Reihe **Hierhin reisen**, **Gruppe setzen**, **NSC platzieren** und **Einkaufen**.
-- Im **Desktop-Modus** stehen dieselben Bereiche in einer Spalte links, die Karte füllt den Rest. Tastatur: K Karte, W Würfeln, N Notiz, T ein Tag, Ziffern für die Reiter, Esc schließt. Wie die Oberfläche aufgebaut ist, steht im [GUI-Handbuch](docs/gui-handbuch.md).
+- Auf dem Smartphone liegt unten ein **Ziehblatt** wie in einer Karten-App, mit vier Stufen (versteckt, eingeklappt, halb, voll) und der Navigationsleiste mit fünf Bereichen: **Log, Begegnung, Charaktere, Schiff, Missionen**.
+- Ein angetipptes Feld des Globus zeigt, was dort ist und geschah, mit der Aktionsleiste **Hierhin reisen**, **Gruppe setzen**, **NSC platzieren** und **Einkaufen**.
+- Im **Desktop-Modus** stehen dieselben Bereiche in einer Spalte links, die Karte füllt den Rest. Tastatur: K Karte, W Würfeln, N Notiz, T ein Tag, Ziffern für die Bereiche, Esc schließt. Wie die Oberfläche aufgebaut ist, steht im [GUI-Handbuch](docs/gui-handbuch.md).
 - Das **Menü ☰** führt zu Kampagnen, Export und dem Bildschirm „Über“ (Installieren, Vibration, Quellen).
 
 ### Kampagnen und Speicherung
@@ -45,7 +45,7 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 
 ### Log und Orakel
 
-- Der **Log** wächst wie ein Chat von unten; das Neueste steht groß da, Älteres als kompakte Zeile. Unten die Reihe **Notiz, Tag, 2W6, Karte** (Tag lässt einen Tag vergehen). Jedes Ergebnis lässt sich am Ergebnis selbst **deuten**, Notizen und Deutungen lassen sich ändern.
+- Der **Log** wächst wie ein Chat von unten; das Neueste steht groß da, Älteres als kompakte Zeile. Unten die Aktionsleiste **Notiz, Tag, 2W6, Karte** (Tag lässt einen Tag vergehen). Jedes Ergebnis lässt sich am Ergebnis selbst **deuten**, Notizen und Deutungen lassen sich ändern.
 - Oben steht der **Charakter oben** mit UPP und Fertigkeiten; Wischen wechselt den Charakter.
 - **Ja/Nein-Orakel** auf der Karte: ein Wurf, die Antwort für drei Stufen (Hoch 75 %, Mittel 50 %, Gering 25 %), sechs Antworten von **Ja!** bis **Nein!** nach Mythic.
 - **Zufallsereignis** wie bei Mythic bei einem Pasch bis 55, mit Ereignisfokus; ein Handlungsfaden lost eine offene Mission aus.
@@ -56,20 +56,20 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 ### Charaktere und NSC
 
 - **SC** mit UPP, Fertigkeiten, Besitz, Ausrüstung, Credits, Notiz und Lebenslauf. Man legt sie von Hand an oder **erschafft sie nach den Regeln**: Attribute, Heimatwelt, eine der **18 Laufbahnen** (sechs aus dem Regelwerk, zwölf aus Supplement 4), je Term Welt, Überleben, Rang, Fertigkeiten, Altern und Weiterverpflichtung, zuletzt die Abmusterung, Wurf für Wurf animiert. Lange drücken lässt die Erschaffung durchlaufen. Die Abmusterung kann ein Schiff bringen.
-- **NSC** im Reiter Charaktere, nach Rolle gruppiert, vorgegeben die des Aufenthaltsorts. Neue NSC legt man leer an oder **erzeugt sie aus einer Laufbahn**, auf Wunsch mit festem **Dienstalter** (1 bis 7 Terms, ohne Tod); eine **Wartenscheibe** zählt die verworfenen Läufe. Erzeugte NSC bewaffnen sich nach Stand, TL und Gesetz ihrer Welt.
+- **NSC** im Bereich Charaktere, nach Rolle gruppiert, vorgegeben die des Aufenthaltsorts. Neue NSC legt man leer an oder **erzeugt sie aus einer Laufbahn**, auf Wunsch mit festem **Dienstalter** (1 bis 7 Terms, ohne Tod); eine **Wartenscheibe** zählt die verworfenen Läufe. Erzeugte NSC bewaffnen sich nach Stand, TL und Gesetz ihrer Welt.
 - **Gruppengepäck** mit Traglast: Am SC bleibt nur, was er ausgerüstet hat (Primär-, Sekundärwaffe, Rüstung); Ziehen verteilt die Stücke.
 - **Gruppenkasse** mit Kassenbuch: Einnahme, Ausgabe, Einzahlung, Auszahlung; sie wird nie negativ.
 
 ### Begegnungen und Spielzeit
 
-- Im Reiter Begegnung stehen die Würfe **Zufall, Tiere, Patron, Gerücht, Polizei**, jeder mit seinem **Test** nach der Encounter Checklist und einem Würfelfenster.
+- Im Bereich Begegnung stehen die Würfe **Zufall, Tiere, Patron, Gerücht, Polizei**, jeder mit seinem **Test** nach der Encounter Checklist und einem Würfelbühne.
 - **Zufallsbegegnungen** würfeln Art und Anzahl (W6, zum Ausgleich auch W4 oder W3); die NSC entstehen vollständig. **Tiere** kommen aus einer Tiertabelle je Welt und Gelände, mit Ereignissen und Rettungswürfen. Ein **Patron** lässt sich als NSC oder als Mission übernehmen; das **Gerücht** würfelt auf der Rumors Matrix; die **Polizei** prüft gegen das Gesetz.
 - **Spielzeit** im Imperialen Kalender: **Tage vergehen**, **Woche beenden**; jeder Logeintrag trägt seinen Tag. Am Ende der Woche erinnert die App an fehlende Tests.
 - **Beute**: Kredite und Ausrüstung besiegter NSC, Fleisch und Fell von Tieren.
 
 ### Kampf
 
-- Ohne Begegnung zeigt der Reiter die **Waffentabelle** des Charakters oben: der nötige Wurf je Rüstung und Reichweite; ein Tippen greift an, danach würfelt man den Schaden.
+- Ohne Begegnung zeigt der Kampf die **Waffentabelle** des Charakters oben: der nötige Wurf je Rüstung und Reichweite; ein Tippen greift an, danach würfelt man den Schaden.
 - Mit Begegnung läuft die **Kampfsimulation**: SC und NSC in zwei Spalten, Entfernung in Range Bands je SC, Ausdauer, Parade, Feuerstoß und Schrot, Munition und Nachladen, Wunden an STR, DEX und END bis zum Tod.
 - **Heilung** nach den Charts (Aufwachen, Behandlung, Ruhe). Besiegte NSC lassen sich als SC oder dauerhafte NSC **übernehmen**.
 - Regeln und Stand im Einzelnen: [docs/regeln-kampf.md](docs/regeln-kampf.md).

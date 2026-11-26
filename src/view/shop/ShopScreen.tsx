@@ -19,11 +19,11 @@ const areas: readonly { readonly id: Area; readonly name: string }[] = [
 
 /**
  * Der Shop, gebaut wie der Laden eines Rollenspiels; „Einkaufen“ am Feld bzw. an der Weltkarte des
- * Aufenthaltsorts öffnet ihn an der Stelle des Felds. Oben die Leiste mit dem Charakter oben (für ihn
+ * Aufenthaltsorts öffnet ihn an der Stelle des Felds. Oben die Charakterleiste (für ihn
  * kauft und verkauft man), darunter Aufenthaltsort und Stand der Gruppenkasse und die Bereiche Waffen
  * (mit dem Magazin als eigener Spalte), Rüstung, Fahrzeuge, Sonstiges (Ausrüstung, Passagen) und
  * Verkauf (sein Besitz). Buchungen und
- * Kassenbuch stehen im Reiter Charaktere unter Kasse (`FundsScreen`). Gerechnet und geprüft wird im
+ * Kassenbuch stehen im Bereich Charaktere unter Kasse (`FundsScreen`). Gerechnet und geprüft wird im
  * Model; welcher Bereich offen und welcher Kauf offen ist, hält nur die View. `onClose` (✕ oben) gibt
  * es auf dem Smartphone; im Desktop-Modus steht das ✕ im Kopf der Seitenspalte.
  */
@@ -255,7 +255,7 @@ function SaleCounter({ stash, owner, onSell }: { stash: readonly Sellable[]; own
   if (stash.length === 0 && (!owner || owner.sellable.length === 0)) return <p className="log-empty">Im Gepäck und an {owner?.name ?? 'den SC'} ist nichts, das sich verkaufen lässt.</p>;
   return (
     <>
-      <p className="muted shop-hint">Erlös je Stück antippen zum Verkaufen; vorgeschlagen ist der halbe Preis. Oben in der Leiste lässt sich ein anderer Charakter wählen.</p>
+      <p className="muted shop-hint">Erlös je Stück antippen zum Verkaufen; vorgeschlagen ist der halbe Preis. Oben in der Charakterleiste lässt sich ein anderer Charakter wählen.</p>
       {stash.length > 0 && <SaleGroups title="Gepäck" items={stash} onSell={(item) => onSell(undefined, item)} />}
       {owner && owner.sellable.length > 0 && <SaleGroups title={`Ausgerüstet von ${owner.name}`} items={owner.sellable} onSell={(item) => onSell(owner.id, item)} />}
     </>

@@ -37,7 +37,7 @@ export function SystemJourneySheet({ journey }: { journey: SystemJourneyView }) 
             <p className="journey-facts">
               {result.fromDate} → {result.toDate} · {result.flight} · {result.how}
             </p>
-            {!result.arrived && <p className="journey-facts">Unterwegs · noch {result.left === 1 ? '1 Tag' : `${result.left} Tage`}: „Weiterreisen“ unter dem Log oder im Reiter Begegnung.</p>}
+            {!result.arrived && <p className="journey-facts">Unterwegs · noch {result.left === 1 ? '1 Tag' : `${result.left} Tage`}: „Weiterreisen“ unter dem Log oder im Bereich Begegnung.</p>}
             <button type="button" className="primary" onClick={() => game.closeSystemJourney()}>
               Weiter
             </button>

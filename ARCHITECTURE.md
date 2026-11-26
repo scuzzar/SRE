@@ -50,9 +50,9 @@ was daraus folgt:
   und Würfe der Weltenerschaffung sind Teil des Models (`model/draft/`), werden aber nicht gespeichert;
   sie liegen im Zustand des Controllers. Die Charaktererschaffung dagegen ist gespeicherter Stand: Sie
   hält nur die Würfe, alles andere spielt `replay` daraus nach (`model/career.ts`).
-- **Er wählt, welche View zu sehen ist:** Grundkarte, Reiter und Umschalter (`showScreen(screen)`),
+- **Er wählt, welche View zu sehen ist:** Grundkarte, Bereich und Unterreiter (`showScreen(screen)`),
   offene Blätter, Popups und Dialoge, die Stufe des Ziehblatts. Was das Gerät sich merken soll (offene
-  Kampagne, Ziehblatt, eingeklappte Leiste), speichert er über das Repository.
+  Kampagne, Ziehblatt, eingeklappte Charakterleiste), speichert er über das Repository.
 - **Er hält den Ablauf:** Steht nach einer Änderung ein anderer Charakter oben, endet die Probe; nach
   der Erschaffung geht es zum Log, wo der Neue oben steht. Was aus dem Model folgt (die Karte steht im
   Vordergrund, solange es eine offene `Card` gibt), braucht keinen eigenen Zustand.
@@ -71,7 +71,7 @@ Compilerfehler.
 **3. Nach oben wird gemeldet, nicht gerufen.** Der Controller kennt keine Komponenten. Er wählt die
 View, indem er seinen Zustand ändert, nicht indem er Komponenten aufruft. Er bietet
 `subscribe(listener)` und `snapshot()` an: den Spielstand aus dem Model und seinen eigenen Zustand
-(welcher Screen, ob das Popup offen ist, wessen Details aufgeklappt sind, ob die Leiste eingeklappt ist, ob der Hinweis im Shop weggeklickt ist, ob die Charaktererschaffung im Vordergrund steht). Die View hängt sich mit `useSyncExternalStore` daran
+(welcher Screen, ob das Popup offen ist, wessen Details aufgeklappt sind, ob die Charakterleiste eingeklappt ist, ob der Hinweis im Shop weggeklickt ist, ob die Charaktererschaffung im Vordergrund steht). Die View hängt sich mit `useSyncExternalStore` daran
 und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von unten nach oben.
 
 **4. Das Model ist frei von Seiteneffekten, die View frei von Regeln und Ablauf.**
@@ -82,7 +82,7 @@ und zeichnet neu, wenn sich etwas ändert. Das ist die einzige Verbindung von un
   Attribute wählbar sind, welcher DM gilt, was auf 2W6 nötig ist und wie wahrscheinlich das ist,
   liefert das Model über den Snapshot des Controllers. Die View hält nur, was reine Darstellung ist:
   die Anordnung von Feldern und Tafeln, den Text in Eingabefeldern während des Tippens, ob ein
-  Löschen gerade bestätigt werden will, ob das Menü offen ist (`view/Menu.tsx`), wo die Leiste beim
+  Löschen gerade bestätigt werden will, ob das Menü offen ist (`view/Menu.tsx`), wo die Charakterleiste beim
   Wischen gerade steht (`view/oracle/CharacterStrip.tsx` meldet dem Controller nur, bei welcher
   Karte sie liegen bleibt), das Erkennen von langem Drücken (auch der Knopf, der sich dabei füllt, `view/HoldButton.tsx`), die Scrollposition,
   Animationen und Vibration (`view/Dice.tsx`, `view/haptics.ts`), der Hinweis zum Installieren (`view/install.ts`). Eine Animation zeigt nur, was schon
@@ -116,7 +116,7 @@ den `controller/*-view.ts`.
 | Kampagnen, Datei, Abgleich | `campaign-file.ts`, `sync.ts`, `draft/conflict.ts`, `demo.ts`, `ports.ts` | `game.ts` | `CampaignSheet.tsx`, `Menu.tsx` |
 
 Rahmen der View: `App.tsx` (Grundkarte, Ziehblatt, Desktop-Modus), `Tray.tsx` (Ziehblatt),
-`SubTabs.tsx` (Umschalter), `Dice.tsx` (Würfel), `game-context.tsx` (Anschluss an den Controller).
+`SubTabs.tsx` (Unterreiter), `Dice.tsx` (Würfel), `game-context.tsx` (Anschluss an den Controller).
 
 ## Wie die Regeln geprüft werden
 

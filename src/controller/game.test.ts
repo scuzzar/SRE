@@ -350,7 +350,7 @@ describe('Charakter oben: Probe im Orakel-Screen', () => {
     expect(game.snapshot().skills.filter((s) => !s.leveled).map((s) => s.id)).toEqual(['jack-of-all-trades']);
   });
 
-  it('klappt die Leiste ein und auf; das Gerät merkt es sich über einen Neustart', async () => {
+  it('klappt die Charakterleiste ein und auf; das Gerät merkt es sich über einen Neustart', async () => {
     const { game, repository } = await started();
     expect(game.snapshot().stripCollapsed).toBe(false);
     game.toggleStrip();
@@ -654,20 +654,20 @@ describe('Begegnung und Kampfsimulation', () => {
     const npc = npcs.worlds[0]!.roles[0]!.npcs[0]!;
     expect(npc.background).toMatch(/^Smuggler · Ex-Pirate/);
     expect(game.snapshot().patron?.note).toBe(`${npc.name} (${npc.background}) steht jetzt unter Charaktere › NSC.`);
-    // Nicht in der Leiste oben und nicht unter den SC.
+    // Nicht in der Charakterleiste und nicht unter den SC.
     expect(game.snapshot().characters.map((c) => c.id)).not.toContain(npc.id);
-    // „Alle zeigen“ gilt nur, bis man den Reiter wieder öffnet.
+    // „Alle zeigen“ gilt nur, bis man den Bereich wieder öffnet.
     game.showScreen('npcs');
     game.showAllNpcs(true);
     expect(game.snapshot().npcs.all).toBe(true);
     game.showScreen('oracle');
     game.showScreen('npcs');
     expect(game.snapshot().npcs.all).toBe(false);
-    // Ein neuer NSC aus dem Reiter: mit der gewählten Rolle, Ort der Aufenthaltsort.
+    // Ein neuer NSC aus dem Bereich: mit der gewählten Rolle, Ort der Aufenthaltsort.
     game.newCharacter(true, 'contact');
     expect(game.snapshot().editor?.input).toMatchObject({ npc: true, role: 'contact', place: '0101' });
     game.cancelEdit();
-    // Aus einer Laufbahn erzeugt: er steht danach im Editor, mit Attributen im Reiter.
+    // Aus einer Laufbahn erzeugt: er steht danach im Editor, mit Attributen im Bereich.
     await game.generateNpc('scouts', 'ally');
     const editor = game.snapshot().editor!;
     expect(editor.input).toMatchObject({ npc: true, role: 'ally', place: '0101' });
@@ -706,7 +706,7 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().editor).toBeUndefined();
   });
 
-  it('Würfelfenster: Der Test steht mit Würfeln im Fenster, die Übersicht folgt erst danach; schon getestet steht als Hinweis da', async () => {
+  it('Würfelbühne: Der Test steht mit Würfeln im Fenster, die Übersicht folgt erst danach; schon getestet steht als Hinweis da', async () => {
     const { game, random } = await onRegina();
     random.queue.push(4);
     game.rollEncounter();
@@ -738,7 +738,7 @@ describe('Begegnung und Kampfsimulation', () => {
     game.showScreen('encounter');
     game.startNpcJoining(false);
     expect(game.snapshot()).toMatchObject({ screen: 'npcs', npcs: { placing: { here: [], allowed: [tenzin], ok: 'dazunehmen' } } });
-    // Abbrechen: zurück in den Reiter Begegnung, nichts gewürfelt.
+    // Abbrechen: zurück in den Bereich Begegnung, nichts gewürfelt.
     game.cancelNpcPlacing();
     expect(game.snapshot()).toMatchObject({ screen: 'encounter', combat: { sim: undefined }, npcs: { placing: undefined } });
     game.startNpcJoining(false);
@@ -828,7 +828,7 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().journey?.result).toMatchObject({ arrived: false, left: 7 });
     expect(game.snapshot().location).toBeUndefined();
     game.closeJourney();
-    // Der Tag-Knopf (in der Reihe unter dem Log und im Reiter Begegnung) heißt jetzt „Weiterreisen“.
+    // Der Tag-Knopf (in der Aktionsleiste unter dem Log und im Bereich Begegnung) heißt jetzt „Weiterreisen“.
     expect(game.snapshot().time?.oneDay).toMatchObject({ kind: 'voyage', label: 'Weiterreisen', blocker: undefined });
     for (let i = 0; i < 6; i++) game.oneDay();
     expect(game.snapshot().time?.voyage).toMatchObject({ to: 'Nahe', left: 1 });
@@ -928,7 +928,7 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().journey?.mode).toBe('passage');
   });
 
-  it('im Reiter Begegnung gewürfelt, zeigt erst die Übersicht; danach bleibt der Reiter Begegnung, zum Kampf geht es erst auf Wunsch', async () => {
+  it('im Bereich Begegnung gewürfelt, zeigt erst die Übersicht; danach bleibt der Bereich Begegnung, zum Kampf geht es erst auf Wunsch', async () => {
     const { game } = await onRegina();
     game.showScreen('encounter');
     game.rollEncounter(15, 'clear');
@@ -1060,7 +1060,7 @@ describe('Begegnung und Kampfsimulation', () => {
     expect(game.snapshot().combat!.sim!.defeated).toBe('npcs');
   });
 
-  it('Wischen in der Leiste: im NSC-Zug wird der SC das Ziel; im SC-Zug greift trotzdem der SC am Zug an', async () => {
+  it('Wischen in der Charakterleiste: im NSC-Zug wird der SC das Ziel; im SC-Zug greift trotzdem der SC am Zug an', async () => {
     const { game, random } = await onRegina();
     game.rollEncounter(15);
     game.rollSurprise();
@@ -1654,7 +1654,7 @@ describe('Subsektor und Weltenerschaffung', () => {
   // Vorkommen 5; Raumhafen C; Scoutbasis ja; Gasriese ja; dann UWP C788545-7.
   const regina = [5, 4, 4, 4, 4, 3, 3, 4, 5, 4, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3, 4, 3, 2, 1, 1, 2, 2, 3, 3, 3, 4, 3, 3];
 
-  it('zeigt 80 Felder, alle nicht erzeugt, im Reiter Sektor', async () => {
+  it('zeigt 80 Felder, alle nicht erzeugt, im Bereich Sektor', async () => {
     const { game } = await started(fixedRandom(), memoryRepository(createCampaign()));
     game.showScreen('sector');
     const view = game.snapshot();
@@ -2018,9 +2018,9 @@ describe('Globus (Oberflächenkarte)', () => {
     expect(game.snapshot().globe?.map).toBe(view.globe?.map);
   });
 
-  it('ist die Grundkarte: beim Start der Globus des Aufenthaltsorts, sobald seine Karte entstanden ist; ein Reiter lässt das Feld los', async () => {
+  it('ist die Grundkarte: beim Start der Globus des Aufenthaltsorts, sobald seine Karte entstanden ist; ein Tipp in die Navigationsleiste lässt das Feld los', async () => {
     const { game, repository } = await started();
-    // Die Demo-Welt hat noch keine Karte: Die Grundkarte ist der Subsektor. Ein Reiter lässt ein
+    // Die Demo-Welt hat noch keine Karte: Die Grundkarte ist der Subsektor. Ein Tipp in die Navigationsleiste lässt ein
     // gewähltes Feld dort los.
     expect(game.snapshot().globe).toBeUndefined();
     game.chooseHex(1, 1);
@@ -2081,7 +2081,7 @@ describe('Städtenamen (2026-11-14k)', () => {
 });
 
 describe('Orte (2026-11-14j)', () => {
-  it('NSC platzieren: die NSC-Liste wählt mehrere NSC, auch ohne Ort; OK setzt sie aufs Feld, Abbrechen und ein Reiter ändern nichts', async () => {
+  it('NSC platzieren: die NSC-Liste wählt mehrere NSC, auch ohne Ort; OK setzt sie aufs Feld, Abbrechen und ein Tipp in die Navigationsleiste ändern nichts', async () => {
     const { game } = await started();
     // Zwei NSC: Mara lebt auf Kessra, Tenzin hat keinen Ort (er reist mit).
     const add = (name: string, place: string | undefined) => {
@@ -2100,11 +2100,11 @@ describe('Orte (2026-11-14j)', () => {
     // NSC platzieren öffnet die NSC-Liste zum Auswählen; das Feld ist so lange losgelassen.
     game.startNpcPlacing();
     expect(game.snapshot()).toMatchObject({ screen: 'npcs', globe: { picked: undefined }, npcs: { all: false, placing: { question: `Welche NSC kommen nach ${capital.label}?`, here: [] } } });
-    // Abbrechen: zurück zum Feld im Reiter davor, nichts geändert.
+    // Abbrechen: zurück zum Feld im Bereich davor, nichts geändert.
     game.cancelNpcPlacing();
     expect(game.snapshot()).toMatchObject({ screen: 'oracle', globe: { picked: { cell: capital.cell } }, npcs: { placing: undefined } });
     expect(game.snapshot().globe!.picked!.npcs).toEqual([]);
-    // Ein Reiter bricht ebenfalls ab.
+    // Ein Tipp in die Navigationsleiste bricht ebenfalls ab.
     game.startNpcPlacing();
     game.showScreen('shop');
     expect(game.snapshot().npcs.placing).toBeUndefined();
@@ -2143,7 +2143,7 @@ describe('Orte (2026-11-14j)', () => {
     expect(turn.attacks.some((a) => a.reaches && a.odds !== undefined)).toBe(true);
   });
 
-  it('Einkaufen geht nur in einer Stadt auf der Welt der Gruppe; ✕ führt zum Feld zurück, ein Reiter verlässt den Shop', async () => {
+  it('Einkaufen geht nur in einer Stadt auf der Welt der Gruppe; ✕ führt zum Feld zurück, ein Tipp in die Navigationsleiste verlässt den Shop', async () => {
     const { game } = await started();
     game.showScreen('ship');
     openWithGlobe(game, 4, 5);
@@ -2257,11 +2257,11 @@ describe('Fahrt (2026-11-15)', () => {
     expect(game.snapshot().globe!.route[0]!.cells.at(-1)).toBe(target);
     game.startTrip();
     expect(game.snapshot().tripPlan).toBeUndefined();
-    // Weiter geht es im Reiter Begegnung, der einzigen Stelle zum Weiterfahren; das Feld ist losgelassen.
+    // Weiter geht es im Bereich Begegnung, der einzigen Stelle zum Weiterfahren; das Feld ist losgelassen.
     expect(game.snapshot()).toMatchObject({ screen: 'encounter', globe: { picked: undefined } });
     const days = game.snapshot().trip!.daysLeft;
     expect(days).toBeGreaterThan(0);
-    // Neu gestartet mitten in der Fahrt: Die App öffnet im Reiter Begegnung.
+    // Neu gestartet mitten in der Fahrt: Die App öffnet im Bereich Begegnung.
     await game.whenSaved();
     const again = new GameController({ repository, random: fixedRandom(), clock: fixedClock(), download: memoryDownload(), keys: countingKeys() });
     await again.init();

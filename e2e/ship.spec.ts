@@ -21,14 +21,14 @@ async function picture(page: Page, width: number, height: number, type: 'image/p
   return Buffer.from(base64, 'base64');
 }
 
-/** Öffnet den Reiter; im Desktop-Modus schlösse ein zweiter Klick auf den offenen Reiter das Panel. */
+/** Öffnet den Bereich Schiff; im Desktop-Modus schlösse ein zweiter Klick auf den offenen Bereich das Panel. */
 async function openTab(page: Page, name: string) {
   const tab = page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name, exact: true });
   if ((await tab.getAttribute('aria-current')) !== 'page') await tab.click();
 }
 
 /**
- * Geld in die Kasse und einen Scout/Courier bar kaufen; der Reiter Schiff bleibt offen. Die
+ * Geld in die Kasse und einen Scout/Courier bar kaufen; der Bereich Schiff bleibt offen. Die
  * Demo-Kampagne hat schon die Yacht „Kestrel“ (2026-11-21b), darum heißt der Knopf dann nur „Werft“.
  */
 async function buyScout(page: Page) {

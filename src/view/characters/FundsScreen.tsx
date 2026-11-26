@@ -10,7 +10,7 @@ type FreeKind = 'income' | 'expense' | 'deposit' | 'payout';
 const freeKinds: readonly FreeKind[] = ['income', 'expense', 'deposit', 'payout'];
 
 /**
- * Die Kasse im Reiter Charaktere (neben SC und NSC): Stand der Gruppenkasse, freie Buchungen und das
+ * Die Kasse im Bereich Charaktere (neben SC und NSC): Stand der Gruppenkasse, freie Buchungen und das
  * Kassenbuch. Gekauft und verkauft wird im Shop („Einkaufen“ am Feld). Gerechnet und geprüft wird im
  * Model; was man gerade eintippt, hält nur die View.
  */

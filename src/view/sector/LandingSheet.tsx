@@ -35,7 +35,7 @@ export function LandingSheet({ landing }: { landing: LandingView }) {
   );
 }
 
-/** Die Reihe unten, solange der Landeplatz auf dem Globus angetippt wird. */
+/** Die Aktionsleiste unten, solange der Landeplatz auf dem Globus angetippt wird. */
 export function LandingDock({ globe }: { globe: GlobeView }) {
   const game = useGame();
   const picked = globe.picked;

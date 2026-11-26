@@ -49,7 +49,7 @@ function duration(trip: TripView): { readonly big: string; readonly small: strin
   return trip.days <= 1 ? { big: hoursText(trip.totalHours), small: '1 Reisetag' } : { big: daysText(trip.days), small: `${hoursText(trip.totalHours)} Fahrt` };
 }
 
-/** Die Planung im angetippten Feld: die Varianten wie bei einer Karten-App, die gewählte mit ihren Abschnitten. „Losfahren“ und „Abbrechen“ stehen unten in der Reihe des Felds (`FieldDock`). */
+/** Die Planung im angetippten Feld: die Varianten wie bei einer Karten-App, die gewählte mit ihren Abschnitten. „Losfahren“ und „Abbrechen“ stehen unten in der Aktionsleiste des Felds (`FieldDock`). */
 export function TripPlanCard({ plan }: { plan: TripPlanView }) {
   const game = useGame();
   const chosen = plan.options[plan.chosen];
@@ -126,8 +126,8 @@ export function TripPlanCard({ plan }: { plan: TripPlanView }) {
 }
 
 /**
- * Die laufende Fahrt im Reiter Begegnung: wohin, wie lange noch, die Abschnitte und abbrechen.
- * Weiterfahren steht unten in der Reihe `EncounterDock`, die einzige Stelle dafür.
+ * Die laufende Fahrt im Bereich Begegnung: wohin, wie lange noch, die Abschnitte und abbrechen.
+ * Weiterfahren steht unten in der Aktionsleiste `EncounterDock`, die einzige Stelle dafür.
  */
 export function TripBar({ trip, note }: { trip: TripView; note: string | undefined }) {
   const game = useGame();
@@ -163,7 +163,7 @@ export function TripBar({ trip, note }: { trip: TripView; note: string | undefin
  * Der Begegnungstest eines Reisetags am Boden (5+ auf 1W6): der Würfel rollt, dann steht da, ob es
  * zur Begegnung kommt; in der Wildnis sind es Tiere. Ein Tippen überspringt die Animation.
  */
-/** Auf dem Globus: Eine Fahrt läuft. Ein Tippen öffnet den Reiter Begegnung, dort geht es weiter. */
+/** Auf dem Globus: Eine Fahrt läuft. Ein Tippen öffnet den Bereich Begegnung, dort geht es weiter. */
 export function TripHint({ trip }: { trip: TripView }) {
   const game = useGame();
   return (

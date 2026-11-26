@@ -85,10 +85,10 @@ export const softwareSlotRows: readonly { readonly slot: SoftwareSlot; readonly 
 ];
 export type { SoftwareSlot };
 
-/** Die Softwarearten, wie der Reiter Schiff sie schreibt (SR 38). */
+/** Die Softwarearten, wie der Bereich Schiff sie schreibt (SR 38). */
 const softwareKinds: Record<SoftwareKind, string> = { offensive: 'Offensiv', defensive: 'Defensiv', routine: 'Routine' };
 
-/** Ein Posten im Reiter Crew (2026-11-22d): Stelle, Name, Besetzung und was die Fertigkeit wert ist. */
+/** Ein Posten im Unterreiter Crew (2026-11-22d): Stelle, Name, Besetzung und was die Fertigkeit wert ist. */
 export interface CrewPostRow {
   /** Die Stelle in `Ship.crew`; das Blatt am Posten arbeitet mit ihr. */
   readonly at: number;
@@ -124,7 +124,7 @@ export interface VesselCrewRow {
   readonly people: readonly CrewPersonRow[];
 }
 
-/** Ein Programm an Bord im Reiter Computer (2026-11-22d). */
+/** Ein Programm an Bord im Unterreiter Computer (2026-11-22d). */
 export interface ProgramRow {
   readonly id: string;
   readonly name: string;
@@ -196,7 +196,7 @@ export interface ShipYardRow {
   readonly owned: boolean;
 }
 
-/** Ein Beiboot im Reiter Schiff. */
+/** Ein Beiboot im Bereich Schiff. */
 export interface CraftRow {
   readonly name: string;
   /** Entwurf und Beschleunigung, knapp: „Ship's Boat · 6G“. */
@@ -205,7 +205,7 @@ export interface CraftRow {
   readonly where: string;
 }
 
-/** Was der Reiter Schiff zeigt: Stände des aktiven Schiffs, Deckpläne und die Werft. */
+/** Was der Bereich Schiff zeigt: Stände des aktiven Schiffs, Deckpläne und die Werft. */
 export interface ShipView {
   readonly funds: number;
   /** Cr je Tonne raffinierten Treibstoff (SR 30). */
@@ -284,7 +284,7 @@ export interface ShipView {
   readonly freeDeckSlots: number;
   readonly yard: readonly ShipYardRow[];
   readonly error: string | undefined;
-  /** Der Systemflug aus dem Reiter Schiff: warum „Starten“ nicht geht (`undefined`: es geht) und ob gerade einer läuft. */
+  /** Der Systemflug aus dem Bereich Schiff: warum „Starten“ nicht geht (`undefined`: es geht) und ob gerade einer läuft. */
   readonly launchBlocker: string | undefined;
   readonly flying: boolean;
 }
@@ -344,7 +344,7 @@ function computerRow(campaign: Campaign, ship: Ship): VesselSoftwareRow {
   };
 }
 
-/** Der Reiter Schiff, aus dem Spielstand und den Geräte-Deckplänen des aktiven Entwurfs. */
+/** Der Bereich Schiff, aus dem Spielstand und den Geräte-Deckplänen des aktiven Entwurfs. */
 export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[], error: string | undefined): ShipView {
   const funds = fundsOf(campaign);
   const ship = shipOf(campaign);

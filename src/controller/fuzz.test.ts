@@ -3,7 +3,7 @@ import { createCampaign, DomainError, fromCampaignFile, setHexes, toCampaignFile
 import { countingKeys, fixedClock, memoryDownload, memoryRepository } from '../model/testing';
 import { GameController } from './game';
 
-// Zufällige Folgen von Eingaben über alle Reiter. Nach jedem Schritt muss der Spielstand eine gültige
+// Zufällige Folgen von Eingaben über alle Bereiche. Nach jedem Schritt muss der Spielstand eine gültige
 // Kampagnendatei ergeben: Was die App erzeugt, lässt sich exportieren und wieder einlesen.
 
 const regina = { column: 1, row: 1, empty: false, name: 'Regina', navalBase: false, scoutBase: true, gasGiant: true, uwp: { starport: 12, size: 7, atmosphere: 8, hydrographics: 8, population: 9, government: 4, law: 5, tech: 12 } };

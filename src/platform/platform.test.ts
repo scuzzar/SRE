@@ -199,7 +199,7 @@ describe('Ältere Spielstände', () => {
     expect(upgraded({ ...old, characters: [] }).focus).toBeUndefined();
   });
 
-  it('merken sich, ob die Leiste eingeklappt ist', async () => {
+  it('merken sich, ob die Charakterleiste eingeklappt ist', async () => {
     const repository = await new DexieCampaignRepository(`test-${Math.random()}`).open();
     expect(await repository.loadStripCollapsed()).toBe(false);
     await repository.saveStripCollapsed(true);

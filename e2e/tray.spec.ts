@@ -36,12 +36,12 @@ async function dragGrip(page: Page, dy: number) {
   await page.mouse.up();
 }
 
-test('Die Stufe bleibt beim Wechsel des Reiters und bei anderer Fenstergröße: Reiter und Reihe stehen immer ganz da', async ({ page }) => {
+test('Die Stufe bleibt beim Wechsel des Bereichs und bei anderer Fenstergröße: Navigationsleiste und Aktionsleiste stehen immer ganz da', async ({ page }) => {
   const viewport = page.viewportSize()!;
   await openCombat(page);
   await page.getByRole('button', { name: 'Blatt einklappen' }).click();
   await expect(page.getByRole('button', { name: 'Blatt hochziehen' })).toBeVisible();
-  // Im Log ist der Fuß höher (die Reihe Notiz, 2W6, Karte); eingeklappt steht er trotzdem ganz da.
+  // Im Log ist der Fuß höher (die Aktionsleiste Notiz, 2W6, Karte); eingeklappt steht er trotzdem ganz da.
   await nav(page).getByRole('button', { name: 'Log', exact: true }).click();
   await expect.poll(async () => { const b = (await nav(page).boundingBox())!; return b.y + b.height; }).toBeLessThanOrEqual(viewport.height + 1);
   await expect(oracle(page).getByRole('button', { name: '2W6', exact: true })).toBeInViewport({ ratio: 1 });
@@ -80,7 +80,7 @@ test('Mit dem Griff im Fokus wechseln Pfeil hoch und runter die Stufe; voll gehe
   await expect(page.getByRole('button', { name: 'Blatt einklappen' })).toBeVisible();
 });
 
-test('Ein angetipptes Feld bleibt sichtbar: Die Karte gleitet es über das Blatt; eingeklappt steht seine Kopfzeile da', async ({ page }) => {
+test('Ein angetipptes Feld bleibt sichtbar: Die Karte gleitet es über das Blatt; eingeklappt steht sein Feldkopf da', async ({ page }) => {
   await page.getByRole('button', { name: 'Blatt einklappen' }).click();
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
   const hex = map.getByRole('button', { name: '0609, nicht erzeugt' });

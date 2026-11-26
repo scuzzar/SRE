@@ -357,7 +357,7 @@ button:disabled {
   font-weight: 600;
 }
 
-/* Die Reiter: im Ziehblatt (Smartphone) bzw. oben in der Seitenspalte (Desktop-Modus). */
+/* Die Navigationsleiste: im Ziehblatt (Smartphone) bzw. oben in der Seitenspalte (Desktop-Modus). */
 .nav {
   flex: 0 0 auto;
   display: grid;
@@ -411,14 +411,14 @@ button:disabled {
   z-index: 0;
 }
 
-/* Den Streifen unten, den das Ziehblatt immer belegt (Griff und Reiter), nimmt der Globus nie ein: Er
+/* Den Streifen unten, den das Ziehblatt immer belegt (Griff und Navigationsleiste), nimmt der Globus nie ein: Er
    zentriert sich darüber. Unter die runden Ecken des Blatts reicht er noch. */
 .base .globe-stage {
   bottom: max(0px, calc(var(--tray-floor, 0px) - 16px));
 }
 
 /* Der Subsektor als Grundkarte wie der Globus: Die Karte füllt die Fläche zwischen Leiste und dem
-   Streifen, den das Ziehblatt immer belegt (Griff und Reiter); bei Zoom 1 steht dort der ganze
+   Streifen, den das Ziehblatt immer belegt (Griff und Navigationsleiste); bei Zoom 1 steht dort der ganze
    Subsektor. Zieht man das Blatt hoch, schiebt es sich darüber, die Karte bleibt, wie sie ist;
    verdeckte Reihen holt man durch Verschieben hervor. Leiste und Listen schweben darüber. */
 .base-sector {
@@ -620,7 +620,7 @@ button:disabled {
   overflow: hidden;
 }
 
-/* Fuß und Reiter lassen sich ziehen wie der Kopf; schiebt man das Blatt ins Versteck, blenden sie aus. */
+/* Aktionsleiste und Navigationsleiste lassen sich ziehen wie der Kopf; schiebt man das Blatt ins Versteck, blenden sie aus. */
 .tray-foot {
   flex: 0 0 auto;
   touch-action: none;
@@ -628,7 +628,7 @@ button:disabled {
   transition: opacity var(--tray-glide);
 }
 
-/* Die Reiter ganz unten im Ziehblatt, wie die Leiste einer Karten-App; der Strich steht oben. */
+/* Die Navigationsleiste ganz unten im Ziehblatt, wie die Leiste einer Karten-App; der Strich steht oben. */
 .tray .nav {
   border-top: 1px solid var(--rule);
   border-bottom: 0;
@@ -700,7 +700,7 @@ button:disabled {
 .log-scroll {
   display: flex;
   flex-direction: column-reverse;
-  /* Unter der Leiste mit dem Charakter oben läuft der Log weich aus, statt hart abgeschnitten. */
+  /* Unter der Charakterleiste läuft der Log weich aus, statt hart abgeschnitten. */
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
   mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
 }
@@ -947,7 +947,7 @@ button:disabled {
   color: var(--muted);
 }
 
-/* Die eine Reihe im Orakel-Screen: Notiz, Würfeln, Karte; gleich breit, Symbol über dem Namen. */
+/* Die eine Aktionsleiste im Orakel-Screen: Notiz, Würfeln, Karte; gleich breit, Symbol über dem Namen. */
 .oracle-actions .action {
   min-height: 54px;
   flex-direction: column;
@@ -1928,7 +1928,7 @@ button:disabled {
   color: var(--dim);
 }
 
-/* --- Ergebnis-Popup und Editor -------------------------------------------------------------- */
+/* --- Würfelbühne und Editor -------------------------------------------------------------- */
 
 .modal {
   position: absolute;
@@ -4432,7 +4432,7 @@ button:disabled {
   transition: transform var(--hold-ms) linear;
 }
 
-/* --- Charakter oben: die Leiste im Orakel-Screen -------------------------------------------- */
+/* --- Charakter oben: die Charakterleiste im Orakel-Screen -------------------------------------------- */
 
 .strip {
   position: relative;
@@ -4744,7 +4744,7 @@ button:disabled {
   color: var(--ink-muted);
 }
 
-/* Im Kampf ist die Leiste eng: Kopfzeile so hoch wie die Schrift, wenig Abstand zwischen den Zeilen. */
+/* Im Kampf ist die Charakterleiste eng: Kopfzeile so hoch wie die Schrift, wenig Abstand zwischen den Zeilen. */
 .strip-combat .strip-track {
   padding-top: 8px;
   padding-bottom: 8px;
@@ -5019,7 +5019,7 @@ button:disabled {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-/* Die Reihe an der Welt (Hierher reisen, Gruppe platzieren, Öffnen): dieselbe Technik wie beim
+/* Die Aktionsleiste an der Welt (Hierher reisen, Gruppe platzieren, Öffnen): dieselbe Technik wie beim
    Dock, ohne dass sie in einem stecken muss, denn sie liegt mitten im Blatt der Weltkarte. */
 .world-actions:has(> :only-child) {
   grid-template-columns: minmax(0, 1fr);
@@ -5037,7 +5037,7 @@ button:disabled {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-/* Der Umschalter oben in Begegnung (Begegnung, Kampf) und Charaktere (SC, NSC, Kasse), im Stil der Bereiche des Shops. */
+/* Der Unterreiter oben in Begegnung (Begegnung, Kampf) und Charaktere (SC, NSC, Kasse), im Stil der Bereiche des Shops. */
 .sub-tabs {
   flex: 0 0 auto;
   display: flex;
@@ -5136,7 +5136,7 @@ button:disabled {
   color: var(--accent-text);
 }
 
-/* Kopf des Shops: Welt und Kasse in einer Zeile, darunter die Bereiche als Reiter. Bleibt stehen. */
+/* Kopf des Shops: Welt und Kasse in einer Zeile, darunter die Abteilungen als Unterreiter. Bleibt stehen. */
 .shop-top {
   flex: 0 0 auto;
   display: flex;
@@ -5455,7 +5455,7 @@ button:disabled {
   align-items: center;
 }
 
-/* Im Shop zeigt die Leiste oben die Credits des Charakters in Gold. */
+/* Im Shop zeigt die Charakterleiste die Credits des Charakters in Gold. */
 .strip-shop .strip-credits {
   color: var(--gold);
 }
@@ -5468,7 +5468,7 @@ button:disabled {
   gap: 8px;
 }
 
-/* --- Reiter Begegnung ----------------------------------------------------------------------- */
+/* --- Bereich Begegnung ----------------------------------------------------------------------- */
 
 .encounter-scroll {
   display: flex;
@@ -5540,7 +5540,7 @@ button:disabled {
   min-height: 48px;
 }
 
-/* Eine Begegnungsart als Karte in der Liste des Reiters Begegnung. */
+/* Eine Begegnungsart als Karte in der Liste des Bereichs Begegnung. */
 .encounter-kind {
   display: flex;
   flex-direction: column;
@@ -5572,7 +5572,7 @@ button:disabled {
   gap: 8px;
 }
 
-/* Oben im Reiter Begegnung: der Aufenthaltsort über die ganze Breite, darunter Gelände und Würfel der Anzahl. */
+/* Oben im Bereich Begegnung: der Aufenthaltsort über die ganze Breite, darunter Gelände und Würfel der Anzahl. */
 .encounter-settings > .location-pick {
   grid-column: 1 / -1;
 }
@@ -6354,7 +6354,7 @@ button:disabled {
   font-size: 12px;
 }
 
-/* Die weiteren Würfe einer Garbe im Ergebnis-Popup und im Log. */
+/* Die weiteren Würfe einer Garbe im Würfelbühne und im Log. */
 .volley-rolls {
   display: flex;
   flex-direction: column;
@@ -7258,7 +7258,7 @@ button:disabled {
 }
 
 /* --- Desktop-Modus (ab 1024 px) ------------------------------------------------------------- */
-/* Dieselbe Grenze wie DESKTOP_QUERY in media.ts: links eine Spalte mit den Reitern, darunter das Log
+/* Dieselbe Grenze wie DESKTOP_QUERY in media.ts: links eine Spalte mit der Navigationsleiste, darunter das Log
    oder an seiner Stelle der gewählte Bereich bzw. das angetippte Feld; rechts die Grundkarte. Die
    Screens sind dieselben wie auf dem Smartphone. */
 @media (min-width: 1024px) {
@@ -7364,7 +7364,7 @@ button:disabled {
 
 /* --- Zeit und Reisen --------------------------------------------------------------------- */
 
-/* Oben im Reiter Begegnung: Datum mit Wochentag, Tage vergehen lassen, Woche beenden. */
+/* Oben im Bereich Begegnung: Datum mit Wochentag, Tage vergehen lassen, Woche beenden. */
 .time-bar {
   display: flex;
   flex-direction: column;
@@ -8573,7 +8573,7 @@ button:disabled {
   background: var(--panel);
 }
 
-/* Auf dem Globus nur ein Hinweis auf die laufende Fahrt; ein Tippen öffnet den Reiter Begegnung. */
+/* Auf dem Globus nur ein Hinweis auf die laufende Fahrt; ein Tippen öffnet den Bereich Begegnung. */
 .trip-hint {
   pointer-events: auto;
   align-self: flex-start;
@@ -8588,7 +8588,7 @@ button:disabled {
   text-align: left;
 }
 
-/* Die Reihe im Reiter Begegnung: fünf Würfe mit Symbol, Wort und Zählung, darunter die Zeit. */
+/* Die Aktionsleiste im Bereich Begegnung: fünf Würfe mit Symbol, Wort und Zählung, darunter die Zeit. */
 .dock .actions.encounter-tests {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
@@ -8768,7 +8768,7 @@ button:disabled {
   padding: 8px 14px;
 }
 
-/* Die Würfe stehen unten in der Reihe; auf dem Blatt bleibt nur „oder wählen …“, über die ganze Breite. */
+/* Die Würfe stehen unten in der Aktionsleiste; auf dem Blatt bleibt nur „oder wählen …“, über die ganze Breite. */
 .encounter-start:has(> :only-child) {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -8780,7 +8780,7 @@ button:disabled {
   margin: 0;
 }
 
-/* Das Würfelfenster eines Begegnungswurfs: Folgeknöpfe wie „Als NSC“ stehen unter dem Ergebnis. */
+/* Die Würfelbühne eines Begegnungswurfs: Folgeknöpfe wie „Als NSC“ stehen unter dem Ergebnis. */
 .encounter-roll .patron-last,
 .encounter-roll .patron-npc,
 .encounter-roll .encounter-note {
@@ -8818,7 +8818,7 @@ button:disabled {
   justify-content: flex-end;
 }
 
-/* --- Reiter Schiff --------------------------------------------------------------------------- */
+/* --- Bereich Schiff --------------------------------------------------------------------------- */
 
 /*
  * Nach dem Mock docs/mock/schiff-tab.html: Kopf mit Name, Stift und Entwurf, Kacheln für die
@@ -9070,7 +9070,7 @@ button:disabled {
   min-height: 44px;
 }
 
-/* Ein Blatt des Reiters Schiff als Feld im Ziehblatt (Werft, Bestellung, Bearbeiten, Treibstoff,
+/* Ein Blatt des Bereichs Schiff als Feld im Ziehblatt (Werft, Bestellung, Bearbeiten, Treibstoff,
    Umbenennen, Deckplan groß): Kopf wie beim angetippten Feld des Globus, unten das Dock. */
 .ship-field .globe-sheet-head {
   padding-top: 2px;
@@ -10037,7 +10037,7 @@ button:disabled {
 }
 
 /*
- * Crew und Rechner im Reiter Schiff (Änderung 2026-11-22d, Vorbild docs/mock/crew-zuweisen.html und
+ * Crew und Rechner im Bereich Schiff (Änderung 2026-11-22d, Vorbild docs/mock/crew-zuweisen.html und
  * docs/mock/computer-programme.html). Die Posten sind Karten mit der Karte des Charakters darin, die
  * Ablagen des Rechners drei Zonen mit den Programmen; beides lässt sich ziehen (view/drag.ts).
  * Gebaute Posten stehen oben, die freien als schmale Zeile darunter, darunter, wer keinen Posten hat.

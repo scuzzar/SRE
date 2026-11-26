@@ -3,13 +3,13 @@ import { land, openOracle, openSector } from './layout';
 
 test.use({ reducedMotion: 'reduce' });
 
-test('Nebenwelt aus dem Reiter System öffnen, benennen und mit dem eigenen Schiff hinreisen; dort entsteht der Globus, die Karte zeigt sie zuerst (2026-11-20d, 2026-11-21)', async ({ page }) => {
+test('Nebenwelt aus dem Unterreiter System öffnen, benennen und mit dem eigenen Schiff hinreisen; dort entsteht der Globus, die Karte zeigt sie zuerst (2026-11-20d, 2026-11-21)', async ({ page }) => {
   await page.goto('/');
   await openSector(page);
   const kessraHex = page.getByRole('group', { name: 'Karte des Subsektors' }).getByRole('button', { name: /^0405, Kessra: Weltkarte öffnen/ });
   await kessraHex.click();
   const kessra = page.getByRole('region', { name: 'Kessra · 0405' });
-  // Das System ist ein eigener Reiter der Weltkarte; ein Tipp auf eine Welt öffnet ihre Weltkarte.
+  // Das System ist ein eigener Unterreiter der Weltkarte; ein Tipp auf eine Welt öffnet ihre Weltkarte.
   await kessra.getByRole('tab', { name: 'System' }).click();
   await kessra.getByRole('region', { name: 'Sternsystem' }).locator('.system-open').filter({ hasText: /^Welt / }).first().click();
   const name = page.getByLabel('Name der Welt');
@@ -33,7 +33,7 @@ test('Nebenwelt aus dem Reiter System öffnen, benennen und mit dem eigenen Schi
   await expect(check).toContainText('Start von Kessra');
   await expect(check).toContainText(/Schiff bei \d/);
   await skipCheck(page);
-  // Unterwegs (2026-11-22c): Die Tage vergehen mit „Weiterreisen“ in der Reihe unter dem Log.
+  // Unterwegs (2026-11-22c): Die Tage vergehen mit „Weiterreisen“ in der Aktionsleiste unter dem Log.
   await expect(page.getByRole('dialog', { name: /Unterwegs: Kessra → Tertius/ })).toBeVisible();
   await page.getByRole('button', { name: 'Weiter', exact: true }).click();
   await openOracle(page);

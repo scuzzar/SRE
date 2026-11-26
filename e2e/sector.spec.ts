@@ -26,7 +26,7 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     await dock.getByRole('button', { name: 'Welt erschaffen' }).click();
     // Die Weltkarte steht jetzt im Ziehblatt bzw. in der Seitenspalte, schiebbar wie jedes Feld.
     const dialog = page.getByRole('region', { name: `Weltenerschaffung ${id}` });
-    // Der Hinweis und der Würfelknopf stehen in der Reihe unten, wie beim Orakel, nicht im Feld.
+    // Der Hinweis und der Würfelknopf stehen in der Aktionsleiste unten, wie beim Orakel, nicht im Feld.
     await expect(page.locator('.generation-prompt')).toHaveText('Systeminhalt: Raumhafen');
     // „Später weiter“ behält die Welt in Erschaffung.
     await dialog.getByRole('button', { name: 'Später weiter' }).click();
@@ -38,7 +38,7 @@ test('Sektor: Hex-Karte, Weltenerschaffung Wurf für Wurf, Welt öffnen', async 
     // Danach kommt das Sternsystem mit eigenem Knopf; die Übersicht zeigt Sterne und Bahnen.
     await expect(page.locator('.generation-prompt')).toContainText('Sternsystem nach Book 6');
     await page.getByRole('button', { name: 'Sternsystem würfeln' }).click();
-    // Das System steht im eigenen Reiter der Weltkarte (Owner, 21. November 2026).
+    // Das System steht im eigenen Unterreiter der Weltkarte (Owner, 21. November 2026).
     await dialog.getByRole('tab', { name: 'System' }).click();
     await expect(dialog.getByRole('region', { name: 'Sternsystem' })).toContainText('Hauptstern');
     await expect(dialog.getByRole('region', { name: 'Sternsystem' })).toContainText('(Hauptwelt)');
@@ -243,13 +243,13 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   await expect(places).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
   // „Zur Gruppe“ gibt es, sobald die Gruppe ein Feld auf dieser Welt hat (hier nach dem Landeplatz); wie im Navi führt er zu ihr zurück.
-  // Unten beim Feld steht die Reihe des Felds: Hierhin reisen, Gruppe setzen, NSC platzieren.
+  // Unten beim Feld steht die Aktionsleiste des Felds: Hierhin reisen, Gruppe setzen, NSC platzieren.
   const actions = page.getByRole('region', { name: 'Am Feld' });
   await globe.getByRole('button', { name: 'Zur Gruppe' }).click();
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('Die Gruppe ist hier');
   await expect(actions.getByRole('button', { name: 'Hierhin reisen' })).toBeDisabled();
   await expect(actions.getByRole('button', { name: 'Gruppe in diese Stadt setzen' })).toBeDisabled();
-  // Gewürfelt wird mit der Reihe im Log; der Wurf steht dann am Feld der Gruppe unter dem, was dort geschah.
+  // Gewürfelt wird mit der Aktionsleiste im Log; der Wurf steht dann am Feld der Gruppe unter dem, was dort geschah.
   await openOracle(page);
   await oracle(page).getByRole('button', { name: '2W6', exact: true }).click();
   await expect(page.locator('.dice-roll')).toBeHidden();
@@ -266,7 +266,7 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   const box = (await canvas.boundingBox())!;
   await canvas.click({ position: { x: box.width * 0.35, y: box.height * 0.4 } });
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toContainText('°C im Jahresmittel');
-  // Der Name oben öffnet die Weltkarte im Blatt, wie im Subsektor, mit Oberfläche, Notiz und der Reihe unten.
+  // Der Name oben öffnet die Weltkarte im Blatt, wie im Subsektor, mit Oberfläche, Notiz und der Aktionsleiste unten.
   await globe.getByRole('button', { name: /^Kessra, UWP A766754-A/ }).click();
   const world = page.getByRole('region', { name: 'Kessra · 0405' });
   await expect(page.getByRole('region', { name: 'Angetipptes Feld' })).toHaveCount(0);
@@ -281,7 +281,7 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   await expect(page.getByRole('group', { name: 'Karte des Subsektors' })).toBeVisible();
 });
 
-test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des Felds; NSC platzieren wählt in der NSC-Liste aus, Hierhin reisen plant die Route', async ({ page }) => {
+test('Globus: Beim angetippten Feld steht unten statt des Orakels die Aktionsleiste des Felds; NSC platzieren wählt in der NSC-Liste aus, Hierhin reisen plant die Route', async ({ page }) => {
   // Zwei Globen hintereinander: auf dem Desktop knapp 30 s, also schwer.
   schwererLauf(60_000);
   await page.goto('/');
@@ -305,7 +305,7 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   const field = page.getByRole('region', { name: 'Angetipptes Feld' });
   await expect(field).not.toContainText('Die Gruppe ist hier');
   await expect(actions).toBeVisible();
-  // Auf dem Smartphone steht die Reihe des Felds an der Stelle des Orakels, im Desktop-Modus unter dem Feld.
+  // Auf dem Smartphone steht die Aktionsleiste des Felds an der Stelle des Orakels, im Desktop-Modus unter dem Feld.
   if (test.info().project.name === 'mobil') await expect(page.locator('.tray').getByRole('region', { name: 'Orakel und Proben' })).toHaveCount(0);
   await expect(actions.getByRole('button', { name: /Gruppe .* setzen/ })).toBeEnabled();
   await expect(actions).not.toContainText('kein Feld');
@@ -349,14 +349,14 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Reihe des 
   await actions.getByRole('button', { name: 'Abbrechen' }).click();
   await expect(page.getByRole('region', { name: 'Route' })).toHaveCount(0);
   await actions.getByRole('button', { name: 'Hierhin reisen' }).click();
-  // Losfahren öffnet den Reiter Begegnung: Dort unten ist Weiterfahren, die einzige Stelle dafür.
+  // Losfahren öffnet den Bereich Begegnung: Dort unten ist Weiterfahren, die einzige Stelle dafür.
   await actions.getByRole('button', { name: 'Losfahren' }).click();
   const nav = page.getByRole('navigation', { name: 'Bereiche' });
   await expect(nav.getByRole('button', { name: 'Begegnung', exact: true })).toHaveAttribute('aria-current', 'page');
   const dock = page.getByRole('region', { name: 'Begegnung und Zeit' });
   await expect(dock.getByRole('button', { name: 'Weiterfahren' })).toBeVisible();
   await expect(dock.getByRole('button', { name: /Tage? vergehen/ })).toHaveCount(0);
-  // Auf dem Globus steht nur ein Hinweis; er führt zurück in den Reiter Begegnung.
+  // Auf dem Globus steht nur ein Hinweis; er führt zurück in den Bereich Begegnung.
   if (test.info().project.name === 'mobil') await nav.getByRole('button', { name: 'Log', exact: true }).click();
   else await nav.getByRole('button', { name: 'Begegnung', exact: true }).click();
   await expect(globe.getByRole('button', { name: /Einen Tag fahren/ })).toHaveCount(0);

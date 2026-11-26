@@ -13,10 +13,10 @@ import { CombatIcon, DiceIcon } from '../icons';
 import { CharacterStrip } from '../oracle/CharacterStrip';
 
 /**
- * Der Kampf im Reiter Begegnung (Umschalter oben), in zwei Modi. Ohne laufende Begegnung die **Waffentabelle**: oben die Leiste mit
+ * Der Kampf im Bereich Begegnung (Unterreiter oben), in zwei Modi. Ohne laufende Begegnung die **Waffentabelle**: oben die Charakterleiste mit
  * dem Charakter oben und seinen Waffen, die getragene Rüstung und die klassische Tabelle der Waffe in
  * der Hand (Rüstung × Reichweite, in jeder Zelle der nötige Wurf). Mit laufender Begegnung die
- * **Kampfsimulation** (FightScreen). Der Kampf ist der zweite Teil des Reiters Begegnung (Umschalter
+ * **Kampfsimulation** (FightScreen). Der Kampf ist der zweite Teil des Bereichs Begegnung (Unterreiter
  * oben); Begegnungen würfelt man im ersten (EncounterScreen).
  * Gerechnet wird im Model; die View zeigt nur.
  */
@@ -40,7 +40,7 @@ export function CombatScreen({ view, patient, onPatient: setPatient }: { view: S
   return (
     <div className="screen">
       <SubTabs label="Begegnung" parts={encounterParts} screen="combat" />
-      {/* Ohne Begegnung steht der Charakter oben in der Leiste; in der Kampfsimulation stehen die SC links in der Arena. */}
+      {/* Ohne Begegnung steht der Charakter oben in der Charakterleiste; in der Kampfsimulation stehen die SC links in der Arena. */}
       {!combat?.sim && <CharacterStrip view={view} weapons heal={combat && pcHeal(combat, setPatient)} />}
       {!combat ? (
         <section className="scroll combat-scroll">
@@ -69,7 +69,7 @@ export function CombatScreen({ view, patient, onPatient: setPatient }: { view: S
 
 /**
  * Heilen für den Charakter oben, wenn er verwundet ist und sich etwas tun lässt: in der Simulation als
- * Kämpfer, sonst mit den Werten der Waffentabelle. Der Knopf steht in der Leiste oben auf seiner Karte.
+ * Kämpfer, sonst mit den Werten der Waffentabelle. Der Knopf steht in der Charakterleiste auf seiner Karte.
  */
 export function pcHeal(combat: CombatView, onHeal: (patient: Patient) => void): { readonly name: string; readonly onHeal: () => void } | undefined {
   const pc = combat.sim?.fighters.find((f) => f.side === 'pcs' && f.name === combat.character);

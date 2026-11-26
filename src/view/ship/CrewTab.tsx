@@ -1,4 +1,4 @@
-/** Der Reiter Crew: die Posten des Schiffs, Zuweisung über das Blatt, Umziehen durch Ziehen (2026-11-22d). */
+/** Der Unterreiter Crew: die Posten des Schiffs, Zuweisung über das Blatt, Umziehen durch Ziehen (2026-11-22d). */
 import { useState, type CSSProperties } from 'react';
 import type { CrewPostRow, VesselCrewRow } from '../../controller';
 import { useGame } from '../game-context';
@@ -12,7 +12,7 @@ type Payload = { readonly at: number } | { readonly who: string };
 /**
  * Die Posten des Schiffs: besetzte als Karte mit der Person darin, die freien als schmale Zeile,
  * darunter, wer keinen Posten hat (Vorbild docs/mock/crew-zuweisen.html). Die Blätter dazu öffnet
- * der Reiter Schiff, sie stehen dort an der Stelle des Reiters wie die übrigen Blätter.
+ * der Bereich Schiff, sie stehen dort an der Stelle des Bereichs wie die übrigen Blätter.
  */
 export function CrewTab({ crews, onOpenPost, onOpenPerson }: { readonly crews: readonly VesselCrewRow[]; readonly onOpenPost: (shipId: string, at: number) => void; readonly onOpenPerson: (shipId: string, who: string) => void }) {
   const game = useGame();

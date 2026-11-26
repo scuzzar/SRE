@@ -29,12 +29,12 @@ async function makeWorld(page: Page) {
   throw new Error('Keine Welt entstanden');
 }
 
-test('Shop: Einkaufen an Kessra öffnet den Shop; die Kasse im Reiter Charaktere geht auch auf keiner Welt', async ({ page }) => {
+test('Shop: Einkaufen an Kessra öffnet den Shop; die Kasse im Bereich Charaktere geht auch auf keiner Welt', async ({ page }) => {
   await page.goto('/');
   await openShop(page);
   await expect(page.locator('.shop-world')).toContainText('Kessra');
   await expect(page.getByRole('tab', { name: 'Waffen' })).toHaveAttribute('aria-selected', 'true');
-  // Die Kasse steht nicht im Shop, sondern im Reiter Charaktere.
+  // Die Kasse steht nicht im Shop, sondern im Bereich Charaktere.
   await expect(page.getByRole('tab', { name: 'Kasse' })).toHaveCount(0);
   // Fahrzeuge haben eine eigene Theke; unter Sonstiges stehen sie nicht mehr.
   await page.getByRole('tab', { name: 'Fahrzeuge' }).click();
@@ -62,7 +62,7 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   // Ein langer Ablauf: Globus bauen, landen, kaufen, verkaufen, ausrüsten.
   schwererLauf(60_000);
   await page.goto('/');
-  // Die Demo-Kampagne bringt ein Startkapital mit; eingezahlt wird in der Kasse im Reiter Charaktere,
+  // Die Demo-Kampagne bringt ein Startkapital mit; eingezahlt wird in der Kasse im Bereich Charaktere,
   // vorgewählt vom Charakter oben.
   await openPeople(page, 'Kasse');
   await expect(page.locator('.funds-total')).toContainText('Cr 5.000');
@@ -98,7 +98,7 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await banned.getByRole('button', { name: 'Trotzdem kaufen' }).click();
   await expect(page.locator('.shop-funds')).toContainText('Cr 5.470');
 
-  // Jonas kommt oben in die Leiste und verkauft im Bereich Verkauf seine Blade; vorgeschlagen ist der halbe Preis, Cr 25.
+  // Jonas kommt oben in die Charakterleiste und verkauft im Bereich Verkauf seine Blade; vorgeschlagen ist der halbe Preis, Cr 25.
   await characters(page).getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
   await page.getByRole('tab', { name: 'Verkauf' }).click();
   await expect(page.getByRole('row', { name: /Blade/ })).toContainText('Primärwaffe');
@@ -108,7 +108,7 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
   await sale.getByRole('button', { name: 'Verkaufen' }).click();
   await expect(page.locator('.shop-funds')).toContainText('Cr 5.495');
   await characters(page).getByRole('button', { name: 'Kira Vant nach oben' }).click();
-  // Im Kassenbuch (Reiter Charaktere, Kasse) stehen Kauf und Verkauf, das Neueste zuerst.
+  // Im Kassenbuch (Bereich Charaktere, Kasse) stehen Kauf und Verkauf, das Neueste zuerst.
   await openPeople(page, 'Kasse');
   await expect(page.locator('.shop-booking').nth(0)).toContainText('1 × Blade von Jonas Reyl auf Kessra');
   await expect(page.locator('.shop-booking').nth(1)).toContainText('1 × Submachinegun für Kira Vant auf Kessra');

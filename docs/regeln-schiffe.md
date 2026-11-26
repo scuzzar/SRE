@@ -57,8 +57,8 @@ dabei.
 | [Piraterie, Entführung und Zahlungsausfall](#piraterie-entführung-und-zahlungsausfall) | SR 28–29 | ○ |
 | [Schiffsaufbau](#schiffsaufbau) | SR 31–33 | ○ |
 | [Optionale Komponenten](#optionale-komponenten) | SR 32–33 | ○ |
-| [Crew](#crew) | SR 33 | ◐ (Posten im Reiter Crew des Schiffes: Pilot, Gunner je Turret, Navigator, Engineer, Steward, Medic; Zuweisung durch Ziehen oder Blatt, zwei Posten mit je einem Punkt Abzug, Grundwert als Hinweis; 2026-11-22d. Heuer, Pflicht ab Tonnage und Crewbedarf bleiben offen) |
-| [Computer und Software](#computer-und-software) | SR 38–39 | ◐ (CPU, Speicher und Archiv im Reiter Computer des Schiffes; Umstecken durch Ziehen oder Blatt, Werfen jederzeit; Kauf in der Werft des Reiters; Pflichtprogramme Maneuver und Target in der CPU; Wirkung in Stufe 2b für Target, Maneuver, Predict, Gunner Interact, Auto-Evade und Return Fire; 2026-11-22d. Schreiben eigener Programme und Fehlermeldungen dazu bleiben offen) |
+| [Crew](#crew) | SR 33 | ◐ (Posten im Unterreiter Crew des Schiffes: Pilot, Gunner je Turret, Navigator, Engineer, Steward, Medic; Zuweisung durch Ziehen oder Blatt, zwei Posten mit je einem Punkt Abzug, Grundwert als Hinweis; 2026-11-22d. Heuer, Pflicht ab Tonnage und Crewbedarf bleiben offen) |
+| [Computer und Software](#computer-und-software) | SR 38–39 | ◐ (CPU, Speicher und Archiv im Unterreiter Computer des Schiffes; Umstecken durch Ziehen oder Blatt, Werfen jederzeit; Kauf in der Werft des Reiters; Pflichtprogramme Maneuver und Target in der CPU; Wirkung in Stufe 2b für Target, Maneuver, Predict, Gunner Interact, Auto-Evade und Return Fire; 2026-11-22d. Schreiben eigener Programme und Fehlermeldungen dazu bleiben offen) |
 | [Standardentwürfe](#standardentwürfe) | SR 35–37 | ○ |
 | [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ◐ (die acht Entwürfe als Beiboote der Standardentwürfe, aussetzen, andocken, landen und Reise im System, 2026-11-21b;andocken am Knopf „Andocken“ der Knopfreihe mit Hausregel (2026-11-23c: genug Schub, um den Ort des Mutterschiffs in der nächsten Bewegung zu erreichen, und Platz – Liegeplatz des Entwurfs oder freier Laderaum; aus 100 km dockt es sofort an, weiter weg fliegt es mit der nächsten Bewegung heim), 2026-11-23; einzeln zu kaufen als Beiboot im Laderaum oder eigenständig, 2026-11-21c; ab Werft mit Beam Lasern, feuern im Raumkampf, Trefferzonen der Small Craft, 2026-11-22; Fittings, Module, Raketen, Sand, Computer und Charter offen) |
 | [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ◐ (bei Abreise und Ankunft mit eigenem Schiff und von Hand, mit Dialog; ohne Small Craft; 2026-11-21h, 2026-11-22b) |
@@ -411,7 +411,7 @@ durch Treffer auf ein Feld mit „–“, arbeitet der Antrieb nicht mehr (SR 41
 Launch 20, Ship's Boat 30, Slow Boat 30, Pinnace 40, Slow Pinnace 40, Cutter 50 (Module je 30:
 Fuel, ATV, Open), Shuttle 95, Fighter 10.
 
-**Stand in der App** (2026-11-22d, `model/crew.ts`, Reiter Schiff → **Crew**): die Posten des
+**Stand in der App** (2026-11-22d, `model/crew.ts`, Bereich Schiff → **Crew**): die Posten des
 Schiffs stehen als Karten untereinander, zuerst die besetzten, dann die freien als schmale Zeile,
 darunter, wer keinen Posten hat. Reihenfolge Pilot, Gunner (je Turret einer), Navigator, Engineer,
 Steward, Medic. Zugewiesen wird durch Ziehen auf einen anderen Posten (der belegt getauscht) oder
@@ -520,7 +520,7 @@ die Anforderungen an Personen, die das Programm selbst schreiben wollen, *Wurf* 
 - **Small Craft**: brauchen keinen Computer; ohne Computer DM −1 auf Waffeneinsatz und keine
   zweite Waffe gleichzeitig nutzbar.
 
-**Stand in der App** (2026-11-22d, `model/software.ts`, Reiter Schiff → **Computer**): der Rechner
+**Stand in der App** (2026-11-22d, `model/software.ts`, Bereich Schiff → **Computer**): der Rechner
 des Schiffs steht mit drei Ablagen da – **CPU** (läuft), **Speicher** (bereit) und **Archiv**
 (davon). Space ist der Platz, den ein Programm in der Ablage kostet; die CPU fasst, was gleichzeitig
 läuft, der Speicher, was bereitgehalten wird (SR 38). Umgesteckt wird durch Ziehen in eine andere
@@ -797,7 +797,7 @@ kritisch 0); Hull ohne Folgen; Turret-Treffer legt ein zufälliges Turret still;
 handelt nicht mehr; Explode: zerstört. Raketen, Sand, Ortung, Schadenskontrolle, Entern ○.
 Schiffsbegegnungen im System ✔ als Knopf im Systemflug (SE 13 mit Reaktion nach SE 21), ✔ seit
 2026-11-22b beim Start von der Welt und bei der Ankunft jeder Reise mit eigenem Schiff (Sprung und
-Reise im System) und von Hand im Reiter Begegnung, je mit Dialog (Zielwert, Würfeln, Abbrechen lang
+Reise im System) und von Hand im Bereich Begegnung, je mit Dialog (Zielwert, Würfeln, Abbrechen lang
 gedrückt). Flucht per Sprung aus dem Systemflug ✔ mit DM +5/+15 nahe an einem Körper (SR 28).
 
 **Hit Locations** (SE 12), 2W6 je Treffer:

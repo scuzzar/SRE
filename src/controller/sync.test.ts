@@ -335,7 +335,7 @@ describe('Abgleich der Deckpläne (2026-11-17)', () => {
     expect(shown(handy.game)).toEqual([['Deck A', `${png}neu`]]);
   });
 
-  it('mehr als drei nur über den Abgleich: der Reiter zeigt alle, ein neues Bild geht erst wieder bei weniger als drei', async () => {
+  it('mehr als drei nur über den Abgleich: der Bereich Schiff zeigt alle, ein neues Bild geht erst wieder bei weniger als drei', async () => {
     const cloud = memoryCloud();
     const handy = await trader(cloud, 'handy', '2026-11-17T10:00:00.000Z');
     const tablet = await trader(cloud, 'tablet', '2026-11-17T12:00:00.000Z');

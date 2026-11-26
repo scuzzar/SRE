@@ -24,8 +24,8 @@
 > Was davon im Kampf läuft und was fehlt, zeigt das Kampf-Interface selbst; ein eigenes Modell
 > dafür gibt es nicht (Owner, 23. November 2026). Software kosten **MCr, unter 0,2 MCr in Cr**
 > (Owner, 23. November 2026) – also „MCr 2,00“, aber „Cr 100.000“ für *Maneuver*; die Kasse steht
-> auf der Oberfläche in MCr. Der Reiter heißt **Computer**, die **Werft** öffnet sich aus diesem
-> Reiter heraus (Owner, 23. November 2026).
+> auf der Oberfläche in MCr. Der Unterreiter heißt **Computer**, die **Werft** öffnet sich aus diesem
+> Unterreiter heraus (Owner, 23. November 2026).
 
 Die Idee des Owners in einem Satz: **Der Raumkampf bleibt rundenbasiert, und in jeder Runde legt man
 fest, wie viel Schub jedes Schiff in welche Richtung gibt. Wie sich das Schiff dann bewegt, rechnet
@@ -307,8 +307,8 @@ Was die Karte beim Planen zeigt, ist der Kern des Spielgefühls. Es sind die dre
 2. **„Runde ausführen“**: Die NSC entscheiden, dann spielt die Karte die 1.000 Sekunden in etwa zwei
    Sekunden ab, alle Einheiten zugleich. ⚑ Man kann die Wiedergabe anhalten und mit einem Regler
    zurück- und vorspulen.
-3. **Feuer**: Die Würfe der Runde erscheinen nacheinander im Blatt mit rollenden Würfeln, wie im
-   Würfelfenster der Begegnung, und gehen ins Log.
+3. **Feuer**: Die Würfe der Runde erscheinen nacheinander im Blatt mit rollenden Würfeln, wie auf
+   der Würfelbühne der Begegnung, und gehen ins Log.
 
 ## 4. Ablauf einer Raumrunde
 
@@ -473,15 +473,15 @@ rastet auf denselben vier Stufen ein wie heute (`TrayStop`):
 | halb | dazu die Waffen dieser Einheit: je Turret Ziel, Entfernung in Raumbändern, Gesamt-DM, Munition, Nachladen; Starts von Raketen, Sand und Small Craft |
 | voll | dazu der Zustand des Schiffs (Treffer je Zone, Drive- und Power-Plant-Buchstabe, Hull, Dekompression), die Schiffspositionen der SC (Pilot, Gunner, Engineer) mit ihren DMs, und das Log der laufenden Runde |
 
-Die Reiter unten (Log, Begegnung, Charaktere, Schiff) bleiben erreichbar. ⚑ Solange ein Raumkampf
-läuft, zeigt der Reiter Begegnung oben „Raumkampf“ statt „Kampf“.
+Die Navigationsleiste unten (Log, Begegnung, Charaktere, Schiff) bleibt erreichbar. ⚑ Solange ein Raumkampf
+läuft, zeigt der Bereich Begegnung oben „Raumkampf“ statt „Kampf“.
 
 ⚑ **Gebaut ist das Blatt anders** (2026-11-23a, nach der Skizze des Owners und
 [`mock/raumkampf-ui.html`](mock/raumkampf-ui.html)): oben zwei Karten nebeneinander – mein Schiff
 (▲/▼ durch die eigenen) und das Ziel (▲/▼ durch die fremden, ein Tipp auf der Karte wählt es) –,
 darunter die **Hardpoints über alle eigenen Schiffe** mit Schiffsnummer, Waffen und nötigem Wurf; ein
-Tipp feuert sofort. Der Zustand des Schiffs (Treffer je Zone) steht in den Karten und im Reiter Schiff,
-die Schiffspositionen im Reiter Crew. Das Log der laufenden Runde folgt mit Stufe 3.
+Tipp feuert sofort. Der Zustand des Schiffs (Treffer je Zone) steht in den Karten und im Bereich Schiff,
+die Schiffspositionen im Unterreiter Crew. Das Log der laufenden Runde folgt mit Stufe 3.
 
 ## 8. Was ins Domänenmodell käme (Skizze)
 

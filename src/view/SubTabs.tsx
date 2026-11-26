@@ -3,13 +3,13 @@ import { useGame } from './game-context';
 
 type Part = { readonly id: Screen; readonly name: string };
 
-/** Die Teile des Reiters Begegnung, in dieser Reihenfolge. */
+/** Die Teile des Bereichs Begegnung, in dieser Reihenfolge. */
 export const encounterParts: readonly Part[] = [
   { id: 'encounter', name: 'Begegnung' },
   { id: 'combat', name: 'Kampf' },
 ];
 
-/** Die Teile des Reiters Charaktere, in dieser Reihenfolge. */
+/** Die Teile des Bereichs Charaktere, in dieser Reihenfolge. */
 export const peopleParts: readonly Part[] = [
   { id: 'characters', name: 'SC' },
   { id: 'funds', name: 'Kasse' },
@@ -17,8 +17,8 @@ export const peopleParts: readonly Part[] = [
 ];
 
 /**
- * Der Umschalter oben in einem Reiter mit mehreren Teilen: im Reiter Begegnung Begegnung und Kampf, im
- * Reiter Charaktere SC, Kasse und NSC. Reine Darstellung; was ein Tipp bewirkt, entscheidet der
+ * Der Unterreiter oben in einem Bereich mit mehreren Teilen: im Bereich Begegnung Begegnung und Kampf, im
+ * Bereich Charaktere SC, Kasse und NSC. Reine Darstellung; was ein Tipp bewirkt, entscheidet der
  * Controller (`showScreen`).
  */
 export function SubTabs({ label, parts, screen }: { label: string; parts: readonly Part[]; screen: Screen }) {

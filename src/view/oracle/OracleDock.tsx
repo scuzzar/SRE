@@ -11,7 +11,7 @@ import { DiceRoll } from './DiceRoll';
 import { NoteSheet } from './NoteSheet';
 
 /**
- * Die Reihe unter dem Log: Notiz, Tag, Würfeln, Karte; ist eine Fertigkeit gewählt, steht die Probe
+ * Die Aktionsleiste unter dem Log: Notiz, Tag, Würfeln, Karte; ist eine Fertigkeit gewählt, steht die Probe
  * mit der Stufe darüber, und aus „2W6“ wird „Probe“. Der Tag (2026-11-22c, statt „Deuten“, das am
  * Ergebnis selbst sitzt) lässt einen Tag vergehen: während einer Fahrt „Weiterfahren“, unterwegs
  * „Weiterreisen“, sonst „1 Tag“; was er tut, entscheidet der Controller. Steht im Orakel und im Feld des Globus, damit man dort
@@ -25,7 +25,7 @@ export function OracleDock({
   className = 'dock',
 }: {
   view: Snapshot;
-  /** Öffnet das Notizblatt des Aufrufers; ohne öffnet die Reihe ihr eigenes. */
+  /** Öffnet das Notizblatt des Aufrufers; ohne öffnet die Aktionsleiste ihr eigenes. */
   onNote?: () => void;
   /** Ob K, W und N die Knöpfe auslösen (nur einmal in der App, im Orakel). */
   shortcuts?: boolean;
@@ -36,7 +36,7 @@ export function OracleDock({
   const [rolling, setRolling] = useState<number | undefined>(undefined);
   const rolled = rolling === undefined ? undefined : view.log[rolling];
   const done = useCallback(() => setRolling(undefined), []);
-  // Ob die Reihe selbst das Notizblatt geöffnet hat.
+  // Ob die Aktionsleiste selbst das Notizblatt geöffnet hat.
   const [sheet, setSheet] = useState<'note' | undefined>(undefined);
   const day = view.time?.oneDay;
   const task = view.task?.ready ? view.task : undefined;

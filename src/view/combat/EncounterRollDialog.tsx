@@ -15,7 +15,7 @@ const RULES: Record<string, string> = {
 };
 
 /**
- * Das Würfelfenster eines Begegnungswurfs aus der Reihe im Reiter Begegnung: Der Würfel des Tests rollt,
+ * Die Würfelbühne eines Begegnungswurfs aus der Aktionsleiste im Bereich Begegnung: Der Würfel des Tests rollt,
  * dann steht da, was herauskam, und was man danach tun kann (beim Patron „Als NSC“, das ihn anlegt
  * und das Fenster schließt, daneben „Abbrechen“; bei einem
  * Tierereignis die Rettungswürfe). Ohne Würfel (etwa schon getestet) steht nur der Hinweis da. Kam es

@@ -314,7 +314,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
             <input type="checkbox" checked={form.npc ?? false} onChange={(e) => setForm({ ...form, npc: e.target.checked })} />
             <span>
               NSC
-              <span className="small-label">Kein Spielercharakter: steht unter Charaktere › NSC, nicht in der Leiste oben und nicht im Shop.</span>
+              <span className="small-label">Kein Spielercharakter: steht unter Charaktere › NSC, nicht in der Charakterleiste und nicht im Shop.</span>
             </span>
           </label>
           {form.npc && (

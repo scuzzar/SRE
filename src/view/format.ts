@@ -43,7 +43,7 @@ export const woundStateText: Record<WoundState, string> = {
 };
 
 /** Die Rollen eines NSC, wie sie in der Tabelle „Begriffe“ heißen. */
-/** Die Zustände einer Mission in Worten, in der Reihenfolge des Umschalters (2026-11-18). */
+/** Die Zustände einer Mission in Worten, in der Reihenfolge des Unterreiters (2026-11-18). */
 export const missionStateText: Record<MissionState, string> = { open: 'Offen', done: 'Erledigt', failed: 'Gescheitert' };
 
 export const roleText: Record<NpcRole, string> = {

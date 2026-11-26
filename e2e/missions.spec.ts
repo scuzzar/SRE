@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { openTab, revealed, openHomeGlobe, schwererLauf } from './layout';
 
-// Missionen (2026-11-18): der Reiter Missionen mit Editor, Orte immer als Feld auf dem Globus, „Missionen
+// Missionen (2026-11-18): der Bereich Missionen mit Editor, Orte immer als Feld auf dem Globus, „Missionen
 // hier“ am Feld.
 test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Feld wiederfinden', async ({ page }) => {
   // Globus, Editor und Globus-Auswahl: auf dem Desktop über 40 s, also schwer.

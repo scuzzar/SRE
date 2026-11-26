@@ -21,7 +21,7 @@ const passMonth = (game: GameController) => {
   for (let i = 0; i < 5; i++) game.passDays(6);
 };
 
-describe('Reiter Schiff', () => {
+describe('Bereich Schiff', () => {
   it('zeigt das gekaufte Schiff mit seinen Ständen und macht die alte Kasse klein', async () => {
     const { game } = await started();
     game.showScreen('ship');
@@ -37,7 +37,7 @@ describe('Reiter Schiff', () => {
     expect(view.ship?.yard.find((d) => d.designId === 'S')?.owned).toBe(true);
   });
 
-  it('ohne Schiff zeigt der Reiter den Hinweis und die Werft offen', async () => {
+  it('ohne Schiff zeigt der Bereich den Hinweis und die Werft offen', async () => {
     const { game } = await started();
     // Die Demo-Kampagne hat eine Yacht (2026-11-21b); eine neue Kampagne beginnt ohne Schiff.
     game.createCampaign('Ohne Schiff');
@@ -93,7 +93,7 @@ describe('Reiter Schiff', () => {
     expect(ships[2]).toMatchObject({ design: 'S', retired: true });
   });
 
-  it('Bearbeiten, Umbenennen und Treibstoff gehen durch den Reiter', async () => {
+  it('Bearbeiten, Umbenennen und Treibstoff gehen durch den Bereich', async () => {
     const { game } = await started();
     fund(game, 45_000_000);
     const before = game.snapshot().ship!.funds;
@@ -105,7 +105,7 @@ describe('Reiter Schiff', () => {
     const ship = game.snapshot().ship!.ship!;
     expect(ship).toMatchObject({ name: 'Eiserne Meridian II', fuel: 28, fuelMax: 30, cargo: 5 });
     expect(game.snapshot().ship!.funds).toBe(before - 37_080_000 - 5_000);
-    // Was die Regeln nicht zulassen, steht im Reiter statt im Spielstand.
+    // Was die Regeln nicht zulassen, steht im Bereich statt im Spielstand.
     game.buyFuelTons(20);
     expect(game.snapshot().ship!.error).toMatch(/fasst noch 2/);
     expect(game.snapshot().ship!.ship!.fuel).toBe(28);
@@ -136,7 +136,7 @@ describe('Reiter Schiff', () => {
   });
 });
 
-describe('Deckpläne im Reiter Schiff', () => {
+describe('Deckpläne im Bereich Schiff', () => {
   const png = 'data:image/png;base64,iVBORw0KGgo=';
 
   it('legen Bilder auf die freien Plätze und bleiben auf dem Gerät', async () => {
@@ -154,7 +154,7 @@ describe('Deckpläne im Reiter Schiff', () => {
     expect(JSON.stringify(repository.saved)).not.toContain('deckPlans');
   });
 
-  it('sind drei belegt, sagt der Reiter warum', async () => {
+  it('sind drei belegt, sagt der Bereich warum', async () => {
     const { game } = await started();
     fund(game, 45_000_000);
     game.buyShipDesign('A', 'cash');
@@ -182,7 +182,7 @@ describe('Deckpläne im Reiter Schiff', () => {
     const { game } = await started(fixedRandom(), repository);
     fund(game, 45_000_000);
     game.buyShipDesign('A', 'cash');
-    // Der Entwurf ist jetzt aktiv; der Plan des Geräts kommt beim nächsten Blick in den Reiter.
+    // Der Entwurf ist jetzt aktiv; der Plan des Geräts kommt beim nächsten Blick in den Bereich.
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(game.snapshot().ship!.deckPlans.map((p) => p.name)).toEqual(['Deck A']);
   });
@@ -224,7 +224,7 @@ describe('Deckpläne im Reiter Schiff', () => {
     expect(game.snapshot().ship!.deckPlans.map((p) => p.name)).toEqual(['Deck A', 'Deck B']);
   });
 
-  it('Nichtbilder weist der Reiter ab', async () => {
+  it('Nichtbilder weist der Bereich ab', async () => {
     const { game } = await started();
     fund(game, 45_000_000);
     game.buyShipDesign('A', 'cash');

@@ -1,8 +1,8 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { schwererLauf, openPeople, openShop, openCombat, pickCapital, openHomeGlobe } from './layout';
 
-// Der Desktop-Modus (ab 1024 px): links eine Spalte mit den Reitern, darunter das Log mit dem Charakter
-// oben oder an seiner Stelle der gewählte Bereich bzw. das angetippte Feld; unten die Reihe Notiz,
+// Der Desktop-Modus (ab 1024 px): links eine Spalte mit der Navigationsleiste, darunter das Log mit dem Charakter
+// oben oder an seiner Stelle der gewählte Bereich bzw. das angetippte Feld; unten die Aktionsleiste Notiz,
 // Tag, 2W6, Karte, wo der Bereich keine eigene hat; rechts die Grundkarte (Globus oder Subsektor).
 // Diese Tests laufen nur im Projekt „desktop“.
 
@@ -38,7 +38,7 @@ test('Links eine Spalte: das Log, an seiner Stelle der Bereich; rechts die Grund
     await expect(panel(page).getByRole('button', { name: 'Karte ziehen' })).toBeVisible();
     await expect(panel(page).getByRole('button', { name: '2W6' })).toBeVisible();
   }
-  // Ein zweiter Klick auf den offenen Reiter führt zurück zum Log, auch unter NSC; ebenso ✕ und der Reiter Log.
+  // Ein zweiter Klick auf den offenen Bereich führt zurück zum Log, auch unter NSC; ebenso ✕ und der Bereich Log.
   await openPeople(page, 'NSC');
   await expect(head(page)).toContainText('Charaktere');
   await nav(page).getByRole('button', { name: 'Charaktere', exact: true }).click();
@@ -63,7 +63,7 @@ test('Ein Wurf in einem Bereich landet im Log', async ({ page }, testInfo) => {
   await expect(page.locator('.entry')).toHaveCount(1);
 });
 
-test('Ein Tag geht auch in einem Bereich: der Knopf in der Reihe unten (2026-11-22c, statt Deuten)', async ({ page }, testInfo) => {
+test('Ein Tag geht auch in einem Bereich: der Knopf in der Aktionsleiste unten (2026-11-22c, statt Deuten)', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
   await panel(page).getByRole('button', { name: '1 Tag vergehen lassen' }).click();
@@ -140,14 +140,14 @@ test('Kampf und Shop zeigen ihre SC selbst; ein Klick auf eine Karte holt sie na
   await expect(area.getByRole('article', { name: 'Kira Vant' })).toContainText('Cr 12.400');
   await area.getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
   await expect(area).toContainText('Jonas Reyl hat die Fertigkeit');
-  // Keiner der Reiter ist dabei gewählt; ✕ im Kopf führt zum Feld der Stadt zurück.
+  // Keiner der Bereiche ist dabei gewählt; ✕ im Kopf führt zum Feld der Stadt zurück.
   await expect(nav(page).locator('[aria-current="page"]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Shop schließen' }).click();
   await expect(area.getByRole('region', { name: 'Angetipptes Feld' })).toBeVisible();
   await expect(area.getByRole('button', { name: 'Einkaufen', exact: true })).toBeEnabled();
 });
 
-test('Die Ziffern wählen die Reiter', async ({ page }, testInfo) => {
+test('Die Ziffern wählen die Bereiche', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   await expect(nav(page)).toBeVisible();
   for (const [key, name] of [['2', 'Begegnung'], ['3', 'Charaktere'], ['4', 'Schiff'], ['1', 'Log']]) {
@@ -181,7 +181,7 @@ test('Globus als Grundkarte: ein angetipptes Feld steht in der Seitenspalte, ✕
   await expect(panel(page).locator('.shop-world')).toContainText('Kessra');
   await page.getByRole('button', { name: 'Shop schließen' }).click();
   await expect(field).toContainText('°C im Jahresmittel');
-  // Ein Reiter lässt das Feld los und zeigt den Bereich.
+  // Ein Tipp in die Navigationsleiste lässt das Feld los und zeigt den Bereich.
   await nav(page).getByRole('button', { name: 'Charaktere', exact: true }).click();
   await expect(field).toHaveCount(0);
   await expect(head(page)).toContainText('Charaktere');

@@ -25,7 +25,7 @@ export function ElsewhereDialog() {
   );
 }
 
-/** Was nach einer Eingabe nicht ging, oben als Hinweis; ✕ nimmt ihn weg. */
+/** Was nach einer Eingabe nicht ging, oben als Meldung; ✕ nimmt sie weg. */
 export function NoticeToast({ text }: { text: string }) {
   const game = useGame();
   return (

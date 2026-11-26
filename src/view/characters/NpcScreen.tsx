@@ -7,13 +7,13 @@ import { CheckIcon, CloseIcon, CombatIcon, PencilIcon } from '../icons';
 import { SubTabs, peopleParts } from '../SubTabs';
 
 /**
- * NSC im Reiter Charaktere: die dauerhaften NSC, vorgegeben die des Aufenthaltsorts (und die ohne Ort) nach
+ * NSC im Bereich Charaktere: die dauerhaften NSC, vorgegeben die des Aufenthaltsorts (und die ohne Ort) nach
  * Rolle; mit „Alle zeigen“ alle nach Welt und darin nach Rolle. Antippen öffnet den Editor.
  *
  * Beim NSC platzieren (`npcs.placing`) hat jeder NSC ein Kästchen zum Auswählen, wer schon auf dem
  * Feld ist, ist angehakt und gesperrt; unten stehen „Abbrechen“ und „OK“. Filter wie „Alle zeigen“
  * gelten weiter, die Auswahl bleibt dabei stehen. Welche angehakt sind, ist reine Darstellung, bis
- * „OK“ sie dem Controller gibt; solange steht der Umschalter SC, NSC, Kasse oben nicht da.
+ * „OK“ sie dem Controller gibt; solange steht der Unterreiter SC, NSC, Kasse oben nicht da.
  */
 export function NpcScreen({ view }: { view: Snapshot }) {
   const game = useGame();
@@ -47,7 +47,7 @@ export function NpcScreen({ view }: { view: Snapshot }) {
         {shown === 0 && (
           <p className="npc-empty">
             {npcs.total === 0
-              ? 'Noch keine NSC. Sie entstehen beim Patron im Reiter Begegnung („Als NSC“), beim Übernehmen aus einer Begegnung oder mit „+ Neuer NSC“.'
+              ? 'Noch keine NSC. Sie entstehen beim Patron im Bereich Begegnung („Als NSC“), beim Übernehmen aus einer Begegnung oder mit „+ Neuer NSC“.'
               : `Hier lebt noch kein NSC. Auf anderen Welten: ${npcs.total}; „Alle zeigen“ zeigt sie.`}
           </p>
         )}

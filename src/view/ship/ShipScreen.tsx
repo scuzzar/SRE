@@ -13,7 +13,7 @@ import { deckImage } from './deck-image';
 /** Die Ansicht unter den Kacheln: eigene Deckpläne, die Crew und der Rechner. */
 type Tab = 'deck' | 'crew' | 'computer';
 
-/** Das Blatt, das als Feld an der Stelle des Reiters steht; die Werft ist ein Blatt, kein eigener Reiter. */
+/** Das Blatt, das als Feld an der Stelle des Bereichs steht; die Werft ist ein Blatt, kein eigener Unterreiter. */
 type Sheet =
   | { readonly kind: 'yard' }
   | { readonly kind: 'buy'; readonly design: string; readonly method: 'cash' | 'bank' }
@@ -29,10 +29,10 @@ type Sheet =
 type Boat = NonNullable<ShipView['ship']>;
 
 /**
- * Der Reiter Schiff: oben die Leiste mit Name (Stift zum Umbenennen) und Entwurf, dazu die Kasse;
+ * Der Bereich Schiff: oben die Leiste mit Name (Stift zum Umbenennen) und Entwurf, dazu die Kasse;
  * darunter die Stände als Kacheln und zwei Ansichten – die eigenen Deckpläne und die Details.
  * Unten im Dock: Bearbeiten, Treibstoff und die goldene Werft. Die Werft und die übrigen Blätter
- * stehen als Feld an der Stelle des Reiters, im Ziehblatt; in der Werft wird bar oder über die Bank gekauft.
+ * stehen als Feld an der Stelle des Bereichs, im Ziehblatt; in der Werft wird bar oder über die Bank gekauft.
  */
 export function ShipScreen({ view }: { view: Snapshot }) {
   const game = useGame();
@@ -51,7 +51,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
   const compBoat = vessel === undefined || boat === undefined ? undefined : boat.computers.find((c) => c.shipId === vessel);
   const program = sheet?.kind === 'program' ? compBoat?.programs.find((p) => p.id === sheet.program) : undefined;
   const buying = sheet?.kind === 'buy' ? ship.yard.find((d) => d.designId === sheet.design) : undefined;
-  // Ein offenes Blatt steht wie ein angetipptes Feld an der Stelle des Reiters: im Ziehblatt, das sich
+  // Ein offenes Blatt steht wie ein angetipptes Feld an der Stelle des Bereichs: im Ziehblatt, das sich
   // ziehen lässt, über der Karte; im Desktop-Modus in der Seitenspalte.
   const field =
     sheet?.kind === 'yard' ? (
@@ -196,7 +196,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
                 <span className="tile-label">Computer</span>
                 <span className="tile-text">{boat.computerName}</span>
               </div>
-              {/* Die Restschuld steht als letzte Kache, nicht mehr im Reiter Details. */}
+              {/* Die Restschuld steht als letzte Kache, nicht mehr im Unterreiter Details. */}
               <div className="tile">
                 <span className="tile-label">Restschuld</span>
                 <span className={`tile-text${boat.loanBalance === undefined ? '' : ' gold'}`}>{debtLine(boat)}</span>
@@ -716,7 +716,7 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
       )}
       <p className="shop-hint muted">
         Ausblenden (für die Spielleitung): {boat.name}
-        {boat.craft.length > 0 ? ' und seine Beiboote verschwinden' : ' verschwindet'} aus dem Reiter Schiff, gelöscht wird nichts – Buchungen und Log zeigen {boat.craft.length > 0 ? 'sie' : 'es'} weiter. Raten fallen keine mehr an. Danach lässt sich ein neues Schiff oder ein eigenständiges Small Craft kaufen.
+        {boat.craft.length > 0 ? ' und seine Beiboote verschwinden' : ' verschwindet'} aus dem Bereich Schiff, gelöscht wird nichts – Buchungen und Log zeigen {boat.craft.length > 0 ? 'sie' : 'es'} weiter. Raten fallen keine mehr an. Danach lässt sich ein neues Schiff oder ein eigenständiges Small Craft kaufen.
       </p>
       {boat.retireBlocker && <p className="combat-hint">Ausblenden: {boat.retireBlocker}</p>}
     </SheetFrame>
@@ -824,7 +824,7 @@ function RenameSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
 /** Einen hinterlegten Deckplan groß ansehen; hier lässt er sich auch entfernen. */
 function DeckSheet({ name, image, onClose }: { name: string; image: string; onClose: () => void }) {
   const game = useGame();
-  // Erst der zweite Tipper löscht, wie im Reiter und in der Kampagnenwahl.
+  // Erst der zweite Tipper löscht, wie im Bereich Schiff und in der Kampagnenwahl.
   const [confirming, setConfirming] = useState(false);
   return (
     <SheetFrame

@@ -7,8 +7,8 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 
 ## UI
 - [ ] **Entschlacken (Schritt 3):** jeden Bereich für das Ziehblatt und die Seitenspalte des Desktops
-  durchgehen: Kampf und Kampfsimulation kompakter, damit sie halb hochgezogen gehen. Die Reihe
-  unten folgt dem GUI-Handbuch: die eigene Reihe eines Bereichs ersetzt die des Logs.
+  durchgehen: Kampf und Kampfsimulation kompakter, damit sie halb hochgezogen gehen. Die Aktionsleiste
+  unten folgt dem GUI-Handbuch: die eigene Aktionsleiste eines Bereichs ersetzt die des Logs.
 - [ ] **Bedienabläufe aus dem Domänenmodell lösen:** Die Begriffe der Oberfläche stehen seit dem
   25. November 2026 im GUI-Handbuch. In den Regeltexten von `docs/domain-model.md` sind Fachregel und
   Bedienung noch vermischt (rund 120 Zeilen mit Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt
