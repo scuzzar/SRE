@@ -555,6 +555,9 @@ beginnt mit der END, die der Kämpfer dann hat)
 | **Weakened** | Nach den Combat-Schlägen beliebig viele, je mit dem **Weakened Blow/Swing DM** der Waffe. Man darf einen Schlag auch freiwillig geschwächt führen, damit er nicht von der END abgeht. |
 | **Special** | Wo Stärke nicht zählt, etwa gegen Bewusstlose: nicht geschwächt, zählt nicht gegen die END. |
 
+> ✱ App (2026-11-26): Geschwächt wird nur, wenn die Combat-Schläge aufgebraucht sind; freiwillig
+> schwächen geht nicht (Hausregel). Die übrigen Combat-Schläge stehen auf dem Angriffsknopf.
+
 - Höchstens **ein Schlag oder Hieb je Runde**.
 - Maßgeblich ist die **END zu Beginn der Begegnung**: Wunden in der Begegnung senken die Zahl nicht,
   Wunden von vorher schon. Die Zahl gilt für Faust und Klinge zusammen.
@@ -612,7 +615,12 @@ App: ✔ ✱ (siehe `domain-model.md`, *Feuerstoß und Schrot*)
 > ✱ App: Feuerstoß mit der Grenze aus B4 und SR 26 (2 Nachbarn, DM −3); Schrot nach B1 und SR 26
 > (3 Nachbarn, ohne DM; der DM +2 gegen fliegende Ziele fehlt, es gibt noch keine). Die Parteien haben keine Plätze, nur eine Liste: Beim Feuerstoß sind die Nachbarn der
 > darüber und der darunter in der Liste, bei der Schrotflinte lost die App sie aus der Partei des
-> Ziels aus.
+> Ziels aus. Beim Automatic Rifle sind Feuerstoß und Einzelschuss zwei Angriffe mit je eigenem
+> nötigem Wurf (2026-11-26), keine Wahl vorher.
+>
+> ✱ App, Hausregel **Beide Hände** (2026-11-26): Gewehre, Bögen, Armbrüste, Halberd und Pike brauchen
+> beide Hände. Wer so eine Waffe als Primärwaffe hat, greift in der Kampfsimulation nur mit ihr an;
+> ist sie leer und kein Magazin mehr da, wieder mit Sekundärwaffe bzw. Händen.
 
 ### Waffen- und Reichweitenmatrix
 

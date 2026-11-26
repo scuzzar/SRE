@@ -139,7 +139,9 @@ Smartphone                          Desktop-Modus (ab 1024 px)
   Polizei*, darunter die Zeit *Tage vergehen, Woche beenden* (auf einer Fahrt *Weiterfahren*).
 - In der **Kampfsimulation** ist die Aktionsleiste der Zug (2026-11-26): links **Beenden** und
   **Ausweichen** im Stil der Knöpfe des Logs, rechts im Daumenbereich die Angriffe (je Waffe ein Knopf
-  mit nötigem Wurf; Primär gefüllt, Sekundär umrandet, oben die Munition). Lange drücken auf Ausweichen setzt aus
+  mit nötigem Wurf; Primär gefüllt, Sekundär umrandet, oben die Munition bzw. die übrigen
+  Combat-Schläge; beim Automatic Rifle Feuerstoß und Einzeln als zwei Knöpfe). Umschalter für die
+  Feuerart oder einen geschwächten Schlag gibt es nicht (2026-11-26). Lange drücken auf Ausweichen setzt aus
   (kein Angriff, aber die Parade bleibt); wer gelaufen ist oder festgehalten wird, kann nicht ausweichen,
   dann heißt der Knopf **Aussetzen**. Beenden geht nur lange gedrückt, ein Tippen sagt das. Wer am Zug
   ist und wen er angreift, zeigen die Karten (▶ und Pfeil), nicht die Aktionsleiste.

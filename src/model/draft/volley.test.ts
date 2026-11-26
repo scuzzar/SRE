@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ammoOf,
+  attackWeaponsOf,
   appendLog,
   characterOf,
   createCampaign,
@@ -21,7 +22,7 @@ import {
   hexFromFlat, type Hex,
 } from '..';
 import { fixedClock, fixedRandom, onTurn } from '../testing';
-import { aimAt, attackRounds, chooseFire, chooseTarget, evaluateAttack, firesBurst, neighbourTargets, rollAttack, startAttack } from './attack';
+import { aimAt, attackRounds, chooseTarget, evaluateAttack, firesBurst, neighbourTargets, rollAttack, startAttack } from './attack';
 
 // Regina: TL 7. Vier Thugs (15, L): n1 Anführer mit Foil und Mesh, n2 bis n4 mit Club ohne Rüstung.
 const regina: Hex = hexFromFlat({
@@ -53,6 +54,27 @@ function armed(weapon: string, ammo: string, rounds?: number): Campaign {
 
 const autoRifle = () => armed('auto-rifle', 'auto-rifle-ammo');
 
+describe('Beide Hände (2026-11-26)', () => {
+  it('mit einer zweihändigen Primärwaffe nur sie; leer und ohne Magazin wieder Sekundärwaffe bzw. Hände', () => {
+    const campaign = armed('auto-rifle', 'auto-rifle-ammo');
+    const c1 = { ...characterOf(campaign, 'c1'), secondary: 'blade' };
+    expect(weaponOf('auto-rifle').twoHanded).toBe(true);
+    expect(attackWeaponsOf(c1, [])).toEqual(['auto-rifle']);
+    const spent = { ...c1, possessions: c1.possessions.map((p) => (p.of === 'auto-rifle' ? { ...p, rounds: 0 } : p)) };
+    expect(attackWeaponsOf(spent, [])).toEqual(['blade']);
+    const bare = Object.fromEntries(Object.entries(spent).filter(([key]) => key !== 'secondary')) as typeof spent;
+    expect(attackWeaponsOf(bare, [])).toEqual(['hands']);
+    // Mit einem Magazin im Gruppengepäck lädt er nach, statt die Waffe zu wechseln.
+    expect(attackWeaponsOf(spent, [{ of: 'auto-rifle-ammo', count: 1 }])).toEqual(['auto-rifle']);
+  });
+
+  it('eine einhändige Primärwaffe lässt Sekundärwaffe bzw. Hände', () => {
+    const campaign = armed('automatic-pistol', 'automatic-pistol-ammo');
+    const c1 = characterOf(campaign, 'c1');
+    expect(attackWeaponsOf({ ...c1, secondary: 'blade' }, [])).toEqual(['automatic-pistol', 'blade']);
+  });
+});
+
 describe('Feuerstoß', () => {
   it('ist beim Automatic Rifle vorgewählt; zwei Würfe auf das Ziel, dazu der darüber und der darunter in der Liste mit DM −3', () => {
     const campaign = autoRifle();
@@ -83,25 +105,25 @@ describe('Feuerstoß', () => {
     const attack = chooseTarget(campaign, 'nothing', 'medium', aimAt(startAttack(campaign), campaign, 'n2'));
     expect(() => rollAttack(attack, campaign, fixedRandom(), clock)).toThrow(/braucht 4 Schuss/);
     expect(() => spendRound(campaign, 'c1', 4)).toThrow(/braucht 4 Schuss/);
-    const single = chooseFire(attack, campaign, false);
-    expect(rollAttack(single, campaign, fixedRandom(), clock)).toHaveLength(1);
-    expect(ammoOf(characterOf(spendRound(campaign, 'c1', attackRounds(single, campaign)), 'c1'))!.rounds).toBe(2);
+    expect(rollAttack(attack, campaign, fixedRandom(), clock, false)).toHaveLength(1);
+    expect(ammoOf(characterOf(spendRound(campaign, 'c1', attackRounds(attack, campaign, false)), 'c1'))!.rounds).toBe(2);
   });
 
   it('der Einzelschuss des Automatic Rifle nimmt die Zeile des Rifle: ein Wurf, keine Nachbarn', () => {
     const campaign = autoRifle();
-    const attack = chooseFire(chooseTarget(campaign, 'nothing', 'medium', aimAt(startAttack(campaign), campaign, 'n2')), campaign, false);
-    expect(firesBurst(weaponOf('auto-rifle'), attack)).toBe(false);
+    const attack = chooseTarget(campaign, 'nothing', 'medium', aimAt(startAttack(campaign), campaign, 'n2'));
+    expect(firesBurst(weaponOf('auto-rifle'), false)).toBe(false);
     // Rifle gegen Nothing +3, Medium ±0, DEX A beim Automatic Rifle +2.
-    expect(evaluateAttack(attack, campaign)!.dm.total).toBe(5);
-    expect(rollAttack(attack, campaign, fixedRandom(), clock)).toMatchObject([{ against: 'n2', dm: 5 }]);
-    expect(attackRounds(attack, campaign)).toBe(1);
+    expect(evaluateAttack(attack, campaign, false)!.dm.total).toBe(5);
+    expect(rollAttack(attack, campaign, fixedRandom(), clock, false)).toMatchObject([{ against: 'n2', dm: 5 }]);
+    expect(attackRounds(attack, campaign, false)).toBe(1);
   });
 
   it('die Submachinegun schießt nur Feuerstöße', () => {
     const campaign = armed('submachinegun', 'submachinegun-ammo');
     const attack = chooseTarget(campaign, 'mesh', 'short', aimAt(startAttack(campaign), campaign, 'n1'));
-    expect(() => chooseFire(attack, campaign, false)).toThrow(/keine Wahl/);
+    // Ohne Einzelschuss bleibt es ein Feuerstoß, auch wenn einer verlangt wird.
+    expect(firesBurst(weaponOf('submachinegun'), false)).toBe(true);
     // n1 steht oben: nur n2 als Nachbar.
     expect(rollAttack(attack, campaign, fixedRandom(), clock).map((r) => r.against)).toEqual(['n1', 'n1', 'n2']);
   });

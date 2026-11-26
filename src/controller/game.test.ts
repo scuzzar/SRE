@@ -1315,12 +1315,13 @@ describe('Flächenschaden in der Kampfsimulation', () => {
     expect(game.snapshot().combat!.sim!.turn!.id).toBe('c2');
   });
 
-  it('Einzelschuss wählen: ein Wurf, ein Schuss, und der Zug endet mit dem Fehlschuss', async () => {
+  it('Einzelschuss als eigener Angriff (2026-11-26): ein Wurf, ein Schuss, und der Zug endet mit dem Fehlschuss', async () => {
     const { game } = await fourThugs();
     game.chooseFightTarget('n2');
-    game.chooseFire(false);
-    expect(game.snapshot().combat!.sim!.turn!.fire).toMatchObject({ burst: false, rounds: 1, neighbours: 0 });
-    game.fightAttack();
+    const attacks = game.snapshot().combat!.sim!.turn!.attacks;
+    expect(attacks.map((a) => a.burst)).toEqual([true, false]);
+    expect(attacks[1]!.fire).toMatchObject({ burst: false, rounds: 1, neighbours: 0 });
+    game.fightAttack(false);
     expect(game.snapshot().result).toMatchObject({ kind: 'attack', success: false, fire: undefined, rest: [] });
     expect(game.snapshot().combat!.sim!.turn!.id).toBe('c2');
     game.focusCharacter('c1');

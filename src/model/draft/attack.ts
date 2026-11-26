@@ -64,17 +64,21 @@ export interface Attack {
   readonly armor?: ArmorClass;
   readonly range?: Range;
   readonly against?: CharacterId;
-  /** Feuerstoß (`true`) oder Einzelschuss; zählt nur bei einer Waffe, die beides kann. Fehlt: Feuerstoß. */
-  readonly burst?: boolean;
-  /** Ein SC schwächt seinen Schlag oder Hieb freiwillig, damit er nicht gegen die END zählt (SR 22). */
-  readonly weakened?: boolean;
 }
 
-/** Schießt die Waffe einen Feuerstoß? Ohne `burst` nie, ohne `single` immer, sonst nach der Wahl (vorgewählt: Feuerstoß). */
-export function firesBurst(weapon: Weapon, attack: Attack): boolean {
+/**
+ * Schießt die Waffe einen Feuerstoß? Ohne `burst` nie, ohne `single` immer; sonst sind Feuerstoß
+ * (`true`) und Einzelschuss zwei Angriffe (2026-11-26), `burst` sagt, welcher, ohne Angabe der Feuerstoß.
+ */
+export function firesBurst(weapon: Weapon, burst?: boolean): boolean {
   if (weapon.burst === undefined) return false;
   if (weapon.single === undefined) return true;
-  return attack.burst ?? true;
+  return burst ?? true;
+}
+
+/** Reicht die Waffe auf diese Reichweite, mit Feuerstoß oder Einzelschuss? */
+function reachesAt(weapon: Weapon, range: Range): boolean {
+  return rangeDm(rowOf(weapon, firesBurst(weapon, true)), range) !== undefined || rangeDm(rowOf(weapon, firesBurst(weapon, false)), range) !== undefined;
 }
 
 /** Kann man mit dieser Waffe zwischen Feuerstoß und Einzelschuss wählen? */
@@ -127,38 +131,17 @@ export function startAttack(campaign: Campaign): Attack {
   return {};
 }
 
-/** Feuerstoß oder Einzelschuss; nur bei einer Waffe, die beides kann. */
-export function chooseFire(attack: Attack, campaign: Campaign, burst: boolean): Attack {
-  const weapon = attackerOf(attack, campaign).weapon;
-  if (!canChooseFire(weapon)) throw new DomainError(`${weapon.name} hat keine Wahl zwischen Feuerstoß und Einzelschuss.`);
-  return withRange({ ...attack, burst }, campaign);
-}
-
-/** Der Angriff mit der vorgewählten Feuerart, etwa nach einem Wechsel der Waffe. */
-export function withoutFire(attack: Attack): Attack {
-  return Object.fromEntries(Object.entries(attack).filter(([key]) => key !== 'burst'));
-}
-
 /** Behält die Reichweite, wenn die Waffe dorthin reicht. */
 function withRange(attack: Attack, campaign: Campaign): Attack {
   const rest: Attack = Object.fromEntries(Object.entries(attack).filter(([key]) => key !== 'range'));
   const range = attack.range;
   const weapon = attackerOf(rest, campaign).weapon;
-  return range !== undefined && rangeDm(rowOf(weapon, firesBurst(weapon, rest)), range) !== undefined ? { ...rest, range } : rest;
+  return range !== undefined && reachesAt(weapon, range) ? { ...rest, range } : rest;
 }
 
-/** Der Angriff ohne Ziel; nur die Reichweite, die Feuerart und das Schwächen bleiben. */
+/** Der Angriff ohne Ziel; nur die Reichweite bleibt. */
 function untargeted(attack: Attack): Attack {
-  return {
-    ...(attack.range === undefined ? {} : { range: attack.range }),
-    ...(attack.burst === undefined ? {} : { burst: attack.burst }),
-    ...(attack.weakened === undefined ? {} : { weakened: attack.weakened }),
-  };
-}
-
-/** Den Schlag oder Hieb schwächen (`true`) oder mit voller Kraft führen. */
-export function chooseWeakened(attack: Attack, weakened: boolean): Attack {
-  return { ...attack, weakened };
+  return attack.range === undefined ? {} : { range: attack.range };
 }
 
 /** Was zum DM eines Angriffs neben der Matrix kommt: die Schlagart (geschwächt), die Parade des Ziels (SR 22) und ob es ausweicht (SR 20). */
@@ -175,11 +158,11 @@ export interface AttackExtras {
   readonly held: boolean;
 }
 
-/** Schlagart und Parade dieses Angriffs; ein NSC schwächt nie freiwillig. */
+/** Schlagart und Parade dieses Angriffs; geschwächt nur, wenn die Combat-Schläge aufgebraucht sind (2026-11-26). */
 export function attackExtras(attack: Attack, campaign: Campaign): AttackExtras {
   const attacker = attackerOf(attack, campaign);
   const defender = defenderOf(attack, campaign);
-  const strike = strikeOf(campaign, attacker.who, attacker.weapon, defender?.state, attack.weakened === true && sideOf(campaign, attacker.who) === 'pcs');
+  const strike = strikeOf(campaign, attacker.who, attacker.weapon, defender?.state, false);
   return { strike, weakened: strikeDm(attacker.weapon, strike), parry: parryDm(campaign, defender?.who, attacker.weapon), evading: evadesNow(campaign, defender?.who), natural: attacker.natural, hide: defender?.hide ?? 0, held: defender !== undefined && isHeld(campaign, defender.who) };
 }
 
@@ -218,7 +201,7 @@ export function chooseTarget(campaign: Campaign, armor: ArmorClass, range: Range
   if (!armorClasses.includes(armor) || !ranges.includes(range)) throw new DomainError('Diese Rüstung oder Reichweite gibt es nicht.');
   const defender = defenderOf(attack, campaign);
   if (defender && defender.armor !== armor) throw new DomainError(`${defender.name} trägt ${defender.armor}, nicht ${armor}.`);
-  if (rangeDm(rowOf(attacker.weapon, firesBurst(attacker.weapon, attack)), range) === undefined) throw new DomainError(`Mit ${attacker.weapon.name} geht auf diese Reichweite kein Angriff.`);
+  if (!reachesAt(attacker.weapon, range)) throw new DomainError(`Mit ${attacker.weapon.name} geht auf diese Reichweite kein Angriff.`);
   return { ...attack, armor, range };
 }
 
@@ -246,20 +229,20 @@ function odds(attacker: Fighter, armor: ArmorClass, range: Range, burst: boolean
   return { dm, target: ATTACK_TARGET, need, chance: chance2d6(need) };
 }
 
-/** DM, nötiger Wurf und Chance; erst mit Rüstung und Reichweite. */
-export function evaluateAttack(attack: Attack, campaign: Campaign): AttackOdds | undefined {
+/** DM, nötiger Wurf und Chance; erst mit Rüstung und Reichweite. `burst` wählt Feuerstoß oder Einzelschuss. */
+export function evaluateAttack(attack: Attack, campaign: Campaign, burst?: boolean): AttackOdds | undefined {
   if (attack.armor === undefined || attack.range === undefined) return undefined;
   const attacker = attackerOf(attack, campaign);
-  return odds(attacker, attack.armor, attack.range, firesBurst(attacker.weapon, attack), attackExtras(attack, campaign));
+  return odds(attacker, attack.armor, attack.range, firesBurst(attacker.weapon, burst), attackExtras(attack, campaign));
 }
 
 /**
  * Die klassische Tabelle der Waffe des Angreifers: je Rüstung eine Zeile, je Reichweite eine Spalte,
  * in jeder Zelle die Werte mit allen DMs des Angreifers; `undefined`, wo die Waffe nicht hinreicht.
  */
-export function attackTable(campaign: Campaign, attack: Attack = {}): readonly (readonly (AttackOdds | undefined)[])[] {
+export function attackTable(campaign: Campaign, attack: Attack = {}, fire?: boolean): readonly (readonly (AttackOdds | undefined)[])[] {
   const attacker = attackerOf(attack, campaign);
-  const burst = firesBurst(attacker.weapon, attack);
+  const burst = firesBurst(attacker.weapon, fire);
   const extras = attackExtras(attack, campaign);
   return armorClasses.map((armor) => ranges.map((range) => odds(attacker, armor, range, burst, extras)));
 }
@@ -301,9 +284,9 @@ export function neighbourTargets(campaign: Campaign, who: CharacterId, weapon: W
 }
 
 /** Wie viele Schuss der Angriff verbraucht: ein Feuerstoß `burst`, sonst einer. */
-export function attackRounds(attack: Attack, campaign: Campaign): number {
+export function attackRounds(attack: Attack, campaign: Campaign, burst?: boolean): number {
   const weapon = attackerOf(attack, campaign).weapon;
-  return roundsFor(weapon, firesBurst(weapon, attack));
+  return roundsFor(weapon, firesBurst(weapon, burst));
 }
 
 /**
@@ -313,15 +296,15 @@ export function attackRounds(attack: Attack, campaign: Campaign): number {
  * aus einem Wurf. Auch ein unmöglicher Angriff darf gewürfelt werden; er misslingt und steht
  * trotzdem im Log.
  */
-export function rollAttack(attack: Attack, campaign: Campaign, random: Random, clock: Clock): readonly AttackResult[] {
+export function rollAttack(attack: Attack, campaign: Campaign, random: Random, clock: Clock, fire?: boolean): readonly AttackResult[] {
   const attacker = attackerOf(attack, campaign);
-  const evaluated = evaluateAttack(attack, campaign);
+  const evaluated = evaluateAttack(attack, campaign, fire);
   if (!evaluated || attack.armor === undefined || attack.range === undefined) throw new DomainError('Erst Rüstung und Reichweite des Ziels wählen.');
   if (!canFight(attacker.state)) throw new DomainError(`${attacker.name} ist ${isDead(attacker.state) ? 'tot' : 'bewusstlos'} und greift nicht an.`);
   const defender = defenderOf(attack, campaign);
   if (defender && isDead(defender.state)) throw new DomainError(`${defender.name} ist tot.`);
   const weapon = attacker.weapon;
-  const burst = firesBurst(weapon, attack);
+  const burst = firesBurst(weapon, fire);
   const range = attack.range;
   const at = clock.now();
   const character = anyCharacterOf(campaign, attacker.who);

@@ -1,5 +1,7 @@
 import {
   HANDS,
+  attackWeaponsOf,
+  weaponOf,
   addCharacter,
   addMission,
   updateMission,
@@ -45,7 +47,6 @@ import {
   unequip,
   type EquipSlot,
   type TrayStop,
-  fighterOf,
   endTurn,
   setDistance,
   moveSide,
@@ -263,15 +264,11 @@ import {
 } from '../model';
 import {
   attackRounds,
-  canChooseFire,
-  chooseFire,
   chooseSkill,
   chooseTarget,
   keepTarget,
-  withoutFire,
   type Attack,
   rollAttack,
-  chooseWeakened,
   startAttack,
   turnAttack,
   startWounding,
@@ -327,7 +324,7 @@ const NPC_REPAINT_EVERY = 10;
 /** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
 const slotKey = (slot: { readonly design: string; readonly name: string }): string => `${slot.design}/${slot.name}`;
 
-const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, systemJourney: undefined, shipCheck: undefined, nextShipCheck: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, simBurst: undefined, simWeakened: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, systemJourney: undefined, shipCheck: undefined, nextShipCheck: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -426,8 +423,6 @@ export class GameController {
       journey: undefined,
       systemJourney: undefined,
       simTarget: undefined,
-      simBurst: undefined,
-      simWeakened: undefined,
       encounterIntro: false,
       surpriseShown: false,
       shopError: undefined,
@@ -1628,7 +1623,7 @@ export class GameController {
     const character = focusOf(this.campaign);
     if (!character) throw new DomainError('Es gibt keinen lebenden Charakter.');
     const campaign = setWields(this.campaign, character.id, weapon);
-    this.change(campaign, { attack: this.state.attack && keepTarget(withoutFire(this.state.attack), campaign) });
+    this.change(campaign, { attack: this.state.attack && keepTarget(this.state.attack, campaign) });
   }
 
   /** Wählt Rüstung und Reichweite des Ziels; dieselbe Zelle noch einmal nimmt die Reichweite zurück. */
@@ -1650,49 +1645,16 @@ export class GameController {
    * das Ergebnis als Popup; das Ziel bleibt gewählt. Eine Schusswaffe verbraucht einen Schuss, ein
    * Feuerstoß so viele, wie er braucht.
    */
-  rollAttack(): void {
+  rollAttack(burst?: boolean): void {
     const attack = this.state.attack ?? {};
-    const campaign = this.logAttack(this.campaign, attack);
+    const campaign = this.logAttack(this.campaign, attack, burst);
     this.change(campaign, { result: volleyStart(campaign.log, campaign.log.length - 1) });
   }
 
-  /**
-   * Feuerstoß oder Einzelschuss, wenn die Waffe beides kann: in der Kampfsimulation für den, der am
-   * Zug ist, sonst für den Angriff in Vorbereitung.
-   */
-  chooseFire(burst: boolean): void {
-    this.inFight(() => {
-      const turn = turnOf(this.campaign);
-      if (!turn) {
-        this.update({ attack: chooseFire(this.state.attack ?? startAttack(this.campaign), this.campaign, burst), combatNote: undefined });
-        return;
-      }
-      const weapon = fighterOf(this.campaign, turn.id).weapon;
-      if (!canChooseFire(weapon)) throw new DomainError(`${weapon.name} hat keine Wahl zwischen Feuerstoß und Einzelschuss.`);
-      this.update({ simBurst: burst, combatNote: undefined });
-    });
-  }
-
-  /**
-   * Schlag oder Hieb voll (`false`) oder freiwillig geschwächt (`true`), damit er nicht gegen die END
-   * zählt (SR 22): in der Kampfsimulation für den SC am Zug, sonst für den Angriff in Vorbereitung.
-   */
-  chooseWeakened(weakened: boolean): void {
-    this.inFight(() => {
-      const turn = turnOf(this.campaign);
-      if (!turn) {
-        this.update({ attack: chooseWeakened(this.state.attack ?? startAttack(this.campaign), weakened), combatNote: undefined });
-        return;
-      }
-      if (turn.side !== 'pcs') throw new DomainError('Ein NSC schwächt seinen Schlag nicht freiwillig.');
-      this.update({ simWeakened: weakened, combatNote: undefined });
-    });
-  }
-
-  /** Würfelt den Angriff als Garbe, hängt sie an den Log und zieht die verbrauchten Schuss ab. */
-  private logAttack(campaign: Campaign, attack: Attack): Campaign {
-    const results = rollAttack(attack, campaign, this.deps.random, this.deps.clock);
-    const rounds = attackRounds(attack, campaign);
+  /** Würfelt den Angriff als Garbe, hängt sie an den Log und zieht die verbrauchten Schuss ab. `burst` wählt Feuerstoß oder Einzelschuss. */
+  private logAttack(campaign: Campaign, attack: Attack, burst?: boolean): Campaign {
+    const results = rollAttack(attack, campaign, this.deps.random, this.deps.clock, burst);
+    const rounds = attackRounds(attack, campaign, burst);
     // Ein Schuss mit Überraschung gibt Alarm, außer mit einem Laser (SR 20).
     const logged = holdAfterAttack(alarmAfterAttack(appendLog(campaign, ...results), results), results);
     // SC wie NSC verbrauchen ihre Munition.
@@ -1884,7 +1846,7 @@ export class GameController {
     // Hat der Zug den Kampf entschieden, ist keiner mehr dran; dann gibt es nichts zu beenden.
     const ended = turnOf(campaign) ? (evade ? evadeTurn(campaign) : endTurn(campaign)) : campaign;
     const prepared = this.prepareTurn(ended, this.state.simTarget);
-    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget, simBurst: undefined, simWeakened: undefined, combatNote: undefined });
+    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget, combatNote: undefined });
   }
 
   /** Führt eine Eingabe der Kampfsimulation aus; verletzt sie eine Regel, steht das im Kampf. */
@@ -1932,7 +1894,7 @@ export class GameController {
       if (turnOf(moved)?.id === before) this.change(moved, { combatNote: undefined });
       else {
         const prepared = this.prepareTurn(moved, this.state.simTarget);
-        this.change(prepared.campaign, { simTarget: prepared.simTarget, simBurst: undefined, simWeakened: undefined, combatNote: undefined });
+        this.change(prepared.campaign, { simTarget: prepared.simTarget, combatNote: undefined });
       }
     });
   }
@@ -1941,16 +1903,22 @@ export class GameController {
    * Der Kämpfer am Zug greift sein Ziel an. Daneben beendet den Zug gleich; ein Treffer erst mit dem
    * Schaden. Wer für den Zug oben stehen muss, kommt vorher nach oben (auch nach Wischen in der Charakterleiste).
    */
-  fightAttack(): void {
-    this.inFight(() => this.attackFrom(this.campaign));
+  fightAttack(burst?: boolean): void {
+    this.inFight(() => this.attackFrom(this.campaign, burst));
   }
 
   /**
    * Der Kämpfer am Zug greift mit dieser Waffe an (Primär, Sekundär oder die Hände): Sie kommt in die
    * Hand, dann der Angriff wie `fightAttack`. SC und NSC gleich.
    */
-  fightAttackWith(weapon: string): void {
-    this.inFight(() => this.attackFrom(this.withWeaponInHand(weapon)));
+  fightAttackWith(weapon: string, burst?: boolean): void {
+    this.inFight(() => {
+      const turn = turnOf(this.campaign);
+      if (!turn) throw new DomainError('Es ist keiner am Zug.');
+      // Beide Hände (2026-11-26): mit einer zweihändigen Primärwaffe nur sie.
+      if (!attackWeaponsOf(anyCharacterOf(this.campaign, turn.id), this.campaign.stash).includes(weapon)) throw new DomainError(`${weaponOf(weapon).name}: Die Hände sind an der zweihändigen Waffe.`);
+      this.attackFrom(this.withWeaponInHand(weapon), burst);
+    });
   }
 
   /** Der Kämpfer am Zug lädt diese Waffe nach; sie kommt dabei in die Hand. Das ist sein Zug. */
@@ -1971,12 +1939,12 @@ export class GameController {
   }
 
   /** Der Kämpfer am Zug greift sein Ziel an. Daneben beendet den Zug gleich; ein Treffer erst mit dem Schaden. */
-  private attackFrom(base: Campaign): void {
+  private attackFrom(base: Campaign, burst?: boolean): void {
     const target = this.state.simTarget;
     if (target === undefined) throw new DomainError('Erst ein Ziel wählen.');
     const ready = this.focusedForTurn(base, target);
-    const attack = { ...turnAttack(ready, target), ...(this.state.simBurst === undefined ? {} : { burst: this.state.simBurst }), ...(this.state.simWeakened ? { weakened: true } : {}) };
-    const campaign = this.logAttack(ready, attack);
+    const attack = turnAttack(ready, target);
+    const campaign = this.logAttack(ready, attack, burst);
     const index = volleyStart(campaign.log, campaign.log.length - 1);
     if (pendingDamage(campaign.log) !== undefined && volleyStart(campaign.log, pendingDamage(campaign.log)!) === index) this.change(campaign, { result: index, combatNote: undefined });
     else this.nextTurn(campaign, { result: index });

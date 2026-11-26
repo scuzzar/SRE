@@ -743,8 +743,6 @@ hide <<browser>> stereotype
   class Attack <<transient>> $kampf {
     armor: ArmorClass [0..1]
     range: Range [0..1]
-    $gone("2026-11-26", "burst: boolean")
-    $gone("2026-11-26", "weakened: boolean")
     /dm: number
     /need: number
     /chance: number
@@ -1064,7 +1062,7 @@ hide <<browser>> stereotype
     burst: number [0..1]
     neighbours: number [0..1]
     weakened: number [0..1]
-    $new("2026-11-26", "twoHanded: boolean")
+    twoHanded: boolean
   }
   class ArmorDm <<value>> $kampf {
     armor: ArmorClass

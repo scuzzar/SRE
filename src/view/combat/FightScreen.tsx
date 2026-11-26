@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
-import type { AnimalSimView, AttackOption, CombatView, FighterView, Impact, SimView } from '../../controller';
+import type { AnimalSimView, AttackOption, CombatView, FighterView, Impact, MeleeView, SimView } from '../../controller';
 import type { Range } from '../../model';
 import { hex, rangeText, signed } from '../format';
 import { useGame } from '../game-context';
@@ -9,8 +9,6 @@ import { HoldButton } from '../HoldButton';
 import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
 import type { Patient } from './CombatScreen';
 import { Arena, canAdopt, type Selection } from './Arena';
-import { FireToggle } from './FireToggle';
-import { StrikeToggle } from './StrikeToggle';
 
 /**
  * Die Kampfsimulation einer laufenden Begegnung: oben fest Runde, Reaktion, Überraschung und
@@ -367,8 +365,6 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
   const game = useGame();
   const turn = sim.turn;
   const target = turn?.target === undefined ? undefined : sim.fighters.find((f) => f.id === turn.target);
-  // Feuerstoß oder Einzelschuss wählt man nur bei einer Waffe, die beides kann (Automatic Rifle).
-  const fire = turn?.attacks.find((a) => a.fire?.choosable)?.fire;
   // Ein kurzes Tippen auf Beenden sagt, dass es einen langen Druck braucht.
   const [nudged, setNudged] = useState(false);
   const end = (
@@ -468,12 +464,9 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
                 </span>
               </button>
             ) : (
-              turn.attacks.map((a, i) => <AttackButton key={a.weapon} attack={a} first={i === 0} label={target ? '' : 'Ziel antippen'} hasTarget={target !== undefined} ran={turn.ran} />)
+              turn.attacks.map((a, i) => <AttackButton key={`${a.weapon}-${String(a.burst)}`} attack={a} first={i === 0} label={target ? '' : 'Ziel antippen'} blows={a.melee ? turn.melee : undefined} hasTarget={target !== undefined} ran={turn.ran} />)
             )}
           </div>
-          {fire && <FireToggle fire={fire} compact />}
-          {/* Voll oder geschwächt nur, wenn ein Schlag oder Hieb auch reicht. */}
-          {turn.melee && turn.side === 'pcs' && turn.attacks.some((a) => a.reaches && a.melee) && <StrikeToggle melee={turn.melee} />}
         </>
       ) : (
         <>
@@ -486,10 +479,14 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
 }
 
 /** Ein Angriff mit einer Waffe: Platz (Primär …), Waffe, nötiger Wurf. Leer lädt er nach. */
-function AttackButton({ attack: a, first, label, hasTarget, ran }: { attack: AttackOption; first: boolean; label: string; hasTarget: boolean; ran: boolean }) {
+function AttackButton({ attack: a, first, label, blows, hasTarget, ran }: { attack: AttackOption; first: boolean; label: string; blows: MeleeView | undefined; hasTarget: boolean; ran: boolean }) {
   const game = useGame();
-  // Primär und Sekundär zeigt die Füllung; oben steht nur, was fehlt (das Ziel), und die Munition.
-  const slot = [label, a.ammo ? `${a.ammo.rounds}/${a.ammo.capacity}` : ''].filter(Boolean).join(' · ');
+  // Primär und Sekundär zeigt die Füllung; oben steht nur, was fehlt (das Ziel), die Munition bzw. die
+  // übrigen Combat-Schläge (2026-11-26: geschwächt wird erst, wenn sie aufgebraucht sind).
+  const count = a.ammo ? `${a.ammo.rounds}/${a.ammo.capacity}` : blows?.blows !== undefined ? `${blows.blows}/${blows.end}` : '';
+  const slot = [label, count].filter(Boolean).join(' · ');
+  // Feuerstoß und Einzelschuss sind zwei Angriffe mit derselben Waffe (2026-11-26).
+  const name = a.burst === undefined ? a.name : a.burst ? 'Feuerstoß' : 'Einzeln';
   if (a.empty) {
     const can = (a.ammo?.magazines ?? 0) > 0;
     return (
@@ -503,7 +500,7 @@ function AttackButton({ attack: a, first, label, hasTarget, ran }: { attack: Att
         }}
       >
         <span className="atk-slot">{slot}</span>
-        <span className="atk-name">{a.name}</span>
+        <span className="atk-name">{name}</span>
         <span className="atk-need small">{can ? `nachladen (${a.ammo!.magazines})` : 'leer'}</span>
       </button>
     );
@@ -515,14 +512,14 @@ function AttackButton({ attack: a, first, label, hasTarget, ran }: { attack: Att
       type="button"
       className={first ? 'atk primary' : 'atk secondary'}
       disabled={!hasTarget || !a.reaches || ran}
-      aria-label={`Mit ${a.name} angreifen${a.odds ? `, braucht ${Math.max(2, a.odds.need)}+` : ''}`}
+      aria-label={`${a.burst === undefined ? `Mit ${a.name}` : `${name} mit ${a.name}`} angreifen${a.odds ? `, braucht ${Math.max(2, a.odds.need)}+` : ''}`}
       onClick={() => {
         haptic('land');
-        game.fightAttackWith(a.weapon);
+        game.fightAttackWith(a.weapon, a.burst);
       }}
     >
       <span className="atk-slot">{slot}</span>
-      <span className="atk-name">{a.name}</span>
+      <span className="atk-name">{name}</span>
       <span className={small ? 'atk-need small' : 'atk-need'}>{need}</span>
     </button>
   );

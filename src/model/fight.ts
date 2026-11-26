@@ -1,5 +1,6 @@
-import { anyCharacterOf, armedWeaponsOf, isPlayerCharacter, livingCharacters, setWields, type Campaign, type CharacterId } from './campaign';
+import { anyCharacterOf, armedWeaponsOf, isPlayerCharacter, livingCharacters, setWields, type Campaign, type Character, type CharacterId } from './campaign';
 import { ammoOf, reload } from './combat';
+import { HANDS, weaponOf } from './reference';
 import { DomainError } from './errors';
 import { currentEncounter, distanceOf, encounterAnimalRow, ESCAPED_BAND, isAnimalEncounter, isEscapedDistance, needsSurprise, npcSideIds, steppedPosition, withDistance, type Encounter } from './encounter';
 import { canFight, woundStateOf } from './wounds';
@@ -146,6 +147,25 @@ function finishTurn(campaign: Campaign, evade = false): Campaign {
   let after: Encounter = { ...without(encounter, 'evading'), ...(evading.length > 0 ? { evading } : {}), acted: [...encounter.acted, turn.id] };
   if (waiting(campaign, after).length === 0) after = nextRound(after);
   return withEncounter(campaign, after);
+}
+
+/**
+ * Die Waffen, mit denen ein Kämpfer in der Kampfsimulation angreift: Primär- und Sekundärwaffe, ohne
+ * zweite Waffe die Hände (ein Tier nur mit seinen Tierangriffen). Beide Hände (2026-11-26): Ist die
+ * Primärwaffe zweihändig (`Weapon.twoHanded`), greift er nur mit ihr an – außer sie ist leer und kein
+ * Magazin mehr da, dann wieder mit Sekundärwaffe bzw. Händen.
+ */
+export function attackWeaponsOf(character: Character, stash: Campaign['stash'] = []): readonly string[] {
+  const armed = armedWeaponsOf(character).filter((w) => w !== HANDS).slice(0, 2);
+  const primary = character.primary;
+  if (primary !== undefined && weaponOf(primary).twoHanded === true) {
+    const ammo = ammoOf({ ...character, wields: primary }, stash);
+    const spent = ammo !== undefined && ammo.rounds === 0 && ammo.magazines === 0;
+    if (!spent) return [primary];
+    const rest = armed.filter((w) => w !== primary);
+    return rest.length > 0 ? rest : character.animal ? [] : [HANDS];
+  }
+  return armed.length < 2 && !character.animal ? [...armed, HANDS] : armed;
 }
 
 /**

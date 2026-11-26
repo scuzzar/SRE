@@ -687,7 +687,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 >
 > Am 24. November 2026 freigegeben (Kennzeichen **2026-11-24g**): **Was der Lauf verschluckt**. `Generation` meldet das Flüchtig-Feld `/discarded` – die Liste `RunEnd` sagt, *warum* ein verworfener Lauf endete: `dead` (gestorben), `drafted` (er wäre eingezogen worden), `unqualified` (die Qualifikation fehlte, der Adlige mit Stand unter 10). Beim Erzeugen eines NSC erscheint eine **Wartenscheibe**: oben die Drehung, darunter die Zahl der Versuche und darunter, wie viele davon gestorben sind – beides zählt hoch, weil zwischen den Läufen ans Bild übergeben wird (ein Lauf dauert wenige Millisekunden, ohne Abgabe wäre nie etwas zu sehen). Ist einer gefunden, **bleibt das Ganze eine Sekunde stehen**, dann erscheint der neue NSC. Scheibe und Zahlen sind flüchtig: nichts davon wird gespeichert und nichts kommt ins Log. Der Ausschnitt dazu liegt unter [`changes/2026-11-24g-was-der-lauf-verschluckt.png`](changes/2026-11-24g-was-der-lauf-verschluckt.png).
 
-> Am 26. November 2026 vorgeschlagen, **wartet auf Freigabe** (Kennzeichen **2026-11-26**): **Beide
+> Am 26. November 2026 freigegeben (Kennzeichen **2026-11-26**): **Beide
 > Hände, keine Wahl im Angriff.** Neu an der Waffe `twoHanded` (zweihändig): Gewehre (Carbine, Rifle,
 > Automatic Rifle, Shotgun, Submachinegun, Laser Carbine, Laser Rifle), Bögen und Armbrüste sowie die
 > Stangenwaffen Halberd und Pike. Wer eine zweihändige Primärwaffe hat, greift in der Kampfsimulation
@@ -698,8 +698,8 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > **geschwächt** nur noch, wenn die Combat-Schläge aufgebraucht sind, freiwillig schwächen geht
 > nicht mehr (Hausregel, SR 22 erlaubt es). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-26-beide-haende-keine-wahl.png`](changes/2026-11-26-beide-haende-keine-wahl.png).
-> **Offene Frage:** Ist die zweihändige Waffe leer und kein Magazin mehr da, greift der Kämpfer dann
-> mit Sekundärwaffe bzw. Händen an (Empfehlung), oder kann er nur noch ausweichen und aussetzen?
+> Ist die zweihändige Waffe leer und kein Magazin mehr da, greift er wieder mit Sekundärwaffe bzw.
+> Händen an (Owner).
 >
 ![Domänenmodell der Solo RPG Engine](domain-model.png)
 
@@ -1482,7 +1482,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   er keine, die Hände.
 - **Beide Hände** (2026-11-26). Eine zweihändige Waffe (`Weapon.twoHanded`) braucht beide Hände:
   Wer sie als Primärwaffe hat, greift in der Kampfsimulation nur mit ihr an, Sekundärwaffe und Hände
-  bietet die App ihm dort nicht an. Eine Sekundärwaffe darf er trotzdem haben (etwa die Blade am
+  bietet die App ihm dort nicht an – außer die zweihändige Waffe ist leer und kein Magazin mehr da,
+  dann wieder (Owner). Eine Sekundärwaffe darf er trotzdem haben (etwa die Blade am
   Gürtel); in der Waffentabelle nimmt er sie wie bisher in die Hand.
 - **Kauf einer Waffe.** Kauft man eine Waffe für einen SC, wird sie seine
   Primärwaffe und er nimmt sie in die Hand; seine bisherige Primärwaffe kommt ins Gepäck, die

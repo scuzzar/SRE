@@ -24,7 +24,7 @@ import {
   type Side,
 } from '..';
 import { fixedClock, fixedRandom, onTurn } from '../testing';
-import { aimAt, attackExtras, chooseTarget, chooseWeakened, evaluateAttack, rollAttack, turnAttack, type Attack } from './attack';
+import { aimAt, attackExtras, chooseTarget, evaluateAttack, rollAttack, turnAttack, type Attack } from './attack';
 
 // Regina: TL 7. Zwei Thugs: n1 Anführer mit Body Pistol und Mesh, n2 mit Club; beide UPP 222222.
 const regina: Hex = hexFromFlat({
@@ -165,13 +165,12 @@ describe('Ausdauer (SR 20, 22)', () => {
     expect(evaluateAttack(turn(campaign, 'n2'), ready(campaign, 'n2'))!.dm.total).toBe(full.dm.total - 2);
   });
 
-  it('freiwillig geschwächt zählt nicht gegen die END; gegen Wehrlose ist der Schlag Special', () => {
+  it('freiwillig geschwächt gibt es nicht (2026-11-26); gegen Wehrlose ist der Schlag Special', () => {
     let campaign = endTurn(thugs());
-    const weakened = chooseWeakened(turn(campaign, 'n2'), true);
-    expect(attackExtras(weakened, ready(campaign, 'n2'))).toMatchObject({ strike: 'weakened', weakened: -2 });
-    campaign = attack(campaign, 'n2', [1, 1], { weakened: true });
-    expect(campaign.log.at(-1)).toMatchObject({ strike: 'weakened' });
-    expect(blowsOf(campaign, 'c2')).toBe(7);
+    // Mit Combat-Schlägen ist ein Hieb immer voll.
+    expect(attackExtras(turn(campaign, 'n2'), ready(campaign, 'n2'))).toMatchObject({ strike: 'combat', weakened: 0 });
+    campaign = attack(campaign, 'n2', [1, 1]);
+    expect(campaign.log.at(-1)).toMatchObject({ strike: 'combat' });
     // n2 bewusstlos (STR 2 → 0), dann ist ein Hieb auf ihn Special.
     campaign = patch(campaign, { round: 2, acted: ['c1', 'n1', 'n2'] });
     campaign = attack(campaign, 'n2', [6, 6]);

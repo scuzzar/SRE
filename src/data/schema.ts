@@ -271,6 +271,8 @@ export const WeaponSchema = z.object({
   single: z.string().min(1).optional(),
   /** Bei Schlägen und Hieben: der DM eines geschwächten Schlags (S. 4, *Weakened Blow or Swing*). */
   weakened: z.number().int().max(0).optional(),
+  /** Braucht beide Hände (2026-11-26): Gewehre, Bögen, Armbrüste, Halberd, Pike. Wer sie als Primärwaffe hat, greift nur mit ihr an. */
+  twoHanded: z.boolean().default(false),
   vsArmor: z.preprocess(
     inMatrixOrder(armorClasses, 'armor'),
     z.array(ArmorDmSchema).refine((dms) => dms.length === armorClasses.length && dms.every((d, i) => d.armor === armorClasses[i]), 'Die DMs gegen Rüstung stehen nicht in der Reihenfolge der Matrix'),

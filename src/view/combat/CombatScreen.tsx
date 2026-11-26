@@ -4,7 +4,7 @@ import type { CombatView, HealingView, Snapshot } from '../../controller';
 import { EncounterIntro, FightScreen, SurpriseDialog } from './FightScreen';
 import { SubTabs, encounterParts } from '../SubTabs';
 import { ButcheredDialog, LootDialog } from './LootDialogs';
-import { FireToggle } from './FireToggle';
+import { FireNote } from './FireNote';
 import { armorText, attackText, characteristicLabel, hex, partLabel, rangeMeters, rangeShort, rangeText, rangeTiny, signed } from '../format';
 import { CloseIcon } from '../icons';
 import { useGame } from '../game-context';
@@ -101,7 +101,7 @@ function WeaponHead({ combat }: { combat: CombatView }) {
           Magazin {combat.ammo.rounds}/{combat.ammo.capacity} Schuss · {combat.ammo.magazines} × {combat.ammo.magazine}
         </p>
       )}
-      {combat.fire && <FireToggle fire={combat.fire} />}
+      {combat.fire && <FireNote fire={combat.fire} />}
     </div>
   );
 }
@@ -213,18 +213,38 @@ function AttackDock({ combat }: { combat: CombatView }) {
             Nachladen ({combat.ammo.magazines})
           </button>
         )}
-        <button
-          type="button"
-          className="action task-roll"
-          disabled={!target || !combat.canAttack}
-          onClick={() => {
-            haptic('land');
-            game.rollAttack();
-          }}
-        >
-          <CombatIcon />
-          Angreifen
-        </button>
+        {/* Feuerstoß und Einzelschuss sind zwei Angriffe, je mit ihrem nötigen Wurf (2026-11-26). */}
+        {combat.fireChoices ? (
+          combat.fireChoices.map((c) => (
+            <button
+              key={String(c.burst)}
+              type="button"
+              className={c.burst ? 'action task-roll' : 'action dice'}
+              disabled={!c.can}
+              onClick={() => {
+                haptic('land');
+                game.rollAttack(c.burst);
+              }}
+            >
+              <CombatIcon />
+              {c.burst ? 'Feuerstoß' : 'Einzeln'}
+              {c.odds ? ` ${Math.max(2, c.odds.need)}+` : ''}
+            </button>
+          ))
+        ) : (
+          <button
+            type="button"
+            className="action task-roll"
+            disabled={!target || !combat.canAttack}
+            onClick={() => {
+              haptic('land');
+              game.rollAttack();
+            }}
+          >
+            <CombatIcon />
+            Angreifen
+          </button>
+        )}
       </div>
     </section>
   );

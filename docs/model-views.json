@@ -714,7 +714,7 @@
       "id": "2026-11-26",
       "file": "2026-11-26-beide-haende-keine-wahl",
       "title": "Beide Hände, keine Wahl im Angriff: `Weapon.twoHanded` – wer eine zweihändige Waffe führt (Gewehre, Bögen, Armbrüste, Stangenwaffen), greift nur mit ihr an, ohne Sekundärwaffe und Hände. Am Angriff in Vorbereitung entfallen `burst` (Feuerstoß und Einzelschuss sind beim Automatic Rifle zwei Angriffe) und `weakened` (geschwächt wird nur noch, wenn die Combat-Schläge aufgebraucht sind)",
-      "approved": false,
+      "approved": true,
       "show": [
         "Character",
         "Strike",
