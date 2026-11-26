@@ -93,7 +93,7 @@ export function CharacterStrip({
             aria-label={character.name}
             aria-hidden={!character.focus}
           >
-            {fight?.[character.id] && <ImpactMarks impacts={fight[character.id]!.impacts} atStats={!collapsed && weapons} />}
+            {fight?.[character.id] && <ImpactMarks impacts={fight[character.id]!.impacts} atStats={false} />}
             <div className="strip-head">
               <button type="button" className="strip-title" aria-expanded={!collapsed} onClick={() => game.toggleStrip()} tabIndex={character.focus ? 0 : -1}>
                 <span className="strip-name">
@@ -135,7 +135,8 @@ export function CharacterStrip({
                 <ChevronDownIcon />
               </button>
             </div>
-            {!weapons && !shop && character.state !== 'unhurt' && (
+            {/* Verwundet: Zustand und die Körperwerte in einer Zeile, auch im Kampf, wo die Attribute fehlen. */}
+            {!shop && character.state !== 'unhurt' && (
               <p className={`strip-state state-${character.state}`}>
                 {woundStateText[character.state]} · STR {hex(Math.max(0, character.current.str))} · DEX {hex(Math.max(0, character.current.dex))} · END {hex(Math.max(0, character.current.end))}
               </p>
@@ -143,7 +144,8 @@ export function CharacterStrip({
             {!collapsed && shop && <UppLine character={character} />}
             {!collapsed && !shop && (
               <>
-                {weapons ? <UppLine character={character} impacts={fight?.[character.id]?.impacts ?? []} /> : <UppRow character={character} interactive={character.focus} />}
+                {/* Im Kampf nur Name und Waffen, damit die Waffentabelle auf halber Höhe beginnt (2026-11-26). */}
+                {!weapons && <UppRow character={character} interactive={character.focus} />}
                 {weapons ? (
                   <WeaponChips character={character} />
                 ) : (

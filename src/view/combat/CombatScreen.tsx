@@ -53,6 +53,7 @@ export function CombatScreen({ view, patient, onPatient: setPatient }: { view: S
           <section className="scroll combat-scroll" aria-label="Waffentabelle">
             <WeaponHead combat={combat} />
             <AttackTable combat={combat} />
+            <WeaponDms combat={combat} />
           </section>
           <AttackDock combat={combat} />
         </>
@@ -80,8 +81,7 @@ export function pcHeal(combat: CombatView, onHeal: (patient: Patient) => void): 
 
 
 function WeaponHead({ combat }: { combat: CombatView }) {
-  const { weapon, base } = combat;
-  const characteristic = characteristicLabel[weapon.characteristic];
+  const { weapon } = combat;
   return (
     <div className="weapon-head">
       {combat.defender && (
@@ -89,6 +89,7 @@ function WeaponHead({ combat }: { combat: CombatView }) {
           Ziel: <b>{combat.defender.name}</b> ({armorText[combat.defender.armor]})
         </p>
       )}
+      {/* Eine Zeile: Waffe, Angriffsart und Schaden; die DMs stehen unter der Tabelle (2026-11-26). */}
       <div className="weapon-title">
         <h2 className="section-title">{weapon.name}</h2>
         <span className="muted">
@@ -101,14 +102,22 @@ function WeaponHead({ combat }: { combat: CombatView }) {
         </p>
       )}
       {combat.fire && <FireToggle fire={combat.fire} />}
-      <p className="weapon-dms">
-        {base.map(partLabel).join(' · ')}
-        <span className="muted">
-          {' '}
-          ({characteristic} unter {hex(weapon.required)} {signed(weapon.requiredDm)}, ab {hex(weapon.advantageous)} {signed(weapon.advantageousDm)})
-        </span>
-      </p>
     </div>
+  );
+}
+
+/** Unter der Tabelle: die DMs, die in jeder Zelle schon stecken, und wie das Attribut zählt. */
+function WeaponDms({ combat }: { combat: CombatView }) {
+  const { weapon, base } = combat;
+  const characteristic = characteristicLabel[weapon.characteristic];
+  return (
+    <p className="weapon-dms">
+      {base.map(partLabel).join(' · ')}
+      <span className="muted">
+        {' '}
+        ({characteristic} unter {hex(weapon.required)} {signed(weapon.requiredDm)}, ab {hex(weapon.advantageous)} {signed(weapon.advantageousDm)})
+      </span>
+    </p>
   );
 }
 

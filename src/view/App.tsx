@@ -165,7 +165,8 @@ export function App() {
 
   // Die Aktionsleiste Notiz, Tag, Würfeln, Karte: im Ziehblatt nur im Log, die übrigen Bereiche haben unten
   // Platz für ihre eigenen Knöpfe; in der Seitenspalte des Desktops unter jedem Bereich, der keine
-  // eigene Aktionsleiste hat. Beim angetippten Feld des Globus steht dort stattdessen die Aktionsleiste des Felds.
+  // eigene Aktionsleiste hat, und unter Schiff (1 Tag und Probe auch dort, 2026-11-22c), nur unter dem
+  // Kampf nicht (Owner, 26. November 2026). Beim angetippten Feld des Globus steht dort stattdessen die Aktionsleiste des Felds.
   const dock = <OracleDock view={view} shortcuts />;
   const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcs={view.npcs} missionPicking={view.missions.picking} /> : undefined;
   // Im Bereich Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
@@ -173,7 +174,7 @@ export function App() {
   // Beim Landeplatz auf dem Globus steht unten „Hier landen“ (2026-11-21).
   const landingDock = view.landing?.picking && view.globe ? <LandingDock globe={view.globe} /> : undefined;
   const own = landingDock ?? fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock;
-  const foot = own ?? ((desktop || screen === 'oracle') && field === undefined ? dock : undefined);
+  const foot = own ?? ((desktop || screen === 'oracle') && field === undefined && screen !== 'combat' ? dock : undefined);
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
   const base = (

@@ -4572,6 +4572,12 @@ button:disabled {
   padding-bottom: 4px;
 }
 
+/* Im Kampf flacher, damit die Waffentabelle auf halber Höhe beginnt (2026-11-26). */
+.strip-combat:not(.strip-shop) .strip-dots {
+  margin-top: -12px;
+  padding-bottom: 0;
+}
+
 .strip-dots button {
   width: 28px;
   height: 22px;
@@ -4838,13 +4844,13 @@ button:disabled {
 .combat-scroll {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-top: 10px;
+  gap: 8px;
+  padding-top: 6px;
 }
 
 /* Die Aktionsleiste der Waffentabelle so knapp wie die der Kampfsimulation, damit auf halber Höhe die Tabelle beginnt. */
 .dock.attack-dock {
-  padding: 8px 12px;
+  padding: 6px 12px;
 }
 
 .weapon-head {
@@ -7095,15 +7101,15 @@ button:disabled {
 }
 
 .fight-actions.turn.n1 {
-  grid-template-columns: repeat(2, 66px) minmax(0, 1fr);
+  grid-template-columns: repeat(2, 72px) minmax(0, 1fr);
 }
 
 .fight-actions.turn.n2 {
-  grid-template-columns: repeat(2, 66px) repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, 72px) repeat(2, minmax(0, 1fr));
 }
 
 .fight-actions.turn.n3 {
-  grid-template-columns: repeat(2, 66px) repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, 72px) repeat(3, minmax(0, 1fr));
 }
 
 /* In der Aktionsleiste ist der Angriff schmal: der nötige Wurf rückt neben den Platz, der Name hat
@@ -7131,6 +7137,7 @@ button:disabled {
 
 .fight-actions .fight-act {
   font-size: 11px;
+  letter-spacing: 0;
 }
 
 .fight-actions .atk-name {

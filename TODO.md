@@ -7,17 +7,10 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 
 ## UI
 - [ ] **Entschlacken (Schritt 3):** jeden Bereich für das Ziehblatt und die Seitenspalte des Desktops
-  durchgehen. Die Kampfsimulation zeigt halb hochgezogen zwei Reihen Kämpfer; Beenden und Ausweichen
-  stehen mit den Angriffen in der Aktionsleiste (2026-11-26).
-  Offen:
-  - *Waffentabelle:* Halb hochgezogen füllen Charakterleiste (140 px) und Waffenkopf (61 px) die
-    Höhe, die Tabelle beginnt erst darunter. Braucht eine Entscheidung des Owners, was wegfällt
-    oder wandert.
-  - *Aktionsleiste im Desktop-Modus:* Laut Handbuch ersetzt die eigene Aktionsleiste eines Bereichs
-    die des Logs; unter Kampf und Schiff steht in der Seitenspalte aber beides (2026-11-22c: „1 Tag“
-    und Probe auch im Bereich Schiff, zwei Tests in `e2e/desktop.spec.ts` verlangen das). Owner
-    entscheidet, was gilt.
-  - Die übrigen Bereiche durchgehen.
+  durchgehen. Kampf ist fertig (2026-11-26): Die Kampfsimulation zeigt halb hochgezogen zwei Reihen
+  Kämpfer, die Waffentabelle Kopf und erste Zeile; im Desktop-Modus steht unter dem Kampf keine
+  Aktionsleiste des Logs mehr. Offen: die übrigen Bereiche (Begegnung, Charaktere, Schiff, Missionen,
+  Feld) halb hochgezogen und in der Seitenspalte durchgehen.
 - [ ] **Bedienabläufe aus dem Domänenmodell lösen:** Die Begriffe der Oberfläche stehen seit dem
   25. November 2026 im GUI-Handbuch. In den Regeltexten von `docs/domain-model.md` sind Fachregel und
   Bedienung noch vermischt (rund 120 Zeilen mit Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt

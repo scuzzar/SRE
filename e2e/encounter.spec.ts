@@ -252,7 +252,7 @@ test('Tiere: Gelände auf dem Blatt; die Tiertabelle entsteht beim ersten Wurf, 
       await expect(intro).toContainText('Tiere · Clear');
       await expect(intro).toContainText(/Hits \d+\/\d+/);
       await intro.getByRole('button', { name: 'Weiter' }).click();
-      await page.locator('.encounter-running').getByRole('button', { name: 'Beenden' }).click();
+      await hold(page, page.locator('.encounter-running').getByRole('button', { name: 'Beenden' }));
     } else await roll.getByRole('button', { name: 'Weiter' }).click();
   }
   // Mit diesem Anfang der Zahlenfolge sind die drei ersten Würfe ohne Tiere, der vierte bringt sie –

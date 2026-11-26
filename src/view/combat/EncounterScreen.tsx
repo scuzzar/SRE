@@ -5,6 +5,7 @@ import { useGame } from '../game-context';
 import { TripBar } from '../sector/TripPanels';
 import { distancesText, EncounterIntro } from './FightScreen';
 import { SubTabs, encounterParts } from '../SubTabs';
+import { HoldButton } from '../HoldButton';
 
 /** Was im Bereich Begegnung eingestellt ist, aber nur in der Ansicht lebt: die Haken und wie viele Tage. */
 export interface EncounterOptions {
@@ -74,6 +75,8 @@ export function EncounterScreen({ view, options, onOptions }: { view: Snapshot; 
 /** Die laufende Begegnung knapp: wer, wo, welche Runde, wie weit; dazu Zum Kampf, Übersicht und Beenden. */
 function RunningEncounter({ sim }: { sim: SimView }) {
   const game = useGame();
+  // Beenden geht nur lange gedrückt, wie in der Aktionsleiste des Kampfs; ein Tippen sagt das (2026-11-26).
+  const [nudged, setNudged] = useState(false);
   const npcs = sim.fighters.filter((f) => f.side === 'npcs');
   const standing = npcs.filter((f) => f.state === 'unhurt' || f.state === 'wounded').length;
   return (
@@ -93,10 +96,15 @@ function RunningEncounter({ sim }: { sim: SimView }) {
         <button type="button" className="ghost" onClick={() => game.showEncounterIntro()}>
           Übersicht
         </button>
-        <button type="button" className="ghost" onClick={() => game.endEncounter()}>
+        <HoldButton className="ghost" label="Beenden" hint="Lange drücken: die Begegnung beenden" title="Lange drücken: die Begegnung beenden" onPress={() => setNudged(true)} onHold={() => game.endEncounter()}>
           Beenden
-        </button>
+        </HoldButton>
       </div>
+      {nudged && (
+        <p className="small-label fight-nudge" role="status">
+          Lange drücken: die Begegnung beenden
+        </p>
+      )}
     </div>
   );
 }

@@ -25,7 +25,7 @@ Umschalter, Reihe, großes und kleines Blatt, Würfelfenster und Hinweis).
 |---|---|---|
 | Grundkarte | (View) | Was auf dem Handy wie im Desktop-Modus unter allem liegt: der Globus der offenen Welt, beim Start der des Aufenthaltsorts (sobald seine Oberflächenkarte entstanden ist); mit ✕ oder ganz herausgezoomt der Subsektor, in dem ein Tippen auf eine Welt deren Globus öffnet |
 | Ziehblatt | `Tray` (Smartphone; Stufe `TrayStop`) | Das Blatt unten über der Grundkarte, wie in einer Karten-App. Es rastet beim Loslassen immer auf einer von vier **Stufen** ein: versteckt (nur der Griff, mit Abstand zum Rand; Aktionsleiste und Navigationsleiste rutschen hinaus), eingeklappt (Kopf, Aktionsleiste und Navigationsleiste, bei einem offenen Feld auch dessen Feldkopf), halb und voll; nach einem Wisch eine Stufe weiter in seine Richtung. Ziehen lässt es sich am Griff, an Aktions- und Navigationsleiste und im Inhalt nach unten, wenn der ganz oben steht. Das Gerät merkt sich die Stufe, nicht die Höhe. Von oben nach unten: Griff, der gewählte Bereich oder das angetippte Feld (dafür fährt es mindestens auf halbe Höhe, und die Karte holt das Feld über das Blatt), die Aktionsleiste, ganz unten die Navigationsleiste |
-| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links die **Seitenspalte** mit der Navigationsleiste oben, darunter das Log mit der Charakterleiste; ein Bereich (oder ein angetipptes Feld) steht an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Aktionsleiste; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
+| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links die **Seitenspalte** mit der Navigationsleiste oben, darunter das Log mit der Charakterleiste; ein Bereich (oder ein angetipptes Feld) steht an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Aktionsleiste des Logs, auch unter Bereichen mit eigener (Schiff), nur unter dem Kampf nicht; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
 | Navigationsleiste | (View, `nav` „Bereiche“) | Die Leiste mit den fünf Bereichen, ganz unten im Ziehblatt bzw. oben in der Seitenspalte. Ein Tipp darauf öffnet den Bereich und bricht einen laufenden Ablauf ab (NSC platzieren, Ort wählen) |
 | Bereich | `Screen` | Einer der fünf Teile der App: **Log, Begegnung, Charaktere, Schiff, Missionen** (Missionen seit 2026-11-18). Begegnung und Charaktere haben Unterreiter |
 | Unterreiter | `SubTabs` | Die Wahl oben in einem Bereich, welcher Teil zu sehen ist: im Bereich Begegnung *Begegnung · Kampf*, im Bereich Charaktere *SC · Kasse · NSC*, im Bereich Schiff *Deckplan · Crew · Computer*, an der Weltkarte *Welt · System* |
@@ -146,7 +146,9 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 - **Deuten** sitzt nicht in der Aktionsleiste, sondern am Ergebnis im Log (am neuesten immer, ein älteres
   klappt man auf).
 - Jeder Bereich mit eigenen Handlungen bringt seine eigene Aktionsleiste mit; wo er keine hat,
-  bleibt die des Logs.
+  bleibt die des Logs. Im Desktop-Modus steht die des Logs zusätzlich darunter (etwa unter Schiff:
+  1 Tag und Probe auch dort), nur unter dem Kampf nicht; dort wird nicht nebenbei gewürfelt
+  (Owner, 26. November 2026).
 - **Während eines Ablaufs** (Route planen, NSC wählen, Ort wählen) ersetzt die Aktionsleiste ihre Knöpfe durch
   **„Abbrechen“** links und die Bestätigung rechts (**„OK“**, „Losfahren“).
 - Ein Knopf, der gerade nicht geht, bleibt stehen, ist ausgegraut und sagt im Titel oder in einer
@@ -199,7 +201,8 @@ Dialog                               Kurzdialog
 
 ### Charakterleiste
 
-- Oben im Bereich die Karte eines SC, des **Charakters oben**: Name, UPP, Fertigkeiten bzw. im Kampf die Waffen.
+- Oben im Bereich die Karte eines SC, des **Charakters oben**: Name, UPP, Fertigkeiten bzw. im Kampf
+  nur die Waffen (ohne UPP; verwundet steht der Zustand mit STR, DEX und END da).
   **Wischen** wechselt den Charakter, ein Tippen auf den Namen klappt sie ein.
 - Wer oben steht, gilt für alles darunter (Probe, Kauf, Waffentabelle).
 
