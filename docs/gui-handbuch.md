@@ -256,7 +256,11 @@ Feld.
   durch. Zeichen, die nur der Canvas kennt (Sprunggrenze, Schusstrahl, das kleine Haus einer
   Kleinstadt), tragen keinen Namen im Stylesheet und sagen das im Kommentar. **Deckkraftstufen
   bekommen nie einen eigenen Namen**: `mitDeckkraft(FARBTAFEL.weltGlobus, .35)` rechnet sie aus der
-  Grundfarbe, so wie im Stylesheet `rgba(79, 209, 255, .35)` dieselbe Farbe ist.
+  Grundfarbe, so wie im Stylesheet `rgba(79, 209, 255, .35)` dieselbe Farbe ist. **Ausnahme: Tafeln,
+  die das Model selbst wählt** – die 16 Atmosphären mit ihren Wolkenfarben, die 19 Gelände- und die
+  5 Klima-Töne in `src/view/sector/world-icon.ts` – bleiben Tabellen im Rendering; der Owner will sie
+  am 26. November 2026 nicht einzeln benannt haben. Die Farbe des Atmosphären-Glühens führt trotzdem
+  nur eine Tabelle (`ATMOSPHERE_GLOW` in `globe-render.ts`), Weltsymbol und Globus teilen sie sich.
 - **Inline-SVG malt mit `var()` im Attribut** (`fill="var(--accent)"`): das tragen alle gängigen
   Browser, und die Töne bleiben in `:root`. Im Markup steht nur, *welche* Farbe ein Teil hat; Form
   und Breite bleiben Attribute.

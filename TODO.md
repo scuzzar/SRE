@@ -17,12 +17,6 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
   Bedienung noch vermischt (rund 120 Zeilen mit Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt
   zuerst nach der Rolle“). In einem eigenen Durchgang trennen, Bereich für Bereich: Die Regel
   bleibt im Modell, der Ablauf auf dem Bildschirm kommt ins Handbuch oder fällt weg.
-- [ ] **Weltfarben nach dem Model benennen:** Weltsymbol und Globus malen nach Tafeln, die das Model
-  wählt – 16 Atmosphären mit ihren Wolkenfarben, 19 Gelände- und 5 Klima-Töne in
-  `src/view/sector/world-icon.ts`. Am 25. November 2026 ist die doppelt geführte Glühtafel zusammen-
-  gelegt (`ATMOSPHERE_GLOW` in `globe-render.ts`, das Weltsymbol importiert sie jetzt). Ob diese
-  Tafeln in `src/view/farbtafel.ts` umziehen und Namen nach den Begriffen des Modells bekommen,
-  entscheidet der Owner.
 - [ ] **Drei wackelnde GUI-Tests fest gegen den Zufall:** `e2e/shop.spec.ts:131` („Gruppe platzieren")
   scheiterte am 25. November 2026 an `Keine Welt entstanden`, `e2e/encounter.spec.ts:206` (Tiertabelle)
   wartete auf einen Wurf, den der Zufall gerade nicht brachte, und `e2e/space.spec.ts:127` (Beam
