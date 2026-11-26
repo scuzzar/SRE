@@ -16,7 +16,9 @@ test('Probe oben im Orakel: Fertigkeit, dann Attribute, Stufe unten, Ergebnis al
   await page.goto('/');
   const kira = top(page, 'Kira Vant');
   await expect(kira.getByRole('button', { name: 'Pilot-2' })).toHaveText('Pil-2');
-  await expect(kira.getByRole('button', { name: /^DEX A/ })).toBeDisabled();
+  // Ohne Fertigkeit stehen die Attribute als Zeile da; Knöpfe werden sie erst mit der Fertigkeit (2026-11-26).
+  await expect(kira.getByRole('button', { name: /^DEX A/ })).toHaveCount(0);
+  await expect(kira.getByLabel('Attribute')).toContainText('DEX A');
   await expect(dock(page).getByRole('button', { name: 'Probe würfeln' })).toBeHidden();
   await kira.getByRole('button', { name: 'Pilot-2' }).click();
 

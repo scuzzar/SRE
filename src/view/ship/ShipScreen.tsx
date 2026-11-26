@@ -226,8 +226,9 @@ export function ShipScreen({ view }: { view: Snapshot }) {
           </>
         )}
       </section>
+      {/* Die Aktionsleiste wie im Log: gleich breit, Symbol über dem Wort (2026-11-26). */}
       <div className="dock">
-        <div className="actions">
+        <div className="actions oracle-actions">
           {boat === undefined ? (
             <button type="button" className="action gold" onClick={() => setSheet({ kind: 'yard' })}>
               <ShipIcon />

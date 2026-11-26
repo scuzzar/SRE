@@ -201,8 +201,10 @@ Dialog                               Kurzdialog
 
 ### Charakterleiste
 
-- Oben im Bereich die Karte eines SC, des **Charakters oben**: Name, UPP, Fertigkeiten bzw. im Kampf
-  nur die Waffen (ohne UPP; verwundet steht der Zustand mit STR, DEX und END da).
+- Oben im Bereich die Karte eines SC, des **Charakters oben**: Name, das UPP als eine Zeile und die
+  Fertigkeiten; ist für eine Probe eine Fertigkeit gewählt, werden die Attribute Kästchen zum
+  Dazuwählen. Im Kampf nur die Waffen (ohne UPP; verwundet steht der Zustand mit STR, DEX und END da)
+  (2026-11-26).
   **Wischen** wechselt den Charakter, ein Tippen auf den Namen klappt sie ein.
 - Wer oben steht, gilt für alles darunter (Probe, Kauf, Waffentabelle).
 

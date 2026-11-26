@@ -145,7 +145,8 @@ export function CharacterStrip({
             {!collapsed && !shop && (
               <>
                 {/* Im Kampf nur Name und Waffen, damit die Waffentabelle auf halber Höhe beginnt (2026-11-26). */}
-                {!weapons && <UppRow character={character} interactive={character.focus} />}
+                {/* Die Attribute als Zeile; Kästchen zum Dazuwählen erst, wenn für die Probe eine Fertigkeit gewählt ist (2026-11-26). */}
+                {!weapons && (character.focus && (character.unskilled?.chosen || character.skills.some((sk) => sk.chosen)) ? <UppRow character={character} interactive /> : <UppLine character={character} />)}
                 {weapons ? (
                   <WeaponChips character={character} />
                 ) : (

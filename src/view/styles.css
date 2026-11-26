@@ -4572,8 +4572,8 @@ button:disabled {
   padding-bottom: 4px;
 }
 
-/* Im Kampf flacher, damit die Waffentabelle auf halber Höhe beginnt (2026-11-26). */
-.strip-combat:not(.strip-shop) .strip-dots {
+/* Flach unter der Karte, damit auf halber Höhe Log bzw. Waffentabelle beginnen (2026-11-26). */
+.strip .strip-dots {
   margin-top: -12px;
   padding-bottom: 0;
 }
