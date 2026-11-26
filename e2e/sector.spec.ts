@@ -290,7 +290,7 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Aktionslei
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
   await page.getByRole('dialog', { name: 'Neuer NSC' }).getByLabel('Rolle').selectOption({ label: 'Kontakt' });
   await page.getByRole('button', { name: 'Leer anlegen' }).click();
-  const editor = page.getByRole('dialog', { name: 'Neuer NSC' });
+  const editor = page.getByRole('region', { name: 'Neuer NSC' });
   await editor.getByLabel('Name').fill('Mara Voss');
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await expect(editor).toHaveCount(0);
@@ -338,7 +338,7 @@ test('Globus: Beim angetippten Feld steht unten statt des Orakels die Aktionslei
   await expect(create.getByRole('button', { name: 'Leer anlegen' })).toHaveCount(0);
   await create.getByLabel('Rolle').selectOption({ label: 'Händler' });
   await create.getByRole('button', { name: 'Scouts', exact: true }).click();
-  await page.getByRole('dialog', { name: 'Charakter bearbeiten' }).getByRole('button', { name: 'Schließen' }).click();
+  await page.getByRole('region', { name: 'Charakter bearbeiten' }).getByRole('button', { name: /schließen$/ }).click();
   await expect(field).toContainText('NSC, Händler');
   // Hierhin reisen plant die Route; dann stehen unten Abbrechen und Losfahren statt der Knöpfe des Felds.
   await actions.getByRole('button', { name: 'Hierhin reisen' }).click();

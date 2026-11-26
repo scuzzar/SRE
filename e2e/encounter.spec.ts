@@ -196,9 +196,9 @@ test('Patron und Gerücht: unten würfeln, die Würfelbühne zeigt Test und Erge
   await expect(roll.getByRole('button', { name: 'Abbrechen' })).toBeVisible();
   await roll.getByRole('button', { name: 'Als NSC' }).click();
   await expect(roll).toBeHidden();
-  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await expect(editor).toBeVisible();
-  await editor.getByRole('button', { name: 'Schließen' }).click();
+  await editor.getByRole('button', { name: /schließen$/ }).click();
   await expect(editor).toBeHidden();
   // Dahinter steht die NSC-Liste; die Würfe gehen im Bereich Begegnung weiter.
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();

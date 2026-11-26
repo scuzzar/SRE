@@ -30,7 +30,7 @@ test('Im abgeschotteten Rahmen: Welt benennen und Charakter speichern', async ({
 
   await app.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
   await app.locator('article', { hasText: 'Kira Vant' }).first().getByRole('button', { name: 'Bearbeiten' }).click();
-  const editor = app.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  const editor = app.getByRole('region', { name: 'Charakter bearbeiten' });
   await editor.getByLabel('Name', { exact: true }).fill('Kira Vantos');
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await expect(editor).toBeHidden();

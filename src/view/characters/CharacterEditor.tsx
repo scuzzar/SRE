@@ -8,6 +8,7 @@ import { CardIcon, CloseIcon, FlagIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { CardSheet } from '../oracle/CardSheet';
 import { Form } from '../Form';
+import { DetailPage } from '../DetailPage';
 
 const uppFields = [
   ['str', 'STR'],
@@ -97,15 +98,21 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
     });
   };
 
+  // Eine Detailseite an der Stelle des Bereichs (2026-11-26), kein Dialog mehr: ✕ oder Esc bricht ab,
+  // unten nur „Speichern“.
+  const title = isNew ? (editor.input.npc ? 'Neuer NSC' : 'Neuer Charakter') : 'Charakter bearbeiten';
   return (
-    <div className="overlay">
-      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title">
-        <div className="sheet-head centered">
-          <h2 id="editor-title">{isNew ? (editor.input.npc ? 'Neuer NSC' : 'Neuer Charakter') : 'Charakter bearbeiten'}</h2>
-          <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={cancel}>
-            <CloseIcon />
+    <div className="screen" role="region" aria-label={title}>
+      <DetailPage
+        title={title}
+        labelled={false}
+        onClose={cancel}
+        foot={
+          <button type="button" className="action gold" onClick={save}>
+            Speichern
           </button>
-        </div>
+        }
+      >
         <Form
           className="sheet-body form"
           id="character-form"
@@ -390,16 +397,7 @@ export function CharacterEditor({ editor, skills, items }: { editor: EditorView;
             </div>
           )}
         </Form>
-        <div className="sheet-foot">
-          <button type="button" className="ghost" onClick={cancel}>
-            Abbrechen
-          </button>
-          <span className="count" />
-          <button type="button" className="primary wide" onClick={save}>
-            Speichern
-          </button>
-        </div>
-      </section>
+      </DetailPage>
       {noteCard && (
         <CardSheet
           card={noteCard}

@@ -3,7 +3,7 @@ import { useState, type CSSProperties } from 'react';
 import type { ProgramRow, ShipView, SoftwareOfferRow, SoftwareSlot, VesselSoftwareRow } from '../../controller';
 import { useGame } from '../game-context';
 import { mcr, softwarePrice } from '../format';
-import { SheetFrame } from './SheetFrame';
+import { DetailPage } from '../DetailPage';
 import { useDrag } from '../drag';
 import { TrashIcon } from '../icons';
 /** Die Ablagen des Rechners, in der Reihenfolge der Oberfläche (SR 38). */
@@ -101,7 +101,7 @@ function used(boat: VesselSoftwareRow, slot: SoftwareSlot): number {
 export function ProgramSheet({ boat, program, onClose }: { readonly boat: VesselSoftwareRow; readonly program: ProgramRow; readonly onClose: () => void }) {
   const game = useGame();
   return (
-    <SheetFrame
+    <DetailPage
       className="two-col"
       title={program.name}
       aside={`${program.space} Space · ${softwarePrice(program.price)}`}
@@ -146,7 +146,7 @@ export function ProgramSheet({ boat, program, onClose }: { readonly boat: Vessel
           );
         })}
       </div>
-    </SheetFrame>
+    </DetailPage>
   );
 }
 
@@ -161,7 +161,7 @@ export function SoftwareYard({ ship, onClose }: { readonly ship: ShipView; reado
   const kinds = ['offensive', 'defensive', 'routine'];
   const names: Record<string, string> = { offensive: 'Offensiv', defensive: 'Defensiv', routine: 'Routine' };
   return (
-    <SheetFrame className="two-col" title="Werft · Software" aside={mcr(ship.funds)} onClose={onClose}>
+    <DetailPage className="two-col" title="Werft · Software" aside={mcr(ship.funds)} onClose={onClose}>
       {ship.error !== undefined && (
         <p className="error" role="alert">
           {ship.error}
@@ -179,7 +179,7 @@ export function SoftwareYard({ ship, onClose }: { readonly ship: ShipView; reado
           </div>
         </div>
       ))}
-    </SheetFrame>
+    </DetailPage>
   );
 }
 

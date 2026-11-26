@@ -3,7 +3,7 @@ import { useState, type CSSProperties } from 'react';
 import type { CrewPostRow, VesselCrewRow } from '../../controller';
 import { useGame } from '../game-context';
 import { CloseIcon, PlusIcon } from '../icons';
-import { SheetFrame } from './SheetFrame';
+import { DetailPage } from '../DetailPage';
 import { useDrag } from '../drag';
 
 /** Wohin ein Charakter gezogen wird: auf einen Posten oder zurück zu den ohne Posten. */
@@ -123,7 +123,7 @@ export function CrewTab({ crews, onOpenPost, onOpenPerson }: { readonly crews: r
 export function CrewPostSheet({ boat, post, onClose }: { readonly boat: VesselCrewRow; readonly post: CrewPostRow; readonly onClose: () => void }) {
   const game = useGame();
   return (
-    <SheetFrame
+    <DetailPage
       className="two-col"
       title={post.who === undefined ? `${post.label} besetzen` : post.label}
       {...(post.minimum === undefined ? {} : { aside: `ab Stufe ${post.minimum}` })}
@@ -174,7 +174,7 @@ export function CrewPostSheet({ boat, post, onClose }: { readonly boat: VesselCr
           );
         })}
       </div>
-    </SheetFrame>
+    </DetailPage>
   );
 }
 
@@ -184,7 +184,7 @@ export function CrewPersonSheet({ boat, who, onClose }: { readonly boat: VesselC
   const person = boat.people.find((p) => p.id === who);
   const free = boat.posts.filter((p) => p.who === undefined);
   return (
-    <SheetFrame className="two-col" title={`${person?.name ?? ''} · Posten`} onClose={onClose}>
+    <DetailPage className="two-col" title={`${person?.name ?? ''} · Posten`} onClose={onClose}>
       <div className="shop-table" role="table" aria-label="Freie Posten">
         {free.map((post) => (
           <button
@@ -202,7 +202,7 @@ export function CrewPersonSheet({ boat, who, onClose }: { readonly boat: VesselC
         ))}
         {free.length === 0 && <p className="crew-note">Kein Posten ist frei.</p>}
       </div>
-    </SheetFrame>
+    </DetailPage>
   );
 }
 

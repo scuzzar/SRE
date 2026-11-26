@@ -48,10 +48,10 @@ test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Fe
   await expect(mission).toContainText('kein Auftraggeber');
   // Ein Tippen auf die Beteiligte öffnet sie im Charakter-Editor; dort steht die Mission.
   await mission.getByRole('button', { name: 'Fahrerin: Kira Vant öffnen' }).click();
-  const character = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  const character = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await expect(character).toContainText('Missionen (1)');
   await expect(character).toContainText('Fahrerin · Offen');
-  await character.getByRole('button', { name: 'Schließen' }).click();
+  await character.getByRole('button', { name: /schließen$/ }).click();
   // Der Chip öffnet den Globus am Feld; dort steht die Mission unter „Missionen hier“.
   await mission.getByRole('button', { name: /^Treffpunkt: .* auf dem Globus zeigen/ }).click();
   const field = page.getByRole('region', { name: 'Angetipptes Feld' });

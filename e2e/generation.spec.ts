@@ -122,7 +122,7 @@ test('Besitz: Gegenstand aus der Liste mit Anzahl; was der SC nicht ausrüstet, 
   await openCharacters(page);
   const kira = host(page).getByRole('article', { name: 'Kira Vant' });
   await kira.getByRole('button', { name: 'Bearbeiten' }).click();
-  const editor = page.getByRole('dialog');
+  const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await editor.getByLabel('Gegenstand hinzufügen').selectOption({ label: 'Low Passage' });
   await editor.getByLabel('Anzahl Low Passage').fill('2');
   await editor.getByRole('button', { name: 'Speichern' }).click();

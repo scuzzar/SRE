@@ -11,7 +11,7 @@ test('NSC: leer anlegen mit Rolle, er steht unter seiner Rolle', async ({ page }
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
   await page.getByRole('dialog', { name: 'Neuer NSC' }).getByLabel('Rolle').selectOption({ label: 'Kontakt' });
   await page.getByRole('button', { name: 'Leer anlegen' }).click();
-  const editor = page.getByRole('dialog', { name: 'Neuer NSC' });
+  const editor = page.getByRole('region', { name: 'Neuer NSC' });
   await expect(editor.getByLabel('Rolle')).toHaveValue('contact');
   await editor.getByLabel('Name').fill('Mara Voss');
   await editor.getByRole('button', { name: 'Speichern' }).click();
@@ -28,10 +28,10 @@ test('NSC: aus einer Laufbahn erzeugen, danach steht er im Editor', async ({ pag
   const sheet = page.getByRole('dialog', { name: 'Neuer NSC' });
   await sheet.getByLabel('Rolle').selectOption({ label: 'Feind' });
   await sheet.getByRole('button', { name: 'Army', exact: true }).click();
-  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await expect(editor.getByLabel('Rolle')).toHaveValue('enemy');
   await expect(editor.getByLabel('Herkunft')).toHaveValue(/^Ex-Army/);
-  await editor.getByRole('button', { name: 'Schließen' }).click();
+  await editor.getByRole('button', { name: /schließen$/ }).click();
   await expect(page.getByRole('heading', { name: 'Feind' })).toBeVisible();
 });
 
@@ -51,7 +51,7 @@ test('NSC: mit Dienstalter — die Wartenscheibe zählt die Läufe, dann steht e
   await expect(disc).toBeVisible();
   await expect(page.getByText(/Lauf \d+/)).toBeVisible();
   await expect(disc).toBeHidden({ timeout: 20_000 });
-  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await expect(editor.getByLabel('Herkunft')).toHaveValue(/^Ex-Scouts/);
 });
 
@@ -63,7 +63,7 @@ test('NSC: „In Begegnung“ nimmt den NSC zur Zufallsbegegnung dazu; er führt
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
   await page.getByRole('dialog', { name: 'Neuer NSC' }).getByLabel('Rolle').selectOption({ label: 'Verbündeter' });
   await page.getByRole('button', { name: 'Leer anlegen' }).click();
-  const editor = page.getByRole('dialog', { name: 'Neuer NSC' });
+  const editor = page.getByRole('region', { name: 'Neuer NSC' });
   await editor.getByLabel('Name').fill('Tenzin Thorsen');
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await page.getByRole('button', { name: 'Tenzin Thorsen in Begegnung' }).click();
@@ -92,7 +92,7 @@ test('Zufallsbegegnung: mit Art „keine“ kommen nur die dazugenommenen NSC', 
   await openPeople(page, 'NSC');
   await page.getByRole('button', { name: '+ Neuer NSC' }).click();
   await page.getByRole('button', { name: 'Leer anlegen' }).click();
-  const editor = page.getByRole('dialog', { name: 'Neuer NSC' });
+  const editor = page.getByRole('region', { name: 'Neuer NSC' });
   await editor.getByLabel('Name').fill('Ilka Brand');
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await nav.getByRole('button', { name: 'Begegnung', exact: true }).click();

@@ -1979,6 +1979,12 @@ button:disabled {
   padding: 4px 16px 16px;
 }
 
+/* Auf einer Detailseite rückt die Seite schon ein; das Formular nicht noch einmal (2026-11-26). */
+.ship-field > .sheet-body.form {
+  overflow: visible;
+  padding: 4px 0 16px;
+}
+
 /* Der Knopf, ein Eintrag loszuwerden, mit seinem Hinweis direkt darunter. */
 .remove-block {
   display: flex;

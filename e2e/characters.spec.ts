@@ -102,7 +102,7 @@ test('Charakter-Screen zum Verwalten: Details aufklappen, keine Proben', async (
 test('Charakter anlegen: Fehler im Editor, dann gespeichert; der Neue steht oben', async ({ page }) => {
   await openCharacters(page);
   await page.getByRole('button', { name: '+ Neuer Charakter' }).click();
-  const editor = page.getByRole('dialog', { name: 'Neuer Charakter' });
+  const editor = page.getByRole('region', { name: 'Neuer Charakter' });
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await expect(editor.getByRole('alert')).toHaveText('Der Charakter braucht einen Namen.');
 
@@ -136,7 +136,7 @@ test('Wer im Log vorkommt, wird ausgeblendet statt gelöscht und lässt sich wie
 
   const jonas = card(page, 'Jonas Reyl');
   await jonas.getByRole('button', { name: 'Bearbeiten' }).click();
-  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await editor.getByRole('button', { name: 'Ausblenden' }).click();
   await editor.getByRole('button', { name: 'Wirklich ausblenden?' }).click();
   await expect(jonas).toBeHidden();
@@ -150,7 +150,7 @@ test('Wer nicht im Log vorkommt, wird gelöscht', async ({ page }) => {
   const kira = card(page, 'Kira Vant');
   // Der Stift im Kopf öffnet den Editor, ohne die Details aufzuklappen.
   await kira.getByRole('button', { name: 'Bearbeiten' }).click();
-  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await editor.getByRole('button', { name: 'Löschen' }).click();
   await editor.getByRole('button', { name: 'Wirklich löschen?' }).click();
   await expect(kira).toBeHidden();
@@ -189,7 +189,7 @@ test('Logeintrag löschen: lange drücken, dann bestätigen; danach lässt sich 
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
   const jonas = card(page, 'Jonas Reyl');
   await jonas.getByRole('button', { name: 'Bearbeiten' }).click();
-  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await editor.getByRole('button', { name: 'Löschen' }).click();
   await editor.getByRole('button', { name: 'Wirklich löschen?' }).click();
   await expect(jonas).toBeHidden();
@@ -198,7 +198,7 @@ test('Logeintrag löschen: lange drücken, dann bestätigen; danach lässt sich 
 test('Tot: im Editor markieren, steht unter „Verstorben“, rückt oben weiter, lässt sich zurücknehmen', async ({ page }) => {
   await openCharacters(page);
   await card(page, 'Kira Vant').getByRole('button', { name: 'Bearbeiten' }).click();
-  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await editor.getByLabel(/^Tot/).check();
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await expect(card(page, 'Kira Vant')).toBeHidden();
@@ -220,11 +220,11 @@ test('Ohne lebenden Charakter bietet die Charakterleiste an, einen anzulegen', a
   await openCharacters(page);
   for (const name of ['Kira Vant', 'Jonas Reyl']) {
     await card(page, name).getByRole('button', { name: 'Bearbeiten' }).click();
-    const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+    const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
     await editor.getByRole('button', { name: 'Löschen' }).click();
     await editor.getByRole('button', { name: 'Wirklich löschen?' }).click();
   }
   await openOracle(page);
   await strip(page).getByRole('button', { name: '+ Charakter anlegen' }).click();
-  await expect(page.getByRole('dialog', { name: 'Neuer Charakter' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Neuer Charakter' })).toBeVisible();
 });

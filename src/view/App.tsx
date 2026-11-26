@@ -202,7 +202,9 @@ export function App() {
   );
 
   // Was unter der Navigationsleiste steht: das angetippte Feld, sonst das Log oder der gewählte Bereich.
-  const body = <div className="screen-host">{field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>;
+  // Der Charakter-Editor ist eine Detailseite (2026-11-26): Er tritt an die Stelle dessen, was gerade offen ist.
+  const editorPage = view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />;
+  const body = <div className="screen-host">{editorPage ?? field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>;
   const areaTitle = screen === 'shop' ? 'Shop' : screen === 'about' ? 'Über die App' : (areaOf(screen)?.label ?? '');
 
   return (
@@ -214,7 +216,7 @@ export function App() {
           <aside className="side-panel" aria-label="Seitenspalte">
             {banners}
             {nav}
-            {!field && screen !== 'oracle' && (
+            {!field && !view.editor && screen !== 'oracle' && (
               <div className="area-head">
                 <h2 className="section-title">{areaTitle}</h2>
                 <button type="button" className="icon-button" aria-label={`${areaTitle} schließen`} onClick={() => (screen === 'shop' ? game.closeShop() : game.showScreen('oracle'))}>
@@ -223,7 +225,7 @@ export function App() {
               </div>
             )}
             {body}
-            {foot}
+            {!view.editor && foot}
           </aside>
           {base}
         </>
@@ -232,10 +234,10 @@ export function App() {
           {base}
           <Tray
             stop={view.trayStop}
-            raise={view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && (!view.globe || view.worldCard) ? view.world.id : undefined)}
+            raise={view.editor ? `editor-${view.editor.id ?? 'new'}` : view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && (!view.globe || view.worldCard) ? view.world.id : undefined)}
             head={banners}
             body={body}
-            foot={foot}
+            foot={view.editor ? undefined : foot}
             bar={nav}
           />
         </>
@@ -255,7 +257,6 @@ export function App() {
         </div>
       )}
       {view.missions.editor && screen === 'missions' && <MissionEditor key={view.missions.editor.rev} missions={view.missions} />}
-      {view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />}
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.systemJourney && <SystemJourneySheet journey={view.systemJourney} />}
       {view.landing && !view.landing.picking && !view.systemJourney && !view.journey && !view.shipCheck && <LandingSheet landing={view.landing} />}

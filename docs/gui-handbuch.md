@@ -31,7 +31,7 @@ Umschalter, Reihe, großes und kleines Blatt, Würfelfenster und Hinweis).
 | Unterreiter | `SubTabs` | Die Wahl oben in einem Bereich, welcher Teil zu sehen ist: im Bereich Begegnung *Begegnung · Kampf*, im Bereich Charaktere *SC · Kasse · NSC*, im Bereich Schiff *Deckplan · Crew · Computer*, an der Weltkarte *Welt · System* |
 | Aktionsleiste | `…Dock` (`OracleDock`, `EncounterDock`, `FieldDock`) | Die drei bis fünf gleich breiten Knöpfe zum Handeln über der Navigationsleiste, im Daumenbereich. Im Log *Notiz, Tag, 2W6, Karte*, am angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen* |
 | Charakterleiste | `CharacterStrip` | Oben im Log, im Kampf ohne Begegnung und im Shop: die Karte des Charakters oben (Name, UPP, Fertigkeiten bzw. Waffen), Wischen wechselt ihn, ein Tipp auf den Namen klappt sie ein |
-| Detailseite | (View; `SheetFrame`, `FieldDock`, `WorldSheet`) | Ein Inhalt, der an die Stelle des Bereichs tritt, ohne die App abzudunkeln: oben Titel und ✕, unten seine Aktionsleiste. Das Feld ist eine, im Bereich Schiff Treibstoff, Bearbeiten, Werft, Posten und Programm (2026-11-26) |
+| Detailseite | (View; `DetailPage`, `FieldDock`, `WorldSheet`) | Ein Inhalt, der an die Stelle des Bereichs tritt, ohne die App abzudunkeln: oben Titel und ✕, unten seine Aktionsleiste. Das Feld ist eine, ebenso der Charakter-Editor und im Bereich Schiff Treibstoff, Bearbeiten, Werft, Posten und Programm (2026-11-26) |
 | Feld | (View; `FieldDock`, `WorldSheet`) | Die Detailseite des angetippten Felds des Globus bzw. des gewählten Felds im Subsektor; oben sein **Feldkopf** (Name und Werte), der auch eingeklappt stehen bleibt |
 | Dialog | `Sheet` mit ✕ (`overlay`) | Groß, für vieles zum Ausfüllen: oben Titel und ✕, unten die Hauptaktion. Charakter-Editor, Erschaffung, Kauf … |
 | Kurzdialog | `Sheet` ohne ✕ (`overlay`) | Klein, für eine kurze Eingabe oder Entscheidung: unten „Abbrechen“ und die Hauptaktion. Notiz, Beute, Wahl der Begegnungsart … |
@@ -160,8 +160,10 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 
 ### Detailseite
 
-- Was zu einem Bereich gehört und mehr Platz braucht (ein angetipptes Feld, Treibstoff, die Werft, ein
-  Posten der Crew), tritt als **Detailseite** an die Stelle des Bereichs: im Ziehblatt bzw. in der
+- Was zu einem Bereich gehört und mehr Platz braucht (ein angetipptes Feld, der Charakter-Editor,
+  Treibstoff, die Werft, ein Posten der Crew), tritt als **Detailseite** an die Stelle des Bereichs –
+  an die Stelle dessen, was gerade offen ist, auch wenn sie aus einem anderen Bereich kommt (der
+  Editor etwa vom Stift in der Charakterleiste oder von einer Mission): im Ziehblatt bzw. in der
   Seitenspalte, ohne die App abzudunkeln; die Karte bleibt sichtbar.
 - Oben Titel und **✕**, unten ihre eigene Aktionsleiste mit der Handlung („Kaufen“, „Speichern“).
   Zurück geht es mit ✕ oder Esc; ein „Abbrechen“ daneben gibt es nicht. Innerhalb einer Detailseite
@@ -185,7 +187,7 @@ Dialog                               Kurzdialog
 ```
 
 - **Dialog** (viele Felder, scrollt): oben Titel und **✕**, unten die eine Hauptaktion
-  (`primary`). Das ✕ bleibt erreichbar, auch wenn unten weggescrollt ist. So gebaut: Charakter-Editor,
+  (`primary`). Das ✕ bleibt erreichbar, auch wenn unten weggescrollt ist. So gebaut:
   Erschaffung, Neuer NSC, Kampagnen, Heilung, Mission, Kaufen und Verkaufen, Reise, Systemflug,
   Inspirationskarte, Ortswahl im Sektor.
 - **Kurzdialog** (eine kurze Eingabe oder Entscheidung): kein ✕, unten **„Abbrechen“** (`ghost`) links

@@ -1464,7 +1464,8 @@ export class GameController {
   showScreen(screen: Screen): void {
     // Ein angetipptes Feld des Globus oder ein gewähltes Feld des Subsektors steht an der Stelle des
     // Bereichs; ein Tipp in die Navigationsleiste lässt es los.
-    const released = { globe: this.state.globe && { picked: undefined }, selected: undefined, worldError: this.state.globe ? this.state.worldError : undefined };
+    // Ebenso der Charakter-Editor, eine Detailseite (2026-11-26): wie ✕, ohne zu speichern.
+    const released = { globe: this.state.globe && { picked: undefined }, selected: undefined, worldError: this.state.globe ? this.state.worldError : undefined, editor: undefined };
     // Die NSC-Liste zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
     // Ein Tipp in die Navigationsleiste bricht auch NSC platzieren ab und verlässt den Shop.
     // Ein Tipp in die Navigationsleiste bricht auch das Ort wählen einer Mission ab; der Editor bleibt mit seiner Eingabe.

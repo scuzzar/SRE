@@ -40,7 +40,7 @@ test('K zieht eine Karte, Esc verwirft sie; Esc schließt auch den Editor', asyn
   await expect(entries(page)).toHaveCount(0);
 
   await characters(page).getByRole('button', { name: 'Kira Vant bearbeiten' }).click();
-  const editor = page.getByRole('dialog', { name: 'Charakter bearbeiten' });
+  const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await expect(editor).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(editor).toBeHidden();

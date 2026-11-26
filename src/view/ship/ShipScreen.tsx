@@ -5,7 +5,7 @@ import { SpaceCard, SpaceDock } from '../space/SpacePanel';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { DropIcon, ExpandIcon, PencilIcon, ShipIcon, TrashIcon } from '../icons';
-import { SheetFrame } from './SheetFrame';
+import { DetailPage } from '../DetailPage';
 import { CrewPersonSheet, CrewPostSheet, CrewTab } from './CrewTab';
 import { ComputerTab, ProgramSheet, SoftwareYard } from './ComputerTab';
 import { deckImage } from './deck-image';
@@ -509,7 +509,7 @@ function YardTable({ title, rows, funds, onBuy }: { title: string; rows: readonl
 /** Die Werft als Detailseite: Reparatur und Bewaffnung des eigenen Schiffs (2026-11-21g/h), dann die Standardentwürfe und die Small Craft (2026-11-21c), der Preis als Knopf. */
 function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: ShipYardRow) => void; onClose: () => void }) {
   return (
-    <SheetFrame title="Werft" aside="Standardentwürfe · SR 33–37" onClose={onClose}>
+    <DetailPage title="Werft" aside="Standardentwürfe · SR 33–37" onClose={onClose}>
       {ship.error && (
         <p className="error" role="alert">
           {ship.error}
@@ -523,7 +523,7 @@ function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: S
         <YardTable title="Small Craft" rows={ship.yard.filter((d) => d.smallCraft)} funds={ship.funds} onBuy={onBuy} />
       </div>
       <p className="shop-hint muted">Ein Small Craft wird mit Schiff dessen Beiboot und liegt im Laderaum (so viele Tonnen wie sein Rumpf); ohne Schiff gehört es euch allein. Auch bei der Abmusterung gibt es ein Schiff: der Ship-Vorteil der Laufbahn (Scout/Courier schuldenfrei, Subsidized Merchant mit Kreditschuld).</p>
-    </SheetFrame>
+    </DetailPage>
   );
 }
 
@@ -533,7 +533,7 @@ function BuySheet({ ship, design, method, onMethod, onBack, onBuy, onClose }: { 
   const canPay = method === 'cash' ? cash : ship.funds >= design.down;
   const monthly = Math.round((design.price * 2) / 480);
   return (
-    <SheetFrame
+    <DetailPage
       title={design.smallCraft ? `${design.name} kaufen` : `${design.name} (${design.code}) kaufen`}
       aside={design.smallCraft ? `${design.hull} t · ${design.maneuver}G · ${design.becomes}` : `${design.hull} t · Jump-${design.jump} · ${design.maneuver}G`}
       onClose={onClose}
@@ -597,7 +597,7 @@ function BuySheet({ ship, design, method, onMethod, onBack, onBuy, onClose }: { 
         </p>
       )}
       {ship.ship !== undefined && <p className="shop-hint muted">Die Gruppe hat schon „{ship.ship.name}“. Beim Kaufen wird das alte Schiff ausgemustert (wie beim Wechsel durch den Ship-Vorteil).</p>}
-    </SheetFrame>
+    </DetailPage>
   );
 }
 
@@ -612,7 +612,7 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
   // Ausblenden erst beim zweiten Tippen, wie Löschen sonst auch (Owner, 22. November 2026).
   const [retiring, setRetiring] = useState(false);
   return (
-    <SheetFrame
+    <DetailPage
       title="Schiff bearbeiten"
       aside={`${boat.designName} (${boat.designCode})`}
       onClose={onClose}
@@ -717,7 +717,7 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
         {boat.craft.length > 0 ? ' und seine Beiboote verschwinden' : ' verschwindet'} aus dem Bereich Schiff, gelöscht wird nichts – Buchungen und Log zeigen {boat.craft.length > 0 ? 'sie' : 'es'} weiter. Raten fallen keine mehr an. Danach lässt sich ein neues Schiff oder ein eigenständiges Small Craft kaufen.
       </p>
       {boat.retireBlocker && <p className="combat-hint">Ausblenden: {boat.retireBlocker}</p>}
-    </SheetFrame>
+    </DetailPage>
   );
 }
 
@@ -729,7 +729,7 @@ function FuelSheet({ boat, ship, onClose }: { boat: Boat; ship: ShipView; onClos
   const cost = qty * ship.fuelPrice;
   const buyable = qty >= 1 && cost <= ship.funds;
   return (
-    <SheetFrame
+    <DetailPage
       title="Treibstoff kaufen"
       aside={`Cr ${ship.fuelPrice} / t · raffiniert`}
       onClose={onClose}
@@ -776,7 +776,7 @@ function FuelSheet({ boat, ship, onClose }: { boat: Boat; ship: ShipView; onClos
         </div>
       </dl>
       {need === 0 ? <p className="shop-hint muted">Der Tank ist voll.</p> : cost > ship.funds ? <p className="error" role="alert">Die Kasse ({credits(ship.funds)}) reicht dafür nicht.</p> : null}
-    </SheetFrame>
+    </DetailPage>
   );
 }
 
@@ -785,7 +785,7 @@ function RenameSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
   const game = useGame();
   const [name, setName] = useState(boat.name);
   return (
-    <SheetFrame
+    <DetailPage
       title="Schiff umbenennen"
       onClose={onClose}
       foot={
@@ -809,7 +809,7 @@ function RenameSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
         <span>Name</span>
         <input autoFocus value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
       </label>
-    </SheetFrame>
+    </DetailPage>
   );
 }
 
@@ -819,7 +819,7 @@ function DeckSheet({ name, image, onClose }: { name: string; image: string; onCl
   // Erst der zweite Tipper löscht, wie im Bereich Schiff und in der Kampagnenwahl.
   const [confirming, setConfirming] = useState(false);
   return (
-    <SheetFrame
+    <DetailPage
       title={name}
       aside="Deckplan"
       onClose={onClose}
@@ -846,6 +846,6 @@ function DeckSheet({ name, image, onClose }: { name: string; image: string; onCl
       }
     >
       <img className="deck-large" src={image} alt={name} />
-    </SheetFrame>
+    </DetailPage>
   );
 }
