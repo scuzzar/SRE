@@ -77,14 +77,14 @@ test('Begegnung im eigenen Bereich; Kampf: Waffentabelle ohne Begegnung, mit Beg
   await expect(page.locator('.combat-table')).toHaveCount(0);
   await expect(page.getByRole('img', { name: /^Entfernung: / })).toBeVisible();
   // Der erste Wurf im Kampf ist die Überraschung: zwei Würfel, SC weiß, NSC schwarz, mit DMs.
-  await expect(page.locator('.fight-who-row')).toHaveCount(0);
+  await expect(page.locator('.fight-actions.turn')).toHaveCount(0);
   await page.getByRole('button', { name: 'Überraschung würfeln' }).click();
   const surprise = page.getByRole('dialog', { name: 'Überraschung' });
   await expect(surprise.locator('.die-white')).toHaveCount(1);
   await expect(surprise.locator('.die-black')).toHaveCount(1);
   await expect(surprise).toContainText('Anführer +1');
   await surprise.getByRole('button', { name: 'Kampf beginnen' }).click();
-  await expect(page.locator('.fight-who-row')).toBeVisible();
+  await expect(page.locator('.fight-actions.turn')).toBeVisible();
 
   // Langes Drücken rechts auf die Leiste (an den NSC) setzt den vorgewählten SC frei in die Berührung; Close reicht für jede Waffe.
   const ray = page.getByRole('img', { name: /^Entfernung: / });
@@ -106,7 +106,8 @@ test('Begegnung im eigenen Bereich; Kampf: Waffentabelle ohne Begegnung, mit Beg
   await expect(page.locator('.ray-move')).toContainText('gegangen');
   await pressAt(4);
   await expect(now).toContainText('Berührung');
-  await expect(page.locator('.fight-who-row')).toContainText('→');
+  // Wer am Zug ist und das Ziel stehen an den Karten; für Screenreader sagt es die Aktionsleiste.
+  await expect(page.locator('.fight-dock .visually-hidden[aria-live]')).toContainText('Ziel:');
   // Angegriffen wird mit dem Knopf der Waffe (beim SC Primär oder Sekundär, beim NSC seine Waffe).
   await page.locator('.fight-dock .atk:not(:disabled)').first().click();
   const dialog = page.getByRole('alertdialog');
@@ -121,7 +122,8 @@ test('Begegnung im eigenen Bereich; Kampf: Waffentabelle ohne Begegnung, mit Beg
     const wounding = page.getByRole('dialog', { name: /·/ });
     if (await wounding.isVisible().catch(() => false)) await wounding.getByRole('button', { name: 'Übernehmen' }).click();
   }
-  await page.getByRole('button', { name: 'Aussetzen' }).click();
+  // Ausweichen beendet den Zug; wer gelaufen ist, setzt stattdessen aus (2026-11-26).
+  await page.locator('.fight-dock').getByRole('button', { name: /^(Ausweichen|Aussetzen)$/ }).click();
 
   // Übernehmen: Langes Drücken auf einen NSC öffnet die Auswahl mit Haken; unten stehen dann
   // „Als SC“ und „Als NSC“ statt der Zugknöpfe. Antippen hakt weitere an.
@@ -152,7 +154,15 @@ test('Begegnung im eigenen Bereich; Kampf: Waffentabelle ohne Begegnung, mit Beg
   await page.locator('.encounter-running').getByRole('button', { name: 'Zum Kampf' }).click();
   await expect(page.locator('.fight-head')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Beenden' }).click();
+  // Beenden steht in der Aktionsleiste und geht nur lange gedrückt; ein Tippen sagt das (2026-11-26).
+  const end = page.locator('.fight-dock').getByRole('button', { name: 'Beenden' });
+  await end.click();
+  await expect(page.locator('.fight-nudge')).toContainText('Lange drücken');
+  const endBox = (await end.boundingBox())!;
+  await page.mouse.move(endBox.x + endBox.width / 2, endBox.y + endBox.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(1100);
+  await page.mouse.up();
   await expect(page.locator('.combat-table')).toBeVisible();
   await openPart(page, 'Begegnung', 'Begegnung');
   await expect(dock(page).getByRole('button', { name: /^Zufallsbegegnung würfeln/ })).toBeEnabled();

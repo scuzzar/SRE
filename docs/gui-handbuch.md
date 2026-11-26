@@ -137,6 +137,12 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 - Hat ein Bereich zwei Arten von Handlungen, bekommt er **zwei Aktionsleisten** übereinander, nie eine mit
   mehr als fünf Knöpfen: im Bereich Begegnung oben die Würfe *Zufall, Tiere, Patron, Gerücht,
   Polizei*, darunter die Zeit *Tage vergehen, Woche beenden* (auf einer Fahrt *Weiterfahren*).
+- In der **Kampfsimulation** ist die Aktionsleiste der Zug (2026-11-26): links **Beenden** und
+  **Ausweichen** im Stil der Knöpfe des Logs, rechts im Daumenbereich die Angriffe (je Waffe ein Knopf
+  mit nötigem Wurf; Primär gefüllt, Sekundär umrandet, oben die Munition). Lange drücken auf Ausweichen setzt aus
+  (kein Angriff, aber die Parade bleibt); wer gelaufen ist oder festgehalten wird, kann nicht ausweichen,
+  dann heißt der Knopf **Aussetzen**. Beenden geht nur lange gedrückt, ein Tippen sagt das. Wer am Zug
+  ist und wen er angreift, zeigen die Karten (▶ und Pfeil), nicht die Aktionsleiste.
 - **Deuten** sitzt nicht in der Aktionsleiste, sondern am Ergebnis im Log (am neuesten immer, ein älteres
   klappt man auf).
 - Jeder Bereich mit eigenen Handlungen bringt seine eigene Aktionsleiste mit; wo er keine hat,
@@ -223,7 +229,7 @@ Dialog                               Kurzdialog
 | Geste | Bedeutung |
 |---|---|
 | **Tippen** | Das Übliche: wählen, auslösen, öffnen |
-| **Lange drücken** | Die zweite Absicht (`HoldButton`, 0,9 s): Der Knopf füllt sich von links, erst wenn er voll ist, löst es aus. Beispiele: trotzdem würfeln, obwohl der Test schon gemacht ist; die Erschaffung durchlaufen lassen; ohne Begegnung weiter; NSC hier platzieren; eine ganze Garbe löschen. Ein kurzes Tippen sagt, dass es einen langen Druck gibt |
+| **Lange drücken** | Die zweite Absicht (`HoldButton`, 0,9 s): Der Knopf füllt sich von links, erst wenn er voll ist, löst es aus. Beispiele: trotzdem würfeln, obwohl der Test schon gemacht ist; die Erschaffung durchlaufen lassen; ohne Begegnung weiter; NSC hier platzieren; eine ganze Garbe löschen; aussetzen statt ausweichen; die Begegnung beenden. Ein kurzes Tippen sagt, dass es einen langen Druck gibt |
 | **Wischen** | In der Charakterleiste zum nächsten Charakter; das Ziehblatt eine Stufe weiter |
 | **Ziehen** | Das Ziehblatt; Gegenstände im Gepäck und Personen auf Posten (kurz halten, dann ziehen; gleich wischen scrollt) |
 | **Zwei Finger / Mausrad** | Zoomen auf der Karte |

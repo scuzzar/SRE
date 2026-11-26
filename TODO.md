@@ -7,7 +7,8 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 
 ## UI
 - [ ] **Entschlacken (Schritt 3):** jeden Bereich für das Ziehblatt und die Seitenspalte des Desktops
-  durchgehen. Die Kampfsimulation zeigt halb hochgezogen eine ganze Reihe Kämpfer (2026-11-26).
+  durchgehen. Die Kampfsimulation zeigt halb hochgezogen zwei Reihen Kämpfer; Beenden und Ausweichen
+  stehen mit den Angriffen in der Aktionsleiste (2026-11-26).
   Offen:
   - *Waffentabelle:* Halb hochgezogen füllen Charakterleiste (140 px) und Waffenkopf (61 px) die
     Höhe, die Tabelle beginnt erst darunter. Braucht eine Entscheidung des Owners, was wegfällt

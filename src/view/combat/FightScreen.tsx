@@ -4,7 +4,8 @@ import type { Range } from '../../model';
 import { hex, rangeText, signed } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
-import { DiceIcon } from '../icons';
+import { CloseIcon, DiceIcon, EvadeIcon, SkipIcon } from '../icons';
+import { HoldButton } from '../HoldButton';
 import { DicePairView, DiceView, THROW_MS, useTimeline } from '../Dice';
 import type { Patient } from './CombatScreen';
 import { Arena, canAdopt, type Selection } from './Arena';
@@ -106,7 +107,8 @@ export function useLongPress(onHold: () => void) {
 
 /**
  * Knapp in einer Zeile, damit die NSC Platz haben: Runde und Begegnung, dahinter das erste Wort der
- * Reaktion und wer zuerst zieht, dann Beenden. Antippen zeigt die Übersicht mit allen Würfen.
+ * Reaktion und wer zuerst zieht. Antippen zeigt die Übersicht mit allen Würfen. Beenden steht unten in
+ * der Aktionsleiste (2026-11-26).
  */
 function FightHead({ sim }: { sim: SimView }) {
   const game = useGame();
@@ -132,9 +134,6 @@ function FightHead({ sim }: { sim: SimView }) {
             {reaction}
             {order ? ` · ${order}` : ''}
           </span>
-        </button>
-        <button type="button" className="ghost compact" onClick={() => game.endEncounter()}>
-          Beenden
         </button>
       </div>
       {sim.defeated && <p className="fight-decided">Entschieden: Die {sideName[sim.defeated]} sind außer Gefecht.</p>}
@@ -359,11 +358,6 @@ export function LossFloat({ impacts, attr }: { impacts: readonly Impact[]; attr:
   );
 }
 
-/** Was auf dem Knopf über der Waffe steht: Primär, Sekundär oder Hände. */
-function slotLabel(attack: AttackOption): string {
-  return attack.slot === 'primary' ? 'Primär' : attack.slot === 'secondary' ? 'Sekundär' : 'Hände';
-}
-
 /**
  * Unten kompakt: in einer Zeile wer gegen wen, mit Ausweichen und Aussetzen rechts; darunter je Waffe ein Knopf
  * (Primär gefüllt, Sekundär umrandet) mit dem nötigen Wurf, der die Waffe nimmt und angreift. Ist
@@ -375,96 +369,117 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
   const target = turn?.target === undefined ? undefined : sim.fighters.find((f) => f.id === turn.target);
   // Feuerstoß oder Einzelschuss wählt man nur bei einer Waffe, die beides kann (Automatic Rifle).
   const fire = turn?.attacks.find((a) => a.fire?.choosable)?.fire;
+  // Ein kurzes Tippen auf Beenden sagt, dass es einen langen Druck braucht.
+  const [nudged, setNudged] = useState(false);
+  const end = (
+    <HoldButton className="action note fight-act" label="Beenden" hint="Lange drücken: die Begegnung beenden" title="Lange drücken: die Begegnung beenden" onPress={() => setNudged(true)} onHold={() => game.endEncounter()}>
+      <CloseIcon />
+      Beenden
+    </HoldButton>
+  );
+  // Wer gelaufen ist oder festgehalten wird, kann nicht ausweichen (SR 20); dann setzt der Knopf aus.
+  const evadeOff = turn !== undefined && (turn.ran || turn.held !== undefined);
   return (
     <section className="dock fight-dock" aria-label="Zug">
       <RangeBar sim={sim} />
+      {turn && (
+        <p className="visually-hidden" aria-live="polite">
+          Am Zug: {turn.name}
+          {target ? `, Ziel: ${target.name}` : ', Ziel antippen'}
+        </p>
+      )}
+      {nudged && (
+        <p className="small-label fight-nudge" role="status">
+          Lange drücken: die Begegnung beenden
+        </p>
+      )}
       {sim.needsSurprise ? (
         <>
           <p className="combat-pick">Der erste Wurf im Kampf: Hat eine Partei Überraschung?</p>
+          <div className="fight-actions">
+            {end}
+            <button
+              type="button"
+              className="action task-roll"
+              onClick={() => {
+                haptic('shake');
+                game.rollSurprise();
+              }}
+            >
+              <DiceIcon />
+              Überraschung würfeln
+            </button>
+          </div>
+        </>
+      ) : combat.damage ? (
+        <div className="fight-actions">
+          {end}
           <button
             type="button"
-            className="action task-roll"
+            className="action draw"
             onClick={() => {
               haptic('shake');
-              game.rollSurprise();
+              game.rollDamage();
             }}
           >
             <DiceIcon />
-            Überraschung würfeln
+            {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden'} ({combat.damage.label}){combat.damage.left > 1 ? ` · noch ${combat.damage.left}` : ''}
           </button>
-        </>
-      ) : combat.damage ? (
-        <button
-          type="button"
-          className="action draw"
-          onClick={() => {
-            haptic('shake');
-            game.rollDamage();
-          }}
-        >
-          <DiceIcon />
-          {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden'} ({combat.damage.label}){combat.damage.left > 1 ? ` · noch ${combat.damage.left}` : ''}
-        </button>
+        </div>
       ) : turn ? (
         <>
-          <div className="fight-who-row" aria-live="polite">
-            <span className={`who-chip turn ${turn.side}`} title="am Zug">
-              ▶ {turn.name.split(' ')[0]}
-            </span>
-            <span className="who-arrow" aria-hidden="true">
-              →
-            </span>
-            {target ? (
-              <span className={`who-chip target ${target.side}`} title="Ziel">
-                ⌖ {target.name.split(' ')[0]}
-              </span>
+          {/* Wie im Log: links, was seltener gebraucht wird, rechts im Daumenbereich die Angriffe (2026-11-26). */}
+          <div className={`fight-actions turn n${turn.held ? 1 : turn.attacks.length}`}>
+            {end}
+            {evadeOff ? (
+              <button type="button" className="action note fight-act" title="Kein Angriff, der Zug ist vorbei" onClick={() => game.skipTurn()}>
+                <SkipIcon />
+                Aussetzen
+              </button>
             ) : (
-              <span className="muted">Ziel antippen</span>
+              <HoldButton
+                className="action note fight-act"
+                label="Ausweichen"
+                hint="Lange drücken: aussetzen, die Parade bleibt"
+                title="Kein Angriff; bis zum nächsten Zug DM −1/−2/−4 auf Angriffe gegen ihn. Lange drücken: aussetzen, die Parade bleibt"
+                onPress={() => {
+                  haptic('pick');
+                  game.evade();
+                }}
+                onHold={() => game.skipTurn()}
+              >
+                <EvadeIcon />
+                Ausweichen
+              </HoldButton>
             )}
-            <button
-              type="button"
-              className="ghost compact fight-skip"
-              title="Kein Angriff; bis zum nächsten Zug DM −1/−2/−4 auf Angriffe gegen ihn"
-              disabled={turn.ran || turn.held !== undefined}
-              onClick={() => {
-                haptic('pick');
-                game.evade();
-              }}
-            >
-              Ausweichen
-            </button>
-            <button type="button" className="ghost compact fight-skip" onClick={() => game.skipTurn()}>
-              Aussetzen
-            </button>
+            {turn.held ? (
+              <button
+                type="button"
+                className="atk primary"
+                onClick={() => {
+                  haptic('shake');
+                  game.struggle();
+                }}
+              >
+                <span className="atk-slot">Festgehalten</span>
+                <span className="atk-name">Losreißen</span>
+                <span className="atk-need">
+                  {turn.held.target}+{turn.held.dm ? ` (+${turn.held.dm} durch ${turn.held.helpers} Helfer)` : ''}
+                </span>
+              </button>
+            ) : (
+              turn.attacks.map((a, i) => <AttackButton key={a.weapon} attack={a} first={i === 0} label={target ? '' : 'Ziel antippen'} hasTarget={target !== undefined} ran={turn.ran} />)
+            )}
           </div>
-          {turn.held ? (
-            <button
-              type="button"
-              className="atk primary"
-              onClick={() => {
-                haptic('shake');
-                game.struggle();
-              }}
-            >
-              <span className="atk-slot">Festgehalten</span>
-              <span className="atk-name">Losreißen</span>
-              <span className="atk-need">
-                {turn.held.target}+{turn.held.dm ? ` (+${turn.held.dm} durch ${turn.held.helpers} ${turn.held.helpers === 1 ? 'Helfer' : 'Helfer'})` : ''}
-              </span>
-            </button>
-          ) : (
-            <div className={turn.attacks.length > 1 ? 'attack-buttons' : 'attack-buttons single'}>
-              {turn.attacks.map((a, i) => (
-                <AttackButton key={a.weapon} attack={a} first={i === 0} label={slotLabel(a)} hasTarget={target !== undefined} ran={turn.ran} />
-              ))}
-            </div>
-          )}
           {fire && <FireToggle fire={fire} compact />}
           {/* Voll oder geschwächt nur, wenn ein Schlag oder Hieb auch reicht. */}
           {turn.melee && turn.side === 'pcs' && turn.attacks.some((a) => a.reaches && a.melee) && <StrikeToggle melee={turn.melee} />}
         </>
       ) : (
-        <p className="combat-pick">{sim.defeated ? 'Der Kampf ist entschieden. Heilen, übernehmen (lange drücken) oder die Begegnung beenden.' : 'Keiner ist am Zug.'}</p>
+        <>
+          <p className="combat-pick">{sim.defeated ? 'Der Kampf ist entschieden. Heilen, übernehmen (lange drücken) oder die Begegnung beenden.' : 'Keiner ist am Zug.'}</p>
+          <div className="fight-actions">{end}</div>
+        </>
       )}
     </section>
   );
@@ -473,7 +488,8 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
 /** Ein Angriff mit einer Waffe: Platz (Primär …), Waffe, nötiger Wurf. Leer lädt er nach. */
 function AttackButton({ attack: a, first, label, hasTarget, ran }: { attack: AttackOption; first: boolean; label: string; hasTarget: boolean; ran: boolean }) {
   const game = useGame();
-  const ammo = a.ammo ? ` · ${a.ammo.rounds}/${a.ammo.capacity}` : '';
+  // Primär und Sekundär zeigt die Füllung; oben steht nur, was fehlt (das Ziel), und die Munition.
+  const slot = [label, a.ammo ? `${a.ammo.rounds}/${a.ammo.capacity}` : ''].filter(Boolean).join(' · ');
   if (a.empty) {
     const can = (a.ammo?.magazines ?? 0) > 0;
     return (
@@ -486,7 +502,7 @@ function AttackButton({ attack: a, first, label, hasTarget, ran }: { attack: Att
           game.fightReloadWith(a.weapon);
         }}
       >
-        <span className="atk-slot">{label}{ammo}</span>
+        <span className="atk-slot">{slot}</span>
         <span className="atk-name">{a.name}</span>
         <span className="atk-need small">{can ? `nachladen (${a.ammo!.magazines})` : 'leer'}</span>
       </button>
@@ -505,7 +521,7 @@ function AttackButton({ attack: a, first, label, hasTarget, ran }: { attack: Att
         game.fightAttackWith(a.weapon);
       }}
     >
-      <span className="atk-slot">{label}{ammo}</span>
+      <span className="atk-slot">{slot}</span>
       <span className="atk-name">{a.name}</span>
       <span className={small ? 'atk-need small' : 'atk-need'}>{need}</span>
     </button>

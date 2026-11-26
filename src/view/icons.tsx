@@ -136,6 +136,24 @@ export function CloseIcon() {
   );
 }
 
+/** Ein Zickzack wie ↯ an der Karte: ausweichen. */
+export function EvadeIcon() {
+  return (
+    <svg {...base} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 3l-6 8h7l-6 10" />
+    </svg>
+  );
+}
+
+/** Zwei Balken wie Pause: aussetzen. */
+export function SkipIcon() {
+  return (
+    <svg {...base} strokeLinecap="round">
+      <path d="M9 6v12M15 6v12" />
+    </svg>
+  );
+}
+
 /** Eine Kugel mit Gitter: der Globus einer Welt. */
 export function GlobeIcon() {
   return (

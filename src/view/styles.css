@@ -6497,24 +6497,8 @@ button:disabled {
   gap: 6px;
 }
 
-.who-chip {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 1px 6px;
-  font-size: 14px;
-}
 
-.who-chip {
-  color: var(--side-ink);
-  background: var(--side);
-}
 
-.who-arrow {
-  flex: 0 0 auto;
-  color: var(--muted);
-}
 
 /* Treffer, Fehlschuss und Schaden: ein Aufblitzen über der Karte und ein aufsteigendes Wort oder eine Zahl. */
 .impact-flash {
@@ -7102,32 +7086,100 @@ button:disabled {
   padding: 6px 12px 8px;
 }
 
-.fight-who-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  font-weight: 700;
-}
-
-.fight-who-row .fight-skip {
-  margin-left: auto;
-  flex: none;
-  min-height: 30px;
-  padding: 0 10px;
-  font-size: 13px;
-  font-weight: 400;
-}
-
-.attack-buttons {
+/* Der Zug in einer Aktionsleiste (2026-11-26): die Angriffe breiter, Ausweichen und Beenden schmal mit
+   Symbol und Wort. Ohne Angriff (Überraschung, Schaden) steht der Wurf breit neben Beenden. */
+.fight-actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(64px, 0.42fr) minmax(0, 1fr);
   gap: 6px;
 }
 
-.attack-buttons.single {
-  grid-template-columns: minmax(0, 1fr);
+.fight-actions.turn.n1 {
+  grid-template-columns: repeat(2, 66px) minmax(0, 1fr);
 }
+
+.fight-actions.turn.n2 {
+  grid-template-columns: repeat(2, 66px) repeat(2, minmax(0, 1fr));
+}
+
+.fight-actions.turn.n3 {
+  grid-template-columns: repeat(2, 66px) repeat(3, minmax(0, 1fr));
+}
+
+/* In der Aktionsleiste ist der Angriff schmal: der nötige Wurf rückt neben den Platz, der Name hat
+   die ganze Breite und bricht höchstens einmal um. */
+.fight-actions .atk {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'slot need' 'name name';
+  align-content: center;
+  row-gap: 1px;
+  padding: 4px 7px;
+}
+
+.fight-actions .atk-need {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.fight-actions .atk-need.small {
+  max-width: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+.fight-actions .fight-act {
+  font-size: 11px;
+}
+
+.fight-actions .atk-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.fight-actions:not(.turn) > .hold-button:only-child {
+  grid-column: 1;
+}
+
+/* Ausweichen, Aussetzen und Beenden wie die Knöpfe der Aktionsleiste im Log: Symbol über dem Wort. */
+.fight-act {
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 4px 2px;
+  border-radius: 6px;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.fight-act svg {
+  width: 22px;
+  height: 22px;
+}
+
+.fight-actions .action,
+.fight-actions .atk {
+  min-height: 54px;
+  border-radius: 6px;
+}
+
+.fight-nudge {
+  margin: 0;
+  text-align: right;
+  color: var(--gold);
+}
+
+
+
+
 
 .atk {
   display: grid;
