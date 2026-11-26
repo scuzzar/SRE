@@ -6,11 +6,6 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 `regeln-schiffe.md`, `regeln-sternsystem.md`).
 
 ## UI
-- [ ] **Bedienabläufe aus dem Domänenmodell lösen:** In den Regeltexten von `docs/domain-model.md`
-  sind Fachregel und Bedienung noch vermischt (Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt
-  zuerst nach der Rolle“). Bereich für Bereich trennen: Die Regel bleibt im Modell, neutral gefasst;
-  der Ablauf fällt weg – ihn zeigen die App und die GUI-Tests. Nur ein Grundsatz, der für mehrere
-  Bereiche gilt, kommt als Prinzip ins GUI-Handbuch (Owner, 26. November 2026). Erledigt: Log.
 - [ ] **Name für die Blätter im Bereich Schiff:** Werft, Software-Werft, das Blatt am Posten und am
   Programm stehen an der Stelle des Bereichs, ähnlich wie ein Feld (`SheetFrame`), haben aber noch
   keinen eigenen Namen in den Begriffen der Oberfläche (`docs/gui-handbuch.md`). Owner schlägt vor,

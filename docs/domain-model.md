@@ -93,7 +93,7 @@ Lücken unter [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 > sie, wer kommt (siehe *Begegnung*).
 >
 > Ebenfalls am 3. November 2026 freigegeben: **Kampfsimulation** getrennt von der
-> **Waffentabelle** (siehe *Zwei Modi im Bereich Kampf* und *Kampfsimulation*). Neu im Bild: an der
+> **Waffentabelle** (siehe *Begegnungsarten und zwei Modi im Kampf* und *Kampfsimulation*). Neu im Bild: an der
 > `Encounter` Entfernung (`rangeDice`, `range`, `terrain`), Überraschung (`pcSurprise`,
 > `npcSurprise`, `/surprise`, `/first`), Runde und Zug (`round`, `acted`, `/turn`); `Side`,
 > `SurpriseRoll`, als Referenzdaten `Terrain`, `EncounterRange` und `EncounterType.military`.
@@ -764,7 +764,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Abgleichsmarke | (merkt sich das Gerät) | Je Kampagne: mit welcher Änderungszeit und welcher Fassung in OneDrive dieses Gerät zuletzt gleich war; je Deckplan-Platz: mit welchem Bild (`key`) und welcher Fassung (2026-11-17) |
 | Konflikt | `Conflict` | Dieselbe Kampagne wurde seit dem letzten Abgleich hier und in OneDrive geändert; der Spieler wählt |
 | Charakter | `Character` | Ein Spielercharakter mit seiner Charakterkarte |
-| Charakter oben | `Campaign.focus` | Der Charakter, der oben im Orakel-Screen steht; für ihn würfelt man Proben |
+| Charakter oben | `Campaign.focus` | Der Charakter, für den man Proben würfelt und mit der Waffentabelle angreift |
 | Tot | `Character.dead` | Der Charakter ist in der Geschichte gestorben; er bleibt in der Kampagne |
 | UPP | `Upp` | Die sechs Attributwerte |
 | Attribut | `Characteristic` | STR, DEX, END, INT, EDU, SOC |
@@ -787,7 +787,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Zufallsereignis | `Card./randomEvent`, `CardPick./randomEvent` | Der Orakelwurf ist ein Pasch bis 55 (11, 22, 33, 44, 55): Etwas Unerwartetes passiert, nach Mythic bei Chaosfaktor 5 |
 | Ereignisfokus | `EventFocus` | Worum es beim Zufallsereignis geht, nach Mythic: etwa *NSC handelt*, *SC: Nachteil*, *Aktuelle Lage* |
 | Antwort | `Answer` | Die sechs Antworten des Orakels: Ja!, Ja, Ja?, Nein?, Nein, Nein! |
-| Orakelfeld | `Card.oracle` | Das Feld der Karte mit der Antwort für Hoch, Mittel und Gering; man tippt die Stufe an, die zur Frage passt |
+| Orakelfeld | `Card.oracle` | Das Feld der Karte mit der Antwort für Hoch, Mittel und Gering; man wählt die Stufe, die zur Frage passt |
 | Notiz | `Note` ohne `interprets` | Freier Text im Log, z. B. „Wir landen auf Regina.“ |
 | Deutung | `Note` mit `interprets` | Was man aus einem Ergebnis macht, z. B. „Die Tür ist offen, aber jemand war schon hier.“ |
 | Ergebnis | `DiceRoll`, `CardPick`, `TaskResult`, `AttackResult`, `DamageRoll`, `PatronRoll`, `RumorRoll` | Ein Logeintrag, den das Orakel, die Würfel oder die Karte liefert; nur ihn kann man deuten |
@@ -842,9 +842,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Buchung | `Booking` | Eine Bewegung der Gruppenkasse: Einnahme, Ausgabe, Einzahlung, Auszahlung oder Kauf |
 | Art der Buchung | `BookingKind` | income (Einnahme, z. B. Belohnung), expense (Ausgabe), deposit (Einzahlung eines Charakters), payout (Auszahlung an einen Charakter), purchase (Kauf), sale (Verkauf), lottery (Gewinn der Low Lottery), rent (Miete je Tag eines Fahrzeugs), fare (Fahrpreis im Linienverkehr), ship (Schiff: voller Preis, Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung; welche, sagt `shipCost`) |
 | Angebot | `Hex./offer` | Was man auf der Welt kaufen kann: nach TL und Gesetz der Welt |
-| Bereich Charaktere | (Bereich „Charaktere“; Screens `characters`, `npcs`, `funds`) | Oben ein Unterreiter zwischen **SC** (Charakterkarten und Gruppengepäck), **Kasse** und **NSC** (die *NSC-Liste*) |
-| Shop | (Screen `shop`, `openShop`, `closeShop`) | Der Screen für den Einkauf auf dem Aufenthaltsort, ohne eigenen Bereich: „Einkaufen“ am angetippten Feld einer Stadt auf dem Globus des Aufenthaltsorts öffnet ihn an der Stelle des Felds (nur in Städten), ✕ führt dorthin zurück, ein Tipp in die Navigationsleiste verlässt ihn |
-| Kasse | (Screen `funds`, im Bereich Charaktere) | Stand der Gruppenkasse, freie Buchungen (Einnahme, Ausgabe, Einzahlung, Auszahlung mit einem gewählten SC) und das Kassenbuch; geht auch ohne Aufenthaltsort |
+| Shop | (`openShop`, `closeShop`) | Der Einkauf der Gruppe auf ihrem Aufenthaltsort, nur in einer Stadt |
+| Kasse | (`funds`) | Stand der Gruppenkasse, freie Buchungen (Einnahme, Ausgabe, Einzahlung, Auszahlung mit einem gewählten SC) und das Kassenbuch; geht auch ohne Aufenthaltsort |
 | Magazin | `Weapon.ammo` | Der Gegenstand, der eine Schusswaffe lädt, z. B. Rifle Ammo (20 rds) oder LC Power Pack |
 | Bogenwaffe | `Weapon` mit `attack: shot` ohne `rounds` | Die sechs Bogenwaffen aus Supplement 4 (B4 S. 16): Schleuder, Short Bow, Long Bow, Sporting, Military und Repeating Crossbow; Schusswaffen ohne Magazin, geführt mit Bow Combat; ohne `minSoc` wie Hände und Tierwaffen, ein erzeugter NSC bekommt sie nie (2026-11-24c) |
 | Schuss im Magazin | `Possession.rounds`, `Weapon.rounds` | Wie viele Schuss eine Schusswaffe gerade geladen hat bzw. voll fasst |
@@ -867,8 +866,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Verbrecherisch | `Patron.criminal`, Rolle Feind | Ein NSC, für den das Gesetz eher nicht gilt: DM +2 auf den Wurf, das Gesetz zu ignorieren |
 | Laufbahn eines Patrons | `Patron.career` | Die Laufbahn, in der ein Patron-NSC seine Charaktererschaffung durchläuft, z. B. Smuggler: Merchants (Hausregel) |
 | Rolle eines NSC | `Character.role`, `NpcRole` | Wozu ein dauerhafter NSC da ist, aus einer festen Liste: Patron, Begegnung, Feind, Rivale, Verbündeter, Kontakt, Behörde, Händler, Makler, Captain, Crew, Passagier, Sonstige |
-| NSC-Liste | (Screen `npcs`, im Bereich Charaktere unter „NSC“) | Der Screen mit den dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
-| NSC platzieren | (Ablauf, `startNpcPlacing`, `placeNpcs`) | Vom angetippten Feld des Globus aus: Die NSC-Liste öffnet sich (ohne den Unterreiter oben) mit einem Kästchen an jedem NSC (wer schon auf dem Feld ist, ist angehakt), unten „Abbrechen“ und „OK“; seine Filter wie „Alle zeigen“ gelten weiter, so kommen auch NSC von anderen Welten oder ohne Ort dazu. „OK“ setzt die angehakten auf das Feld (bzw. in die Stadt darauf, `Character.place`); beides führt zurück zum Feld. Lange gedrückt öffnet es stattdessen „Neuer NSC“ nur mit den Laufbahnen (siehe *NSC aus einer Laufbahn*): Der erzeugte NSC lebt auf diesem Feld bzw. in dieser Stadt |
+| NSC-Liste | (`npcs`) | Die dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
+| NSC platzieren | (`startNpcPlacing`, `placeNpcs`) | Dauerhafte NSC auf ein Feld des Globus setzen (bzw. in die Stadt darauf, `Character.place`), auch NSC von anderen Welten oder ohne Ort; oder für das Feld einen neuen NSC aus einer Laufbahn erzeugen (siehe *NSC aus einer Laufbahn*) |
 | Mission | `Mission` | Ein Auftrag oder Ziel, das die Gruppe verfolgt, mit Titel, Text, Zustand, Auftraggeber und Orten (2026-11-18) |
 | Zustand einer Mission | `Mission.state`, `MissionState` | offen (`open`), erledigt (`done`), gescheitert (`failed`) (2026-11-18) |
 | Auftraggeber einer Mission | `Mission.client` | Der dauerhafte NSC, der die Mission vergeben hat; höchstens einer. Nicht zu verwechseln mit *Patron*, der Zeile der Patron-Liste (2026-11-18) |
@@ -877,7 +876,6 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Beteiligter | `MissionPerson` | Ein Charakter der Kampagne (NSC oder SC), der mit einer Mission verknüpft ist, mit Etikett, z. B. das Opfer eines Mordes oder der gestellte Fahrer; nicht der Auftraggeber (2026-11-18b) |
 | Handlungsfaden | offene `Mission`; `Card.thread`, `CardPick.thread` | Eine offene Mission, wie das Orakel sie sieht; bei einem Fadenfokus lost die Karte einen aus (2026-11-18) |
 | Fadenfokus | `EventFocus.thread` | Ein Ereignisfokus, der zu einem Handlungsfaden gehört: Auf einen Handlungsfaden zu, Von einem Handlungsfaden weg, Ein Handlungsfaden endet (2026-11-18) |
-| Bereich Missionen | (Bereich „Missionen“; Screen `missions`) | Der fünfte Bereich: oben die offenen Missionen, darunter eingeklappt die erledigten und gescheiterten (2026-11-18) |
 | Getragene Rüstung | `Character.wears` | Die Rüstung, die jemand gerade anhat; sie zählt, wenn er angegriffen wird |
 | Rüstungsklasse einer Rüstung | `Item.armor` | Wie eine Rüstung in der Matrix zählt, z. B. Vacc Suit als Cloth, Battle Dress als Combat |
 | Wunden | `/wounds`, `Wounds` | Wie viel STR, DEX und END jemand durch Treffer verloren hat |
@@ -915,10 +913,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Schadenswurf | `DamageRoll` | Der Wurf auf den Schaden eines Treffers, z. B. 3W6 = 11 |
 | Block | `DamageRoll.points`, `DamageRoll.to` | Ein Stück eines Schadenswürfels, das ganz auf ein Attribut geht; ein Würfel ist ein Block oder, wenn er ein Attribut auf 0 bringt, mehrere |
 | Überlauf | (Regel) | Was ein Würfel über 0 hinaus bringt, geht als neuer Block auf ein anderes Attribut über 0 (SR 21) |
-| Kampf | (Screen `combat`, im Bereich Begegnung unter „Kampf“) | Der Screen für Angriffe: ohne Begegnung die Waffentabelle, mit Begegnung die Kampfsimulation |
-| Bereich Begegnung | (Bereich „Begegnung“; Screens `encounter`, `combat`) | Oben ein Unterreiter zwischen Begegnung und *Kampf*. Unter Begegnung unten die Aktionsleiste mit den Würfen Zufall, Tiere, Patron, Gerücht, Polizei und darunter Tage vergehen und Woche beenden bzw. bei einer Fahrt Weiterfahren: die einzige Stelle, an der Zeit vergeht oder die Fahrt weitergeht (außer im Systemflug, wo je 24 Stunden ein Tag vergeht, 2026-11-18c). Jeder Wurf zeigt Test und Ergebnis im *Würfelbühne*. Das Blatt darüber hat nur Datum, laufende Fahrt, laufende Begegnung und die Einstellungen: Gelände, Würfel der Anzahl, wie viele Tage, die Haken „Manuell wählen“ und *NSC dazunehmen* |
-| NSC dazunehmen | (Ablauf, `startNpcJoining`) | Mit dem Haken „NSC dazunehmen“ öffnet Zufall erst die NSC-Liste zum Auswählen (wie *NSC platzieren*, nur NSC vom Aufenthaltsort); „OK“ nimmt sie zur Zufallsbegegnung dazu (`Encounter.joined`) und würfelt ohne Test, mit „Manuell wählen“ erst die Art |
-| Begegnungsart | (Karte im Bereich Begegnung) | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, Gerücht, später Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
+| NSC dazunehmen | (`startNpcJoining`) | Dauerhafte NSC vom Aufenthaltsort zur nächsten Zufallsbegegnung dazunehmen (`Encounter.joined`); sie würfelt dann ohne Test |
+| Begegnungsart | – | Eine Art von Begegnungen nach SE S. 20 mit ihren Einstellungen und ihrem Wurf: Zufallsbegegnung, Patron, Gerücht, später Gesetz, Tiere. Nicht zu verwechseln mit der *Art der Begegnung* (`EncounterType`), einer Zeile der Random Encounter List |
 | Zufallsbegegnung | (Begegnungsart) | Personen nach der Random Encounter List (S. 21); ergibt eine Begegnung (`Encounter`) |
 | Patron | `Patron` | Ein Auftraggeber nach seinem Beruf, z. B. „Smuggler“: eine Zeile einer der beiden Patron-Listen (SE, Charts S. 20) |
 | Patron-Liste | `Patron.list` | Liste eins oder Liste zwei der Patron Encounters Matrix, je 36 Zeilen von 11 bis 66 |
@@ -949,7 +945,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Feld der Karte | `Slot` | Aktion, Hören, Aussehen, Name, Auslöser, … |
 | Spalte | `Column` | Eine Liste von Einträgen in einem Feld; ein Feld hat eine oder zwei |
 | Klangart der Namen | (Felder der Tafel NSC) | Irdisch (Namen von der Erde) oder spacig (erfunden, fremd klingend) |
-| Name von der Karte | (Knopf „Karte“ neben einem Namensfeld) | Zeigt Vor- und Nachnamen von der Tafel NSC getrennt zur Wahl und schreibt den gewählten Namen ins Feld; kein Logeintrag |
+| Name von der Karte | – | Vor- und Nachnamen von der Tafel NSC getrennt zur Wahl für einen Namen; kein Logeintrag |
 | Paar | (zwei Einträge im `drawn` eines Feldes) | Was ein Feld mit zwei Spalten zieht: aus jeder Spalte einen Eintrag, z. B. „verraten · Technologie“ |
 | Eintrag | `Entry` | Ein möglicher Text eines Feldes, z. B. „Schulden begleichen.“ |
 | Charaktererschaffung | `Generation` | Ein Charakter, der gerade nach den Regeln entsteht; wird beim Abschluss zum `Character` |
@@ -979,7 +975,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Zugewinn | `Gain` | Eine Zeile einer Tabelle oder was ein Rang bringt: Fertigkeit, Attribut, Gegenstand, Waffe oder Geld |
 | Kaskade | `Cascade` | Ein Sammelbegriff, aus dem man eine Fertigkeit wählt: Blade Combat, Gun Combat, Vehicle |
 | Altern | `Aging` | Eine Zeile der Aging Table: ab welchem Term welches Attribut wie viel verlieren kann |
-| Subsektor | (`Campaign.hexes`) | Die Karte der Kampagne: 8 × 10 Hexfelder wie auf TAS Form 6; in der App der Bereich „Sektor“ |
+| Subsektor | (`Campaign.hexes`) | Die Karte der Kampagne: 8 × 10 Hexfelder wie auf TAS Form 6 |
 | Hexfeld | `Hex` | Ein erzeugtes Feld des Subsektors, benannt nach Spalte und Zeile, z. B. 0304 |
 | Nicht erzeugt | (kein `Hex`) | Ein Feld, für das noch nicht gewürfelt wurde; nur hier beginnt eine Weltenerschaffung |
 | Leer | `Hex.empty` | Ein erzeugtes Feld ohne Welt: Das Vorkommen hat keine ergeben |
@@ -1058,17 +1054,17 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Absicht | `SpaceUnit.intent`, `Intent` | Was ein fremdes Schiff will: angreifen, fliehen oder nichts (ignorieren); danach wählt die App seinen Schub (2026-11-21h) |
 | Gefeuert | `SpaceUnit.firedTurrets` | Die Hardpoints (`Ship.turrets`), die in dieser Raumrunde schon gefeuert haben; die Bewegung setzt sie leer – jeder Hardpoint feuert je Raumrunde einmal (2026-11-21i als `fired`, 2026-11-23a je Hardpoint) |
 | Andockflug | `SpaceUnit.docking` | Das Small Craft steuert in der nächsten Bewegung den Ort an, an dem sein Mutterschiff stehen wird, und dockt dort an; wer selbst einen Schub setzt, gibt ihn auf (2026-11-23c) |
-| Phase der Raumrunde | `SystemFlight.phase`, `BattlePhase` | Was das Blatt in der laufenden Raumrunde zeigt: `thrust` = Schub wählen, `fire` = feuern. Im Raumkampf rückt die Raumrunde erst mit „End Turn“ weiter; ohne Angabe die Schubphase (2026-11-23a) |
+| Phase der Raumrunde | `SystemFlight.phase`, `BattlePhase` | `thrust` = Schub wählen, `fire` = feuern. Im Raumkampf rückt die Raumrunde erst mit „End Turn“ weiter; ohne Angabe die Schubphase (2026-11-23a) |
 | Schaden am Schiff | `ShipDamage`, `Ship.damage`, `SpaceUnit.damage` | Die Treffer eines Schiffs in der Reihenfolge, in der sie kamen, und die ausgefallenen Turrets; am eigenen Schiff bleibt er bis zur Reparatur (2026-11-21h) |
 | Trefferzone | `HitZone` | Wohin ein Treffer geht (SE 12, *Hit Locations* und *Critical Hits*) (2026-11-21h) |
 | Ausgang | `SpaceBattleEnd.outcome`, `BattleOutcome` | Wie ein Raumkampf endete: zerstört, kampfunfähig, entkommen, abgebrochen, verloren (2026-11-21h); abgereist: das eigene Schiff ist aus dem Systemflug gesprungen oder im System weitergereist (2026-11-22b) |
-| Anlass | `SpaceBattle.occasion`, `EncounterOccasion` | Warum auf der Starship Encounter Table gewürfelt wurde: beim Start von der Welt (`departure`) oder bei der Ankunft (`arrival`); fehlt beim Knopf „Schiffsbegegnung“ (2026-11-22b) |
+| Anlass | `SpaceBattle.occasion`, `EncounterOccasion` | Warum auf der Starship Encounter Table gewürfelt wurde: beim Start von der Welt (`departure`) oder bei der Ankunft (`arrival`); fehlt bei der Schiffsbegegnung von Hand (2026-11-22b) |
 | Begegnungswurf | `Journey.departureRoll`, `arrivalRoll`, `SystemJourney.departureRoll`, `arrivalRoll` | Die 2W6 auf der Starship Encounter Table bei Abreise bzw. Ankunft, wenn kein Schiff kam; kam eines, stehen sie am `SpaceBattle` (2026-11-22b) |
 | Begegnungsprüfung | `EncounterCheck` (flüchtig) | Der Dialog vor dem Begegnungswurf bei Abreise oder Ankunft: Zielwert, „Würfeln“ und „Abbrechen“ (lang drücken lässt den Wurf ausfallen); danach, bei einer Sichtung, die Frage „Zur Raumkarte“ oder „Weiter“ (2026-11-22b) |
 | Unterwegs | `Voyage`, `Campaign.voyage` | Eine Reise, die begonnen hat und noch nicht angekommen ist; die Gruppe lässt ihre Tage mit „Weiterreisen“ selbst vergehen (2026-11-22c) |
 | Reisetage | `Voyage.days`, `/left` | Wie viele Tage der Reise schon vergangen sind bzw. noch fehlen (2026-11-22c) |
 | Sichtung | `EncounterCheck.sighting` | Ein fremdes Schiff, das die Gruppe bei Abreise oder Ankunft ignoriert (2026-11-22b) |
-| Weiterreise | `SpaceBattle.jumpTo`, `travelTo`, `SystemFlight.departure` | Die Reise, die beim Start von der Welt durch eine Begegnung unterbrochen wurde; der Knopf „Springen nach …“ bzw. „Reisen nach …“ im Systemflug setzt sie fort (2026-11-22b) |
+| Weiterreise | `SpaceBattle.jumpTo`, `travelTo`, `SystemFlight.departure` | Die Reise, die beim Start von der Welt durch eine Begegnung unterbrochen wurde; aus dem Systemflug geht sie weiter („Springen nach …“ bzw. „Reisen nach …“, 2026-11-22b) |
 | Turret | `Turret`, `Ship.turrets` | Ein Waffenturm auf einem Hardpoint des eigenen Schiffs, mit seinen Waffen; höchstens so viele, wie der Entwurf Hardpoints hat (2026-11-21g) |
 | Turmart | `TurretType` | Referenzdaten: Single, Double oder Triple Turret mit 1, 2 oder 3 Plätzen für Waffen und Preis (SE 10, 2026-11-21g) |
 | Schiffswaffe | `ShipWeapon` | Referenzdaten: Pulse Laser, Beam Laser, Missile Rack, Sandcaster mit Preis (SE 10, 2026-11-21g) |
@@ -1279,7 +1275,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   Stufen sind Referenzdaten: Hoch (75 %, 6+), Mittel (50 %, 8+), Gering (25 %, 10+), in dieser
   Reihenfolge, leicht links. Die Auswahl bleibt stehen, bis man sie ändert, auch über einen Neustart
   der App hinweg. Seit 2026-11-14d gilt sie nur für Proben; das Orakel steht auf der Karte, wo man
-  die Stufe je Frage antippt (siehe *Orakel auf der Karte*).
+  die Stufe je Frage wählt (siehe *Orakel auf der Karte*).
 - **Der Log verweist, er kopiert nicht.** Ein Logeintrag hält nur fest, was allein ihm gehört: Frage,
   Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei einer Probe DM und Zielwert (siehe
   *Orakel auf der Karte* und *Probe*). Alles andere ist ein
@@ -1294,7 +1290,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   ändert sich dadurch nicht, weil Chance bzw. DM und Zielwert festgehalten sind.
 - **Würfe stehen im Log, nicht nur ihr Ergebnis.** Gespeichert werden die einzelnen Würfel (`dice`,
   `oracle`); Summe, Antwort und Erfolg (`/total`, `/answer`, `/success`) folgen daraus.
-- **Orakel auf der Karte** (2026-11-14d). Ersetzt den Knopf „Ja/Nein“ mit der Stufe der Kampagne.
+- **Orakel auf der Karte** (2026-11-14d). Ersetzt die Ja/Nein-Frage mit der Stufe der Kampagne.
   - Jede `Card` würfelt beim Ziehen einmal 1 bis 100 (`oracle`). Das **Orakelfeld** der Karte zeigt
     daraus die Antwort für alle drei Stufen nebeneinander, wie die *Likely Odds* des GMA. Weil es
     ein Wurf ist, widersprechen sich die Stufen nie: Sagt Gering Ja, sagen es auch Mittel und Hoch.
@@ -1468,7 +1464,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   Ältere Spielstände bekommen die Waffe in der Hand als Primärwaffe.
 - **Waffe in der Hand.** Jeder Charakter führt gerade höchstens eine Waffe (`wields`); keine heißt:
   Hände. Infrage kommen nur seine Primär- und seine Sekundärwaffe. Sie wird gespeichert,
-  übersteht also einen Neustart und steht in der Kampagnendatei. Im Kampf wechselt man zwischen
+  übersteht also einen Neustart und steht in der Kampagnendatei. Gewechselt wird zwischen
   Primärwaffe, Sekundärwaffe und Händen. Ist die Waffe in der Hand nach einer Änderung im Editor
   oder einem Verkauf keine der beiden mehr, nimmt der Charakter seine Primärwaffe in die Hand; hat
   er keine, die Hände.
@@ -1494,18 +1490,13 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   - *Attribut*: STR bzw. DEX des Angreifers unter dem nötigen Wert gibt `requiredDm`, ab dem
     vorteilhaften Wert `advantageousDm`, dazwischen ±0. Das ist nicht die Hausregel ±1 der Probe;
     die Hausregeln und die gewählte Stufe (`odds`) zählen beim Angriff nicht.
-  - Angriffe würfelt man im **Kampf** (Bereich Begegnung, Unterreiter oben). Oben steht dort dieselbe Charakterleiste wie im Orakel-Screen,
-    mit dem Charakter oben; Wischen wählt den Charakter, für den man angreift. Dort ist sie
-    kompakt: die Attribute als schmale Zeile wie bei den NSC (mit Wunden), statt der Fertigkeiten
-    in einer Zeile die Waffen, also Primärwaffe, Sekundärwaffe und Hände, die Waffe in der Hand
-    hervorgehoben mit ihrer Fertigkeit; antippen wechselt sie.
   - Der Angriff in Vorbereitung ist ein `Attack`, flüchtig im Paket `draft` wie die Probe. Er gilt
     immer dem Charakter oben (`/for`) und seiner Waffe in der Hand (`/with`). Man wählt Rüstung
     und Reichweite des Ziels; erst mit beiden gibt es DM, nötigen Wurf (8 − DM) und Chance, exakt
     aus den 36 Kombinationen. Wechselt der Charakter oben, endet der Angriff; wechselt die Waffe in
     der Hand, bleiben Rüstung und Reichweite, außer die Reichweite geht mit der neuen Waffe nicht.
-  - Die Ansicht zeigt dazu die klassische Tabelle der Waffe: Rüstung × Reichweite, in jeder Zelle
-    der nötige Wurf mit allen DMs des Charakters; eine Zelle antippen wählt Rüstung und Reichweite.
+  - Die **Waffentabelle** ist die klassische Tabelle der Waffe: Rüstung × Reichweite, in jeder Zelle
+    der nötige Wurf mit allen DMs des Charakters; eine Zelle steht für Rüstung und Reichweite.
   - Gewürfelt wird ein Angriff als `AttackResult` in den Log übernommen. Es verweist auf
     Charakter (`for`), Waffe und, wenn er sie hat, seine Fertigkeitsstufe darin; es hält Rüstung,
     Reichweite, die zwei Würfel sowie DM und Zielwert fest. Der Erfolg (`/success`: Würfel + `dm` ≥
@@ -1571,11 +1562,10 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Waffe (`burst`) und daraus, dass die Garbe mehr als einen Wurf hat; ein Einzelschuss ist immer
     ein einzelner Wurf.
   - **Schaden**: Jeder Treffer der Garbe bekommt seinen eigenen Schadenswurf, wie bisher; der
-    Kampf bietet sie für die Treffer der neuesten Garbe der Reihe nach an. Wunden wirken erst
+    Schaden kommt für die Treffer der neuesten Garbe der Reihe nach. Wunden wirken erst
     nach dem Würfeln aller Würfe: Wer durch den ersten Treffer bewusstlos wird, bleibt Ziel des
     zweiten.
-  - **Im Log** steht die Garbe in einem Kasten, die Würfe untereinander, Nachbarn als solche
-    gekennzeichnet. Einen Wurf der Garbe löschen löscht die ganze Garbe mit ihren Schadenswürfen und
+  - **Im Log** ist die Garbe eine Einheit; Nachbarn sind als solche gekennzeichnet. Einen Wurf der Garbe löschen löscht die ganze Garbe mit ihren Schadenswürfen und
     Deutungen. In der Kampagnendatei muss `volley` auf einen früheren ersten Wurf derselben Datei
     verweisen, mit demselben Angreifer und derselben Waffe, und eine Garbe darf höchstens
     2 + `neighbours` Würfe haben.
@@ -1602,34 +1592,25 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     begonnen.
   - *Tag im Log*: Jeder neue Logeintrag hält den Spieltag fest, an dem er entsteht (`LogEntry.day`).
     Der Log zeigt beim ersten Eintrag eines neuen Tages das Datum als Trenner.
-- **Zeit vergehen lassen** (2026-11-13d). Oben im Bereich Begegnung stehen das Datum und zwei
-  Knöpfe: **Tage** (man wählt 1 bis 6 Tage) und **Woche beenden** (springt zum nächsten Sonntag; am
-  Sonntag sieben Tage weiter). Beides ist ein Logeintrag `TimePassed` mit der Zahl der Tage und ob
+- **Zeit vergehen lassen** (2026-11-13d). Zeit vergeht auf zwei Arten: **Tage** (1 bis 6 Tage)
+  und **Woche beenden** (bis zum nächsten Sonntag; am Sonntag sieben Tage weiter). Beides ist ein Logeintrag `TimePassed` mit der Zahl der Tage und ob
   es die Woche beendet hat; `Campaign.day` wächst um die Tage. Während einer laufenden Begegnung
   vergeht keine Zeit.
   - *Erinnerung* (am 14. November 2026 auf Wunsch des Owners geändert): **Tage** vergehen ohne
     Erinnerung. Nur **Woche beenden** sagt einmal, was diese Woche fehlt, statt gleich
     weiterzuschalten: bei Gesetz 1 oder mehr die Polizei, wenn sie diese Woche nicht getestet ist;
     die Zufallsbegegnung und, wenn das Gelände Tiere hat, die Tiere, wenn sie diese
-    Woche gar nicht getestet sind. **Langes Drücken** schaltet trotzdem weiter, ohne Begegnung: je
+    Woche gar nicht getestet sind. Man kann trotzdem weiterschalten, ohne Begegnung: je
     nach Lage will man mehr oder weniger Begegnungen. An Patron und Gerücht erinnert nichts: Die
     will man haben, man würfelt sie von selbst. Die Tests würfelt die Zeit nie selbst. Die
-    Testknöpfe zählen weiter je Tag bzw. Woche (siehe *Test*).
-  - **Ein Tag in der Aktionsleiste des Logs** (Owner, 22. November 2026: „den einen Tag vergehen lassen Knopf
-    könnten wir grundsätzlich auch noch in dem Log unterbringen. Da würde er den Deuten-Knopf
-    ersetzen … Damit kann ich dann die Reise in dem Oracle-Log-Bildschirm durchführen und muss nicht
-    immer wechseln, was auch für Landreisen gut ist“). Die Aktionsleiste unter dem Log heißt jetzt **Notiz,
-    Tag, 2W6, Karte**: Der Knopf „Deuten“ entfällt dort (gedeutet wird am Ergebnis selbst, siehe
-    *Deutungen und Notizen*), an seiner Stelle steht ein Knopf für **einen Tag**, je nach Lage:
-    **„Weiterfahren“** während einer *Fahrt*, **„Weiterreisen“** während einer Reise *unterwegs*,
-    sonst **„1 Tag“** (wie „1 Tag vergehen“ im Bereich Begegnung). Er tut genau dasselbe wie der Knopf
-    im Bereich Begegnung, mit denselben Sperren (etwa während einer laufenden Begegnung); gesperrt sagt
-    er, warum. Die Würfelbühne der Fahrt (Pflicht-Test am Boden) geht wie dort über der App auf.
-    Die Aktionsleiste steht auch im Feld des Globus; dort gilt dasselbe.
+    Tests zählen weiter je Tag bzw. Woche (siehe *Test*).
+  - **Ein Tag** (Owner, 22. November 2026): Ein Tag vergehen lassen geht auch aus dem Log, ohne den
+    Bereich zu wechseln, etwa für Reisen. Während einer *Fahrt* ist es **Weiterfahren**, während
+    einer Reise *unterwegs* **Weiterreisen**, sonst **1 Tag**; es gelten dieselben Sperren (etwa
+    während einer laufenden Begegnung).
 - **Reise** (2026-11-13d). Die Gruppe reist mit **Passagen** (High, Middle, Low; SE S. 8 f.) oder
-  mit dem **eigenen Schiff** (2026-11-16d, siehe *Eigenes Schiff*); der Reisedialog
-  bietet, was verfügbar ist.
-  - *Wohin*: Auf der Weltkarte einer anderen fertigen Welt steht **Hierher reisen**, wenn die Gruppe
+  mit dem **eigenen Schiff** (2026-11-16d, siehe *Eigenes Schiff*), je nachdem, was verfügbar ist.
+  - *Wohin*: Zu einer anderen fertigen Welt reist die Gruppe, wenn sie
     einen Aufenthaltsort hat, beide Welten einen Raumhafen A bis E haben und das Ziel höchstens
     **2 Parsec** entfernt ist (Sprung 2). Weiter geht es nur über Zwischenhalte, je Halt eine Reise.
     Mit eigenem Schiff gilt diese Grenze nicht (siehe *Eigenes Schiff*).
@@ -1648,7 +1629,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Tests, weder vor der Abreise noch für die Tage im Sprung, und würfelt keine. Wer unterwegs eine
     Begegnung will, würfelt sie wie sonst von Hand.
   - *Eigenes Schiff* (2026-11-16d). Hat die Gruppe ein Schiff, kann sie in diesem
-    reisen: Sie wählt im Reisedialog „Eigenes Schiff“ statt Passagen.
+    reisen statt mit Passagen.
     - *Wohin*: Das Ziel liegt höchstens so viele Parsec entfernt, wie der Entwurf Sprung kann
       (`ShipDesign.jump`). Raumhäfen sind beide keiner nötig – das Schiff landet überall. Es
       reisen alle lebenden Charaktere mit; niemand kauft eine Passage, niemand liegt in
@@ -1673,8 +1654,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     - Kommen später: zahlende Passagiere und Fracht.
   - *Reise im System* (freigegeben am 20. November 2026, 2026-11-20d; Owner, 20. November 2026). Zwischen Welten
     desselben Systems (SE S. 27, Charts S. 8).
-    - *Wohin*: Auf der Weltkarte jeder anderen Welt des Systems, in dem die Gruppe ist, steht
-      **Hierher reisen**; es öffnet den Reisedialog wie beim Sprung. Ziele sind Welten, kleine
+    - *Wohin*: Zu jeder anderen Welt des Systems, in dem die Gruppe ist, wie beim Sprung. Ziele sind Welten, kleine
       Welten, Gürtel und Monde, keine Gasriesen und Ringe. Nicht während einer laufenden Begegnung,
       einer Fahrt oder eines Systemflugs.
     - *Entfernung* (`/distance`, Owner: Abstand der Bahnen): Zwischen zwei Welten um den Stern der
@@ -1699,21 +1679,21 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   - *Landeplatz* (freigegeben am 21. November 2026, 2026-11-21; Owner, 21. November 2026: „egal wie ich auf eine
     Welt komme, ich muss immer zuerst ein Feld für die Landung auswählen“).
     - *Wann*: Ist die Gruppe auf einer Welt mit Globus, aber ohne Feld und ohne Stadt (nach einer
-      Reise, einer Reise im System, einer Landung aus dem Systemflug oder „Gruppe platzieren“), geht
-      zuerst der Dialog **Landeplatz** auf; vorher geht nichts anderes. Welten ohne Globus
+      Reise, einer Reise im System, einer Landung aus dem Systemflug oder „Gruppe platzieren“), wählt
+      sie zuerst ihren **Landeplatz**; vorher geht nichts anderes. Welten ohne Globus
       (Asteroidengürtel) haben keine Felder: Dort ist die Gruppe einfach auf der Welt.
-    - *Was*: Der Dialog bietet jede Stadt der Welt mit Hafen an (A–E Starport, F–H Spaceport, Owner:
-      alle Häfen) und, wenn die Gruppe mit dem eigenen Schiff kam, **Anderer Ort**: Dann tippt man
-      auf dem Globus ein Feld an und bestätigt. ⚑ Hat eine Welt keine Stadt mit Hafen (selten, etwa
-      dünn besiedelt), bietet der Dialog auch ohne eigenes Schiff „Anderer Ort“ an.
+    - *Was*: Infrage kommt jede Stadt der Welt mit Hafen (A–E Starport, F–H Spaceport, Owner:
+      alle Häfen) und, wenn die Gruppe mit dem eigenen Schiff kam, **ein anderer Ort**: ein beliebiges
+      Feld des Globus. ⚑ Hat eine Welt keine Stadt mit Hafen (selten, etwa dünn besiedelt), geht ein
+      anderer Ort auch ohne eigenes Schiff.
     - *Folge*: Die Gruppe steht in dieser Stadt bzw. auf diesem Feld (`Campaign.location`). Kam sie mit
       dem eigenen Schiff (Reise mit eigenem Schiff, Reise im System mit eigenem Schiff, Landung aus
       dem Systemflug), steht auch das Schiff dort (`Ship.place`).
     - *Abflug mit eigenem Schiff* (Sprung, Reise im System, Systemflug beginnen) geht nur, wenn die
       Gruppe beim Schiff ist: auf seiner Welt und, hat es ein Feld oder eine Stadt, dort. Das Schiff
-      steht auf dem Globus mit einem eigenen Zeichen.
+
     - *Abflug mit Passage oder Ticket* geht nur aus einer Stadt mit Hafen, nicht „aus der Pampa“; am
-      Ziel landet das fremde Schiff an einem Hafen (der Dialog bietet dann nur Häfen an).
+      Ziel landet das fremde Schiff an einem Hafen (als Landeplatz kommen dann nur Häfen infrage).
     - *Schiffe ohne Ort* (alte Stände, gerade gekauft): Sie stehen dort, wo die Gruppe ist, bis die
       Gruppe ihren nächsten Landeplatz wählt; dann steht das Schiff dort, ohne neue Liegegebühr bei
       der Ankunft (es lag schon auf dieser Welt).
@@ -1742,9 +1722,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     genau einer). Der Tag bleibt, und die Gruppe ist **an keinem Ort** (Owner): `Campaign.location`
     fehlt, bis sie ankommt. Das eigene Schiff, mit dem sie reist, hat keinen Ort (es ist bei der Gruppe),
     ein zurückgelassenes bleibt, wo es steht. Es gibt höchstens eine Reise unterwegs.
-  - **Weiterreisen** (Owner: wie bei der Fahrt). Unten im Bereich Begegnung steht statt „Tage vergehen“
-    der Knopf **„Weiterreisen“**, ebenso in der Aktionsleiste unter dem Log (siehe *Ein Tag in der Aktionsleiste des
-    Logs*): Er lässt **einen Tag** vergehen, genau wie „1 Tag vergehen“, mit
+  - **Weiterreisen** (Owner: wie bei der Fahrt). Unterwegs tritt **Weiterreisen** an die Stelle von
+    „Tage vergehen“ (siehe *Ein Tag*): Es lässt **einen Tag** vergehen, genau wie „1 Tag vergehen“, mit
     allem, was daran hängt (Logeintrag, laufende Kosten, Monatsende), und zählt `days` um eins hoch.
     `/left` = Dauer − `days`. Wie bisher gibt es unterwegs **keine Pflicht-Begegnungen**: Die Reise
     erinnert nicht an fehlende Tests. ⚑ „Woche beenden“ ist unterwegs gesperrt (die Woche endet mit
@@ -1754,8 +1733,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     dort an (Liegegebühr ab dem Ankunftstag). Erst jetzt wirkt der **Kälteschlaf** (Owner: Aufwachwurf
     und Lotterie bei der Ankunft): Wer nicht aufwacht, ist tot, und der Lotteriegewinn wird gebucht. ⚑
     Gewürfelt wird beides weiter beim Abflug (die Würfel stehen an der Reise, damit ein Neustart nichts
-    neu würfelt), gezeigt wird es erst bei der Ankunft: Der Dialog der Reise zeigt beim Abflug nur
-    Ziel, Dauer und Sprungwurf, bei der Ankunft Kälteschlaf und Lotterie. Danach folgt mit eigenem
+    neu würfelt), bekannt wird es erst bei der Ankunft: beim Abflug nur Ziel, Dauer und Sprungwurf,
+    bei der Ankunft Kälteschlaf und Lotterie. Danach folgt mit eigenem
     Schiff die Begegnungsprüfung der Ankunft (siehe *Schiffsbegegnungen bei Abreise und Ankunft*).
   - **Unterwegs möglich** (Owner: Begegnungen an Bord): die Würfe im Bereich Begegnung, die keinen Ort
     brauchen (Zufallsbegegnung, Patron, Gerücht), von Hand; ⚑ eine Zufallsbegegnung an Bord nimmt TL
@@ -1804,11 +1783,9 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     (eine Gegenbuchung mit dem umgekehrten Betrag).
   - Die Kampagnendatei enthält Aufenthaltsort und Buchungen; beim Import muss jede Buchung zu ihrer
     Art passen und die Kasse nach keiner Buchung negativ sein.
-- **Shop.** Im *Shop* kauft die Gruppe auf ihrem Aufenthaltsort ein, aus der Gruppenkasse. Er hat keinen
-  eigenen Bereich: „Einkaufen“ am angetippten Feld einer **Stadt** auf der Welt der Gruppe öffnet ihn (2026-11-17; auf
-  einem Feld ohne Stadt ist der Knopf ausgegraut);
-  Buchungen und Kassenbuch stehen unter *Kasse* im Bereich Charaktere. Das Angebot steht in den
-  Bereichen Waffen, Rüstung, Fahrzeuge, Sonstiges (Ausrüstung, Passagen); dazu Verkauf. Das ist reine Anzeige.
+- **Shop.** Im *Shop* kauft die Gruppe auf ihrem Aufenthaltsort ein, aus der Gruppenkasse,
+  und zwar nur in einer **Stadt** auf der Welt der Gruppe (2026-11-17). Das Angebot ist gegliedert in
+  Waffen, Rüstung, Fahrzeuge, Sonstiges (Ausrüstung, Passagen); dazu Verkauf.
   - **Angebot** (`/offer`): jeder Gegenstand aus der Liste mit Preis, dessen TL höchstens der TL der
     Welt ist (S. 23: „TL is the minimum technological level at which the item is available“), ohne
     Schiffe und Mitgliedschaften. Auch Waffen, die auf der Welt verboten sind, kann man kaufen, aber
@@ -1907,9 +1884,6 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     echte 2 oder 12 bleibt, sonst begrenzt auf 3 bis 12 (S. 21). Der DM wird beim Würfeln festgehalten,
     damit ein späterer Tod oder Ausblenden ihn nicht rückwirkend ändert; fehlt er (Begegnungen von
     vorher), gilt der DM der Welt. Der Text (`/reactionText`) kommt aus der Tabelle.
-  - *Zeigen*: Nach dem Würfeln zeigt die App die Begegnung, bevor der Kampf beginnt: wer kommt (jeder
-    NSC mit Waffe, Rüstung, Anführer), und die Würfe für Reaktion und Entfernung, jeder mit Würfeln,
-    DM und Ergebnis. Das ist Anzeige; gespeichert ist es schon.
   - Es gibt höchstens **eine laufende Begegnung**. Sie bleibt gespeichert, bis man sie beendet
     (`ended`); beendete Begegnungen bleiben in der Kampagne, weil der Log auf ihre NSC verweist,
     und werden nicht mehr gezeigt. Eine Begegnung, auf die der Log nicht verweist, wird beim Beenden
@@ -1937,9 +1911,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
       **Übernehmen** gilt nur für die gewürfelten NSC; ein dazugenommener ist schon in der Kampagne.
     - *Beenden*: Das Beenden löst nur den Verweis; der NSC bleibt, wie er ist. Ein NSC, auf den eine
       laufende Begegnung verweist, kann nicht zum SC gemacht werden, solange sie läuft.
-    - *NSC-Liste*: Am dauerhaften NSC (vom Aufenthaltsort) springt **„In Begegnung“** in den Bereich
-      Begegnung und wählt ihn in der Karte Zufallsbegegnung schon vor. Läuft eine Begegnung, gibt es
-      den Knopf nicht (höchstens eine laufende Begegnung).
+    - Ein dauerhafter NSC vom Aufenthaltsort lässt sich so für die nächste Zufallsbegegnung
+      vormerken; nicht, solange eine Begegnung läuft (höchstens eine laufende Begegnung).
 - **Test.** Jede Begegnungsart beginnt mit ihrem **Test** nach der Encounter Checklist (SE, Charts
   S. 20): Zufallsbegegnung täglich 5+ auf 1W6, Patron wöchentlich 5+ auf 1W6, Gerücht wöchentlich
   7+ auf 2W6. Besteht er nicht, gibt es nichts, und die Karte sagt das („Test 3 (5+ nötig): diese
@@ -1955,11 +1928,9 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Scouts oder Marines, −1 bei Bevölkerung 9 oder mehr; `/reaction` 2 bis 12). Eine schlechte
     Reaktion heißt mehr Ärger, eine gute vielleicht ein Gerücht, Helfer oder Patron (SE S. 20); was
     folgt, entscheidet der Spieler. Bei Gesetz 0 gibt es keine Polizei-Begegnung, der Test entfällt.
-  - *Wie oft schon*: Der Knopf jeder Art sagt, wie oft ihr Test in seinem Zeitraum schon gewürfelt
-    ist: Zufallsbegegnung „heute 1×“, Tiere „heute 1×“, Patron, Gerücht und Polizei „diese Woche
-    1×“. Ist die Regel schon erfüllt (Zufallsbegegnung 1× am Tag, Tiere 2× am Tag, Patron, Gerücht
-    und Polizei 1× in der Woche), würfelt der Knopf erst auf **langes Drücken**: Mehr Begegnungen gehen, aber mit
-    Absicht. Die Zeit vergeht dadurch nicht; Zeit und Begegnungen bleiben getrennt.
+  - *Wie oft schon*: Gezählt wird, wie oft der Test jeder Art in seinem Zeitraum schon gewürfelt ist
+    (heute bzw. diese Woche). Ist die Regel schon erfüllt (Zufallsbegegnung 1× am Tag, Tiere 2× am
+    Tag, Patron, Gerücht und Polizei 1× in der Woche), gehen mehr Begegnungen, aber nur mit Absicht. Die Zeit vergeht dadurch nicht; Zeit und Begegnungen bleiben getrennt.
 - **Patron.** Im Bereich Begegnung ist der **Patron** eine eigene Begegnungsart. Nach dem Test wählt
   ein Würfel die Liste (Hausregel; die Regeln lassen die Spielleitung wählen): 1W6, 1 bis 3 Liste
   eins, 4 bis 6 Liste zwei; der Würfel wird nicht gespeichert, die Liste schon. Das Ergebnis ist ein Logeintrag
@@ -1981,14 +1952,13 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   - *Deuten*: Der Patron-Wurf ist ein Ergebnis und lässt sich deuten, z. B. mit dem Auftrag, den
     der Patron vergibt. Die Regeln geben keine Tabelle für Aufträge; die legt die Spielleitung fest.
     Festhalten lässt sich der Auftrag als Mission („Als Mission“, 2026-11-18, siehe *Missionen*).
-- **Gelände.** Es gibt ein Gelände für alle Begegnungsarten: Man wählt es oben im Bereich Begegnung
-  neben dem Aufenthaltsort, und es bleibt an der Kampagne (`Campaign.terrain`), bis man es ändert;
+- **Gelände.** Es gibt ein Gelände für alle Begegnungsarten: Man wählt es, und es bleibt an der Kampagne (`Campaign.terrain`), bis man es ändert;
   fehlt es, gilt ±0 und es gibt keine Tiere. Jede Begegnung hält das Gelände fest, mit dem sie
   gewürfelt wurde (`Encounter.terrain`).
   - **Vorbelegt aus dem Aufenthaltsort** (freigegeben am 15. November 2026, 2026-11-15b): Kommt die Gruppe auf ein Feld oder
     in eine Stadt (Gruppe hierher setzen, jeder Reisetag einer Fahrt, Ankunft), setzt die App das
     Gelände neu: in einer Haupt- oder Nebenstadt City, sonst das Gelände der Geländeart des Feldes
-    (`Landform.terrain`). Danach kann man es oben im Bereich Begegnung wie bisher ändern, etwa auf
+    (`Landform.terrain`). Danach kann man es wie bisher ändern, etwa auf
     River am Fluss oder Ruins; es gilt bis zum nächsten Ortswechsel. Ohne Feld (nur die Welt, nach
     einer Reise zwischen Welten, eine Orbitalstadt) bleibt das Gelände, wie es ist.
   - **Die Zuordnung** (Hausregel, Owner 15. November 2026):
@@ -2047,7 +2017,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     `fleeDice`). `/behavior`: Greift die Tierart zuerst an, gilt der Angriffswurf gegen A, sonst der
     Fluchtwurf gegen F; Pflanzenfresser prüfen umgekehrt (`AnimalType.fleesFirst`); trifft keiner,
     tun die Tiere nichts. Steht bei der Tierart ein Wort statt einer Zahl („if possible“, „if
-    surprise“, „if surprised“, „if more“), zeigt die App das Wort; ob es zutrifft, entscheidet man
+    surprise“, „if surprised“, „if more“), gilt das Wort; ob es zutrifft, entscheidet man
     selbst. Das Verhalten ist wie die Reaktion eine Auskunft: Die App erzwingt es nicht.
   - *Tiere im Kampf*: Jedes Tier der Begegnung ist ein Charakter (`Encounter.npcs`) wie jeder NSC,
     mit dem Namen der Tierart und einer Nummer, und verweist auf seine Zeile (`Character.animal`).
@@ -2147,18 +2117,6 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
       Rechenbeispiel über 4000 Tabellen: typisch rund 90 Cr Fell und 80 Cr Fleisch je Begegnung
       (Listenpreis), große Herden mehrere tausend; wie viel die Gruppe mitnehmen kann, entscheidet
       man selbst.
-  - *Zeigen*: Ausweiden ist wie Angriff und Überraschung ein Ereignis mit Würfelanimation im
-    Vordergrund, Schritt für Schritt:
-    1. Das Tier mit Gewicht und ob die Art essbar ist (bei „ungenießbar“ gleich der Grund:
-       Atmosphäre, Giftwaffe oder Wurf).
-    2. Der Fleischwürfel rollt; daneben der DM mit dem, der ihn gibt („Jonas · Steward-1 +1“),
-       dann die Summe (höchstens 6) und die Menge in kg.
-    3. Das Fell: wer abzieht und mit welcher Klinge („Kira · Dagger-0: halbes Fell“), die Menge in kg.
-    4. Der Wert: Marktwurf, Jagd-DM des Geländes, Gefahr-DM und Seltenheit je einzeln mit Namen
-       („Mountain +2“, „Carnivore +3“, „Zeile 11 +2“), Fell- und Fleischwert, Preis je kg und der
-       Gesamtwert der Beute in Cr (Listenpreis, dazu der Verkaufspreis).
-    Ein Tippen überspringt die Animation. Ebenso zeigt „Beute nehmen“ bei einem NSC, was er bei sich
-    hat (Gegenstände mit Verkaufspreis, Kredite), bevor man es nimmt.
   - *Tierbeute in älteren Tabellen*: Zeilen ohne Marktwurf oder ohne `edible` bekommen beides
     beim ersten Ausweiden einer Tierart dieser Zeile, gewürfelt wie beim Erzeugen.
 - **Gerücht.** Eine weitere Begegnungsart im Bereich Begegnung.
@@ -2176,7 +2134,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 - **NSC.** Ein NSC der Begegnung ist ein vollständiger Charakter, derselben Klasse wie die SC.
   Er hängt an seiner Begegnung (`Encounter.npcs`), nicht an der Kampagne: Jeder Charakter gehört
   genau einer Kampagne (`characters`) oder genau einer Begegnung (`npcs`), nie beiden. Die NSC einer
-  Begegnung stehen nicht im Charakter-Screen, nicht in der Charakterleiste, nicht im Shop, und der
+  Begegnung gehören nicht zu den SC (kein Kauf, keine Probe), und der
   Charakter oben (`focus`) ist nie einer von ihnen. Für Angriff, Wunden, Heilung, Ausdauer, Parade
   und Zug gelten für SC und NSC dieselben Regeln; wo eine Regel sie unterscheidet, sagt sie es (SC
   heißt: Charakter der Kampagne; NSC: Charakter der Begegnung).
@@ -2187,9 +2145,9 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     nicht mehr auf ihrer Seite. Weil er derselbe Charakter bleibt, verweist der Log weiter auf ihn,
     und er behält seine **Wunden** aus dem Kampf (bisher kam der Übernommene unverwundet); heilen
     lässt er sich wie jeder Charakter.
-  - **Dauerhafte NSC** (`Character` mit `npc`) stehen nur in der **NSC-Liste** (2026-11-14, seit 2026-11-17
-    im Bereich Charaktere unter „NSC“, nicht unter den SC), nicht in der Charakterleiste, nicht unter den SC im Shop, und lassen
-    sich im Editor zum SC machen und umgekehrt. Proben und Angriffe würfelt man für SC.
+  - **Dauerhafte NSC** (`Character` mit `npc`) stehen nur in der **NSC-Liste** (2026-11-14), nicht
+    unter den SC, sind nie Charakter oben und kaufen nicht ein; sie lassen sich zum SC machen und
+    umgekehrt. Proben und Angriffe würfelt man für SC.
   - **Ort eines NSC** (2026-11-14). Ein dauerhafter NSC lebt auf höchstens einer Welt (`place`),
     einer fertigen Welt des Subsektors. Er bekommt den Aufenthaltsort, wenn er entsteht oder
     übernommen wird (dann mit der Rolle „Begegnung“); im Editor lässt er sich ändern oder leeren (ein NSC, der mit der Gruppe reist,
@@ -2213,8 +2171,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     in jeder Gruppe nach Namen. **„Alle zeigen“** hebt den Filter auf: Dann stehen alle dauerhaften
     NSC **nach Welt gruppiert** (nach dem Namen der Welt, die NSC ohne Ort als eigene Gruppe am
     Ende), darin **nach Rolle** und darin **nach Namen**. Ohne Aufenthaltsort zeigt er alle so.
-    Die Wahl ist Anzeige und wird nicht gespeichert; beim Öffnen gilt wieder der Filter. Antippen
-    öffnet den Editor wie im Charakter-Screen. Tote und Ausgeschiedene stehen eingeklappt darunter.
+    Die Wahl wird nicht gespeichert. Tote und Ausgeschiedene stehen für sich.
   - **Patron als NSC** (2026-11-14, Laufbahn 2026-11-14b). Zu einem Patron-Wurf, der einen Patron
     ergibt (keine Rumor-Zeile), erzeugt **„Als NSC“** einen zufälligen dauerhaften NSC **in der
     Laufbahn seines Patrons** (`Patron.career`): Die Charaktererschaffung läuft für ihn zufällig
@@ -2239,24 +2196,21 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
       Zuordnung in [`patron-nsc.md`](patron-nsc.md)); ein Beruf, der mehrfach vorkommt, hat
       überall dieselbe. Die Rumor-Zeilen haben keine. Zur Wahl stehen alle achtzehn Laufbahnen
       (2026-11-24e, ergänzt 2026-11-25a).
-  - **NSC aus einer Laufbahn** (2026-11-14c). „+ Neuer NSC“ in der NSC-Liste fragt zuerst nach der
-    **Rolle** und bietet dann an: leer anlegen (Editor wie bisher) oder **aus einer Laufbahn
-    erzeugen**. Erzeugt wird wie beim Patron-NSC, nur in der gewählten Laufbahn: Die
-    Charaktererschaffung läuft zufällig und ohne Animation durch (abgelehnt, ohne
+  - **NSC aus einer Laufbahn** (2026-11-14c). Ein neuer NSC bekommt zuerst eine **Rolle**; dann legt
+    man ihn leer an oder **erzeugt ihn aus einer Laufbahn**. Erzeugt wird wie beim Patron-NSC, nur in der gewählten Laufbahn: Die
+    Charaktererschaffung läuft zufällig durch (abgelehnt, ohne
     `needs`-Qualifikation oder tot: von vorn – beim Adligen also, solange der Stand unter 10 bleibt,
     2026-11-24e),
-    Name von der Tafel NSC, Ort der Aufenthaltsort, danach öffnet der Editor zum Nachbessern. Ohne
-    Aufenthaltsort geht es nicht. Er hat keinen Patron. **Dienstalter** (2026-11-24f): Über der Liste
-    der Laufbahnen steht das Feld „Dienstalter“ (Auswahl: „So lange er kann“ oder
-    1 bis 7 Terms, ohne eigene Schnellwahl daneben) – leer wählt der Lauf,
+    Name von der Tafel NSC, Ort der Aufenthaltsort; danach lässt er sich nachbessern. Ohne
+    Aufenthaltsort geht es nicht. Er hat keinen Patron. **Dienstalter** (2026-11-24f): „So lange er
+    kann“ oder 1 bis 7 Terms – leer wählt der Lauf,
     wie lange er kommt (er will bleiben, so lange es geht, wie beim Patron-NSC), gesetzt würfelt
     er genau so viele Terms ohne Überleben und ohne Weiterverpflichtung, und nichts kann ihn
-    töten. Das Feld steht in beiden Dialogen. Lange auf „NSC platzieren“ am angetippten
-    Feld des Globus gedrückt (2026-11-17), lebt er stattdessen auf diesem Feld bzw. in der Stadt
-    darauf (`Character.place` mit `cell` bzw. `city`) und bewaffnet sich nach dem Gesetz dieser Welt;
-    dann geht es auch ohne Aufenthaltsort, und „leer anlegen“ gibt es dort nicht.
+    töten. Wird er für ein Feld des Globus erzeugt (2026-11-17), lebt er stattdessen auf diesem Feld
+    bzw. in der Stadt darauf (`Character.place` mit `cell` bzw. `city`) und bewaffnet sich nach dem
+    Gesetz dieser Welt; dann geht es auch ohne Aufenthaltsort, und leer anlegen gibt es dort nicht.
   - **Der Lauf eines NSC** (2026-11-24f). Was Patron-NSC und erzeugte NSC gemeinsam haben: Die
-    Erschaffung läuft zufällig und ohne Animation in der vorgegebenen Laufbahn, bis zum Namen.
+    Erschaffung läuft zufällig in der vorgegebenen Laufbahn, bis zum Namen.
     Der Spieler ist nie ein Schritt davon; der Würfel dahinter ist `runCareerIn`. Er
     **will bleiben, so lange es geht** – die Weiterverpflichtung wird immer mit *will bleiben*
     gewürfelt. Mit **Dienstalter** (`termsGoal`, 1 bis 7) entfallen Überleben und
@@ -2265,10 +2219,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Krise, steht das Attribut auf 1 und der nächste Term beginnt. Ohne Dienstalter bleibt die
     Regel: Er überlebt oder nicht; verworfen und von vorn wird der Lauf, wenn er abgelehnt
     würde, die Qualifikation nicht mitbringt oder stirbt.
-    Während er läuft, zeigt eine **Wartenscheibe**, was sie verschluckt (2026-11-24g): oben die Drehung
-    und darunter die Zahl des laufenden Laufs („Lauf 3“), darunter „2 gestorben“ – die Zeile erscheint
-    erst ab dem ersten Todesfall. Beide zählen hoch, weil zwischen den Läufen ans Bild übergeben wird
-    (bei einem Pechvogel endet das Zögern nach 1,4 Sekunden, die Scheibe zählt dann ohne Pause weiter). Ist einer gefunden, bleibt die Scheibe **eine Sekunde** stehen, dann erscheint der NSC. Scheibe und Zahlen sind flüchtig und kommen in kein Log. Die Scheibe zeigt auch, wenn `termsGoal` gesetzt ist – dort wirft der Lauf nur Musterung und Qualifikation weg, nie den Tod.
+    Wie viele Läufe verworfen wurden und warum (`/discarded`, 2026-11-24g), ist flüchtig und kommt in
+    kein Log.
   - **Waffen erzeugter NSC** (2026-11-14c; Patron-NSC und NSC aus einer Laufbahn, nicht die NSC
     der Begegnung, die ihre eigene Regel haben). Hausregel nach Wunsch des Owners:
     - *SOC-Stufe*: Jede Waffe hat ein Mindest-SOC (`Weapon.minSoc`): billige Nahkampfwaffen ab 0
@@ -2294,8 +2246,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   ihm (`Item.armor`): Jack, Mesh, Cloth, Reflec, Ablat, Combat Armor als Combat, Battle Dress als
   Combat (S. 4), Vacc Suit als Cloth (S. 4), Protective Suit (jack) als Jack und Protective Suit
   (cloth) als Cloth. NSC bekommen in Begegnungen nur Rüstungen der Art *armor*. Man legt sie wie
-  Primär- und Sekundärwaffe im Editor an, oder gleich nach dem Kauf (siehe *Kauf einer Rüstung*);
-  im Kampf steht sie oben in der Charakterleiste neben dem Namen. Geht sie aus dem Besitz, trägt er Nothing.
+  Primär- und Sekundärwaffe im Editor an, oder gleich nach dem Kauf (siehe *Kauf einer Rüstung*).
+  Geht sie aus dem Besitz, trägt er Nothing.
   Die Beispiel-Charaktere tragen ihre Rüstung von Anfang an (Kira Jack, Jonas Mesh).
 - **Angriff in beide Richtungen.**
   - Angreifer (`for`) und Ziel (`against`) sind Charaktere, SC oder NSC. Im Angriff in Vorbereitung
@@ -2352,18 +2304,12 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     aber nicht (`to` fehlt).
   - **Später**: Medical Drugs, Wunden mit Zeit, Fahrzeuge, Überraschung, Entfernung,
     Moral und Kampfrunden.
-- **Bereich Begegnung und zwei Modi im Kampf.** Der Bereich **Begegnung** hat oben einen Unterreiter
-  zwischen **Begegnung** und **Kampf** (2026-11-17; bisher zwei Bereiche). Unter Begegnung steht oben der
-  Aufenthaltsort, das Gelände und den Würfel der Anzahl als allgemeine Einstellungen für alle Arten und
-  darunter eine Liste der **Begegnungsarten**, je Art eine Karte mit ihren
-  Einstellungen und ihrem Wurf: zurzeit die Zufallsbegegnung und der Patron (siehe *Patron*); weitere
-  Arten kommen als weitere Karten dazu. Die Zufallsbegegnung würfelt oder wählt man in ihrer Karte;
-  die Übersicht danach führt zurück in den Bereich Begegnung, denn nicht jede
-  Begegnung wird ein Kampf; erst „Zum Kampf“ dort schaltet auf Kampf um. Läuft eine
-  Begegnung, zeigt ihre Karte sie knapp. Ohne laufende Begegnung zeigt der Kampf die
-  **Waffentabelle**: die Waffe in der Hand des Charakters oben, Rüstung und Reichweite frei gewählt
-  (siehe *Angriff*); mit laufender Begegnung die **Kampfsimulation**; beendet man sie, zeigt er
-  wieder die Waffentabelle. Das alles ist nur Anzeige; gespeichert wird die Begegnung.
+- **Begegnungsarten und zwei Modi im Kampf.** Aufenthaltsort, Gelände und der Würfel der Anzahl
+  gelten für alle **Begegnungsarten** gleich; jede Art hat dazu ihre eigenen Einstellungen und ihren
+  Wurf. Nicht jede Begegnung wird ein Kampf: Gekämpft wird erst, wenn man es will. Ohne laufende
+  Begegnung greift man mit der **Waffentabelle** an (die Waffe in der Hand des Charakters oben,
+  Rüstung und Reichweite frei gewählt, siehe *Angriff*); mit laufender Begegnung in der
+  **Kampfsimulation**. Gespeichert wird nur die Begegnung.
 - **Kampfsimulation.** Gilt für die laufende Begegnung. Es kämpfen die SC (die Lebenden, nicht
   ausgeblendet, ohne dauerhafte NSC) gegen die NSC der Begegnung (`npcs`).
   - *Entfernung*: Beim Anlegen der Begegnung 2W6 plus DM des Geländes (`terrain`, wählbar, ohne
@@ -2424,8 +2370,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
         Gruppe in der Begegnung gelaufen ist, steht an der Begegnung (`npcRuns`; fehlt: 0); der Lauf
         kostet jeden NSC einen Combat-Schlag.
     - Mehr als 2 Bands je Runde gehen nicht.
-    - *Frei setzen* (Ermessen der Spielleitung): Langes Drücken auf den Strahl setzt das Band des
-      gewählten SC frei (siehe README, *Kampfsimulation*), jederzeit, ohne Grenze und ohne dass es als Bewegung zählt; z. B. um einen
+    - *Frei setzen* (Ermessen der Spielleitung): Das Band des gewählten SC lässt sich frei setzen,
+      jederzeit, ohne Grenze und ohne dass es als Bewegung zählt; z. B. um einen
       Fehler zu beheben.
   - *Ausweichen* (SR 20, *Evade*): Statt anzugreifen kann der Kämpfer am Zug ausweichen, SC wie NSC,
     auf jeder Reichweite. Das ist sein Zug, wie Aussetzen. Er steht dann unter `Encounter.evading`,
@@ -2433,8 +2379,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     wieder ausweichen); mit dem Ende der Begegnung ist es vorbei.
     - Solange er ausweicht und kämpfen kann (nicht bewusstlos, schwer verwundet oder tot), bekommt
       jeder Angriff auf ihn einen DM nach der Reichweite: −1 auf Close oder Short, −2 auf Medium,
-      −4 auf Long oder Very Long. Er steckt im DM des Angriffsergebnisses (`dm`); die Anzeige nennt
-      ihn als eigenen Posten.
+      −4 auf Long oder Very Long. Er steckt im DM des Angriffsergebnisses (`dm`).
     - Wer ausweicht, pariert nicht (siehe *Parade*) und ist kein Nachbar eines Feuerstoßes oder einer
       Schrotflinte (siehe *Feuerstoß und Schrot*).
     - Bewegen darf er in demselben Zug vorher wie sonst (Hausregel; SR 20 führt Evade als eigenen
@@ -2442,17 +2387,12 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
       dann nur noch nachlädt oder aussetzt.
   - *Überraschung* (S. 5): der **erste Wurf im Kampf**, eigens gewürfelt, bevor jemand dran ist. Bis
     dahin fehlen `pcSurprise` und `npcSurprise`, keiner ist am Zug, und keiner bewegt sich; die
-    Kampfsimulation bietet nur „Überraschung würfeln“. Der Wurf ist 1W6 je Partei mit DMs, die beim
+    Kampfsimulation beginnt mit dem Wurf auf die Überraschung. Der Wurf ist 1W6 je Partei mit DMs, die beim
     Würfeln aus den Parteien bestimmt und festgehalten werden (`dm`):
     Battle Dress getragen +2; Leader-Fertigkeit +1 (bei NSC: ein Anführer); Tactics +1; militärische
     Erfahrung (SC aus Army oder Marines, NSC einer militärischen Art: Soldiers, Marines, Security
     Troops, Soldiers on Patrol) +1; Fahrzeug −1 (NSC mit V); 8 oder mehr in der Partei −1. Liegt
     eine Partei 3 oder mehr höher, hat sie Überraschung (`/surprise`).
-    - *Zeigen*: zwei Würfel nebeneinander, der der SC **weiß** (mit schwarzen Augen), der der NSC
-      **schwarz** (mit weißen Augen), darunter je Partei die DMs einzeln und die Summe, dann das
-      Ergebnis („Überraschung: SC“ oder „keine; die NSC ziehen zuerst“). Schwarz und Weiß statt Rot
-      und Grün, weil Rot und Grün für Farbenblinde kaum zu unterscheiden sind und Rot in der App
-      schon das Ziel meint. Danach beginnt Runde 1. Das ist Anzeige; gespeichert sind Würfel und DM.
     - Begegnungen, die schon gewürfelte Überraschung haben, bleiben, wie sie sind; solche ohne
       (von vor der Kampfsimulation) würfeln sie beim nächsten Kampf.
   - *Überraschung bis zum Alarm* (SR 20): Die Überraschung hält Runde für Runde, bis die überraschte
@@ -2483,10 +2423,9 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     würfelt, ein SC mit seiner **Primär- oder Sekundärwaffe** (ohne zweite Waffe mit den Händen): Der
     Angriff nimmt diese Waffe in die Hand (`wields`) und würfelt; ist sie leer, lädt er sie stattdessen
     nach. Für einen NSC am Zug gilt dasselbe (meist Primärwaffe und die Hände); hat er kein Magazin
-    mehr, bleiben ihm die Hände. Die Anzeige dazu (zwei Spalten, Pfeile, die Entfernung unten im Zug) ist reine Anzeige,
-    siehe README; Rüstung ist die des Ziels, Reichweite die Entfernung des SC (Angreifer oder Ziel); ein
+    mehr, bleiben ihm die Hände. Mit einer zweihändigen Primärwaffe gilt *Beide Hände*. Rüstung ist die des Ziels, Reichweite die Entfernung des SC (Angreifer oder Ziel); ein
     entkommener SC ist kein Ziel. Ist ein NSC dran, schlägt die App
-    einen zufälligen wachen SC als Ziel vor; man kann es ändern. Ist ein SC dran, steht er oben.
+    einen zufälligen wachen SC als Ziel vor; man kann es ändern. Ist ein SC dran, ist er der Charakter oben.
   - Der Zug endet mit dem Angriff, sobald sein Schaden verteilt ist (oder er daneben ging; bei einer
     Garbe der Schaden aller ihrer Treffer, siehe *Feuerstoß und Schrot*), mit **Nachladen**, mit
     **Ausweichen** oder mit **Aussetzen**. Wunden wirken sofort: Wer bewusstlos wird, ist in dieser
@@ -2522,8 +2461,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   wie beim Angriff (ohne die Fertigkeit Stufe 0), bei SC und NSC gleich. Ein NSC mit Gewehr hat
   Cudgel nicht und pariert damit also mit 0. Wer
   bewusstlos, schwer verwundet oder tot ist oder ausweicht (`Encounter.evading`), pariert nicht. Angreifen und parieren geht in derselben
-  Runde. Die Parade steckt im DM des Angriffsergebnisses (`dm`); die Anzeige nennt sie als eigenen
-  Posten.
+  Runde. Die Parade steckt im DM des Angriffsergebnisses (`dm`).
 - **Heilung.** Nach S. 7. Eine Heilung ist ein Logeintrag (`Recovery`) für einen verwundeten Charakter
   (`for`), einen SC oder einen NSC der laufenden Begegnung, nie für einen Toten. Die Wunden (`/wounds`)
   folgen aus Schadenswürfen und Heilungen im Log, der Reihe nach; eine Heilung löschen nimmt sie
@@ -2597,14 +2535,13 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 - **Löschen und Ausblenden.** Ein Charakter oder eine Fertigkeitsstufe, auf die kein Logeintrag
   verweist (bei einem Charakter auch keine Buchung der Gruppenkasse),
   wird wirklich gelöscht. Verweist der Verlauf darauf, wird sie stattdessen ausgeblendet
-  (`retired`): Sie verschwindet aus dem Charakter-Screen und aus der Charakterleiste und lässt sich nicht mehr für Proben wählen,
+  (`retired`): Sie steht nicht mehr unter den Charakteren, ist nie Charakter oben und lässt sich nicht mehr für Proben wählen,
   bleibt aber gespeichert, und der Log zeigt sie weiter. Ein ausgeblendeter Charakter lässt sich
   wieder einblenden. Sind die Logeinträge gelöscht, die auf ihn verwiesen, lässt er sich auch
   löschen.
 - **Tot.** Im Editor lässt sich ein Charakter als tot markieren (`dead`) und, falls das ein Irrtum
-  war, wieder zurück. Ein toter Charakter bleibt in der Kampagne und im Charakter-Screen, aber
-  getrennt von den Lebenden unter „Verstorben“, nur mit Namen und Herkunft. Für Proben ist er nicht
-  wählbar und steht nicht in der Charakterleiste; war er der Charakter oben, rückt ein anderer nach
+  war, wieder zurück. Ein toter Charakter bleibt in der Kampagne, aber getrennt von den Lebenden.
+  Für Proben ist er nicht wählbar und nie Charakter oben; war er der Charakter oben, rückt ein anderer nach
   (siehe *Charakter oben*), und eine vorbereitete Probe endet. Tot und ausgeblendet sind
   unabhängig: Auch einen toten Charakter kann man löschen bzw. ausblenden, nach denselben Regeln.
   Der Log zeigt ihn weiter wie bisher; alte Proben ändern sich dadurch nicht, weil DM und Zielwert
@@ -2799,15 +2736,14 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     haben neue Ids.
 - **Name von der Karte.** Wo man einen Namen eintippt, für einen Charakter (letzter Schritt der
   Charaktererschaffung, Charakter-Editor) oder für eine Welt (letzter Schritt der
-  Weltenerschaffung), steht neben dem Feld ein Knopf **Karte**. Er öffnet die Namenswahl mit
-  Vornamen und Nachnamen getrennt: Jedes der sechs Namensfelder der Tafel NSC wird zweimal gezogen,
+  Weltenerschaffung), kann man ihn von der Karte ziehen, mit Vornamen und Nachnamen getrennt:
+  Jedes der sechs Namensfelder der Tafel NSC wird zweimal gezogen,
   nach denselben Regeln wie *Karte ziehen*, mit zwei verschiedenen Vornamen und zwei verschiedenen
-  Nachnamen je Feld. Oben stehen die zwölf Vornamen (erst irdisch, dann spacig, je weiblich,
-  männlich, neutral), darunter die Nachnamen (erst irdisch, dann spacig; derselbe Nachname steht nur
-  einmal da). Man tippt höchstens einen Vornamen und höchstens einen Nachnamen an; *Übernehmen*
-  schreibt „Vorname Nachname“ ins Feld, oder nur den einen, wenn nur einer gewählt ist. Das gilt für
+  Nachnamen je Feld (derselbe Nachname zählt nur einmal). Man wählt höchstens einen Vornamen und
+  höchstens einen Nachnamen; der Name wird „Vorname Nachname“, oder nur der eine, wenn nur einer
+  gewählt ist. Das gilt für
   Charakter und Welt gleich: Wer will, nimmt für eine Welt nur einen Namen. Danach lässt sich der
-  Text wie getippt ändern. *Neu ziehen* zeigt neue Namen, *Abbrechen* lässt das Feld, wie es war.
+  Text wie getippt ändern; neu ziehen oder abbrechen geht jederzeit.
   Gespeichert wird nur der Name, so wie er am Ende im Feld steht; die Wahl selbst ist kein
   Logeintrag und verweist auf nichts.
 - **Einträge austauschen.** Ein Eintrag, der nicht mehr gezogen werden soll, wird nicht gelöscht und
@@ -2847,14 +2783,11 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Mythic-Tabellen *Gegenstand* (`plot.object`) und *Fund* (`plot.salvage`) weg: Ihre Einträge
     werden ausgeblendet (siehe *Einträge austauschen*), alte Logeinträge zeigen sie weiter. Die
     Tafel *Handlung* hat danach eine Reihe: Wendung, Stimmung, Botschaft.
-  - Antippen nimmt ein Wurffeld in die Auswahl (`pickedRolls`) auf oder wieder heraus, wie ein Feld.
-    *Bestätigen* geht, sobald ein Feld oder ein Wurffeld ausgewählt ist. Der `CardPick` hält den Wert
+  - Ein Wurffeld nimmt man in die Auswahl (`pickedRolls`) auf oder wieder heraus, wie ein Feld.
+    Bestätigen geht, sobald ein Feld oder ein Wurffeld ausgewählt ist. Der `CardPick` hält den Wert
     jedes ausgewählten Wurffelds selbst (`bell`, `scatter`, `map`), weil es nichts gibt, worauf er
     verweisen könnte; nicht ausgewählte bleiben leer. Ein `CardPick` hat also mindestens einen
     `PickedItem` oder einen Wert eines Wurffelds. Ältere `CardPick`s ohne Wurffelder bleiben gültig.
-  - Im Log stehen die Wurffelder vor den ausgewählten Feldern, in derselben Reihenfolge wie auf der
-    Karte, mit Bild: Glockenzahl als Zahl, Streuwürfel als Windrose mit Pfeil, Kartensymbol als
-    Raum mit seinen Wegen. Wie sie gezeichnet werden, ist Sache der Anzeige (siehe UI-Entwurf).
 
 - **Subsektor.** Jede Kampagne hat einen Subsektor aus 8 Spalten und 10 Zeilen wie TAS Form 6
   (Charts S. 26): 0101 links oben, die Spalten mit gerader Nummer eine halbe Zeile tiefer. Ein
@@ -2862,8 +2795,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   Ein Feld ist also **nicht erzeugt** (kein `Hex`), **in Erschaffung** (`/step` vor `done`),
   **leer** (`empty`) oder hat eine **Welt**. Nur ein nicht erzeugtes Feld lässt eine neue
   Weltenerschaffung zu: Ihr erster Wurf, das Vorkommen, wird im Subsektor selbst gewürfelt, die
-  übrigen auf der Weltkarte. Eine Welt antippen öffnet ihre Weltkarte, ein Feld in Erschaffung setzt
-  sie fort. Mehrere Felder dürfen zugleich in Erschaffung sein. Die Kampagnendatei enthält die
+  übrigen danach. Mehrere Felder dürfen zugleich in Erschaffung sein. Die Kampagnendatei enthält die
   Hexfelder; eine neue Kampagne beginnt mit einem Subsektor ohne Hexfelder.
 - **Weltenerschaffung** nach der *World Generation Checklist* (Charts S. 15), jeder Wert einzeln
   gewürfelt wie bei der Charaktererschaffung. **Gespeichert werden die Werte, nicht die Würfe:** Das
@@ -2907,26 +2839,24 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
      Regierung E–F und Gesetz über A haben in den Charts keinen Text (`UwpDigit.text` fehlt), die
      App zeigt dann nur die Ziffer (Ziffern über F in eHex ohne I und O, der Raumhafen X ist so die
      Ziffer 31).
-  6. *Oberfläche* (`surface`): Steht der TL fest, würfelt die App die ganze Oberfläche auf einmal und
-     ohne eigenen Knopf (siehe *Oberfläche*). Sie ist kein einzelner Wurf (`WorldRoll`) und hat
-     keine Würfelanimation; die Weltkarte zeigt gleich die Werte.
+  6. *Oberfläche* (`surface`): Steht der TL fest, würfelt die App die ganze Oberfläche auf einmal,
+     ohne eigenen Schritt (siehe *Oberfläche*). Sie ist kein einzelner Wurf (`WorldRoll`).
   7. *Sternsystem* (`system`, 2026-11-20): Steht die Oberfläche fest, kommt ein
-     eigener Schritt mit dem Knopf „Sternsystem würfeln“. Er würfelt das ganze Sternsystem auf
+     eigener Schritt „Sternsystem würfeln“. Er würfelt das ganze Sternsystem auf
      einmal nach Book 6 (siehe *Sternsystem, Monde und Gasriesen*): Sterne, Bahnen, Gasriesen,
-     Monde und Ringe. Wie die Oberfläche ist das kein einzelner Wurf (`WorldRoll`) und hat keine
-     Würfelanimation; die Weltkarte zeigt danach Sterne, Gasriesen, Monde und Ringe (Owner,
+     Monde und Ringe. Wie die Oberfläche ist das kein einzelner Wurf (`WorldRoll`) (Owner,
      20. November 2026).
   8. *Name*: Zum Schluss gibt man den Namen ein (nicht leer); dann ist die Welt fertig (`done`).
 
   **Welten ohne Temperatur.** Welten, deren Hydrographie vor diesem Schritt gewürfelt wurde, haben
   keine Temperatur. Das ist erlaubt: Ihre Erschaffung geht ohne Temperatur weiter, und ist die Welt
-  fertig, bietet ihre Weltkarte „Temperatur würfeln“ an, mit derselben Würfelanimation. Die
+  fertig, lässt sich die Temperatur nachträglich würfeln. Die
   Hydrographie bleibt dann, wie sie ist; der Wasser-DM gilt nur, wenn die Temperatur vorher
   feststand.
 
   **Welten ohne Oberfläche.** Ebenso dürfen Welten, die vor diesem Schritt den TL bekamen, ohne
-  Oberfläche sein. Ihre Erschaffung geht mit dem Namen weiter; ist die Welt fertig, bietet ihre
-  Weltkarte „Oberfläche würfeln“ an, nach der Temperatur, falls auch die fehlt (die Oberfläche
+  Oberfläche sein. Ihre Erschaffung geht mit dem Namen weiter; ist die Welt fertig, lässt sich die
+  Oberfläche nachträglich würfeln, nach der Temperatur, falls auch die fehlt (die Oberfläche
   braucht sie für das Leben).
 
   **Welten ohne Sternsystem** (2026-11-20). Fertige Welten von vor diesem
@@ -2985,20 +2915,18 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   Hausregeln, im [Konzept Oberflächenkarte](konzept-oberflaechenkarte.md); sie gelten als Teil
   dieses Modells. Das Wichtigste für das Bild:
   - Eine fertige Welt ab Größe 1 mit Oberfläche (`Surface`) kann eine Oberflächenkarte haben
-    (`map`). Sie entsteht in einem Zug, wenn man den Globus zum ersten Mal öffnet, und ersetzt sich
-    nur ganz („Neu würfeln“). Von Hand ändern lässt sie sich nicht. Größe 0 hat keine.
-    Geändert 2026-11-20d (Owner): Sie entsteht nur auf ausdrücklichen Knopfdruck, „Globus erzeugen“
-    auf der Weltkarte; „Öffnen“ gibt es erst danach. Das gilt für jede Welt, Hauptwelt wie
-    Nebenwelt. Ergänzt am 21. November 2026 (Owner): Kommt die Gruppe auf einer Welt an (Reise im
+    (`map`). Sie entsteht in einem Zug und ersetzt sich nur ganz (neu würfeln). Von Hand ändern
+    lässt sie sich nicht. Größe 0 hat keine. Geändert 2026-11-20d (Owner): Sie entsteht nur auf
+    ausdrücklichen Wunsch („Globus erzeugen“). Das gilt für jede Welt, Hauptwelt wie Nebenwelt. Ergänzt am 21. November 2026 (Owner): Kommt die Gruppe auf einer Welt an (Reise im
     System, Sprung, „Gruppe platzieren“, Wahl im Bereich Begegnung), entstehen dabei ihre Oberfläche
     und ihr Globus, falls sie fehlen; „Globus erzeugen“ bleibt für alle anderen Welten. Eine
     Hauptwelt ohne Temperatur bekommt so keine Oberfläche (die Temperatur würfelt man von Hand).
     Geändert am 21. November 2026 (Owner, „Oberfläche erzeugen sollte einfach immer mit der Welt
     passieren“): Die **Oberfläche** (die Zahlen nach dem World Builder's Handbook, nicht die Karte)
-    braucht keinen Knopf mehr. Eine Nebenwelt ab Größe 1 bekommt sie im Schritt „Sternsystem
+    entsteht von selbst. Eine Nebenwelt ab Größe 1 bekommt sie im Schritt „Sternsystem
     würfeln“ mit ihren übrigen Werten, die Temperatur aus ihrer Zone gespeichert; Systeme und ältere
     Hauptwelten (mit Temperatur) von davor bekommen sie beim Öffnen der Kampagne nachgewürfelt, mit
-    Würfen aus Schlüssel und Feld. Nur der Globus entsteht weiter auf Knopfdruck oder bei Ankunft.
+    Würfen aus Schlüssel und Feld. Nur der Globus entsteht weiter auf Wunsch oder bei Ankunft.
   - Das Raster folgt aus der Größe und wird nicht gespeichert: ein Ikosaeder, jede Kante in
     n = 4 × Größe Abschnitte geteilt, jeder Eckpunkt ein Oberflächenfeld (`/cells` = 10 × n² + 2).
     Die Felder (`cells`) stehen in einer festen Reihenfolge, jedes hat eine Nummer ab 0.
@@ -3056,10 +2984,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     sich nicht mehr neu würfeln. Sonst stünde, was in einer Stadt passiert ist, plötzlich im Ozean.
   - **Städte haben eine Nummer** in der Reihenfolge ihrer Liste; darüber verweist ein Ort auf sie.
     Gespeichert wird ein Ort gepackt: das Hexfeld, dazu die Feldnummer oder die Nummer der Stadt.
-  - **Anzeige:** Der Globus zeigt ein Symbol für die Gruppe, eines je NSC und für Felder mit
-    Logeinträgen eines mit ihrer Zahl; Antippen listet Einträge und NSC dort. Die Weltkarte hat
-    einen Abschnitt „Was hier geschah“. Die Sektorkarte zeigt ein kleines Zeichen an Welten, auf
-    denen etwas geschehen ist oder NSC leben.
+  - Zu jedem Ort lässt sich ablesen, was dort geschah (die Logeinträge mit diesem Ort) und welche
+    NSC dort leben.
   - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
     dieser Welt, ohne Feld und Stadt.
 - **Missionen** (freigegeben am 18. November 2026, 2026-11-18). Eine **Mission** (`Mission`) ist ein Auftrag
@@ -3092,43 +3018,32 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     sein, nötig ist das nicht. Gewählt wird aus den Charakteren, die nicht ausgeblendet sind, auch aus
     toten (das Opfer). Der Verweis bleibt, wenn der Charakter stirbt oder zwischen SC und NSC wechselt;
     ein Charakter, auf den eine Mission als Beteiligten verweist, wird nicht gelöscht, sondern
-    ausgeblendet, wie ein Auftraggeber. Die Mission im Bereich zeigt die Beteiligten mit Etikett
-    („Opfer: Jarek Holm“), ein Tippen öffnet den Charakter im Editor; der Charakter-Editor zeigt, in
-    welchen Missionen jemand vorkommt, als Auftraggeber oder mit seinem Etikett.
+    ausgeblendet, wie ein Auftraggeber. Zu einem Charakter lässt sich ablesen, in welchen Missionen er
+    vorkommt, als Auftraggeber oder mit seinem Etikett.
   - *Löschen und Ausblenden*: Eine Mission, auf die keine Kartenauswahl verweist
     (`CardPick.thread`), wird wirklich gelöscht. Sonst wird sie ausgeblendet (`retired`): Sie
-    verschwindet aus dem Bereich und von der Karte und wird nicht mehr ausgelost, der Log zeigt sie
+    zählt nicht mehr zu den Missionen und wird nicht mehr ausgelost, der Log zeigt sie
     weiter; einblenden lässt sie sich wieder.
-  - *Bereich Missionen*: ein eigener Bereich, der fünfte, hinter Schiff (so behalten die anderen ihre
-    Taste; Missionen ist Taste 5). Oben stehen die offenen Missionen, darunter eingeklappt die
-    erledigten und gescheiterten, wie die toten NSC. Jede zeigt Titel, Auftraggeber und ihre Orte
-    mit Etikett; Antippen öffnet den Editor, ein Ort darin führt zu ihm auf den Globus (die Karte fliegt hin
-    und zoomt hinein).
-    **„+ Neue Mission“** legt eine offene Mission an, mit dem Aufenthaltsort als erstem Ort, wenn er
-    ein Feld oder eine Stadt auf einem Feld ist. Im Editor kommt ein Ort hinzu mit
-    **„+ Aufenthaltsort“** (ebenso nur mit Feld) oder **„+ Auf dem Globus“**: Wie bei *NSC
-    platzieren* tippt man auf dem Globus ein Feld an und bestätigt mit „OK“; liegt dort eine
-    Stadt, wird der Ort die Stadt.
-  - *Auf der Karte*: Der Globus zeigt an den Feldern offener Missionen eine Fahne, der Subsektor an
-    Welten mit solchen Feldern. Das angetippte Feld listet unter **„Missionen hier“** die offenen
-    Missionen mit einem Ort auf diesem Feld (auch in einer Stadt darauf), mit Etikett. Der
-    NSC-Editor zeigt die Missionen, deren Auftraggeber der NSC ist.
-  - *Vom Patron zur Mission*: In der Würfelbühne des Patrons steht neben „Als NSC“ auch **„Als
-    Mission“**. Es legt den Patron-NSC an wie „Als NSC“ und dazu eine offene Mission mit ihm als
+  - *Neue Mission*: Sie ist offen, mit dem Aufenthaltsort als erstem Ort, wenn er ein Feld oder eine
+    Stadt auf einem Feld ist. Ein Ort kommt hinzu als Aufenthaltsort (ebenso nur mit Feld) oder als
+    beliebiges Feld eines Globus; liegt dort eine Stadt, wird der Ort die Stadt.
+  - *Auf der Karte*: Zu jedem Feld lässt sich ablesen, welche offenen Missionen dort einen Ort haben
+    (auch in einer Stadt darauf), mit Etikett; zu einem NSC, welche Missionen er vergibt.
+  - *Vom Patron zur Mission*: Aus einem Patron-Wurf lässt sich neben dem Patron-NSC auch gleich eine
+    **Mission** machen: der Patron-NSC wie bei „Als NSC“ und dazu eine offene Mission mit ihm als
     Auftraggeber, dem Beruf des Patrons als Titel (z. B. „Smuggler“) und dem Aufenthaltsort als
-    erstem Ort, wenn er ein Feld hat; die Ansicht wechselt in den Bereich Missionen, mit der neuen Mission im Editor. Bei
-    einer Rumor-Zeile gibt es den Knopf nicht.
+    erstem Ort, wenn er ein Feld hat. Bei einer Rumor-Zeile geht das nicht.
   - *Handlungsfäden*: Die offenen, nicht ausgeblendeten Missionen sind die **Handlungsfäden** des
     Orakels, wie die Thread-Liste in Mythic. Drei Einträge des Ereignisfokus sind **Fadenfokusse**
     (`EventFocus.thread`): Auf einen Handlungsfaden zu, Von einem Handlungsfaden weg, Ein
     Handlungsfaden endet. Würfelt die Karte beim Ziehen einen Fadenfokus und gibt es offene
     Missionen, lost sie gleich eine davon aus, alle gleich wahrscheinlich (`Card.thread`). Die
-    Mission steht wie der Fokus erst mit gewählter Stufe im roten Band, neben dem Fokus („Auf einen
-    Handlungsfaden zu: Fracht nach Regina schmuggeln“). Die Kartenauswahl hält sie fest
+    Mission gilt wie der Fokus erst mit gewählter Stufe („Auf einen Handlungsfaden zu: Fracht nach
+    Regina schmuggeln“). Die Kartenauswahl hält sie fest
     (`CardPick.thread`), damit der Log auch später zeigt, welcher Faden gemeint war, selbst wenn die
     Mission inzwischen erledigt ist. Ohne offene Mission bleibt es beim Fokus allein. „Ein
     Handlungsfaden endet“ ändert den Zustand nicht von selbst; wie es ausgeht, entscheidet man per
-    Deutung und stellt es im Editor ein.
+    Deutung und stellt es an der Mission ein.
 - **Fahrzeuge** (freigegeben am 15. November 2026, 2026-11-15). Grundlage der Logistik auf der Oberfläche: Die App findet
   die schnellste Route zwischen zwei Orten einer Welt, auch wenn man dafür ein ATV oder einen
   Hubschrauber mieten muss, und die Gruppe fährt sie Tag für Tag ab.
@@ -3198,16 +3113,15 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     zum Flugplatz, Flug, Auto). Die gemischten wägen Zeit gegen Miete ab, mit vier Gewichten (eine
     Fahrstunde ist 3, 30, 300 bzw. 3000 Cr wert). Je Fahrzeugfolge bleibt die schnellste Variante.
     **Varianten mit eigenen Fahrzeugen stehen immer oben** (Owner, 15. November 2026), darunter die
-    übrigen, je die schnellste zuerst; markiert als „Schnellste“ bzw. „Günstigste“. **Bleibt ein
-    eigenes Fahrzeug zurück** (die Gruppe wechselt auf ein anderes, siehe *Eigene Fahrzeuge bleiben
-    stehen*), sagt die Variante das deutlich, z. B. „⚠ Ground Car bleibt am Start stehen“ oder „⚠ Ground
-    Car bleibt in Ora stehen“; ebenso die laufende Fahrt für den Rest der Strecke. Jede mit Dauer in Tagen
-    (`/days`), Fahrstunden und Miete; die gewählte steht auf dem Globus, mit „Losfahren“ wird sie
-    gespeichert (`Campaign.trip`). Die Varianten vor dem Bestätigen sind nur Anzeige.
+    übrigen, je die schnellste zuerst. **Bleibt ein eigenes Fahrzeug zurück** (die Gruppe wechselt
+    auf ein anderes, siehe *Eigene Fahrzeuge bleiben stehen*), muss das vor dem Losfahren klar sein;
+    ebenso bei der laufenden Fahrt für den Rest der Strecke. Jede Variante hat eine Dauer in Tagen
+    (`/days`), Fahrstunden und Miete; erst die gewählte wird gespeichert (`Campaign.trip`), die
+    Varianten davor nicht.
   - **Abschnitt:** Jeder Abschnitt hat seine Felder in Reihenfolge (`cells`; bei einem Flug nur Start
     und Landepunkt), daraus folgen seine Fahrstunden (`/hours`) und seine Miete je Tag (`/rent`). Das
     letzte Feld eines Abschnitts ist das erste des nächsten.
-  - **Tag für Tag** (wie Zeit vergehen lassen): „Weiterfahren“ unten im Bereich Begegnung (nach „Losfahren“ öffnet er sich, auf dem Globus führt ein Hinweis hin; seit 2026-11-22c auch in der Aktionsleiste unter dem Log, siehe *Ein Tag in der Aktionsleiste des Logs*) fährt die Fahrstunden je Tag
+  - **Tag für Tag** (wie Zeit vergehen lassen): **Weiterfahren** (siehe *Ein Tag*) fährt die Fahrstunden je Tag
     (Hausregel: **8 Stunden** für alle Fahrzeuge; *Mission on Mithril* rechnet 10 auf einem
     20-Stunden-Tag) oder den Rest bis zur Ankunft, nie weniger. Das ist ein
     Logeintrag `TripDay` mit den gefahrenen Stunden, der Miete des Tages und ob die Gruppe
@@ -3217,21 +3131,14 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Reisetag ist es der Aufenthaltsort; der Reisetag bekommt es als Ort. Bei der Ankunft ist der
     Aufenthaltsort das Ziel (Feld oder Stadt) und die Fahrt fällt weg.
   - **Begegnungen am Boden** (Owner, 15. November 2026): Hat ein Reisetag Strecke am Boden (nicht nur
-    einen Flug), würfelt „Weiterfahren“ danach Pflicht den Begegnungstest am erreichten Ort, mit
-    Würfelanimation: in der **Wildnis** (ein Feld ohne Stadt und Kleinstadt, nicht besiedelt, dessen
+    einen Flug), würfelt Weiterfahren danach Pflicht den Begegnungstest am erreichten Ort: in der **Wildnis** (ein Feld ohne Stadt und Kleinstadt, nicht besiedelt, dessen
     Gelände Tiere hat) den Test auf **Tiere**, sonst den auf eine **Zufallsbegegnung** (je 5+ auf 1W6,
     wie im Bereich Begegnung). Er steht als Test im Log und zählt als Test des Tages. Besteht er, folgt
-    gleich der Wurf auf die Tiertabelle bzw. die Random Encounter List; eine Begegnung zeigt danach
-    ihre Übersicht im Bereich Begegnung, ein Tierereignis steht im Log. Solange die Begegnung läuft,
+    gleich der Wurf auf die Tiertabelle bzw. die Random Encounter List; daraus wird eine Begegnung,
+    ein Tierereignis steht im Log. Solange die Begegnung läuft,
     fährt man nicht weiter.
-  - **Im Log** stehen die Reisetage einer Fahrt mit ihren Tests als eine Zeile („Fahrt · 5 Reisetage,
-    angekommen: Ora“); antippen klappt sie auf. Das ist nur Anzeige.
-  - **Auf dem Globus** zählen Reisetage und ihre Tests nicht als Einträge (keine Zahl am Feld, nicht
-    unter „Was hier geschah“), außer im Modus **„Wo ich war“** (Owner, 15. November 2026; Schalter in
-    der Liste „Einträge“): Dann zählen sie, und der gereiste Weg steht als gepunktete Linie auf dem
-    Planeten, je Reisetag vom Ort davor (dem letzten Logeintrag mit Feld auf dieser Welt) zum
-    erreichten Feld. Steht vor einer Fahrt kein Eintrag am Start, fehlt das erste Stück. Der Modus ist
-    nur Anzeige und wird nicht gespeichert.
+  - **Wo ich war:** Reisetage und ihre Tests gelten nicht als Ereignisse eines Ortes, außer man will
+    den gereisten Weg sehen (Owner, 15. November 2026); diese Wahl wird nicht gespeichert.
   - **Dazwischen:** Zwischen zwei Reisetagen kann man alles tun: Begegnungen würfeln, ausspielen,
     **rasten** mit *Zeit vergehen lassen* (dann vergehen Tage, die Gruppe bewegt sich nicht). Während
     einer laufenden Begegnung fährt man nicht. Stunden innerhalb eines Tages rechnet die App nicht.
@@ -3299,8 +3206,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     günstiger). Ein solcher Preisnachlass ist **nicht Teil dieses Schritts** (offene Frage, siehe
     unten), aber das Feld ist schon da, damit `price` nicht rückwirkend am Entwurf hängt, sobald es
     ihn gibt.
-  - **Erwerb.** Drei Wege; der Ort ist Sache der Ansicht (der UI-Mock zeigt dafür ein Werft-Blatt im
-    Bereich Schiff, die Abmusterung würfelt in der Charaktererschaffung); in allen dreien wird
+  - **Erwerb.** Drei Wege (die Abmusterung würfelt in der Charaktererschaffung); in allen dreien wird
     `Ship.price` zunächst auf `design.basePrice` gesetzt (kein Nachlass in diesem Schritt):
     1. **Bar aus der Kasse:** der volle Preis (`price`) wird sofort gebucht (`BookingKind.ship`),
        das Schiff entsteht ohne Restschuld, mit vollem Tank und leerem Laderaum.
@@ -3402,8 +3308,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Schiff. Die Regel *Worauf der Log verweist, wird nie gelöscht* gilt damit auch für
     Schiffe.
   - **Von Hand ausblenden** (Owner, 22. November 2026: „Ich sollte als GM auch das Schiff manuell
-    retire können, z. B. um ein alleiniges Small Craft kaufen zu können“). Im Bereich Schiff (Knopf
-    „Ausblenden“ unter *Bearbeiten*, Owner) kann die Spielleitung das aktive Schiff ausblenden: Es und alle seine Beiboote bekommen
+    retire können, z. B. um ein alleiniges Small Craft kaufen zu können“). Die Spielleitung kann das
+    aktive Schiff ausblenden: Es und alle seine Beiboote bekommen
     `retired`, gelöscht wird nichts. Danach hat die Gruppe kein Schiff; ein gekauftes Small Craft
     gehört ihr eigenständig. ⚑ Eine Restschuld bleibt am ausgeblendeten Schiff stehen, Raten werden
     keine mehr eingezogen (wie beim Wechsel nach dem Ship-Vorteil). Nicht während eines Systemflugs.
@@ -3436,9 +3342,9 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     dieselben Pläne, auch in einer anderen Kampagne. Ist der Spieler bei OneDrive angemeldet,
     gleicht der Abgleich sie ab, sodass jedes seiner Geräte sie hat (siehe *Abgleich mit OneDrive*,
     *Deckpläne*); ohne Anmeldung bleiben sie auf dem Gerät. Export und Import nehmen sie nicht mit
-    (die Kampagnendatei würde um Megabytes größer). Am `Ship` wird nichts davon gespeichert: der
-    Bereich Schiff zeigt die Pläne seines Entwurfs. Löschen braucht eine Rückfrage, denn der Plan
-    verschwindet aus allen Kampagnen und mit dem Abgleich von allen Geräten.
+    (die Kampagnendatei würde um Megabytes größer). Am `Ship` wird nichts davon gespeichert: ein
+    Schiff hat die Pläne seines Entwurfs. Gelöscht verschwindet ein Plan aus allen Kampagnen und mit
+    dem Abgleich von allen Geräten.
   - **Bewaffnung** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21g; Owner, 21. November 2026). Nach
     SE 10 und SR 32: ein Hardpoint je 100 t Rumpf, jeder trägt ein Turret, ein Single, Double oder
     Triple Turret fasst 1, 2 oder 3 Waffen.
@@ -3465,8 +3371,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     - *Ausbauen* (Owner): eine Waffe oder ein Turret samt seiner Waffen; Geld gibt es dafür nicht
       zurück, und es wird nichts gebucht.
     - *Wo* (Owner): nur, wenn das Schiff in einer Stadt mit Raumhafen A oder B steht (SR 29: nur
-      dort gibt es Werften) und die Gruppe bei ihm ist, nicht während eines Systemflugs. Sonst ist
-      Umrüsten ausgegraut, mit Grund. Ansehen kann man die Bewaffnung überall.
+      dort gibt es Werften) und die Gruppe bei ihm ist, nicht während eines Systemflugs. Ansehen kann
+      man die Bewaffnung überall.
     - *Später*: Raketen und Sand als Vorrat (Stufe 3 des Raumkampfs), Gunner je bestücktem Turret
       (mit den Schiffspositionen), Feuern (Stufe 2).
   - **Offene Fragen für einen späteren Schritt:**
@@ -3480,7 +3386,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
       anderen; die Subventionsregeln (SR 29: feste Route, Regierung zahlt 50 % der Monatsrate,
       schuldenfrei nach 20 Jahren, Mobilmachung im Notfall) sind nicht modelliert.
     - Wer beim Schiffkauf das **Softwarepaket** wählt (Wert = Modellzahl in MCr): vorerst
-      ein Standard-Set je Entwurf, wie im UI-Mock (Owner, 16. November 2026); eine
+      ein Standard-Set je Entwurf (Owner, 16. November 2026); eine
       Auswahl in der Werft, der Einbau später gekaufter Programme und der Rechner-Tausch
       (SE 10) folgen mit dem Software-Handel.
     - Ebenso offen: Pfändung bei Zahlungsverzug (siehe oben), Verkauf eines Schiffs, mehrere
@@ -3494,11 +3400,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   zusammengefasst in [`regeln-schiffe.md`](regeln-schiffe.md); Abweichungen tragen ⚑, Entscheidungen
   des Owners vom 18. November 2026 sind als solche genannt; die übrigen Hausregeln hat er am selben
   Tag angenommen.
-  - **Raumkarte.** Die dritte Grundkarte neben Subsektor und Globus, in 2D (Owner). Ein Tippen auf
-    eine Welt öffnet wie bisher ihren Globus; die Raumkarte öffnet der Knopf „Raum“ am Globus und
-    an der Welt im Subsektor (Owner). Auf ihr: die Welt mit dem Weltsymbol in echter Größe, ohne
-    die angedeuteten Umlaufbahnen (Owner), die Ringe der Sprunggrenzen, die Einheiten mit Spur und
-    Bahnvorschau, Ringe der Raumbänder um die zuletzt berührte Einheit.
+  - **Raumkarte.** Der Raum um eine Welt, in 2D (Owner): die Welt in echter Größe, die
+    Sprunggrenzen und die Einheiten mit Spur und Bahnvorschau.
   - **Beginnen und beenden** (Owner). „Systemflug beginnen“ geht nur auf der Raumkarte der Welt, auf
     der die Gruppe ist, und nur mit dem eigenen Schiff (`Campaign./ship`); es legt einen
     `SystemFlight` mit Raumrunde 1 und einer Einheit für das Schiff an. Liegegebühr und Ort des
@@ -3515,20 +3418,14 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     vergehen“ im Bereich Begegnung, mit allem, was daran hängt: Logeintrag, Begegnungstests,
     Monatsende. ⚑ Angebrochene Tage verfallen beim Beenden. Sonst schreibt der Systemflug in Stufe 1
     nichts ins Log.
-  - **Schubvektor** (Owner): einer je Raumrunde, fest im Raum, nur durch Tippen oder Ziehen im
-    Schubkreis, stufenlos in 0,1 G, höchstens `/maxG` (der Kreis ist die Grenze), ohne die Einheit
-    vorher auszuwählen; Einrasten an prograd, retrograd, Ziel, weg und angleichen; jede Raumrunde
-    beginnt ohne Schub. Ohne Schubvektor fliegt die Einheit ballistisch.
-  - **Zieleingabe** (Owner, 22. November 2026: „Das Ziehen sollte wie bei den ursprünglichen
-    Vektorkämpfen aus den Regeln vom Zielpunkt aus sein … der neue Zielpunkt ist dann der Ort, an den
-    ich ziehe“; vorher zog man im Schubkreis vom Schiff aus). Wie in *Mayday* zieht man vom Punkt
-    **„ohne Schub“** aus: dem Ort, an dem die Einheit am Ende der Raumrunde ohne Schub stünde. Wohin
-    man zieht, dort steht sie nach der Runde; daraus rechnet die App den Schubvektor (mit der echten
-    Schwerkraft angenähert) und rundet und rastet ihn wie bisher ein. Der **Zielkreis** um den Punkt
-    „ohne Schub“ ist so groß, wie der höchste Schub den Endpunkt verschiebt: ⚑ 5.000 km je G
-    (½ · 10 m/s² · (1.000 s)², weil der Schub die ganze Runde gleichmäßig wirkt; in *Mayday* rückt
-    1 G den Zukunftsmarker um ein Feld, 10.000 km). Die Geschwindigkeit ändert sich wie bisher um
-    10 km/s je G. Am Schubvektor als gespeichertem Wert ändert sich nichts.
+  - **Schubvektor** (Owner): einer je Raumrunde, fest im Raum, stufenlos in 0,1 G, höchstens
+    `/maxG`; jede Raumrunde beginnt ohne Schub. Ohne Schubvektor fliegt die Einheit ballistisch.
+  - **Zieleingabe** (Owner, 22. November 2026, wie in *Mayday*): Den Schub gibt man über den Ort, an
+    dem die Einheit nach der Runde stehen soll, ausgehend vom Punkt **„ohne Schub“** (wo sie ohne
+    Schub stünde); daraus rechnet die App den Schubvektor (mit der echten Schwerkraft angenähert).
+    Höchster Schub verschiebt den Endpunkt um ⚑ 5.000 km je G (½ · 10 m/s² · (1.000 s)², weil der
+    Schub die ganze Runde gleichmäßig wirkt; in *Mayday* rückt 1 G den Zukunftsmarker um ein Feld,
+    10.000 km). Die Geschwindigkeit ändert sich um 10 km/s je G.
   - **Physik.** Gespeichert sind Ort (km) und Geschwindigkeit (km/s) in der Ebene, die Welt in der
     Mitte. Die Simulation rechnet in festen Schritten von 10 Sekunden mit *Velocity Verlet*, ohne
     Zufall: gleicher Stand und gleiche Schubvektoren ergeben auf jedem Gerät dieselbe Bahn. 1 G =
@@ -3540,13 +3437,12 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     keinen Körper und keine Schwerkraft. Monde und Gasriesen kommen mit dem Sternsystem.
   - **Aufschlag** (Owner). Kommt eine Einheit unter die Oberfläche der Welt, wird `crashed` gesetzt;
     sie bewegt sich nicht mehr und bekommt keinen Schub. In Stufe 1 hat das keine Folgen für das
-    Schiff; Schaden und Verlust kommen mit Stufe 2. Die Bahnvorschau warnt vorher.
+    Schiff; Schaden und Verlust kommen mit Stufe 2.
   - **Landen** (Owner, 21. November 2026). Trifft eine Einheit mit höchstens 5 km/s (Owner, 21. November 2026; zuerst 1 km/s) gegenüber der
     Oberfläche auf (bei einem Mond mitbewegt gemessen), ist sie gelandet, nicht aufgeschlagen: Der
     Systemflug endet, und die Gruppe ist auf dieser Welt, wie mit „Gruppe platzieren“ (Ankunft:
     Oberfläche und Globus entstehen, falls sie fehlen; das Schiff liegt dort). So erreicht man auch
-    einen Mond oder eine Nebenwelt der Raumkarte. Die Bahnvorschau zeigt eine Landung (grün) statt
-    eines Aufschlags. Gespeichert wird dafür nichts Neues. An einem Gasriesen landet niemand;
+    einen Mond oder eine Nebenwelt der Raumkarte. Gespeichert wird dafür nichts Neues. An einem Gasriesen landet niemand;
     dort ist langsames Auftreffen Schöpfen (siehe *Treibstoff schöpfen*, 2026-11-21f).
   - **Landeautomatik** (Owner, 21. November 2026: von Hand war Landen bei Raumrunden von 1000 s
     kaum zu schaffen). Führt die Bahn eines Schiffs auf die Oberfläche eines Körpers (der tiefste
@@ -3555,8 +3451,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Schiffs, bremst es selbst mit vollem Schub gegen seine Bewegung gegenüber dem Körper; der
     eingestellte Schub ruht so lange. Sinkt es langsamer als 1 km/s, lässt die Automatik es weiter
     sinken, so setzt es sicher unter der Landegeschwindigkeit auf. Reicht der Schub nicht (zu schnell,
-    zu schwach gegen die Schwerkraft), schlägt es auf. Die Bahnvorschau rechnet die Automatik mit
-    und zeigt so die Landung an. Gespeichert wird dafür nichts.
+    zu schwach gegen die Schwerkraft), schlägt es auf. Gespeichert wird dafür nichts.
   - **Treibstoff schöpfen** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21f; Owner, 21. November
     2026). Nach SR 32 kann ein stromlinienförmiges Schiff an einem Gasriesen Treibstoff schöpfen
     (*skimming*), unraffiniert und kostenlos (SR 30 nennt Cr100 je Tonne nur für gekauften).
@@ -3580,9 +3475,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
       Cruiser, Safari Ship ja; Subsidized Liner, Mercenary Cruiser, Laboratory Ship nein. Landen
       dürfen vorerst weiter alle Schiffe (SR 32 erlaubt es nur stromlinienförmigen; dafür fehlen
       noch Beiboote).
-  - **Spur** (`track`): je vergangene Raumrunde ein `TrackPoint` mit Ort und Geschwindigkeit; die
-    Karte zeichnet daraus eine glatte Kurve (Ort und Geschwindigkeit an beiden Enden geben die
-    Krümmung). Gespeichert, damit sie einen Neustart übersteht.
+  - **Spur** (`track`): je vergangene Raumrunde ein `TrackPoint` mit Ort und Geschwindigkeit.
+    Gespeichert, damit sie einen Neustart übersteht.
   - **Demo-Kampagne** (Owner): Sie beginnt mit einem Scout/Courier (Type S) der Gruppe,
     schuldenfrei wie aus dem Ship-Vorteil der Scouts, mit vollem Tank, damit man den Systemflug
     gleich ausprobieren kann (siehe *Demo-Kampagne*).
@@ -3612,21 +3506,18 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Schub. Fremde Schiffe landen nicht und schöpfen nicht; trifft eines eine Oberfläche, ist es ein
     Aufschlag.
   - **Feuer auslösen** (geändert am 23. November 2026, Kennzeichen 2026-11-23a; vorher 2026-11-21i
-    mit dem einen Knopf „Feuer auf …“ und dem Flag `fired`; vorher setzte man mit `aim` ein Ziel, und
-    gefeuert wurde beim Ausführen der Raumrunde). Die Raumrunde hat im Raumkampf zwei Phasen
-    (`SystemFlight.phase`): **Schub** (`thrust`) und **Feuer** (`fire`). Der eine Knopf unten heißt in
-    der Schubphase **„Bewegen“** und führt die Bewegung aller Einheiten aus – die Raumrunde rückt
-    *nicht* weiter, es folgt die Feuerphase; in der Feuerphase heißt er **„End Turn“**: erst feuern die
-    fremden Schiffe, dann rückt die Raumrunde weiter und jeder Hardpoint darf wieder. Ohne Raumkampf
+    mit dem Flag `fired`; vorher setzte man mit `aim` ein Ziel, und gefeuert wurde beim Ausführen der
+    Raumrunde). Die Raumrunde hat im Raumkampf zwei Phasen (`SystemFlight.phase`): **Schub**
+    (`thrust`) und **Feuer** (`fire`). Am Ende der Schubphase (**Bewegen**) bewegen sich alle
+    Einheiten – die Raumrunde rückt *nicht* weiter, es folgt die Feuerphase; an deren Ende (**End
+    Turn**) feuern erst die fremden Schiffe, dann rückt die Raumrunde weiter und jeder Hardpoint darf
+    wieder. Ohne Raumkampf
     ist die Raumrunde – wie in Stufe 1 – mit der Bewegung zu Ende (`phase` bleibt `thrust`).
-    - In der **Feuerphase** tippt man im Blatt den **Hardpoint** an, der feuern soll (alle Hardpoints
-      aller eigenen Schiffe stehen in einer Leiste, mit der Nummer des Schiffs wie auf der Karte): ein
-      Tipp feuert sofort auf das gewählte Ziel, die Würfe rollen im Vordergrund (Schütze, Ziel, Waffe,
-      2W6 + DM, Treffer und Trefferzonen), der Schaden wirkt gleich. Jeder Hardpoint feuert je
+    - In der **Feuerphase** feuert jeder **Hardpoint** jedes eigenen Schiffs, sobald man ihn auslöst,
+      sofort auf das gewählte Ziel; der Schaden wirkt gleich. Jeder Hardpoint feuert je
       Raumrunde einmal (`firedTurrets`); andere Hardpoints desselben Schiffs bleiben frei.
-    - **Ziel** ist das fremde Schiff, das man auf der Karte antippt; ohne Tipp ist es das erste, das
-      kämpft. Die Karte zeigt es mit rotem Ring, das Blatt in seiner Karte rechts. Die Zielwahl ist
-      Anzeige, kein Spielstand.
+    - **Ziel** ist das gewählte fremde Schiff, sonst das erste, das kämpft. Die Zielwahl ist kein
+      Spielstand.
     - Ein **angreifendes fremdes Schiff** feuert am Ende der Raumrunde („End Turn“) auf das eigene
       Schiff, wenn es in dieser Raumrunde noch nicht gefeuert hat.
     - **Rückfeuer** (SR 40): Ein fremdes Schiff, auf das gefeuert wird und das in dieser Raumrunde
@@ -3643,10 +3534,9 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     das Ausweichprogramm des Ziels als sein Verteidigungs-DM. Missile Racks und
     Sandcaster feuern noch nicht (Stufe 3). Der Schaden einer Salve wirkt erst nach allen ihren
     Würfen.
-  - **DMs erklären** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21i; Zielwert auf dem
-    Hardpoint-Knopf seit 2026-11-23a). Jeder Hardpoint-Knopf zeigt klein die Waffe und den Zielwert auf
-    2W6 (8 − DM, z. B. „Beam Laser 10+“); das Blatt schreibt jeden DM mit seinem Grund aus (Entfernung
-    mit Raumbändern, Pulse Laser, Computer-Treffer, Predict, Gunner, Ausweichen). Jeder Schuss hält
+  - **DMs erklären** (freigegeben am 21. November 2026, Kennzeichen 2026-11-21i). Zu jedem Hardpoint
+    gehört der Zielwert auf 2W6 (8 − DM) und jeder DM mit seinem Grund (Entfernung mit Raumbändern,
+    Pulse Laser, Computer-Treffer, Predict, Gunner, Ausweichen). Jeder Schuss hält
     fest, woraus sein DM kam: `bands` (Entfernung in Raumbändern), `computerHits` (Computer-Treffer
     des Schützen), `predict`, `gunnery`, `evade` und ob es Rückfeuer war (`returnFire`); so erklären
     Würfe und Log den DM auch später noch, wenn sich Schaden und Entfernung geändert haben.
@@ -3694,8 +3584,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
       Kampagne zusammen. Mit zweien zählt seine Fertigkeit auf beiden **um 1 niedriger** (SE 11).
     - *Fertigkeit* (`/skill`): Pilot → Pilot (auf einem Small Craft das bessere von Ship's Boat und
       Pilot − 1, SR 33), Navigator → Navigation, Engineer → Engineering, Steward → Steward, Medic →
-      Medical, Gunner → Gunnery. Ohne die Fertigkeit zählt ⚑ 0; die Mindeststufen der SR zeigt die
-      App als Hinweis an, verbietet aber nichts.
+      Medical, Gunner → Gunnery. Ohne die Fertigkeit zählt ⚑ 0; die Mindeststufen der SR sind ein
+      Hinweis, verboten wird nichts.
     - *Wirkung in Stufe 2b*: nur Pilot, Gunner und Engineer (siehe unten). Navigator, Steward und
       Medic stehen da und wirken später (Sprung, Passagiere, Heuer).
     - Ein **leerer Posten** sperrt nichts: Der Rechner fliegt und feuert ohne Crew, es fehlen nur die
@@ -3731,24 +3621,16 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
       Auto-Evade). Der Schubkreis wird entsprechend kleiner.
     - **Return Fire**: Wird die Einheit beschossen, feuert sie gleich zurück, einmal je Raumrunde
       (`returned`), auch wenn sie schon gefeuert hat (`SpaceAttack.returnFire`). Das eigene Schiff
-      feuert dann mit Würfelanimation von selbst. Ohne Return Fire bleibt es wie in Stufe 2: Wer
+      feuert dann von selbst. Ohne Return Fire bleibt es wie in Stufe 2: Wer
       noch nicht gefeuert hat, darf es jetzt tun.
     - Select, Multi-Target, Launch, Double Fire, Anti-Missile und ECM liegen an Bord, wirken aber
       noch nicht (Stufe 3 und später). Jump und Navigation prüft der Sprung ⚑ noch nicht.
     - ⚑ **Fremde Schiffe** haben Maneuver und Target in der CPU, sonst nichts, wie ein neues Schiff
       der Gruppe.
   - **DMs am Schuss**. Jeder Schuss hält fest, woraus sein DM kam (wie `bands` und `computerHits`
-    seit 2026-11-21i): `predict`, `gunnery`, `evade` und ob es Rückfeuer war. Blatt, Würfe und Log
-    erklären den DM damit auch später noch.
-  - **Oberflächen** (Owner, 22. und 23. November 2026: „Wir müssen da auch auf jeden Fall dann ein ui
-    für die Zuweisung der crew und eines für die Software entwerfen.“). Zwei neue Unterreiter im Bereich
-    Schiff, neben Deckplan und Details: **Crew** und **Computer**. Crew zeigt die Posten als Felder,
-    Zuweisung über das Blatt am Feld, Umziehen und Tauschen durch Ziehen zwischen den Feldern, oben
-    die besetzten Posten, darunter die freien als schmale Zeile, zuunterst die ohne Posten. Computer
-    zeigt CPU, Speicher und Archiv als drei Ablagen über der Rechnerzeile; Umstecken durch Ziehen
-    oder im Blatt, Werfen ebenda. Modelle: [`mock/crew-zuweisen.html`](mock/crew-zuweisen.html) und
-    [`mock/computer-programme.html`](mock/computer-programme.html).
-  - **Software kaufen** (Owner: ein UI für die Software). In der Werft an einem Raumhafen A oder B,
+    seit 2026-11-21i): `predict`, `gunnery`, `evade` und ob es Rückfeuer war. So lässt sich der DM
+    auch später noch erklären.
+  - **Software kaufen** (Owner). In der Werft an einem Raumhafen A oder B,
     wie die Bewaffnung: jedes Programm der Software-Liste zum Listenpreis (SE 13), bar aus der
     Kasse (Buchung `ship` mit `shipCost` software). Ein gekauftes Programm kommt in den Speicher,
     wenn dort Platz ist, sonst ins Archiv. Löschen geht überall, ohne Erstattung. ⚑ Das
@@ -3763,7 +3645,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
       Drive und der des Power Plant; ebenso `/jump`. Ein kritischer Treffer darauf setzt es auf 0.
     - Small Craft bleiben wie 2026-11-22: ein Drive-Treffer legt sie still.
   - **Schadenskontrolle** (`DamageControl`, SR 42). Einmal je Raumrunde und Schiff, solange das
-    eigene Schiff einen Engineer hat: Im Blatt einen ungeflickten, nicht kritischen Treffer wählen,
+    eigene Schiff einen Engineer hat: einen ungeflickten, nicht kritischen Treffer wählen,
     2W6 + Engineering (`dm`), **9+** flickt ihn (`ShipDamage.patched` hält die Stelle in `hits`).
     Ein geflickter Treffer wirkt nicht mehr (Antrieb, Turret, Computer), ⚑ kostet in der Werft aber
     weiter (provisorisch, SR 42). Kritische Treffer lassen sich nicht flicken. ⚑ Ein fremdes Schiff
@@ -3787,52 +3669,45 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     und jeder **Reise im System mit eigenem Schiff** (`SystemJourney` mit `ship`), je zweimal:
     beim **Start von der Welt**, bevor die Reise beginnt, und bei der **Ankunft**, gleich nachdem
     sie endet (nach dem Sprung: beim Auftauchen). Reisen mit Passage oder Ticket würfeln nicht
-    (Owner, ⚑ die Gruppe reist nur mit). „Systemflug beginnen“ würfelt nicht; dafür bleibt der
-    Knopf „Schiffsbegegnung“. Während einer laufenden Begegnung, Fahrt oder eines Systemflugs reist
+    (Owner, ⚑ die Gruppe reist nur mit). „Systemflug beginnen“ würfelt nicht; dafür bleibt die
+    Schiffsbegegnung von Hand. Während einer laufenden Begegnung, Fahrt oder eines Systemflugs reist
     man wie bisher nicht ab (außer mit der Weiterreise, siehe unten).
-  - **Der Wurf** ist derselbe wie beim Knopf „Schiffsbegegnung“ (siehe *Raumkampf, Stufe 2*): SE 13,
+  - **Der Wurf** ist derselbe wie bei der Schiffsbegegnung von Hand (siehe *Raumkampf, Stufe 2*): SE 13,
     Spalte nach dem Raumhafen der Hauptwelt des Systems, von dem man abreist bzw. in dem man
     ankommt, DM +2 Marinebasis, +1 Scoutbasis; danach Pirat oder Reaktion (SE 21). Bei einer Reise
     im System sind Start und Ziel im selben System. ⚑ Das \* (zusätzliches Small Craft) bleibt
     weiter ohne Folgen.
-  - **Dialog vor dem Wurf** (Owner, 22. November 2026: „Für das Würfeln einen Dialog, der den
-    Zielwert anzeigt, und Buttons für Würfeln und Abbrechen. Abbrechen lässt den Wurf ausfallen,
-    wenn man lange drückt. Damit kann ich den Wurf weg-GM-en“). Vor jedem Wurf bei Abreise oder
-    Ankunft entsteht eine flüchtige **Begegnungsprüfung** (`EncounterCheck`) mit dem Anlass
-    (`occasion`) und, beim Start, dem Ziel der Reise (`jumpTo` bzw. `travelTo`). Der Dialog zeigt
-    Anlass, Spalte (`/column`) und DM (`/dm`, mit Grund: Marinebasis, Scoutbasis) und als
-    **Zielwert** die Summen auf 2W6, bei denen ein Schiff kommt (`/shipOn`: jede Summe, deren
-    Ergebnis mit DM, höchstens 15, in der Spalte kein Strich ist), zusammengefasst wie „6+“ oder
-    „4, 9+“; kommt bei keiner Summe ein Schiff, sagt er das.
-    - **„Würfeln“** würfelt mit Würfelanimation wie beim Feuer und zeigt das Ergebnis im Dialog
-      (Wurf, Schiff oder keins, Reaktion).
-    - **„Abbrechen“** wirkt nur **lang gedrückt** (⚑ so lange wie die übrigen lang gedrückten Knöpfe
-      der App; ein kurzes Tippen hebt nur den Hinweis „Lange drücken: …“ hervor): Der Wurf fällt aus, als wäre kein Schiff gekommen, und die Reise geht
-      weiter. Dann steht kein Wurf an der Reise (`departureRoll` bzw. `arrivalRoll` fehlt) und kein
+  - **Prüfung vor dem Wurf** (Owner, 22. November 2026: „Damit kann ich den Wurf weg-GM-en“). Vor
+    jedem Wurf bei Abreise oder Ankunft entsteht eine flüchtige **Begegnungsprüfung**
+    (`EncounterCheck`) mit dem Anlass (`occasion`) und, beim Start, dem Ziel der Reise (`jumpTo`
+    bzw. `travelTo`). Sie kennt Spalte (`/column`), DM (`/dm`, mit Grund: Marinebasis, Scoutbasis)
+    und als **Zielwert** die Summen auf 2W6, bei denen ein Schiff kommt (`/shipOn`: jede Summe, deren
+    Ergebnis mit DM, höchstens 15, in der Spalte kein Strich ist).
+    - **Würfeln** ergibt Wurf, Schiff oder keins und Reaktion.
+    - **Auslassen** (die Spielleitung, mit Absicht): Der Wurf fällt aus, als wäre kein Schiff
+      gekommen, und die Reise geht weiter. Dann steht kein Wurf an der Reise (`departureRoll` bzw. `arrivalRoll` fehlt) und kein
       `SpaceBattle` im Log. ⚑ Ein ausgelassener Wurf ist also im Log nicht von einer Reise von
       vor dieser Änderung zu unterscheiden.
-    - Geht die App zu, solange der Dialog offen ist, ist die Prüfung verloren wie eine offene Karte:
+    - Geht die App zu, solange die Prüfung offen ist, ist sie verloren wie eine offene Karte:
       Beim Start fand keine Reise statt; bei der Ankunft steht die Gruppe am Ziel ohne Wurf.
   - **Von Hand auslösen** (Owner, 22. November 2026: „man sollte auch über Begegnung manuell den
-    Wurf triggern können“). Im Bereich **Begegnung** steht der Knopf **„Schiffsbegegnung“**, wenn die
-    Gruppe ein eigenes Schiff hat und bei ihm ist (wie bei „Systemflug beginnen“) und keine
-    Begegnung läuft. Er öffnet denselben Dialog, ohne Anlass (`occasion` fehlt) und ohne Ziel. Ein
-    Angreifer öffnet die Raumkarte mit einem neuen Systemflug an der Welt der Gruppe, das eigene
-    Schiff startet wie bei „Systemflug beginnen“; eine Sichtung fragt „Zur Raumkarte“ oder
-    „Weiter“ (dann nur der Logeintrag). Läuft schon ein Systemflug, öffnet der Knopf die Raumkarte
-    und würfelt dort. Der Knopf „Schiffsbegegnung würfeln“ im Systemflug öffnet ebenfalls diesen
-    Dialog; ein fremdes Schiff taucht dort auf wie bisher. Das Wählen von Hand (Entwurf und Absicht)
+    Wurf triggern können“). Die **Schiffsbegegnung** von Hand geht, wenn die Gruppe ein eigenes
+    Schiff hat und bei ihm ist (wie bei „Systemflug beginnen“) und keine Begegnung läuft: dieselbe
+    Prüfung, ohne Anlass (`occasion` fehlt) und ohne Ziel. Ein Angreifer beginnt einen neuen
+    Systemflug an der Welt der Gruppe, das eigene Schiff startet wie bei „Systemflug beginnen“; bei
+    einer Sichtung geht es in den Systemflug oder weiter (dann nur der Logeintrag). Läuft schon ein
+    Systemflug, wird dort gewürfelt; ein fremdes Schiff taucht dort auf wie bisher. Das Wählen von Hand (Entwurf und Absicht)
     bleibt im Systemflug.
   - **Ohne Schiff** (Strich in der Tabelle) geht die Reise weiter wie bisher. Die Würfel stehen an
     der Reise: `departureRoll` für den Start, `arrivalRoll` für die Ankunft. Kam ein Schiff, fehlt
     das Feld dort, und die Würfel stehen am `SpaceBattle` (`encounter`), nie an beiden. Reisen von
     vorher und Reisen mit Passage oder Ticket haben keins von beiden.
   - **Der Logeintrag** `SpaceBattle` hält den Anlass fest (`occasion`: `departure` oder `arrival`;
-    ohne beim Knopf). Beim Start trägt er auch das Ziel der unterbrochenen Reise: das Hexfeld des
+    ohne bei der Schiffsbegegnung von Hand). Beim Start trägt er auch das Ziel der unterbrochenen Reise: das Hexfeld des
     Sprungs (`jumpTo`) oder die Welt der Reise im System (`travelTo`), genau eins davon; bei der
-    Ankunft und beim Knopf keins.
-  - **Angriff** (Pirat oder Reaktion „greift an“): Die Raumkarte öffnet sich von selbst mit einem
-    neuen Systemflug, das fremde Schiff taucht auf wie beim Knopf (2W6 Raumbänder, 1W6 × 60°,
+    Ankunft und von Hand keins.
+  - **Angriff** (Pirat oder Reaktion „greift an“): Ein neuer Systemflug beginnt von selbst, das
+    fremde Schiff taucht auf wie von Hand (2W6 Raumbänder, 1W6 × 60°,
     gleiche Geschwindigkeit wie das eigene Schiff).
     - *Beim Start* auf der Raumkarte der Welt, von der man abreist; das eigene Schiff startet wie bei
       „Systemflug beginnen“ (Kreisbahn mit doppeltem Weltradius). Die Reise findet noch nicht statt:
@@ -3842,24 +3717,25 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
       Welt, ⚑), das eigene Schiff **an der Sprunggrenze**: 100 Durchmesser der Zielwelt von ihr
       entfernt, ⚑ ruhend gegenüber der Welt, ⚑ in Richtung 1W6 × 60°; bei Größe 0 wie beim Beginn in
       20.000 km. Die Reise hat stattgefunden (Tage, Treibstoff, Aufenthaltsort wie bisher).
-      ⚑ Der Dialog **Landeplatz** wartet, solange der Systemflug läuft; landet das Schiff im
-      Systemflug oder endet er, geht er auf wie sonst.
+      ⚑ Die Wahl des **Landeplatzes** wartet, solange der Systemflug läuft; landet das Schiff im
+      Systemflug oder endet er, kommt sie wie sonst.
   - **Sichtung** (Owner: fragen). Ignoriert das fremde Schiff die Gruppe, hält die Begegnungsprüfung
-    den noch nicht gespeicherten `SpaceBattle` als Sichtung (`sighting`), und der Dialog fragt: **„Zur Raumkarte“** öffnet den Systemflug wie beim Angriff, mit dem fremden Schiff,
-    das ignoriert (`intent` ignore); **„Weiter“** setzt die Reise fort (beim Start: sie findet statt;
+    den noch nicht gespeicherten `SpaceBattle` als Sichtung (`sighting`), und die Gruppe entscheidet:
+    **in den Systemflug** wie beim Angriff, mit dem fremden Schiff, das ignoriert (`intent` ignore),
+    oder **weiter** mit der Reise (beim Start: sie findet statt;
     bei der Ankunft: weiter zum Landeplatz). In beiden Fällen kommt der `SpaceBattle` ins Log, bei
-    „Weiter“ ohne Systemflug („Free Trader *Name* in Sicht“). ⚑ Geht die App vor der Antwort zu,
+    weiter ohne Systemflug („Free Trader *Name* in Sicht“). ⚑ Geht die App vor der Antwort zu,
     ist die Sichtung verloren wie eine offene Karte: Beim Start fand dann keine Reise statt, bei der
     Ankunft steht die Gruppe am Ziel, ohne dass die Sichtung im Log steht.
-  - **Weiterreise aus dem Systemflug** (Owner). Hat der Systemflug einen `departure`, steht im Blatt
-    der Knopf **„Springen nach …“** (bei `jumpTo`) bzw. **„Reisen nach …“** (bei `travelTo`),
-    jederzeit, auch mitten im Kampf. Er löst die Reise aus, wie sie der Reisedialog ausgelöst hätte,
+  - **Weiterreise aus dem Systemflug** (Owner). Hat der Systemflug einen `departure`, geht die
+    unterbrochene Reise weiter (**Springen nach …** bei `jumpTo`, **Reisen nach …** bei `travelTo`),
+    jederzeit, auch mitten im Kampf, wie sonst eine Reise,
     mit denselben Bedingungen (Sprungweite höchstens `ShipDamage./jump`, Treibstoff) und **ohne
     neuen Wurf beim Start** (der kam schon); bei der Ankunft wird gewürfelt wie sonst.
     - *Fehlsprung* (SR 28, Owner): Beim Sprung aus dem Systemflug kommt zu `Journey.jumpDm` **+5**,
       wenn das Schiff innerhalb 100 Durchmesser eines Himmelskörpers der Raumkarte ist, **+15**
       innerhalb 10 Durchmesser (der höchste zählt, nicht beide). Das ist auch die **Flucht per
-      Sprung**. Beim Sprung aus dem Reisedialog bleibt es wie bisher (das Schiff fliegt dort
+      Sprung**. Beim gewöhnlichen Sprung bleibt es wie bisher (das Schiff fliegt dort
       gedanklich bis zur Sprunggrenze).
     - Der Systemflug endet damit. War ein fremdes Schiff noch da, endet der Raumkampf mit
       `SpaceBattleEnd` und dem Ausgang **abgereist** (`departed`). Der Ort des Schiffs ist danach
@@ -3891,12 +3767,11 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     ohne Bewaffnung (keine Laser erlaubt, Raketen und Sand gibt es noch nicht). Das gilt für Beiboote
     der Standardentwürfe wie für einzeln gekaufte.
   - **Umrüsten** ⚑ gibt es für Small Craft noch nicht (Owner: der Rest existiert noch nicht): Ist das
-    aktive Schiff ein eigenständiges Small Craft, ist die Werft ausgegraut, mit Grund. Raketen und
+    aktive Schiff ein eigenständiges Small Craft, geht die Werft nicht. Raketen und
     Sandcaster kommen mit Stufe 3.
   - **Ohne Computer** (SE 13): Ein Small Craft ohne Computer schießt mit **DM −1** und kann nicht
     zwei Waffen zugleich einsetzen: Je Raumrunde feuert nur ein Laser (der erste, der noch arbeitet).
-    Der Schuss hält fest, dass der DM daher kam (`SpaceAttack.noComputer`), und Knopf, Blatt und Log
-    schreiben ihn aus („ohne Computer −1“). ⚑ Der DM −1 für einen Piloten, der ohne Gunner schießt
+    Der Schuss hält fest, dass der DM daher kam (`SpaceAttack.noComputer`). ⚑ Der DM −1 für einen Piloten, der ohne Gunner schießt
     (SR 34), kommt erst mit den Schiffspositionen.
   - **Trefferzonen der Small Craft** (SE 12, Spalte *Small Craft*). Wird ein Small Craft getroffen,
     würfelt die Trefferzone 2W6: 2–5 Drive (`drive`), 6 und 8–9 Cabin (`cabin`), 7 Computer, 10–11
@@ -3973,27 +3848,25 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     Mutterschiff: einer der Liegeplätze, für die es gebaut ist (`ShipDesign.craft`), oder, wenn alle
     belegt sind, freier Laderaum für seinen Rumpf. Und **Schub**: Das Small Craft muss den
     **Andockpunkt** der nächsten Bewegung erreichen – den Ort, an dem sein Mutterschiff nach dieser
-    Bewegung steht. Erreichbar heißt, was beim Schub wählen im Ring liegt: 5.000 km je G vom Punkt
+    Bewegung steht. Erreichbar heißt, was mit dem Schub erreichbar ist: 5.000 km je G vom Punkt
     „ohne Schub“ aus, mit der echten Schwerkraft gerechnet. Nähe und Geschwindigkeit für sich sind
     keine Bedingung mehr: Wer weit weg ist oder schnell vorbeifliegt, braucht nur mehr G. Reicht der
-    Schub nicht, bleibt der Knopf gesperrt und sagt, wie viel G fehlen.
+    Schub nicht, geht es nicht; dann ist klar, wie viel G fehlen.
   - **Andockflug** (`SpaceUnit.docking`, 2026-11-23c): „Andocken“ heißt nicht immer „sofort andocken“.
     Steht das Mutterschiff schon näher als 100 km (`DOCK_KM`), dockt die Einheit an. Ist sie weiter
-    weg, setzt der Knopf den **Andockflug**: In der nächsten Bewegung steuert die Einheit mit vollem
+    weg, beginnt der **Andockflug**: In der nächsten Bewegung steuert die Einheit mit vollem
     Schub den Andockpunkt an (der eigene Schubpunkt ist damit hinfällig; wer selbst zieht, gibt den
     Andockflug auf) und dockt an, wenn sie dort näher als 100 km steht. Reichte der Schub nicht,
     fliegt sie dem Mutterschiff nach und behält den Andockflug für die nächste Bewegung. Angedockt:
     Die Einheit entfällt, `aboard` wird gesetzt, und war die Gruppe darin, sitzt sie jetzt im
-    Mutterschiff. Im Blatt sitzt „Andocken“ in der Knopfreihe am Platz von **Launch**, solange die
-    Gruppe in dem Small Craft sitzt (sonst steht „Andocken“ als Chips an der Karte); in beiden Phasen
-    der Raumrunde zu haben. ⚑ „Andocken“ heißt nie „Landen“: **Landen** bleibt das Aufsetzen auf einer
+    Mutterschiff. Andocken geht in beiden Phasen der Raumrunde. ⚑ „Andocken“ heißt nie „Landen“: **Landen** bleibt das Aufsetzen auf einer
     Welt.
   - **Landen** geht wie bisher (Landeautomatik eingeschlossen), aber nur mit der Einheit der Gruppe
     (Owner, 21. November 2026: nur mit Gruppe). Erreicht eine andere Einheit die Oberfläche, schlägt
-    sie auf; die Bahnvorschau warnt vorher, die Landeautomatik gilt für sie nicht. Das gelandete
+    sie auf; die Landeautomatik gilt für sie nicht. Das gelandete
     Schiff oder Small Craft bekommt den Landeplatz als Ort.
-  - **Reise im System mit dem Small Craft** (Owner: „auch Reise im System“). Im Reisedialog steht
-    neben Ticket und eigenem Schiff jedes Small Craft, bei dem die Gruppe ist (gelandet an ihrem Ort,
+  - **Reise im System mit dem Small Craft** (Owner: „auch Reise im System“). Neben Ticket und eigenem
+    Schiff reist die Gruppe auch mit jedem Small Craft, bei dem sie ist (gelandet an ihrem Ort,
     oder an Bord des Mutterschiffs, bei dem die Gruppe steht; dann verlässt es das Mutterschiff).
     Dauer nach T = 2·√(D/A) mit A = seine G (Launch 1 G: bis zu Tagen), `SystemJourney.ship` zeigt auf
     das Small Craft. ⚑ Wie beim Schiff ohne Treibstoff, mit Lebenserhaltung wie bei der Reise im
@@ -4042,7 +3915,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   (B6 35, 37), keine Hausregel.
   - **Wann gewürfelt** (geändert und freigegeben am 20. November 2026, Kennzeichen 2026-11-20;
     vorher: beim ersten Öffnen der Raumkarte). In der Weltenerschaffung als eigener Schritt nach
-    der Oberfläche, mit dem Knopf „Sternsystem würfeln“, alles auf einmal (siehe
+    der Oberfläche („Sternsystem würfeln“), alles auf einmal (siehe
     *Weltenerschaffung*, Schritt 7); fertige Welten ohne Sternsystem bekommen es beim Öffnen der
     Kampagne (siehe *Welten ohne Sternsystem*). Gespeichert an der Welt (`Hex.system`), danach nie
     wieder gewürfelt (Werte, nicht Würfe). Leere Hexfelder haben keins.
@@ -4087,11 +3960,10 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
   - **Hauptwelt als Mond**: Ihre Raumkarte ist die Raumkarte des Gastgebers: der Gasriese in der
     Mitte, die Hauptwelt und die übrigen Monde auf ihren Bahnen. Der Systemflug beginnt dann auf
     einer Kreisbahn um die Hauptwelt mit doppeltem Weltradius, mitbewegt mit ihr.
-  - **Raumkarte am Gasriesen** (`SystemFlight.at`): Der Knopf „Raum“ bietet die Welt und jeden
-    Gasriesen des Systems an. Geändert am 21. November 2026 (Owner): „Raum“ öffnet die Raumkarte um
-    die Welt der offenen Weltkarte, auch um eine Nebenwelt oder einen Mond (nicht um einen Ring);
-    das Blatt bietet daneben die Hauptwelt und jeden Gasriesen an, und der Systemflug darf an jeder
-    dieser Welten beginnen. Am Gasriesen steht er in der Mitte, seine Monde kreisen um ihn,
+  - **Raumkarte am Gasriesen** (`SystemFlight.at`): Eine Raumkarte gibt es um jede Welt des Systems,
+    auch um eine Nebenwelt, einen Mond oder einen Gasriesen (nicht um einen Ring; geändert am
+    21. November 2026, Owner), und der Systemflug darf an der Hauptwelt und jedem Gasriesen
+    beginnen. Am Gasriesen steht er in der Mitte, seine Monde kreisen um ihn,
     Sprunggrenzen nach seinem Durchmesser. Der Systemflug beginnt wie an der Welt (Aufenthaltsort,
     eigenes Schiff, Kreisbahn mit doppeltem Radius). ⚑ Wie das Schiff von der Welt zum Gasriesen
     kommt (eine Reise im System, Tage bei 1 G), bleibt offen; bis dahin darf der Systemflug am
@@ -4121,26 +3993,18 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
     liegen Millionen Kilometer entfernt. Die Weltkarte zeigt sie in einer Übersicht des Systems;
     besuchen kann man sie später mit einer Reise im System.
   - **Nebenwelten mit Weltkarte und Globus** (freigegeben am 20. November 2026, 2026-11-20d; Owner, 20. November
-    2026). Ein Tipp auf eine Welt in der Übersicht des Systems öffnet ihre Weltkarte, wie die der
-    Hauptwelt; Weltkarte und Globus hängen dafür an der Welt, nicht am Hexfeld. Nebenwelten
-    bekommen dort einen Namen und eine Notiz und „Globus erzeugen“ (die Oberfläche haben sie seit
+    2026). Jede Welt des Systems hat ihre Weltkarte wie die Hauptwelt; Weltkarte und Globus hängen
+    dafür an der Welt, nicht am Hexfeld. Nebenwelten bekommen einen Namen, eine Notiz und auf Wunsch
+    einen Globus (die Oberfläche haben sie seit
     21. November 2026 schon mit dem Sternsystem, die Temperatur aus der Zone gespeichert, damit das
     Leben dazu passt); danach haben sie Tiertabellen, Orte und Begegnungen wie die Hauptwelt.
     Keine Oberfläche und keinen Globus haben Größe 0 (Gürtel), Ringe und Gasriesen. Kleine Welten
     (S) bekommen seit 21. November 2026 (Owner) beides: die Oberfläche nach den Regeln für Größe 0
     (kein Wasser, keine Platten; Book 6 behandelt sie wie Größe 0) und einen Globus mit dem kleinsten
     Raster (wie Größe 1, `gridSize`), dessen Felder nach ihrem echten Durchmesser gemessen werden. ⚑ Auf der Oberflächenkarte einer Nebenwelt bekommt die erste Hauptstadt den
-    Spaceport als Hafen (Y: keinen), die übrigen Städte wie bei Starport X. Die Übersicht zeigt mit
-    einem kleinen Punkt am Namen, welche Welt einen Globus hat.
-    Geändert am 21. November 2026 (Owner, „wo die Party ist, sollte die UI beeinflussen“): Ein Feld
-    der Sektorkarte öffnet, einfach oder doppelt angetippt, im System der Gruppe zuerst die Welt, auf
-    der sie ist (doppelt: ihren Globus); der Knopf ⌖ ebenso. Die Übersicht des Systems ist ein
-    eigener Unterreiter der Weltkarte („Welt“ | „System“), nicht ein Abschnitt unter den Werten.
-    Ebenso (Owner, 21. November 2026): Ein Tipp auf den Namen oben auf dem Globus öffnet dieselbe
-    Weltkarte wie im Subsektor, im Blatt unten zum Hochschieben, mit der Aktionsleiste Hierher reisen,
-    Gruppe platzieren, Raum (ohne „Öffnen“, der Globus ist ja offen); ✕ schließt nur das Blatt. Die
-    eigene Kachel „Die Welt“ oben auf dem Globus entfällt. Nach „Globus erzeugen“ geht der Globus auf, und die Weltkarte bleibt
-    unten im Blatt stehen (nicht das Log).
+    Spaceport als Hafen (Y: keinen), die übrigen Städte wie bei Starport X.
+    Geändert am 21. November 2026 (Owner, „wo die Party ist, sollte die UI beeinflussen“): Im System
+    der Gruppe steht die Welt, auf der sie ist, an erster Stelle.
   - **Nebenwelten** (freigegeben am 20. November 2026, Kennzeichen 2026-11-20c). Nach B6 38–39 mit den Tabellen
     S. 29, übertragen in [`regeln-sternsystem.md`](regeln-sternsystem.md) (*Nebenwelten*). Für jede
     Welt außer der Hauptwelt, Gasriesen und Ringen, im selben Zug wie das übrige System, nach den
