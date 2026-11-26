@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { schwererLauf, characters, openPeople, openSector, openShop, openCombat, land } from './layout';
+import { schwererLauf, characters, openPeople, openSector, openShop, openCombat, land, wuerfelgleich } from './layout';
 
 /** Eine fertige Welt im Subsektor, lange gedrückt durchgewürfelt und Regina genannt; ihre Weltkarte bleibt offen. */
 async function makeWorld(page: Page) {
@@ -129,6 +129,9 @@ test('Shop: auf Kessra mit einem Tipp kaufen, Verbotenes erst nach Rückfrage, v
 });
 
 test('Shop: „Gruppe platzieren“ auf der Weltkarte bringt die Gruppe auf eine andere Welt', async ({ page }) => {
+  // Fest gewürfelt (2026-11-26): Welche Welt entsteht, steht fest; der Lauf wartet nicht mehr darauf,
+  // dass der Zufall zehnmal hintereinander eine brauchbare Welt hersagt.
+  await wuerfelgleich(page);
   await page.goto('/');
   const world = await makeWorld(page);
   await page.getByRole('button', { name: 'Gruppe platzieren' }).click();

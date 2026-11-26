@@ -17,12 +17,6 @@ Grundkarte und Ziehblatt stehen (Schritt 1 und 2: Handy und Desktop). Als Nächs
   Bedienung noch vermischt (rund 120 Zeilen mit Knopf, Tippen, Blatt, etwa „„+ Neuer NSC“ fragt
   zuerst nach der Rolle“). In einem eigenen Durchgang trennen, Bereich für Bereich: Die Regel
   bleibt im Modell, der Ablauf auf dem Bildschirm kommt ins Handbuch oder fällt weg.
-- [ ] **Drei wackelnde GUI-Tests fest gegen den Zufall:** `e2e/shop.spec.ts:131` („Gruppe platzieren")
-  scheiterte am 25. November 2026 an `Keine Welt entstanden`, `e2e/encounter.spec.ts:206` (Tiertabelle)
-  wartete auf einen Wurf, den der Zufall gerade nicht brachte, und `e2e/space.spec.ts:127` (Beam
-  Laser) meldete in der großen Suite `Kein Ziel` statt `schon gefeuert`. Alle drei bestehen einzeln
-  direkt danach wieder. In allen drei Tests Welt und Würfelwerkzeug so setzen, dass das Ergebnis
-  nicht vom Zufall hängt.
 
 ## Kampf
 

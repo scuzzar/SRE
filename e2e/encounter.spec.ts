@@ -1,10 +1,14 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { schwererLauf, entries, expandTray, host, openOracle, openSector, openCombat, openPart, land } from './layout';
+import { schwererLauf, entries, expandTray, host, openOracle, openSector, openCombat, openPart, land, wuerfelgleich } from './layout';
 
 test('Begegnung im eigenen Reiter; Kampf: Waffentabelle ohne Begegnung, mit Begegnung die Simulation mit Runde, Entfernung und Zügen', async ({ page }) => {
   // Ein langer Ablauf mit vielen Würfen und Zügen.
   // Auf dem Desktop allein schon 45–55 s.
   schwererLauf(90_000);
+  // Fest gewürfelt (2026-11-26): Im ersten Feld entsteht eine brauchbare Welt, das Durchwürfeln der
+  // zehn Felder bleibt also die Ausnahme. Der Kampf selbst würfelt weiter fest – er braucht keine
+  // bestimmte Zahl, nur Zahlen, die zu den Erwartungen unten passen.
+  await wuerfelgleich(page);
   await page.goto('/');
   await openSector(page);
   const map = page.getByRole('group', { name: 'Karte des Subsektors' });
@@ -204,6 +208,9 @@ test('Patron und Gerücht: unten würfeln, das Würfelfenster zeigt Test und Erg
 });
 
 test('Tiere: Gelände auf dem Blatt; die Tiertabelle entsteht beim ersten Wurf, danach wählt man die Zeile mit „Manuell wählen“', async ({ page }) => {
+  // Fest gewürfelt (2026-11-26): Der Wurf und damit die Tabelle stehen fest; der Test wartet nicht
+  // mehr bis zu 60 Mal darauf, dass der Zufall Tiere hersagt.
+  await wuerfelgleich(page);
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Begegnung' }).click();
   const settings = page.getByRole('region', { name: 'Einstellungen der Begegnungen' });
@@ -220,10 +227,12 @@ test('Tiere: Gelände auf dem Blatt; die Tiertabelle entsteht beim ersten Wurf, 
   await expect(choice).toContainText('entsteht beim ersten Wurf');
   await choice.getByRole('button', { name: 'Abbrechen' }).click();
   await page.getByRole('checkbox', { name: /^Manuell wählen/ }).uncheck();
-  // Würfeln, bis der Test besteht; dann gibt es die Tabelle (Tier mit Übersicht oder Ereignis).
+  // Würfeln, bis es die Tabelle gibt (Tier mit Übersicht oder Ereignis).
   const roll = page.getByRole('dialog', { name: 'Tiere' });
   let table = false;
+  let wuerfe = 0;
   for (let i = 0; i < 60 && !table; i++) {
+    wuerfe = i + 1;
     await hold(page, animals);
     await expect(roll).toContainText(/\(5\+ nötig\)/);
     table = (await roll.textContent())!.includes('Wurf');
@@ -236,6 +245,10 @@ test('Tiere: Gelände auf dem Blatt; die Tiertabelle entsteht beim ersten Wurf, 
       await page.locator('.encounter-running').getByRole('button', { name: 'Beenden' }).click();
     } else await roll.getByRole('button', { name: 'Weiter' }).click();
   }
+  // Mit diesem Anfang der Zahlenfolge sind die drei ersten Würfe ohne Tiere, der vierte bringt sie –
+  // jeder Lauf würfelt genau so. Steht hier ein anderer Wert, hat sich etwas an den Würfeln der
+  // Tierbegegnung geändert, nicht am Zufall.
+  expect(wuerfe, 'Würfe bis zur Tiertabelle').toBe(4);
   // Eine Zeile wählen: ohne Test eine Begegnung mit Übersicht.
   await page.getByRole('checkbox', { name: /^Manuell wählen/ }).check();
   await animals.click();

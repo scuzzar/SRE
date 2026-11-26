@@ -134,3 +134,30 @@ export async function openShop(page: Page) {
   await pickCapital(page);
   await page.getByRole('button', { name: 'Einkaufen', exact: true }).click();
 }
+
+/**
+ * Würfelt fest: legt vor dem ersten Laden der App eine gleichbleibende Zahlenfolge unter
+ * `crypto.getRandomValues`, die Quelle aller Würfe (`src/platform/random.ts`). Der Test würfelt
+ * damit wie beim letzten Lauf: Welten, Tabellenzeilen und Entfernungen stehen jedes Mal gleich,
+ * sodass er sein Ergebnis verlangen kann, statt auf den Zufall zu warten. `anfang` ist der Start
+ * der Folge – ein anderer Wert heißt andere, aber wieder dieselben Würfe. Vor `page.goto` aufrufen.
+ */
+export async function wuerfelgleich(page: Page, anfang = 20261126): Promise<void> {
+  await page.addInitScript((start: number) => {
+    let zustand = (start >>> 0) || 1;
+    // xorshift32: Periode 2^32 − 1, in allen Bits brauchbar verteilt.
+    const weiter = (): number => {
+      zustand = (zustand ^ (zustand << 13)) >>> 0;
+      zustand = (zustand ^ (zustand >>> 17)) >>> 0;
+      zustand = (zustand ^ (zustand << 5)) >>> 0;
+      return zustand;
+    };
+    // Nur diese eine Eigenschaft wird verdeckt; `crypto.randomUUID` (Schlüssel) bleibt die echte.
+    Object.defineProperty(window.crypto, 'getRandomValues', {
+      value: (feld: { readonly length: number; [index: number]: number }) => {
+        for (let i = 0; i < feld.length; i++) feld[i] = weiter();
+        return feld;
+      },
+    });
+  }, anfang);
+}

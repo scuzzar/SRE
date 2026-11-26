@@ -127,6 +127,13 @@ Rahmen der View: `App.tsx` (Grundkarte, Ziehblatt, Desktop-Modus), `Tray.tsx` (Z
 - **Regeln und Ablauf:** Unit-Tests mit Vitest für Model und Controller, darunter die Beispiele aus
   der README (Kira, Jonas). Weil der Controller den Ablauf hält, lässt sich auch „wischen →
   Fertigkeit → Probe würfeln → Popup → weiter“ ohne Browser testen. Playwright prüft die Oberfläche bei 390 × 844.
+- **Der Zufall in den GUI-Tests:** Gewürfelt wird nur über `crypto.getRandomValues`
+  (`src/platform/random.ts`). Ein Test, dessen Ergebnis von einem Wurf abhängt, legt mit
+  `wuerfelgleich(page)` aus `e2e/layout.ts` vor dem ersten `page.goto` eine gleichbleibende Zahlenfolge
+  unter diese Eigenschaft und verlangt dann genau das Ergebnis dieses Wurfs, statt so lange zu
+  würfeln, bis der Zufall mitspielt. Welche Welt entsteht, welche Tabellenzeile zieht und ob ein
+  Schuss das fremde Schiff fallen lässt, steht damit für jeden Lauf fest; ein anderer Anfang der
+  Folge (`wuerfelgleich(page, n)`) nimmt andere, aber wieder dieselben Würfe.
 
 ## Befehle
 

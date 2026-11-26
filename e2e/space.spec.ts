@@ -1,15 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { schwererLauf, openHomeGlobe, openTab } from './layout';
+import { schwererLauf, openHomeGlobe, openTab, wuerfelgleich } from './layout';
 
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-});
+// Jeder Test lädt die App selbst (2026-11-26): Der letzte von ihnen würfelt fest und muss die
+// Zahlenfolge setzen, bevor die App zum ersten Mal lädt.
 
 // Die Raumkarte rechnet und zeichnet viel (Schubringe, Bahnen, Salven); zwei Tester nebeneinander
 // brauchen schon mal das Doppelte der Zeit, darum hier mehr Luft als die 30 Sekunden Grundzeit.
 schwererLauf(90_000);
 
 test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, bewegen, beenden', async ({ page }) => {
+  await page.goto('/');
   // Die Demo-Kampagne hat eine Yacht im Hafen von Kessra (2026-11-21b; vorher ein Scout).
   await openHomeGlobe(page);
   await page.getByRole('button', { name: 'Raumkarte' }).click();
@@ -40,6 +40,7 @@ test('Systemflug: Raumkarte öffnen, Schub im Schubkreis setzen, bewegen, beende
 });
 
 test('Beiboot im Systemflug aussetzen und mit „Andocken“ wieder an Bord (2026-11-21b, der Andockflug 2026-11-23c)', async ({ page }) => {
+  await page.goto('/');
   await openHomeGlobe(page);
   await page.getByRole('button', { name: 'Raumkarte' }).click();
   await page.getByRole('button', { name: 'Systemflug beginnen' }).click();
@@ -89,6 +90,7 @@ test('Beiboot im Systemflug aussetzen und mit „Andocken“ wieder an Bord (202
 });
 
 test('Systemflug aus dem Reiter Schiff: „Starten“ öffnet die Raumkarte, die Bedienung steht im Reiter Schiff (Owner, 21. November 2026)', async ({ page }) => {
+  await page.goto('/');
   await openHomeGlobe(page);
   await openTab(page, 'Schiff');
   await page.getByRole('button', { name: 'Starten', exact: true }).click();
@@ -106,6 +108,7 @@ test('Systemflug aus dem Reiter Schiff: „Starten“ öffnet die Raumkarte, die
 });
 
 test('Raumkarte am Gasriesen: Kessra ist Mond eines Gasriesen; seine Raumkarte hat eigene Monde (2026-11-18d)', async ({ page }) => {
+  await page.goto('/');
   await openHomeGlobe(page);
   await page.getByRole('button', { name: 'Raumkarte' }).click();
   const choices = page.getByRole('group', { name: 'Raumkarte von' });
@@ -125,6 +128,11 @@ test('Raumkarte am Gasriesen: Kessra ist Mond eines Gasriesen; seine Raumkarte h
 });
 
 test('Werft und Raumkampf: der Beam Laser der Demo-Yacht, ein fremdes Schiff von Hand, Feuer auf es (2026-11-21g/h)', async ({ page }) => {
+  // Fest gewürfelt (2026-11-26): Der Schuss trifft immer gleich. Fiel das fremde Schiff mit echten
+  // Würfeln schon nach dieser Salve aus, war danach „Kein Ziel“ übrig und der Hinweis „schon
+  // gefeuert“ fehlte. Mit diesem Anfang überlebt das fremde Schiff die Salve.
+  await wuerfelgleich(page);
+  await page.goto('/');
   await openHomeGlobe(page);
   await openTab(page, 'Schiff');
   await page.getByRole('button', { name: 'Werft', exact: true }).click();
