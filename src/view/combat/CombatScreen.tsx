@@ -176,7 +176,7 @@ function AttackDock({ combat }: { combat: CombatView }) {
   const game = useGame();
   const target = combat.target;
   return (
-    <section className="dock" aria-label="Angreifen">
+    <section className="dock attack-dock" aria-label="Angreifen">
       <div className="actions">
         {combat.damage && (
           <button

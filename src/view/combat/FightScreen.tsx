@@ -233,13 +233,16 @@ function RangeBar({ sim }: { sim: SimView }) {
   const right = npcsMove ? { label: 'Die NSC gehen ein Band weiter weg', can: canFarther, step: 1 as const } : { label: 'Ein Band näher', can: canCloser, step: -1 as const };
   return (
     <>
+      {/* Eine Zeile über dem Strahl: links Reichweite und Band des vorgewählten SC, rechts, wie weit die Partei am Zug gegangen ist. */}
       <p className="ray-now" aria-live="polite">
         <span>
           <b>{sim.escaped || !sim.range ? 'Entkommen' : rangeText[sim.range]}</b>
           {focusName ? `${focusName} · ` : ''}
           {sim.escaped ? 'über 20 Bands' : sim.close ? 'Berührung' : `Band ${sim.band}`}
         </span>
-        <span className="muted">halten: frei</span>
+        <span className={move?.ran ? 'ray-move ran' : 'ray-move'} title={move?.reason}>
+          {moveText}
+        </span>
       </p>
       <div className="ray-range">
         <button type="button" className="ray-arrow" aria-label={left.label} disabled={!left.can} onClick={() => step1(left.step)}>
@@ -255,6 +258,7 @@ function RangeBar({ sim }: { sim: SimView }) {
           }}
           onClick={() => free.consumed()}
           role="img"
+          title="Lange drücken: frei setzen"
           aria-label={`Entfernung: ${sim.positions.map((p) => `${p.name} ${p.escaped ? 'entkommen' : p.close ? 'in Berührung' : `Band ${p.band}`}`).join(', ')}. Lange drücken: ${focusName ?? 'SC'} frei setzen`}
         >
           <span className="ray-line" style={at(lastReach, lastReach)} />
@@ -293,9 +297,6 @@ function RangeBar({ sim }: { sim: SimView }) {
           ▶
         </button>
       </div>
-      <p className={move?.ran ? 'ray-move ran' : 'ray-move'} title={move?.reason}>
-        <span>{moveText}</span>
-      </p>
     </>
   );
 }

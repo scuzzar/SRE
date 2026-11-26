@@ -4838,7 +4838,13 @@ button:disabled {
 .combat-scroll {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+/* Die Aktionsleiste der Waffentabelle so knapp wie die der Kampfsimulation, damit auf halber Höhe die Tabelle beginnt. */
+.dock.attack-dock {
+  padding: 8px 12px;
 }
 
 .weapon-head {
@@ -5818,8 +5824,8 @@ button:disabled {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 4px;
+  padding: 4px 16px;
   border-bottom: 1px solid var(--rule);
 }
 
@@ -5890,7 +5896,7 @@ button:disabled {
   height: 46px;
 }
 
-/* Über der Leiste: Reichweite, Name und Band des vorgewählten SC, rechts der Hinweis auf das freie Setzen. */
+/* Über der Leiste: Reichweite, Name und Band des vorgewählten SC, rechts wie weit die Partei am Zug gegangen ist. */
 .ray-now {
   display: flex;
   justify-content: space-between;
@@ -5903,16 +5909,16 @@ button:disabled {
   overflow: hidden;
 }
 
+.ray-now > span:first-child {
+  flex: none;
+}
+
 .ray-now b {
   margin-right: 6px;
   font-size: 13px;
   color: var(--gold);
 }
 
-.ray-now .muted {
-  font-size: 11px;
-  color: var(--dim);
-}
 
 .ray-arrow {
   display: grid;
@@ -6398,17 +6404,17 @@ button:disabled {
   color: var(--muted);
 }
 
-/* Unter dem Strahl: wie weit die Partei am Zug in dieser Runde gegangen ist, und der Hinweis auf das freie Setzen. */
+/* Rechts in der Zeile über dem Strahl: wie weit die Partei am Zug in dieser Runde gegangen ist. */
 .ray-move {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 2px 0 0;
-  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
   font-family: var(--mono);
+  color: var(--text);
 }
 
-.ray-move.ran > span:first-child {
+.ray-move.ran {
   color: var(--accent-text);
 }
 
@@ -7092,8 +7098,8 @@ button:disabled {
 
 /* Unten kompakt: wer gegen wen mit Aussetzen, darunter je Waffe ein Angriff. */
 .fight-dock {
-  gap: 6px;
-  padding: 8px 12px 10px;
+  gap: 5px;
+  padding: 6px 12px 8px;
 }
 
 .fight-who-row {
@@ -7217,11 +7223,6 @@ button:disabled {
 
 .fight-dock .ray-range {
   height: 44px;
-}
-
-.fight-dock .ray-move {
-  margin: -2px 0 0;
-  font-size: 11px;
 }
 
 /* --- Beute: Beute nehmen und Ausweiden --------------------------------------------------------- */

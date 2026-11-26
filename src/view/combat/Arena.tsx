@@ -36,14 +36,14 @@ export function Arena({ sim, impacts, selection, onHeal, quiet }: { sim: SimView
   return (
     <div className="arena" ref={arena}>
       <div className="arena-side pcs" aria-label="SC">
-        <span className="arena-label">SC</span>
         {pcs.map((f) => (
           <FighterCard key={f.id} fighter={f} selection={selection} onHeal={onHeal} impacts={impacts.filter((i) => i.id === f.id)} />
         ))}
       </div>
       <div className="arena-gap" aria-hidden="true" />
       <div className="arena-side npcs" aria-label="NSC">
-        <span className="arena-label">{selection.picked ? 'Übernehmen' : 'NSC'}</span>
+        {/* Gold und Rot sagen schon, wer wohin gehört; beschriftet wird nur die Auswahl zum Übernehmen. */}
+        {selection.picked && <span className="arena-label">Übernehmen</span>}
         {npcs.map((f) => (
           <FighterCard key={f.id} fighter={f} selection={selection} onHeal={onHeal} impacts={impacts.filter((i) => i.id === f.id)} />
         ))}
