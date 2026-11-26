@@ -484,7 +484,7 @@ export interface NpcItem {
   readonly weapon: string | undefined;
 }
 
-/** Die NSC-Liste (siehe domain-model.md, *NSC-Liste*). */
+/** Die NSC-Liste (siehe modell/begegnung.md, *NSC-Liste*). */
 export interface NpcScreenView {
   /** „Alle zeigen“ ist an; beim Öffnen des Bereichs ist es aus. */
   readonly all: boolean;
@@ -1450,7 +1450,7 @@ export interface MissionItem {
   readonly here: boolean;
 }
 
-/** Der Bereich Missionen (siehe domain-model.md, *Missionen*). */
+/** Der Bereich Missionen (siehe modell/mission.md, *Missionen*). */
 export interface MissionsView {
   readonly open: readonly MissionItem[];
   readonly done: readonly MissionItem[];

@@ -1,4 +1,4 @@
-// Fahrt und Reisetag, wie die View sie zeigt (siehe docs/domain-model.md, *Fahrt*).
+// Fahrt und Reisetag, wie die View sie zeigt (siehe docs/modell/logistik.md, *Fahrt*).
 
 import {
   daysLeft,

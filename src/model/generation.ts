@@ -341,7 +341,7 @@ function withWorld(generation: Generation, state: CareerState, id: string): Gene
 }
 
 /**
- * Ein Schritt des Durchlaufs: würfelt oder entscheidet zufällig (siehe domain-model.md,
+ * Ein Schritt des Durchlaufs: würfelt oder entscheidet zufällig (siehe modell/begegnung.md,
  * *Durchlaufen*). `undefined`, wenn der Lauf hier anhält: beim Namen, beim Tod oder ohne Welt.
  * `service` gibt die Laufbahn vor, sonst fällt sie zufällig nach der Chance der Musterung.
  */
@@ -380,7 +380,7 @@ function runStep(generation: Generation, hexes: Campaign['hexes'], random: Rando
 
 /**
  * Lässt die Erschaffung durchlaufen: würfelt jeden Schritt und trifft jede Entscheidung zufällig,
- * bis zum Namen oder zum Tod (siehe domain-model.md, *Durchlaufen*). Gibt es für die Heimatwelt
+ * bis zum Namen oder zum Tod (siehe modell/erschaffung.md, *Durchlaufen*). Gibt es für die Heimatwelt
  * keine fertige Welt, hält der Lauf dort an. Ein Ship-Vorteil, der die Gruppe vor die Wahl
  * stellt, wird zufällig entschieden (Hausregel, 2026-11-16).
  */
@@ -445,7 +445,7 @@ export function runOneCareer(hexes: Campaign['hexes'], service: string, random: 
 }
 
 /**
- * Der Lebenslauf eines NSC (siehe domain-model.md, *Patron als NSC*, *Der Lauf eines NSC*): Läufe
+ * Der Lebenslauf eines NSC (siehe modell/begegnung.md, *Patron als NSC*, *Der Lauf eines NSC*): Läufe
  * in der vorgegebenen Laufbahn, bis einer zum Namen kommt. Verworfen wird der Lauf, wenn er dort
  * nicht genommen wird, wenn die Qualifikation fehlt oder wenn er stirbt (Hausregel; die
  * Qualifikation seit 2026-11-24e, sonst ist der Adlige als NSC unmöglich). Läuft für sich, ohne die

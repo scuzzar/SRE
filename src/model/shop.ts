@@ -60,7 +60,7 @@ export function locationOf(campaign: Campaign): NamedWorld | undefined {
 
 /** Setzt den Aufenthaltsort auf eine fertige Welt des Subsektors; `undefined` heißt: nirgends. */
 export function setLocation(campaign: Campaign, id: string | undefined): Campaign {
-  // Setzt man den Aufenthaltsort von Hand, fällt eine Fahrt weg (siehe domain-model.md, *Fahrt*).
+  // Setzt man den Aufenthaltsort von Hand, fällt eine Fahrt weg (siehe modell/logistik.md, *Fahrt*).
   const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'location' && key !== 'trip')) as Omit<Campaign, 'location'>;
   if (id === undefined) return rest;
   worldOf(campaign.hexes, id);

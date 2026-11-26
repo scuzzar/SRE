@@ -1,4 +1,4 @@
-// Ein Ort (Domänenmodell: Place, siehe docs/domain-model.md, *Orte*): immer eine Welt, wahlweise
+// Ein Ort (Domänenmodell: Place, siehe docs/modell/oberflaeche.md, *Orte*): immer eine Welt, wahlweise
 // genauer ein Oberflächenfeld oder eine Stadt auf ihrer Oberflächenkarte, nie beides.
 
 import { DomainError } from './errors';
@@ -70,7 +70,7 @@ export function mapLocked(campaign: Campaign, world: string): boolean {
 export function moveParty(campaign: Campaign, place: Place): Campaign {
   if (campaign.location?.world !== place.world) throw new DomainError('Die Gruppe ist nicht auf dieser Welt; erst hinreisen.');
   checkPlace(campaign.hexes, place);
-  // Von Hand versetzt: Eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*).
+  // Von Hand versetzt: Eine Fahrt fällt weg (siehe modell/logistik.md, *Fahrt*).
   const rest = Object.fromEntries(Object.entries(campaign).filter(([key]) => key !== 'trip')) as Omit<Campaign, 'trip'>;
   return withPlaceTerrain({ ...rest, location: place });
 }

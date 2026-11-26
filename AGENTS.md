@@ -4,7 +4,10 @@
   umgekehrt. Um das Modell zu ändern, zuerst das Diagramm ändern und die Zustimmung des Owners
   einholen, dann in den Code übertragen. Das Diagramm nie umzeichnen, damit es zum Code passt; wo der
   Code noch nicht folgt, steht das in `docs/domain-model.md` unter „Wo der Code noch nicht folgt“,
-  bis es behoben ist. Die Quelle des Diagramms ist `docs/domain-model.puml` (PlantUML); nach jeder Änderung
+  bis es behoben ist. Die Regeln, die das Bild nicht zeigt, stehen je Bereich unter `docs/modell/`
+  (neben dem Ausschnitt des Bereichs), der Verlauf der Freigaben in `docs/modell/verlauf.md`; in
+  `docs/domain-model.md` bleiben Einstieg, Begriffe und die allgemeinen Regeln. Die Quelle des
+  Diagramms ist `docs/domain-model.puml` (PlantUML); nach jeder Änderung
   mit `bash .claude/skills/domain-model/scripts/render.sh` (ohne Argument) das Bild und alle
   Ausschnitte neu erzeugen. Wie man das Modell gemeinsam baut und rendert, steht im Skill
   `domain-model` (`.claude/skills/domain-model/`).

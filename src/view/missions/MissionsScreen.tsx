@@ -9,7 +9,7 @@ import { BriefcaseIcon, CardIcon, CloseIcon, LocateIcon, PencilIcon, PersonIcon,
 import { CardSheet } from '../oracle/CardSheet';
 
 /**
- * Der Bereich Missionen (siehe domain-model.md, *Missionen*): oben die offenen Missionen, darunter
+ * Der Bereich Missionen (siehe modell/mission.md, *Missionen*): oben die offenen Missionen, darunter
  * eingeklappt die erledigten, gescheiterten und ausgeblendeten. Ein Ort-Chip öffnet den Globus an
  * diesem Feld, ein Tippen auf die Mission den Editor. Läuft das Ort wählen, steht hier nur der Hinweis.
  */

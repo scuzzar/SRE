@@ -1292,7 +1292,7 @@ export class GameController {
     this.update({ systemJourney: undefined, ...this.arrivalNext() });
   }
 
-  // --- Schiffsbegegnungen bei Abreise und Ankunft (siehe domain-model.md, 2026-11-22b) -------------
+  // --- Schiffsbegegnungen bei Abreise und Ankunft (siehe modell/schiffe.md, 2026-11-22b) -------------
 
   /** Die wartende Prüfung der Ankunft wird zur offenen, wenn gerade keine andere offen ist. */
   private arrivalNext(): Partial<ControllerState> {
@@ -1528,7 +1528,7 @@ export class GameController {
   }
 
   /**
-   * „Als NSC“ zum letzten Patron-Wurf (siehe domain-model.md, *Patron als NSC*): Die Erschaffung läuft
+   * „Als NSC“ zum letzten Patron-Wurf (siehe modell/begegnung.md, *Patron als NSC*): Die Erschaffung läuft
    * in der Laufbahn des Patrons durch, der neue dauerhafte NSC kommt in die NSC-Liste; dorthin
    * wechselt die Ansicht auch gleich, mit dem neuen NSC schon offen im Editor.
    */
@@ -2247,7 +2247,7 @@ export class GameController {
 
   /**
    * Lässt die Läufe eines NSC in einer Laufbahn nacheinander laufen und gibt ans Bild ab
-   * (2026-11-24g, siehe domain-model.md, *Was der Lauf verschluckt*): Die **Wartenscheibe** zählt,
+   * (2026-11-24g, siehe docs/modell/begegnung.md, *Der Lauf eines NSC*): Die **Wartenscheibe** zählt,
    * was der Lauf verwirft. Ist einer zum Namen gefunden, bleibt die Scheibe eine Sekunde stehen.
    */
   private async npcRun(service: string, termsGoal?: number): Promise<Generation> {
@@ -2282,7 +2282,7 @@ export class GameController {
   }
 
   /**
-   * „+ Neuer NSC“ aus einer Laufbahn (siehe domain-model.md, *NSC aus einer Laufbahn*): Die
+   * „+ Neuer NSC“ aus einer Laufbahn (siehe modell/begegnung.md, *NSC aus einer Laufbahn*): Die
    * Erschaffung läuft ohne Animation durch, danach steht der neue NSC im Editor zum Nachbessern. Mit
    * `here` (langes Drücken auf „NSC platzieren“) lebt er auf dem angetippten Feld des Globus bzw. in der
    * Stadt darauf.
@@ -2344,7 +2344,7 @@ export class GameController {
     this.change(restoreCharacter(this.campaign, id));
   }
 
-  // --- Missionen (siehe domain-model.md, *Missionen*) ------------------------------------------
+  // --- Missionen (siehe modell/mission.md, *Missionen*) ------------------------------------------
 
   /** Die Handlungsfäden fürs Orakel: die offenen Missionen. */
   private threads(): readonly string[] {
@@ -2686,7 +2686,7 @@ export class GameController {
     this.update({ globe: undefined, globeFocus: undefined });
   }
 
-  // --- Raumkarte und Systemflug (siehe domain-model.md, *Systemflug*) -----------------------------
+  // --- Raumkarte und Systemflug (siehe modell/raum.md, *Systemflug*) -----------------------------
 
   /** Öffnet die Raumkarte der offenen Welt (Knopf „Raum“ an der Weltkarte und am Globus). */
   openSpace(world?: string): void {
@@ -2967,7 +2967,7 @@ export class GameController {
     this.update({ globe: { picked: cell }, npcPlacing: undefined, ...focus, ...(this.state.tripPlan && this.state.tripPlan.target !== cell ? { tripPlan: undefined } : {}) });
   }
 
-  // --- Fahrt über die Oberfläche (siehe domain-model.md, *Fahrt*) ---------------------------------
+  // --- Fahrt über die Oberfläche (siehe modell/logistik.md, *Fahrt*) ---------------------------------
 
   /** Sucht die Varianten einer Route zum angetippten Feld (zu Fuß, je mietbarem Fahrzeug); die schnellste ist gewählt. */
   planTrip(): void {
@@ -3094,7 +3094,7 @@ export class GameController {
   }
 
   /**
-   * NSC platzieren (siehe domain-model.md, *NSC platzieren*): Die NSC-Liste öffnet sich zum Auswählen
+   * NSC platzieren (siehe domain-model.md, Begriffe: *NSC platzieren*): Die NSC-Liste öffnet sich zum Auswählen
    * für das angetippte Feld; „Alle zeigen“ holt auch NSC von anderen Welten dazu.
    */
   startNpcPlacing(): void {

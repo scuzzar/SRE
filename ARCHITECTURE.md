@@ -6,7 +6,8 @@ Die App ist eine Progressive Web App in **TypeScript** (Vite, React, Dexie für 
 die Referenzdaten, Vitest und Playwright für Tests). Sie folgt **strikt MVC**: Model, View und
 Controller sind getrennte Schichten mit festen Regeln, wer wen kennen darf.
 
-Was das Model enthält, legt das [Domänenmodell](docs/domain-model.md) fest. Es führt; dieses Dokument
+Was das Model enthält, legt das [Domänenmodell](docs/domain-model.md) fest (Regeln je Bereich unter
+[`docs/modell/`](docs/modell/)). Es führt; dieses Dokument
 sagt nur, wo die Teile liegen und wie sie miteinander reden.
 
 ## Die vier Regeln

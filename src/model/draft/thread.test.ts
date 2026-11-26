@@ -5,7 +5,7 @@ import { confirmCard, drawCard, toggleOdds } from './card';
 
 const clock = fixedClock();
 
-// Handlungsfäden (2026-11-18, siehe domain-model.md, *Missionen*): Bei einem Fadenfokus lost die Karte
+// Handlungsfäden (2026-11-18, siehe modell/mission.md, *Missionen*): Bei einem Fadenfokus lost die Karte
 // eine offene Mission aus.
 describe('Handlungsfaden auf der Karte', () => {
   /** Alle Würfe vor dem Orakelwurf liefern ihr Minimum, danach die angegebenen Zahlen (Orakel, Fokus, Faden). */

@@ -8,7 +8,7 @@ import { monthStartsIn, nextMonthStart } from './time';
 import { arrivedVessel, chooseLanding, leaveShipBehind } from './landing';
 
 /**
- * Die laufenden Kosten der Schiffe (2026-11-17b, siehe domain-model.md, *Laufende Kosten und
+ * Die laufenden Kosten der Schiffe (2026-11-17b, siehe modell/schiffe.md, *Laufende Kosten und
  * Monatsabrechnung*; RAW in regeln-schiffe.md): Monatsraten, Liegegebühren und Lebenserhaltung, und
  * an jedem Monatsende die Monatsabrechnung im Log. Ein Monat sind vier Wochen (`time.ts`).
  */

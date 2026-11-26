@@ -7,7 +7,7 @@ import { afterTime } from './upkeep';
 /**
  * Die Spielzeit im Imperialen Kalender: 365 Tage im Jahr, `day` = Jahr × 365 + Tag des Jahres − 1.
  * Tag 001 jedes Jahres ist der Feiertag ohne Wochentag; ab Tag 002 folgen 52 Wochen von Montag bis
- * Sonntag (Hausregel nach dem Imperialen Kalender, siehe domain-model.md, *Spielzeit*).
+ * Sonntag (Hausregel nach dem Imperialen Kalender, siehe modell/reise.md, *Spielzeit*).
  */
 export const DAYS_PER_YEAR = 365;
 

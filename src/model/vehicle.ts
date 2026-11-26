@@ -1,5 +1,5 @@
 // Fahrzeuge auf der Oberflächenkarte (Domänenmodell: Vehicle, VehicleSpeed, Way; siehe
-// docs/domain-model.md, *Fahrzeuge*). Ob und wie schnell ein Fahrzeug von Feld zu Feld kommt und wo
+// docs/modell/logistik.md, *Fahrzeuge*). Ob und wie schnell ein Fahrzeug von Feld zu Feld kommt und wo
 // ein Fluggerät landet; die Fahrt selbst steht in `trip.ts`.
 
 import type { Vehicle } from '../data';

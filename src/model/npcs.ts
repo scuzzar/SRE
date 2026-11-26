@@ -31,7 +31,7 @@ export function byRole(npcs: readonly Character[]): readonly NpcRoleGroup[] {
 }
 
 /**
- * Die lebenden dauerhaften NSC für die NSC-Liste (siehe domain-model.md, *NSC-Liste*). Vorgegeben
+ * Die lebenden dauerhaften NSC für die NSC-Liste (siehe modell/begegnung.md, *NSC-Liste*). Vorgegeben
  * die des Aufenthaltsorts und die ohne Ort, als eine Gruppe nach Rolle. Mit `all`, oder ohne
  * Aufenthaltsort, alle: nach Welt (nach Namen der Welt, ohne Ort am Ende), darin nach Rolle.
  */
@@ -76,7 +76,7 @@ export function generateNpcBlocker(campaign: Campaign): string | undefined {
 }
 
 /**
- * Ein erzeugter NSC (siehe domain-model.md, *Patron als NSC*, *NSC aus einer Laufbahn*): Die
+ * Ein erzeugter NSC (siehe modell/begegnung.md, *Patron als NSC*, *NSC aus einer Laufbahn*): Die
  * Charaktererschaffung läuft zufällig in der Laufbahn durch, der Name kommt von der Tafel NSC, er
  * lebt auf dem Aufenthaltsort und bekommt eine Waffe nach *Waffen erzeugter NSC*. Mit `at` (langes
  * Drücken auf „NSC platzieren“ am Feld) lebt er stattdessen dort, auf dem Feld bzw. in der Stadt, und
@@ -140,7 +140,7 @@ export function allowedWeapons(soc: number, world: World, ignoreLaw: boolean): r
 }
 
 /**
- * Die Waffe eines erzeugten NSC (siehe domain-model.md, *Waffen erzeugter NSC*): erst der Wurf, ob
+ * Die Waffe eines erzeugten NSC (siehe modell/begegnung.md, *Waffen erzeugter NSC*): erst der Wurf, ob
  * das Gesetz für ihn gilt (1W6, +2 mit Streetwise, +2 verbrecherisch, 6+), dann die Waffe seiner
  * höchsten Waffenfertigkeit, die erlaubt ist, sonst die teuerste erlaubte der höchsten SOC-Stufe.
  * Sie kommt mit 1W4 Magazinen in seinen Besitz und ist Primärwaffe und in der Hand.

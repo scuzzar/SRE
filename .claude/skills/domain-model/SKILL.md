@@ -54,7 +54,9 @@ Skinparams entfernen.
 |---|---|
 | `docs/domain-model.puml` | Quelle des Diagramms. Vorlage: `assets/domain-model.puml` |
 | `docs/domain-model.png` | Gerendertes Bild, wird mit eingecheckt |
-| `docs/domain-model.md` | Status, Bild, Farblegende, Begriffe, Regeln, die das Bild nicht zeigt, offene Fragen, „Wo der Code noch nicht folgt“. Vorlage: `assets/domain-model.md` |
+| `docs/domain-model.md` | Einstieg: Status, Bild, Farblegende, Tabelle der Bereiche, Begriffe, die allgemeinen Regeln, offene Fragen, „Wo der Code noch nicht folgt“. Vorlage: `assets/domain-model.md` |
+| `docs/modell/<bereich>.md` | Je Bereich (wie in `model-views.json`) der Ausschnitt und die Regeln, die das Bild nicht zeigt, je Regel eine Überschrift; Querverweise als Links. Wird ein Modell groß, teilt man es so auf |
+| `docs/modell/verlauf.md` | Der Verlauf der Freigaben: je Änderung ein Absatz „Am … freigegeben (Kennzeichen …)“ mit Link auf den Ausschnitt; Nachweis, keine geltende Regel |
 | `AGENTS.md` | Die Regel „das Modell führt“. Baustein: `assets/claude-md-snippet.md` |
 | `docs/model-views.json` | Die Bereiche (`views`) und die Änderungen (`changes`) für die Ausschnitte |
 | `docs/views/*.puml`, `.png` | Je Bereich ein Ausschnitt, erzeugt, nie von Hand ändern |
@@ -141,7 +143,8 @@ gezeichnet; die erzeugten `.puml` nie bearbeiten.
   gescheiterte Probe im Log zum Erfolg“ überzeugt mehr als „Verweise sind instabil“.
 - **Eine Empfehlung geben**, nicht nur Optionen aufzählen.
 - Je Änderung: `.puml` ändern und markieren, die Änderung in `model-views.json` eintragen → rendern
-  → Ausschnitt ansehen → `domain-model.md` nachziehen (Regeln, Begriffe, offene Fragen) →
+  → Ausschnitt ansehen → Regeln im Bereich unter `docs/modell/`, Begriffe und offene Fragen in
+  `domain-model.md`, den Absatz der Änderung in `modell/verlauf.md` nachziehen →
   `ARCHITECTURE.md` prüfen → committen → Ausschnitt der Änderung zeigen → in wenigen Sätzen sagen,
   was sich geändert hat und was jetzt offen ist.
 - Wenn Unklarheit herrscht, was eine Farbe oder ein Bereich bedeutet: am konkreten Ablauf erklären
@@ -171,7 +174,7 @@ entfernen und Status „wartet auf Freigabe“ setzen.
 ### 5. Freigabe
 
 Für eine einzelne Änderung: Kennzeichen entfernen und `approved: true` (siehe *Ausschnitte und
-Markierungen*), Status-Absatz in `domain-model.md` von „wartet auf Freigabe“ auf „freigegeben“
+Markierungen*), den Absatz der Änderung in `modell/verlauf.md` von „wartet auf Freigabe“ auf „freigegeben“
 setzen, rendern, committen, dann in den Code übertragen.
 
 Für eine ganze Version erst auf ausdrückliches „freigegeben“ des Owners: Status in `domain-model.md` auf „Freigegeben für

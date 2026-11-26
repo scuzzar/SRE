@@ -1,7 +1,7 @@
 import type { Snapshot } from '../controller';
 
 /**
- * Die **Wartenscheibe** (2026-11-24g, siehe domain-model.md, *Was der Lauf verschluckt*): Sie steht,
+ * Die **Wartenscheibe** (2026-11-24g, siehe docs/modell/begegnung.md, *Der Lauf eines NSC*): Sie steht,
  * während die Erschaffung eines NSC läuft, und zählt, was der Lauf verschluckt – wie viele Läufe er
  * schon verworfen hat und wie viele davon gestorben sind. Ist ein Lauf zum Namen gefunden, bleibt
  * die Scheibe eine Sekunde stehen. Was sie zeigt, ist flüchtig: Es wird nicht gespeichert.

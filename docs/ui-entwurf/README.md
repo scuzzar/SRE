@@ -29,7 +29,7 @@ Mira Okonkwo ist nur für den Entwurf erfunden, damit man durch drei Charaktere 
 ## Deutung und Notiz (Entwurf vom 3. November 2026)
 
 Im Ordner [`deutung/`](deutung/) liegt der (freigegebene und umgesetzte) Entwurf für Deutungen und Notizen im Log (siehe
-*Deutungen und Notizen* im [Domänenmodell](../domain-model.md)).
+*Deutungen und Notizen* im [Domänenmodell](../modell/karte.md)).
 
 | Datei | Inhalt |
 |---|---|
@@ -47,7 +47,7 @@ und lässt sich direkt im Browser öffnen.
 ## Wurffelder und Namen (Entwurf vom 3. November 2026, freigegeben und umgesetzt)
 
 Im Ordner [`kartensymbol/`](kartensymbol/) liegt der Entwurf für die drei Wurffelder oben auf der
-Inspirationskarte (siehe *Wurffelder der Karte* im [Domänenmodell](../domain-model.md)). In der
+Inspirationskarte (siehe *Wurffelder der Karte* im [Domänenmodell](../modell/karte.md)). In der
 App stehen die Wurffelder knapper (Bild links, Beschriftung rechts), damit alle Tafeln auf einen
 Bildschirm passen; die Namenswahl zeigt Vor- und Nachnamen getrennt.
 
@@ -79,7 +79,7 @@ Wie die Deutung eine gewöhnliche HTML-Datei mit den Stilen der App.
 
 Im Ordner [`waffen-leiste/`](waffen-leiste/) liegt der (am 4. November 2026 freigegebene und umgesetzte) Entwurf für die Leiste
 mit dem Charakter oben im Reiter *Kampf* (siehe *Primär- und Sekundärwaffe* im
-[Domänenmodell](../domain-model.md)). Grundlage ist der echte Kampfbildschirm der App.
+[Domänenmodell](../modell/kampf.md)). Grundlage ist der echte Kampfbildschirm der App.
 
 | Datei | Inhalt |
 |---|---|
@@ -103,7 +103,7 @@ sich trotzdem.
 ## Entfernung je SC (Entwurf vom 8. November 2026)
 
 Im Ordner [`entfernung-je-sc/`](entfernung-je-sc/) liegt der Entwurf zur Änderung 2026-11-08d
-(siehe *Range Bands* und *Bewegen* im [Domänenmodell](../domain-model.md)): der gedrehte Strahl,
+(siehe *Range Bands* und *Bewegen* im [Domänenmodell](../modell/kampf.md)): der gedrehte Strahl,
 rechts fest die NSC, links die SC mit ihrem Anfangsbuchstaben, ganz links Band 20 und dahinter
 „weg“ für entkommene SC. Gold gefüllt ist der vorgewählte SC (am Zug, beim NSC-Zug das Ziel).
 
@@ -125,7 +125,7 @@ Eine gewöhnliche HTML-Datei, die sich direkt im Browser öffnen lässt.
 ## Orakel-Screen neu (Entwurf vom 14. November 2026, freigegeben und umgesetzt)
 
 Im Ordner [`orakel-neu/`](orakel-neu/) liegt der Entwurf für den neuen Aufbau des Orakel-Screens
-(siehe *Orakel auf der Karte* im [Domänenmodell](../domain-model.md), Kennzeichen 2026-11-14d).
+(siehe *Orakel auf der Karte* im [Domänenmodell](../modell/karte.md), Kennzeichen 2026-11-14d).
 
 | Datei | Inhalt |
 |---|---|

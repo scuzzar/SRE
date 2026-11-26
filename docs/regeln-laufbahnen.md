@@ -6,8 +6,8 @@ denen die App Charaktere und NSC erzeugt: die sechs des Regelwerks und die **zw�
 [Wo der Code noch nicht folgt](#wo-der-code-noch-nicht-folgt).
 
 Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt zuerst ins Domänenmodell
-([`domain-model.md`](domain-model.md)); die Erschaffung selbst ist dort unter
-„Charaktererschaffung und Laufbahnen“ (`docs/views/erschaffung.png`) beschrieben.
+([`domain-model.md`](domain-model.md)); die Erschaffung selbst ist unter
+[Charaktererschaffung und Laufbahnen](modell/erschaffung.md) beschrieben.
 
 ## Quellen und Schreibweise
 
@@ -276,7 +276,7 @@ Die Waffentabellen mit begünstigten und benachteiligten Attributswerten und dem
 
 B4 18–41 würfelt je Laufbahn rund zehn NSC vor: Name mit Rang, **UPP** (sechs Attributswerte in
 Hex), Alter, Terme, Geld, Fertigkeiten mit Stufen, Sachwerte. Die App erzeugt ihre NSC selbst aus
-einer Laufbahn (*NSC aus einer Laufbahn*, `docs/domain-model.md`); mit den zwölf Laufbahnen kann sie
+einer Laufbahn (*NSC aus einer Laufbahn*, `docs/modell/begegnung.md`); mit den zwölf Laufbahnen kann sie
 diese NSC **selbst würfeln** – die Beispiele bleiben dann als Vergleich und als Vorrat für den
 Abend.
 

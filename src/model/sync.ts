@@ -7,7 +7,7 @@ import { shipDesignOf } from './reference';
 import { deckSlotPattern, type DeckPlan } from './ship';
 
 /**
- * Der Abgleich mit OneDrive (siehe docs/domain-model.md, „Abgleich mit OneDrive“). Hier steht nur,
+ * Der Abgleich mit OneDrive (siehe docs/modell/kampagne.md, „Abgleich mit OneDrive“). Hier steht nur,
  * was zu tun ist; getan wird es im Controller über `Cloud` und `CampaignRepository`.
  */
 
@@ -129,7 +129,7 @@ export interface DeckStep {
 const slotId = (s: { readonly design: string; readonly name: string }): string => `${s.design}\u0000${s.name}`;
 
 /**
- * Was der Abgleich je Deckplan-Platz tut (siehe docs/domain-model.md, „Abgleich mit OneDrive“,
+ * Was der Abgleich je Deckplan-Platz tut (siehe docs/modell/kampagne.md, „Abgleich mit OneDrive“,
  * *Deckpläne*). *Hier geändert*: auf dem Platz liegt ein anderer Schlüssel als in der Marke, oder
  * keiner mehr. *Dort geändert*: die Wolke hat eine andere Fassung als in der Marke, oder keine Datei.
  * Einen Konflikt, bei dem der Spieler wählt, gibt es nicht: Ein neues Bild gewinnt gegen ein

@@ -29,7 +29,7 @@ export interface Upp {
 
 export type CharacterId = string;
 
-/** Die Rollen eines dauerhaften NSC, in der Reihenfolge, in der die NSC-Liste sie gruppiert (siehe domain-model.md, *Rolle eines NSC*). */
+/** Die Rollen eines dauerhaften NSC, in der Reihenfolge, in der die NSC-Liste sie gruppiert (siehe modell/begegnung.md, *Rolle eines NSC*). */
 export const npcRoles = ['patron', 'encounter', 'enemy', 'rival', 'ally', 'contact', 'official', 'merchant', 'broker', 'captain', 'crew', 'passenger', 'other'] as const;
 export type NpcRole = (typeof npcRoles)[number];
 
@@ -547,7 +547,7 @@ function checkHomeworld(campaign: Campaign, input: CharacterInput): void {
 }
 
 /**
- * Rolle, Ort und Patron (siehe domain-model.md, *Rolle eines NSC*, *Ort eines NSC*): Rolle und Ort
+ * Rolle, Ort und Patron (siehe modell/begegnung.md, *Rolle eines NSC*, *Ort eines NSC*): Rolle und Ort
  * hat nur ein NSC; ein neuer NSC ist Sonstige, wenn die Eingabe nichts sagt. Der Patron bleibt.
  */
 function npcFields(input: CharacterInput, before?: Character): Pick<Character, 'role' | 'place' | 'patron'> {

@@ -227,7 +227,7 @@ export function lifeSupportOf(campaign: Campaign): number {
 export function travelShip(campaign: Campaign, to: string, random: Random, clock: Clock, options: { readonly departureRoll?: Dice; readonly extraDm?: number } = {}): Campaign {
   const blocker = shipJourneyBlocker(campaign, to);
   if (blocker) throw new DomainError(blocker);
-  // Eigene Fahrzeuge bleiben am Aufenthaltsort, eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*).
+  // Eigene Fahrzeuge bleiben am Aufenthaltsort, eine Fahrt fällt weg (siehe modell/logistik.md, *Fahrt*).
   campaign = parkVehicles(campaign);
   const from = campaign.location!.world;
   const ship = shipOf(campaign)!;
@@ -265,7 +265,7 @@ export function travel(
 ): Campaign {
   const blocker = journeyBlocker(campaign, to);
   if (blocker) throw new DomainError(blocker);
-  // Eigene Fahrzeuge bleiben am Aufenthaltsort, eine Fahrt fällt weg (siehe domain-model.md, *Fahrt*);
+  // Eigene Fahrzeuge bleiben am Aufenthaltsort, eine Fahrt fällt weg (siehe modell/logistik.md, *Fahrt*);
   // das eigene Schiff bleibt, wo es steht (2026-11-21).
   campaign = leaveShipBehind(parkVehicles(campaign));
   const from = campaign.location!.world;

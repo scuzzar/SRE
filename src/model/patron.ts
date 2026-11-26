@@ -107,7 +107,7 @@ export function patronNpcBlocker(campaign: Campaign, entry: PatronRoll): string 
 }
 
 /**
- * Erzeugt zum Patron-Wurf an dieser Stelle des Logs einen dauerhaften NSC (siehe domain-model.md,
+ * Erzeugt zum Patron-Wurf an dieser Stelle des Logs einen dauerhaften NSC (siehe modell/begegnung.md,
  * *Patron als NSC*): ein erzeugter NSC in der Laufbahn des Patrons, mit der Rolle Patron und dem
  * Verweis auf seinen Patron; die Herkunft beginnt mit dem Beruf.
  */
@@ -127,7 +127,7 @@ export function createPatronNpc(campaign: Campaign, index: number, random: Rando
 }
 
 /**
- * „Als Mission“ zum Patron-Wurf an dieser Stelle des Logs (2026-11-18, siehe domain-model.md,
+ * „Als Mission“ zum Patron-Wurf an dieser Stelle des Logs (2026-11-18, siehe modell/begegnung.md,
  * *Missionen*): der Patron-NSC wie bei „Als NSC“ und dazu eine offene Mission mit ihm als
  * Auftraggeber, dem Beruf des Patrons als Titel und dem Aufenthaltsort als erstem Ort, wenn er ein
  * Feld hat.

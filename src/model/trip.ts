@@ -1,5 +1,5 @@
 // Die Fahrt über die Oberfläche einer Welt (Domänenmodell: Trip, Leg, TripDay; siehe
-// docs/domain-model.md, *Fahrt*): die schnellste Route suchen, sie Tag für Tag abfahren, abbrechen.
+// docs/modell/logistik.md, *Fahrt*): die schnellste Route suchen, sie Tag für Tag abfahren, abbrechen.
 // Eigene Fahrzeuge, die nicht mitfahren, bleiben stehen (Possession.parked).
 
 import type { Campaign, Possession } from './campaign';
@@ -230,7 +230,7 @@ function affordableRentals(campaign: Campaign, surface: TripSurface): readonly V
 }
 
 /**
- * Die Varianten einer Route, wie bei einer Karten-App (siehe domain-model.md, *Fahrt*, Planen): ohne
+ * Die Varianten einer Route, wie bei einer Karten-App (siehe modell/logistik.md, *Fahrt*, Planen): ohne
  * Miete (zu Fuß und eigene Fahrzeuge), je mietbarem Fahrzeug die schnellste Route damit und gemischte,
  * die Zeit gegen Miete abwägen. Je Fahrzeugfolge bleibt die schnellste; die schnellste zuerst.
  */
@@ -354,7 +354,7 @@ class Heap {
 
 /**
  * Sucht die schnellste Route vom Feld der Gruppe zu `target` auf derselben Welt (siehe
- * domain-model.md, *Fahrt*, Planen): zu Fuß, mit eigenen Fahrzeugen dort, wo sie sind, und, wenn
+ * modell/logistik.md, *Fahrt*, Planen): zu Fuß, mit eigenen Fahrzeugen dort, wo sie sind, und, wenn
  * erlaubt, mit gemieteten aus Siedlungen. Fluggeräte fliegen gerade von Landepunkt zu Landepunkt.
  * Ergebnis ist eine Fahrt mit null gefahrenen Stunden.
  */

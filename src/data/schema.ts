@@ -24,9 +24,9 @@ export const HouseRulesSchema = z.object({
   unskilledDm: z.number().int(),
   bonusFrom: z.number().int(),
   malusUpTo: z.number().int(),
-  /** Fahrstunden je Reisetag einer Fahrt (siehe domain-model.md, *Fahrt*). */
+  /** Fahrstunden je Reisetag einer Fahrt (siehe modell/logistik.md, *Fahrt*). */
   tripHoursPerDay: z.number().positive(),
-  /** Miete je Tag in Prozent des Kaufpreises (siehe domain-model.md, *Fahrzeuge*). */
+  /** Miete je Tag in Prozent des Kaufpreises (siehe modell/logistik.md, *Fahrzeuge*). */
   rentPercent: z.number().positive(),
 });
 
@@ -96,10 +96,10 @@ export const ItemSchema = z.object({
   note: z.string().optional(),
 });
 
-/** Die Geländearten der Oberflächenkarte (siehe domain-model.md, *Geländeart*). */
+/** Die Geländearten der Oberflächenkarte (siehe domain-model.md, Begriffe: *Geländeart*). */
 export const landformIds = ['water', 'waterIce', 'landIce', 'tundra', 'mountain', 'rugged', 'desert', 'jungle', 'swamp', 'open', 'settled'] as const;
 export const LandformSchema = z.enum(landformIds);
-/** Die Wege: Straße, Fluss, Siedlung (siehe domain-model.md, *Weg*). */
+/** Die Wege: Straße, Fluss, Siedlung (siehe modell/logistik.md, *Weg*). */
 export const wayIds = ['road', 'river', 'town'] as const;
 export const WaySchema = z.enum(wayIds);
 export const PortSchema = z.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']);

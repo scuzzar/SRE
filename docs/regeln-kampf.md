@@ -104,7 +104,7 @@ Round“.* App: ◐ (1A, 1B, 2B, 2C, 2E; 1C, 2A, 2D offen)
   Runde gelten als **gleichzeitig**.
 
 > App: Wunden wirken sofort nach dem Treffer, nicht erst am Ende der Runde (siehe
-> `domain-model.md`, *Kampfsimulation*).
+> `modell/kampf.md`, *Kampfsimulation*).
 
 ---
 
@@ -276,7 +276,7 @@ bis zum Alarm; Ausweichen mit Überraschung ○)
 > Begegnung (zwei Würfel, SC weiß, NSC schwarz, mit den DMs einzeln). Schalldämpfer und Vakuum gibt es noch nicht; still sind also nur die Laser. Als „nicht
 > angegriffener Kamerad“ zählt ein Kämpfer der überraschten Partei, der kämpfen kann und in der
 > Begegnung noch nicht Ziel eines Angriffs war. Der 9+-Wurf steht am Schadenswurf (`alarmDice`), die
-> Runde des Alarms an der Begegnung (`alarm`); siehe `domain-model.md`, *Kampfsimulation*.
+> Runde des Alarms an der Begegnung (`alarm`); siehe `modell/kampf.md`, *Kampfsimulation*.
 
 Jede Partei würfelt 1W6 mit DMs. Liegt ein Wurf **3 oder mehr** über dem anderen, hat die höhere
 Partei Überraschung.
@@ -313,7 +313,7 @@ Partei Überraschung.
 ### Anfangsentfernung und Gelände
 
 *SE 5, „Encounter Range“.* App: ✔; das Gelände belegt die App aus dem Aufenthaltsort vor ✱ (Zuordnung
-der Geländearten in `domain-model.md` unter *Gelände*).
+der Geländearten in `modell/begegnung.md` unter *Gelände*).
 
 2W6 plus DM des Geländes; über 12 gilt als 12, unter 1 als 1.
 
@@ -535,7 +535,7 @@ Wie viele volle Schläge die Ausdauer erlaubt, steht unter
 ### Wirkung der Attribute und Ausdauer
 
 *SR 21–22, „The Effects of Characteristics“.* App: ✔ (STR und DEX ohne die Wunden des laufenden
-Kampfs, nach der Errata unten); Ausdauer ✔ ✱, siehe `domain-model.md`, *Ausdauer*: Laufen kostet den SC, der
+Kampfs, nach der Errata unten); Ausdauer ✔ ✱, siehe `modell/kampf.md`, *Ausdauer*: Laufen kostet den SC, der
 läuft, einen Combat-Schlag, bei der NSC-Gruppe jeden NSC, weil die NSC als Gruppe gehen; die 30 Minuten Rast hält sie nicht fest, jede Begegnung
 beginnt mit der END, die der Kämpfer dann hat)
 
@@ -590,7 +590,7 @@ Fertigkeit in seiner Waffe hat. Wer ausweicht, pariert nicht.
 ### Feuerstoß und Schrot nach Book 1
 
 *B1 (Ausgabe 1981), „Special Considerations“: „Full Automatic Fire“, „Group Hits by Shotgun“.*
-App: ✔ ✱ (siehe `domain-model.md`, *Feuerstoß und Schrot*)
+App: ✔ ✱ (siehe `modell/kampf.md`, *Feuerstoß und Schrot*)
 
 > B1 liegt nicht als PDF vor. Der Wortlaut unten stammt aus einem Auszug von B1, den eine Websuche am
 > 7. November 2026 fand; die Seite ist nicht bekannt. Fast gleich steht er im Regelheft der Starter
@@ -1005,7 +1005,7 @@ Spielleitung (SR 23).
 
 > App: Der Überlauf gilt bei **jedem** Treffer, wie SR 21 sagt („further points … must be applied to
 > other characteristics“): beim ersten Treffer und bei NSC zufällig, sonst wählt der Spieler. Der
-> Schadenswurf hält dafür Blöcke fest (`DamageRoll.to`, `points`; siehe `domain-model.md`, *Wunden*).
+> Schadenswurf hält dafür Blöcke fest (`DamageRoll.to`, `points`; siehe `modell/kampf.md`, *Wunden*).
 >
 > *Errata zu The Traveller Book, S. 35 (Traveller-Wiki):* Die Regel für die erste Wunde („first
 > blood“) gilt für die erste Wunde in **jedem Kampf**. In der App: die erste in der laufenden
@@ -1540,7 +1540,7 @@ E = gleich groß, kein DM.
 
 ## Tierbegegnungen
 
-*SE 18–19, „Animal Encounters“; SR 46–49.* App: ✔ Tiertabellen je Welt und Gelände, Tierbegegnung, Tiere im Kampf (Hits, fester Schaden, Tierrüstung, Geschwindigkeit; Regeln in `domain-model.md` unter *Tiere*); ✔ besondere Angriffe (Filter, Trapper, Siren mit Köder, Losreißen); ✔ Ereignisse im Log, Rettungswürfe mit Schaden (Stampede, Poisonous Pests, Flash Flood, Seismic Quake). ✔ zerstörte Tiere, essbar und Fleisch (dazu Fell und Preise als Hausregel, siehe `domain-model.md` unter *Beute*). ○ Gewicht ±20 %, Führer, Psionik. Die Tierwaffen stehen schon in der
+*SE 18–19, „Animal Encounters“; SR 46–49.* App: ✔ Tiertabellen je Welt und Gelände, Tierbegegnung, Tiere im Kampf (Hits, fester Schaden, Tierrüstung, Geschwindigkeit; Regeln in `modell/begegnung.md` unter *Tiere*); ✔ besondere Angriffe (Filter, Trapper, Siren mit Köder, Losreißen); ✔ Ereignisse im Log, Rettungswürfe mit Schaden (Stampede, Poisonous Pests, Flash Flood, Seismic Quake). ✔ zerstörte Tiere, essbar und Fleisch (dazu Fell und Preise als Hausregel, siehe `modell/begegnung.md` unter *Beute*). ○ Gewicht ±20 %, Führer, Psionik. Die Tierwaffen stehen schon in der
 [Waffenmatrix](#waffen--und-reichweitenmatrix). Wie oft Tiere begegnen, steht unter
 [Häufigkeit](#häufigkeit-von-begegnungen).
 
@@ -1830,7 +1830,7 @@ bis 9 ist und es keine Giftwaffe hat; essbar sind 1W6 × 5 % seines Gewichts. Ei
 
 *SR 55–57, „Vehicles“; SA 1, „Procedures“; SA 3, „Event and Encounter Tables“; SA 7, „Time and
 Travel“, „The All Terrain Vehicle“.* App: ✔ ✱ Fahrzeuge mit Geschwindigkeit je Geländeart, Fahrt Tag
-für Tag, Miete (siehe `domain-model.md` unter *Fahrzeuge* und *Fahrt*; Daten in
+für Tag, Miete (siehe `modell/logistik.md` unter *Fahrzeuge* und *Fahrt*; Daten in
 `src/data/vehicles.json`); ○ Pannen und Geländeschwierigkeit, Fertigkeiten, Reichweite und Tanken,
 Linienverkehr, Ereignisse unterwegs.
 
@@ -1922,7 +1922,7 @@ Geländeart der Oberflächenkarte statt Stunden je Hex.
 
 *SR 32, „Armaments“; SR 33, „Crew“ (Gunner), „Weaponry“, „Small Craft“; SR 34–35, „Standard Small
 Craft“.* App: ◐ ✱ Die Small Craft kommen ab Werft mit so vielen Beam Lasern, wie ihr Typ erlaubt, und
-feuern damit im Raumkampf (siehe `domain-model.md` unter *Bewaffnung der Small Craft*, 2026-11-22);
+feuern damit im Raumkampf (siehe `modell/schiffe.md` unter *Bewaffnung der Small Craft*, 2026-11-22);
 Umrüsten, Raketen, Sandcaster und Gunner ○. Den Raumkampf selbst (SE 12–13, SR 39–42) beschreibt
 [`regeln-schiffe.md`](regeln-schiffe.md), dort stehen auch die Werte der Small Craft.
 
@@ -1989,7 +1989,7 @@ jetzt:
 | Dauerfeuer von Automatic Rifle und SMG (SE-Waffen) | SE 5, 6 | [SR 24, 26](#besondere-fälle) |
 | Wie viele volle Schläge die Ausdauer erlaubt | SE 6 | [SR 22](#wirkung-der-attribute-und-ausdauer) |
 | Waffe ziehen, geworfene Klinge | SE 6 | [SR 26](#besondere-fälle) |
-| Entkommen über 20 Bands | `domain-model.md` (B1 S. 33) | [SR 21](#entkommen-und-ausweichen) |
+| Entkommen über 20 Bands | `modell/kampf.md` (B1 S. 33) | [SR 21](#entkommen-und-ausweichen) |
 | Einfache Moral | B4 31 (B1 S. 33) | [SR 23](#moral-einfach), entspricht SE 5 |
 
 ## Nicht aufgenommen
@@ -1998,11 +1998,11 @@ Aus den drei Heften nicht in diesem Dokument, weil sie nicht zum Kampf gehören:
 
 - **SE, Begegnungen ohne Kampf (S. 20–21):** Routine (bei Bedarf), Legal (täglich Gesetzesstufe oder
   mehr auf 2W6, sonst Verhör; **Stand in der App:** Begegnungsart *Polizei* im Bereich Begegnung,
-  auf Wunsch des Owners einmal je Woche, mit Reaktion des Polizisten; Regeln in `domain-model.md`
+  auf Wunsch des Owners einmal je Woche, mit Reaktion des Polizisten; Regeln in `modell/begegnung.md`
   unter *Test*), Patron (wöchentlich 5+ auf 1W6, *Patron Encounters Matrix* mit zwei
   Listen), Rumor (wöchentlich 7+ auf 2W6, *Rumors Matrix* und *Rumor List*), Adventure (führt die
   Spielleitung). **Stand in der App:** Die *Patron Encounters Matrix* mit beiden Listen und ihren DMs
-  ist im Bereich Begegnung (Begegnungsart *Patron*; Regeln in `domain-model.md` unter *Patron*, Listen in
+  ist im Bereich Begegnung (Begegnungsart *Patron*; Regeln in `modell/begegnung.md` unter *Patron*, Listen in
   `src/data/encounters.json`), mit dem wöchentlichen Test 5+ davor; die Liste wählt ein Würfel (Hausregel). Auch die Zufallsbegegnung beginnt mit ihrem täglichen Test 5+. Die *Rumors Matrix* mit der *Rumor List* ist ebenfalls im Bereich Begegnung (Begegnungsart *Gerücht*, Test 7+ auf 2W6; Regeln unter *Gerücht*); eine Rumor-Zeile des Patrons würfelt sie gleich mit. Zu einem gewürfelten Patron legt „Als NSC“ einen dauerhaften NSC an, der die Charaktererschaffung in der Laufbahn seines Patrons zufällig durchläuft (Hausregel, Zuordnung in `docs/patron-nsc.md`; die Regeln geben den Patrons keine Werte). Die vier ausgearbeiteten Aufträge des
   Regelhefts (SR S. 65–66: *The Newlyweds*, *The Nervous Merchant*, *The Lady in White Robes*,
   *The Raggedy Old Man*) sind nicht in der App.

@@ -1,4 +1,4 @@
-// Begegnungen unterwegs (siehe docs/domain-model.md, *Fahrt*, Begegnungen am Boden): Jeder Reisetag
+// Begegnungen unterwegs (siehe docs/modell/logistik.md, *Fahrt*, Begegnungen am Boden): Jeder Reisetag
 // mit Strecke am Boden verlangt einen Begegnungstest, in der Wildnis auf Tiere, sonst auf eine
 // Zufallsbegegnung; besteht er, folgt gleich die Begegnung.
 

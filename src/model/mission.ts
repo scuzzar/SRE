@@ -1,4 +1,4 @@
-// Missionen (Domänenmodell: Mission, MissionPlace, MissionState; siehe docs/domain-model.md, *Missionen*).
+// Missionen (Domänenmodell: Mission, MissionPlace, MissionState; siehe docs/modell/mission.md, *Missionen*).
 // Eine Mission ist ein Auftrag oder Ziel der Gruppe, mit Titel, Text, Zustand, höchstens einem
 // Auftraggeber (einem dauerhaften NSC) und Orten, die immer Felder der Oberfläche sind. Die offenen
 // Missionen sind die Handlungsfäden des Orakels.

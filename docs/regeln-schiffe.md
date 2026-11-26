@@ -10,10 +10,10 @@ Es ist ein Nachschlagewerk, kein Modell: Was die App davon baut, kommt wie immer
 Domänenmodell ([`domain-model.md`](domain-model.md)).
 
 **Reisen als Passagier** (High/Middle/Low Passage, Travellers' Aid Society, Low Lottery) ist bereits
-modelliert, siehe `domain-model.md` unter *Zeit und Reisen*; hier geht es um das **eigene Schiff**.
+modelliert, siehe [`modell/reise.md`](modell/reise.md); hier geht es um das **eigene Schiff**.
 Das **Reisen mit eigenem Schiff** ist seit 16. November 2026 modelliert und gebaut (Änderung
 2026-11-16d, freigegeben): Sprung bis zur Sprungzahl des Entwurfs, Treibstoffverbrauch
-je Sprung als Hausregel, Fehlsprung als Wurf – siehe `domain-model.md` unter *Eigenes Schiff*.
+je Sprung als Hausregel, Fehlsprung als Wurf – siehe `modell/reise.md` unter *Eigenes Schiff*.
 
 ## Quellen und Schreibweise
 
@@ -668,7 +668,7 @@ Reaktionstabelle gewürfelt werden (siehe `regeln-kampf.md`, *Reaktion*).
   Makler bezahlt werden. Nur **ein** Makler darf je Verkauf helfen.
 - **Character Skills**: Bribery- oder Admin-Fertigkeit gibt denselben DM wie ein Makler, nur **ein**
   Charakter darf je Verkauf mitwirken, auch nicht zusätzlich zu einem Makler.
-- **Trade Classifications** (Handelscodes, siehe auch `domain-model.md` unter *Handelscode*):
+- **Trade Classifications** (Handelscodes, siehe auch `modell/sektor.md` unter *Handelscodes*):
   Agricultural, Non-Agricultural, Industrial, Non-Industrial, Rich, Poor; sie geben DMs auf Ein- und
   Verkaufswürfe nach der Trade and Speculation Table.
 
@@ -790,7 +790,7 @@ umprogrammieren. Nach beiden Spielerzügen die Interphase.
 | Small Craft Drive | das Small Craft kann sich nicht mehr bewegen/beschleunigen/feuern |
 
 **Stand in der App** (2026-11-21h, `model/space-combat.ts`, alles weitere unter *Raumkampf, Stufe 2*
-in `domain-model.md`): Laserfeuer ✔ (8+, Pulse −1, Entfernung über 25 und 50 Raumbänder) und
+in `modell/raum.md`): Laserfeuer ✔ (8+, Pulse −1, Entfernung über 25 und 50 Raumbänder) und
 Rückfeuer ✔ gleichzeitig nach der Bewegung, ✱ ohne Programme und ohne Schiffspositionen; Trefferzonen
 und kritische Treffer ✔; Schaden ✱ ohne Antriebsbuchstaben (je Treffer −1 G bzw. −1 Sprung,
 kritisch 0); Hull ohne Folgen; Turret-Treffer legt ein zufälliges Turret still; Crew: das Schiff
