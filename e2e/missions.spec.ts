@@ -14,7 +14,7 @@ test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Fe
   await openTab(page, 'Missionen');
   await expect(page.getByText(/Keine offene Mission/)).toBeVisible();
   await page.getByRole('button', { name: '+ Neue Mission' }).click();
-  const editor = page.getByRole('dialog', { name: 'Neue Mission' });
+  const editor = page.getByRole('region', { name: 'Neue Mission' });
   await editor.getByLabel('Titel').fill('Fracht nach Regina schmuggeln');
   await editor.getByLabel(/^Etikett für /).first().fill('Treffpunkt');
   await editor.getByLabel('Auftraggeber').selectOption({ label: 'keiner' });
@@ -34,7 +34,7 @@ test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Fe
   const box = (await canvas.boundingBox())!;
   await canvas.click({ position: { x: box.width * 0.35, y: box.height * 0.4 } });
   await page.getByRole('region', { name: 'Am Feld' }).getByRole('button', { name: /^OK, .* als Missionsort/ }).click();
-  const again = page.getByRole('dialog', { name: 'Neue Mission' });
+  const again = page.getByRole('region', { name: 'Neue Mission' });
   await expect(again.getByLabel('Titel')).toHaveValue('Fracht nach Regina schmuggeln');
   await expect(again.getByLabel(/^Etikett für /)).toHaveCount(2);
   await expect(again.getByLabel(/^Etikett für /).first()).toHaveValue('Treffpunkt');
@@ -57,7 +57,7 @@ test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Fe
   const field = page.getByRole('region', { name: 'Angetipptes Feld' });
   await expect(field).toContainText('Missionen hier (1)');
   await field.getByRole('button', { name: 'Mission Fracht nach Regina schmuggeln öffnen' }).click();
-  const edit = page.getByRole('dialog', { name: 'Mission bearbeiten' });
+  const edit = page.getByRole('region', { name: 'Mission bearbeiten' });
   await edit.getByRole('radio', { name: 'Erledigt' }).click();
   await edit.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByText('Offene Missionen (0)')).toBeVisible();

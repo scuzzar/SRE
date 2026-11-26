@@ -3,6 +3,7 @@ import type { MissionItem, MissionPersonView, MissionPlaceView, MissionsView, Sn
 import type { MissionInput, MissionState } from '../../model';
 import { missionStateText, roleText } from '../format';
 import { Form } from '../Form';
+import { DetailPage } from '../DetailPage';
 import { useGame, useSnapshot } from '../game-context';
 import { haptic } from '../haptics';
 import { BriefcaseIcon, CardIcon, CloseIcon, LocateIcon, PencilIcon, PersonIcon, PinIcon, TrashIcon } from '../icons';
@@ -16,6 +17,7 @@ import { CardSheet } from '../oracle/CardSheet';
 export function MissionsScreen({ view }: { view: Snapshot }) {
   const game = useGame();
   const missions = view.missions;
+  if (missions.editor && !missions.picking) return <MissionEditor key={missions.editor.rev} missions={missions} />;
   if (missions.picking) {
     return (
       <div className="screen">
@@ -198,15 +200,21 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
   const here = missions.here;
   // Ein Auftraggeber, der nicht mehr wählbar ist (inzwischen SC oder ausgeblendet), bleibt als eigene Zeile stehen.
   const listed = missions.clients.some((g) => g.npcs.some((n) => n.id === client));
+  // Eine Detailseite an der Stelle des Bereichs (2026-11-26), kein Dialog mehr: ✕ oder Esc schließt,
+  // unten nur „Speichern“; die Karte bleibt sichtbar, auch beim Wählen eines Orts.
+  const editorTitle = isNew ? 'Neue Mission' : 'Mission bearbeiten';
   return (
-    <div className="overlay">
-      <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="mission-editor-title">
-        <div className="sheet-head centered">
-          <h2 id="mission-editor-title">{isNew ? 'Neue Mission' : 'Mission bearbeiten'}</h2>
-          <button data-escape type="button" className="icon-button" aria-label="Schließen" onClick={() => game.closeMissionEditor()}>
-            <CloseIcon />
+    <div className="screen" role="region" aria-label={editorTitle}>
+      <DetailPage
+        title={editorTitle}
+        labelled={false}
+        onClose={() => game.closeMissionEditor()}
+        foot={
+          <button type="button" className="action gold" onClick={save}>
+            Speichern
           </button>
-        </div>
+        }
+      >
         <Form className="sheet-body form" id="mission-form" onSend={save}>
           {editor.error && (
             <p className="error" role="alert">
@@ -348,16 +356,7 @@ export function MissionEditor({ missions }: { missions: MissionsView }) {
             </div>
           )}
         </Form>
-        <div className="sheet-foot">
-          <button type="button" className="ghost" onClick={() => game.closeMissionEditor()}>
-            Abbrechen
-          </button>
-          <span className="count" />
-          <button type="button" className="primary wide" onClick={save}>
-            Speichern
-          </button>
-        </div>
-      </section>
+      </DetailPage>
       {noteCard && (
         <CardSheet
           card={noteCard}

@@ -18,7 +18,7 @@ import { useGame, useSnapshot } from './game-context';
 import { useEscapeCloses, useShortcuts } from './keyboard';
 import { useIsDesktop } from './media';
 import { CloseIcon, EncounterIcon, LogIcon, MenuIcon, MissionsIcon, PeopleIcon, ShipIcon } from './icons';
-import { MissionEditor, MissionsScreen } from './missions/MissionsScreen';
+import { MissionsScreen } from './missions/MissionsScreen';
 import { Menu } from './Menu';
 import { ElsewhereDialog, NoticeToast } from './Notices';
 import { CardSheet } from './oracle/CardSheet';
@@ -204,6 +204,8 @@ export function App() {
   // Was unter der Navigationsleiste steht: das angetippte Feld, sonst das Log oder der gewählte Bereich.
   // Der Charakter-Editor ist eine Detailseite (2026-11-26): Er tritt an die Stelle dessen, was gerade offen ist.
   const editorPage = view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />;
+  // Eine Detailseite bringt Kopf und Aktionsleiste selbst mit: kein Kopf des Bereichs, keine Leiste des Logs.
+  const detail = view.editor !== undefined || (screen === 'missions' && view.missions.editor !== undefined && !view.missions.picking);
   const body = <div className="screen-host">{editorPage ?? field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>;
   const areaTitle = screen === 'shop' ? 'Shop' : screen === 'about' ? 'Über die App' : (areaOf(screen)?.label ?? '');
 
@@ -216,7 +218,7 @@ export function App() {
           <aside className="side-panel" aria-label="Seitenspalte">
             {banners}
             {nav}
-            {!field && !view.editor && screen !== 'oracle' && (
+            {!field && !detail && screen !== 'oracle' && (
               <div className="area-head">
                 <h2 className="section-title">{areaTitle}</h2>
                 <button type="button" className="icon-button" aria-label={`${areaTitle} schließen`} onClick={() => (screen === 'shop' ? game.closeShop() : game.showScreen('oracle'))}>
@@ -225,7 +227,7 @@ export function App() {
               </div>
             )}
             {body}
-            {!view.editor && foot}
+            {!detail && foot}
           </aside>
           {base}
         </>
@@ -234,10 +236,10 @@ export function App() {
           {base}
           <Tray
             stop={view.trayStop}
-            raise={view.editor ? `editor-${view.editor.id ?? 'new'}` : view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && (!view.globe || view.worldCard) ? view.world.id : undefined)}
+            raise={view.editor ? `editor-${view.editor.id ?? 'new'}` : detail && view.missions.editor ? `mission-${view.missions.editor.rev}` : view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && (!view.globe || view.worldCard) ? view.world.id : undefined)}
             head={banners}
             body={body}
-            foot={view.editor ? undefined : foot}
+            foot={detail ? undefined : foot}
             bar={nav}
           />
         </>
@@ -256,7 +258,6 @@ export function App() {
           </section>
         </div>
       )}
-      {view.missions.editor && screen === 'missions' && <MissionEditor key={view.missions.editor.rev} missions={view.missions} />}
       {view.journey && <JourneySheet journey={view.journey} />}
       {view.systemJourney && <SystemJourneySheet journey={view.systemJourney} />}
       {view.landing && !view.landing.picking && !view.systemJourney && !view.journey && !view.shipCheck && <LandingSheet landing={view.landing} />}
