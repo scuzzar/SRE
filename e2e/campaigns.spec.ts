@@ -83,7 +83,11 @@ test('Ohne dauerhaften Speicher steht oben ein Hinweis', async ({ page }) => {
     Object.defineProperty(window, 'indexedDB', { value: undefined });
   });
   await page.goto('/');
-  await expect(page.getByRole('status')).toContainText('speichert hier nichts dauerhaft');
+  const hint = page.getByRole('status').filter({ hasText: 'speichert hier nichts dauerhaft' });
+  await expect(hint).toBeVisible();
+  // ✕ blendet ihn aus (bis die Seite neu lädt).
+  await hint.getByRole('button', { name: 'Hinweis schließen' }).click();
+  await expect(page.getByText('speichert hier nichts dauerhaft')).toHaveCount(0);
 });
 
 test('Mit dauerhaftem Speicher gibt es den Hinweis nicht', async ({ page }) => {

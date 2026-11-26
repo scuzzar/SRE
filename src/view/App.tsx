@@ -74,6 +74,7 @@ export function App() {
   // Ob der Hinweis „OneDrive hat dich abgemeldet“ weggeklickt ist; reine Darstellung, beim nächsten
   // Start kommt er wieder, solange die Anmeldung fehlt.
   const [syncHintClosed, setSyncHintClosed] = useState(false);
+  const [storageHintClosed, setStorageHintClosed] = useState(false);
   // Der Platz im Ziehblatt bzw. Panel, in den der Subsektor sein gewähltes Feld zeichnet.
   const [fieldSlot, setFieldSlot] = useState<HTMLDivElement | null>(null);
   // Esc schließt das oberste Popup; die Ziffern wählen den Bereich an dieser Stelle.
@@ -144,10 +145,14 @@ export function App() {
           {view.storageError}
         </p>
       )}
-      {!view.persistent && !view.storageError && (
-        <p className="banner" role="status">
-          Dieser Browser speichert hier nichts dauerhaft: Kampagnen, Charaktere und Sektor sind beim Schließen weg. Zum Sichern über die Kampagnenwahl exportieren.
-        </p>
+      {/* ✕ blendet ihn aus, bis die Seite neu lädt: Merken kann sich das hier niemand, genau der Speicher fehlt. */}
+      {!view.persistent && !view.storageError && !storageHintClosed && (
+        <div className="banner sync-hint" role="status">
+          <span>Dieser Browser speichert hier nichts dauerhaft: Kampagnen, Charaktere und Sektor sind beim Schließen weg. Zum Sichern über die Kampagnenwahl exportieren.</span>
+          <button type="button" className="icon-button" aria-label="Hinweis schließen" onClick={() => setStorageHintClosed(true)}>
+            <CloseIcon />
+          </button>
+        </div>
       )}
       {view.sync.status === 'expired' && !syncHintClosed && (
         <div className="banner sync-hint" role="alert">
