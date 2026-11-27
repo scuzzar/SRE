@@ -37,10 +37,10 @@ Umschalter, Reihe, großes und kleines Blatt, Würfelfenster und Hinweis).
 | Kurzdialog | `Sheet` ohne ✕ (`overlay`) | Klein, für eine kurze Eingabe oder Entscheidung: unten „Abbrechen“ und die Hauptaktion. Notiz, Beute, Wahl der Begegnungsart … |
 | Würfelbühne | `DiceRoll`, `encounterRoll` | Jeder Wurf groß und kurz animiert: Zielwert, Würfel, DMs, Urteil. Nach einem Begegnungswurf zeigt sie den Würfel des Tests, was herauskam und was danach geht („Als NSC“, Rettungswürfe); kam es zur Begegnung, folgt ihre Übersicht. Ohne Würfel nur ein Satz, etwa dass der Test schon gemacht ist |
 | Meldung | `NoticeToast` (`notice-toast`) | Oben, wenn nach einem Tipp etwas nicht ging, mit dem Grund; ✕ nimmt sie weg |
-| Markt | (View, Detailseite) | ⚑ Vorschlag 2026-11-27, abzustimmen: die Detailseite für den spekulativen Handel, geöffnet mit „Markt“ am Feld einer Stadt auf dem Globus; oben der Kapazitätskopf, darunter *Zu kaufen* und *Zu verkaufen* |
-| Aufträge | (View, Detailseite) | ⚑ Vorschlag 2026-11-27: die Detailseiten **Fracht**, **Passagiere** und **Post** zu einer Zielwelt, geöffnet an der Welt im Subsektor; oben der Kapazitätskopf, darunter die Ankreuzliste der Lose |
-| Kapazitätskopf | (View) | ⚑ Vorschlag 2026-11-27: die Kacheln oben auf Markt und Aufträgen mit dem, was noch frei ist (Kasse, Laderaum, Kabinen, Niedrigbetten); sie rechnen sofort mit, was gerade angekreuzt oder als Menge eingestellt ist |
-| Ankreuzliste | (View) | ⚑ Vorschlag 2026-11-27: eine scrollende, gruppierte Liste mit einem Kästchen je Zeile, um mehrere Dinge auf einmal zu wählen; übernommen wird mit dem Knopf in der Aktionsleiste |
+| Markt | (View, Detailseite) | (2026-11-27) die Detailseite für den spekulativen Handel, geöffnet mit „Markt“ am Feld einer Stadt auf dem Globus; oben der Kapazitätskopf, darunter *Zu kaufen* und *Zu verkaufen* |
+| Aufträge | (View, Detailseite) | (2026-11-27) die Detailseiten **Fracht**, **Passagiere** und **Post** zu einer Zielwelt, geöffnet an der Welt im Subsektor; oben der Kapazitätskopf, darunter die Ankreuzliste der Lose |
+| Kapazitätskopf | (View) | (2026-11-27) die Kacheln oben auf Markt und Aufträgen mit dem, was noch frei ist (Kasse, Laderaum, Kabinen, Niedrigbetten); sie rechnen sofort mit, was gerade angekreuzt oder als Menge eingestellt ist |
+| Ankreuzliste | (View) | (2026-11-27) eine scrollende, gruppierte Liste mit einem Kästchen je Zeile, um mehrere Dinge auf einmal zu wählen; übernommen wird mit dem Knopf in der Aktionsleiste |
 | Wartenscheibe | `NpcRunDisc` | Die kleine Scheibe in der Mitte, solange die App ohne Animation rechnet |
 | Weltsymbol | (View, aus `Hex`) | Das kleine 3D-Bild einer fertigen Welt aus Größe, Atmosphäre, Wasser, Bevölkerung, TL, Temperatur und Leben; auf der Sektorkarte, im Feldkopf und oben auf dem Globus; auf der Weltkarte nicht, dort steht es schon auf der Karte daneben. Nur Darstellung, nichts davon wird gespeichert |
 | Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
@@ -244,7 +244,7 @@ Dialog                               Kurzdialog
 
 ### Handel: Markt und Aufträge
 
-⚑ **Vorschlag des Owners vom 27. November 2026, noch abzustimmen.** Regeln in
+*Vorschlag des Owners, freigegeben am 27. November 2026.* Regeln in
 [`modell/handel.md`](modell/handel.md). Zwei getrennte Oberflächen: der **spekulative Handel** am
 Ort (Stadt auf dem Globus) und die **Aufträge zu einem Ziel** (Welt im Subsektor).
 

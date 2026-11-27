@@ -209,7 +209,7 @@ hide <<browser>> stereotype
 
 ' Handel (Regeln: docs/regeln-handel.md)
   class Cargo $handel
-  class Fare $handel $newClass("2026-11-27c")
+  class Fare $handel
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class Skimming $raum
@@ -221,7 +221,6 @@ hide <<browser>> stereotype
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
-  class Hex $sektor
 
 ' Missionen
 
@@ -266,8 +265,7 @@ Booking "*" --> "0..1" Ship : forShip
 
 ' Handel
 Ship "1" *-- "*" Cargo : hold {ordered}
-Ship "*" -$goneArrow("2026-11-27c")-> "0..1" Hex : destination
-Ship "1" *-$newArrow("2026-11-27c")- "*" Fare : fares {ordered}
+Ship "1" *-- "*" Fare : fares {ordered}
 
 ' Raumkarte und Systemflug
 SpaceUnit "*" --> "0..1" Ship : ship
@@ -312,5 +310,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Journey #line:d0021b;line.bold
 @enduml

@@ -43,8 +43,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Handel | [views/handel.png](views/handel.png) | [modell/handel.md](modell/handel.md) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
-**2026-11-27b** (mehrere Warenwürfe, [`changes/2026-11-27b-mehrere-warenwuerfe.png`](changes/2026-11-27b-mehrere-warenwuerfe.png))
-und **2026-11-27c** (Aufträge zu mehreren Zielen, [`changes/2026-11-27c-auftraege-zu-mehreren-zielen.png`](changes/2026-11-27c-auftraege-zu-mehreren-zielen.png)).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit

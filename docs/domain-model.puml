@@ -325,7 +325,7 @@ hide <<browser>> stereotype
     freight
     message
   }
-  class Fare $handel $newClass("2026-11-27c") {
+  class Fare $handel {
     high: number
     middle: number
     low: number
@@ -764,7 +764,7 @@ hide <<browser>> stereotype
     days: number
     high: number
     middle: number
-    $new("2026-11-27c", "low: number")
+    low: number
     mail: boolean
     npcDie: number [0..1]
     lot: number [0..1]
@@ -1496,10 +1496,8 @@ Booking "*" --> "0..1" Ship : forShip
 ' Handel
 Campaign "1" *-- "0..*" Market : markets
 Market "*" --> "1" World : at
-Market "*" -$goneArrow("2026-11-27b")-> "0..1" GoodsRoll : goods
-Market "*" -$newArrow("2026-11-27b")-> "*" GoodsRoll : goods {ordered}
-Market "*" -$goneArrow("2026-11-27b")-> "0..1" PriceRoll : purchase
-Market "*" -$newArrow("2026-11-27b")-> "*" PriceRoll : purchases
+Market "*" --> "*" GoodsRoll : goods {ordered}
+Market "*" --> "*" PriceRoll : purchases
 Market "*" --> "*" PriceRoll : sales
 Market "1" *-- "*" FreightOffer : freight
 Market "1" *-- "*" PassengerOffer : passengers
@@ -1507,26 +1505,23 @@ FreightOffer "*" --> "1" Hex : to
 FreightOffer "1" *-- "*" FreightLot : lots {ordered}
 FreightLot --> FreightSize
 PassengerOffer "*" --> "1" Hex : to
-Market "1" *-$goneArrow("2026-11-27c")- "0..1" MessageOffer : message
-Market "1" *-$newArrow("2026-11-27c")- "*" MessageOffer : messages
-MessageOffer "*" -$goneArrow("2026-11-27c")-> "0..1" Hex : to
-MessageOffer "*" -$newArrow("2026-11-27c")-> "1" Hex : to
+Market "1" *-- "*" MessageOffer : messages
+MessageOffer "*" --> "1" Hex : to
 LogEntry <|-- GoodsRoll
 LogEntry <|-- PriceRoll
 GoodsRoll "*" --> "1" World : at
 GoodsRoll "*" --> "1" TradeGood : /goods
-GoodsRoll "*" -$newArrow("2026-11-27b")-> "1" Character : by
+GoodsRoll "*" --> "1" Character : by
 PriceRoll "*" --> "1" World : at
 PriceRoll "*" --> "0..1" GoodsRoll : offer
 PriceRoll "*" --> "0..1" Cargo : lot
 PriceRoll "*" --> "0..1" Character : helper
 PriceRoll "*" --> "1" ActualValue : /value
 Ship "1" *-- "*" Cargo : hold {ordered}
-Ship "*" -$goneArrow("2026-11-27c")-> "0..1" Hex : destination
-Ship "1" *-$newArrow("2026-11-27c")- "*" Fare : fares {ordered}
-Fare "*" -$newArrow("2026-11-27c")-> "1" World : from
-Fare "*" -$newArrow("2026-11-27c")-> "1" Hex : to
-Booking "*" -$newArrow("2026-11-27c")-> "0..1" Fare : forFare
+Ship "1" *-- "*" Fare : fares {ordered}
+Fare "*" --> "1" World : from
+Fare "*" --> "1" Hex : to
+Booking "*" --> "0..1" Fare : forFare
 Cargo --> CargoKind
 Cargo "*" --> "0..1" TradeGood : goods
 Cargo "*" --> "1" World : from

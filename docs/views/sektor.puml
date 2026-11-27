@@ -81,14 +81,13 @@ hide <<browser>> stereotype
   class Character $charakter
 
 ' Schiffe
-  class Ship $schiffe
 
 ' Handel (Regeln: docs/regeln-handel.md)
   class Market $handel
   class GoodsRoll $handel
   class PriceRoll $handel
   class Cargo $handel
-  class Fare $handel $newClass("2026-11-27c")
+  class Fare $handel
   class MessageOffer <<value>> $handel
   class FreightOffer <<value>> $handel
   class PassengerOffer <<value>> $handel
@@ -287,13 +286,11 @@ Booking "*" --> "0..1" World : in
 Market "*" --> "1" World : at
 FreightOffer "*" --> "1" Hex : to
 PassengerOffer "*" --> "1" Hex : to
-MessageOffer "*" -$goneArrow("2026-11-27c")-> "0..1" Hex : to
-MessageOffer "*" -$newArrow("2026-11-27c")-> "1" Hex : to
+MessageOffer "*" --> "1" Hex : to
 GoodsRoll "*" --> "1" World : at
 PriceRoll "*" --> "1" World : at
-Ship "*" -$goneArrow("2026-11-27c")-> "0..1" Hex : destination
-Fare "*" -$newArrow("2026-11-27c")-> "1" World : from
-Fare "*" -$newArrow("2026-11-27c")-> "1" Hex : to
+Fare "*" --> "1" World : from
+Fare "*" --> "1" Hex : to
 Cargo "*" --> "1" World : from
 Cargo "*" --> "0..1" Hex : to
 Hex --> TravelZone
@@ -373,5 +370,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Journey #line:d0021b;line.bold
 @enduml

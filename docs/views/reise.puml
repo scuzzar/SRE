@@ -127,7 +127,7 @@ hide <<browser>> stereotype
     days: number
     high: number
     middle: number
-    $new("2026-11-27c", "low: number")
+    low: number
     mail: boolean
     npcDie: number [0..1]
     lot: number [0..1]
@@ -228,5 +228,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Journey #line:d0021b;line.bold
 @enduml

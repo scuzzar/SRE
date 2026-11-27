@@ -707,14 +707,14 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > aus SE 9 und SE 22 als Referenzdaten. Regeln in [`handel.md`](handel.md). Der Ausschnitt dazu
 > liegt unter [`changes/2026-11-27-handel.png`](../changes/2026-11-27-handel.png).
 
-> Wartet auf Freigabe (Kennzeichen **2026-11-27b**): **Mehrere Warenwürfe je Markt** (Hausregel).
+> Am 27. November 2026 freigegeben (Kennzeichen **2026-11-27b**): **Mehrere Warenwürfe je Markt** (Hausregel).
 > Statt eines Warenwurfs je Woche (SR 52) darf jeder Charakter der Gruppe je Markt 1 + seine Stufe
 > in Admin oder Streetwise würfeln. `Market.goods` wird eine Liste, `Market.purchase` wird
 > `purchases` (je Warenwurf ein Kaufpreis), und der Warenwurf verweist auf den Charakter, der
 > gewürfelt hat (`by`). Regeln in [`handel.md`](handel.md). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-27b-mehrere-warenwuerfe.png`](../changes/2026-11-27b-mehrere-warenwuerfe.png).
 
-> Wartet auf Freigabe (Kennzeichen **2026-11-27c**): **Aufträge zu mehreren Zielen.** Mit dem
+> Am 27. November 2026 freigegeben (Kennzeichen **2026-11-27c**): **Aufträge zu mehreren Zielen.** Mit dem
 > UI-Vorschlag des Owners: Das angekündigte Ziel entfällt (`Ship.destination`). Fracht, Fahrgäste
 > und private Botschaften zu verschiedenen Welten dürfen zugleich an Bord sein, Umwege sind
 > erlaubt, bezahlt wird bei Ankunft am Ziel. Neu sind die Fahrgäste an Bord (`Fare`, `Ship.fares`)
