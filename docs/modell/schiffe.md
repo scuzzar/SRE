@@ -320,7 +320,7 @@ zusammengefasst in [`regeln-schiffe.md`](../regeln-schiffe.md)). Entscheidungen 
 
 ## Reparatur außerhalb des Kampfs
 
-*Vorschlag 2026-11-27d, noch nicht freigegeben (Owner, 27. November 2026).* Regeln: SR 28
+*freigegeben am 27. November 2026, Kennzeichen 2026-11-27d (Owner).* Regeln: SR 28
 (Reparatur 10+ je Techniker und Woche) und SR 42 (*Repair Parts*: unterwegs nur provisorisch, voll
 nur an einer Werft), zusammengefasst in [`regeln-schiffe.md`](../regeln-schiffe.md). Bisher gab es nur
 „Alles reparieren“ in der Werft.

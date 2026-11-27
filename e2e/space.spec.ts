@@ -214,3 +214,44 @@ test('Schadenskontrolle: der Engineer flickt im Raumkampf einen Treffer, einmal 
   // Einmal je Raumrunde; der Versuch steht im Log.
   if (await repair.isVisible()) await expect(repair.getByRole('button').first()).toHaveAttribute('title', /schon geflickt/);
 });
+
+test('Detailseite Schaden: nach dem Kampf Treffer auswählen und in der Werft reparieren lassen (2026-11-27d)', async ({ page }) => {
+  await wuerfelgleich(page, 20261127);
+  await page.goto('/');
+  await openHomeGlobe(page);
+  await openTab(page, 'Schiff');
+  await page.getByRole('button', { name: 'Starten', exact: true }).click();
+  const card = page.getByRole('region', { name: 'Systemflug' });
+  await card.getByRole('button', { name: 'Von Hand …' }).click();
+  await card.getByRole('combobox', { name: 'Entwurf des fremden Schiffs' }).selectOption('J');
+  await card.getByRole('combobox', { name: 'Absicht' }).selectOption('attack');
+  await card.getByRole('button', { name: 'Auftauchen lassen' }).click();
+  const volley = page.locator('.space-volley');
+  // Raumrunden, bis das fremde Schiff die Yacht getroffen hat.
+  for (let round = 0; round < 12 && !(await card.getByText(/^Treffer: /).isVisible()); round++) {
+    await page.getByRole('button', { name: 'Bewegen' }).click();
+    await expect(card).toContainText('· Feuer');
+    await page.getByRole('button', { name: 'End Turn' }).click();
+    while (await volley.isVisible().catch(() => false)) await volley.click();
+  }
+  await card.getByRole('button', { name: 'Systemflug beenden' }).click();
+  await page.getByRole('button', { name: 'Raumkarte schließen' }).first().click();
+  const open = page.getByRole('button', { name: 'Schaden: Treffer ansehen und reparieren' });
+  if (!(await open.isVisible())) await openTab(page, 'Schiff');
+  await open.click();
+  const sheet = page.getByRole('region', { name: 'Schaden' });
+  await expect(sheet).toContainText('Treffer · auswählen, was repariert wird');
+  // In der Werft von Kessra (Raumhafen A): auswählen, die Werft nennt den Preis; die Kasse der Demo reicht nicht.
+  const hit = sheet.getByRole('group', { name: 'Treffer' }).getByRole('button').first();
+  await hit.click();
+  await expect(hit).toHaveAttribute('aria-pressed', 'true');
+  const yard = page.getByRole('button', { name: /^Werft · .*MCr/ });
+  await expect(yard).toContainText('0,10 MCr');
+  await expect(yard).toBeDisabled();
+  // Selbst reparieren braucht Engineering-1; Kira Vant hat es nicht.
+  await expandTray(page);
+  await sheet.getByRole('group', { name: 'Wer repariert' }).getByRole('button', { name: /Kira Vant/ }).click();
+  const self = page.getByRole('button', { name: /^Selbst reparieren/ });
+  await expect(self).toBeDisabled();
+  await expect(self).toHaveAttribute('title', /Engineering-1/);
+});

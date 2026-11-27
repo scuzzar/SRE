@@ -218,7 +218,7 @@ hide <<browser>> stereotype
   class SpaceBattle $raum
   class SpaceAttack $raum
   class SpaceUnit $raum
-  class ShipRepair $schiffe $newClass("2026-11-27d") {
+  class ShipRepair $schiffe {
     dice: number[2]
     dm: number
     zone: HitZone
@@ -282,10 +282,10 @@ SpaceUnit "*" --> "0..1" ShipDesign : design
 Ship "1" *-- "0..1" ShipDamage : damage
 SpaceBattle "*" --> "1" ShipDesign : design
 SpaceAttack "*" --> "1" ShipWeapon : weapon
-LogEntry <|-$newArrow("2026-11-27d")- ShipRepair
-ShipRepair -$newArrow("2026-11-27d")-> HitZone
-ShipRepair "*" -$newArrow("2026-11-27d")-> "1" Ship : ship
-ShipRepair "*" -$newArrow("2026-11-27d")-> "1" Character : by
+LogEntry <|-- ShipRepair
+ShipRepair --> HitZone
+ShipRepair "*" --> "1" Ship : ship
+ShipRepair "*" --> "1" Character : by
 Skimming "*" --> "1" Ship : ship
 Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" --> "1" ShipDesign : design

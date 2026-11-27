@@ -245,7 +245,7 @@ hide <<browser>> stereotype
     zone: HitZone
     /success: boolean
   }
-  class ShipRepair $schiffe $newClass("2026-11-27d")
+  class ShipRepair $schiffe
   class TrackPoint <<value>> $raum {
     position: Vec
     velocity: Vec
@@ -300,7 +300,7 @@ SpaceAttack "*" --> "0..1" Character : gunner
 LogEntry <|-- DamageControl
 DamageControl --> HitZone
 DamageControl "*" --> "0..1" Character : by
-ShipRepair -$newArrow("2026-11-27d")-> HitZone
+ShipRepair --> HitZone
 SpaceAttack --> HitZone
 SpaceBattleEnd --> BattleOutcome
 SpaceBattle --> EncounterOccasion

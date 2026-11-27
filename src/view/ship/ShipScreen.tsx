@@ -22,6 +22,7 @@ type Sheet =
   | { readonly kind: 'fuel' }
   | { readonly kind: 'hold' }
   | { readonly kind: 'cabins' }
+  | { readonly kind: 'damage'; readonly back?: 'yard' }
   | { readonly kind: 'rename' }
   | { readonly kind: 'deck'; readonly name: string }
   | { readonly kind: 'post'; readonly shipId: string; readonly at: number }
@@ -58,7 +59,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
   // ziehen lässt, über der Karte; im Desktop-Modus in der Seitenspalte.
   const field =
     sheet?.kind === 'yard' ? (
-      <YardSheet ship={ship} onBuy={(d) => setSheet({ kind: 'buy', design: d.designId, method: d.price <= ship.funds ? 'cash' : 'bank' })} onClose={close} />
+      <YardSheet ship={ship} onBuy={(d) => setSheet({ kind: 'buy', design: d.designId, method: d.price <= ship.funds ? 'cash' : 'bank' })} onDamage={() => setSheet({ kind: 'damage', back: 'yard' })} onClose={close} />
     ) : sheet?.kind === 'buy' && buying !== undefined ? (
       <BuySheet
         ship={ship}
@@ -83,6 +84,8 @@ export function ShipScreen({ view }: { view: Snapshot }) {
       <DetailPage title="Kabinen" aside={boat.name} onClose={close}>
         <CabinsList hold={view.hold} />
       </DetailPage>
+    ) : sheet?.kind === 'damage' && boat !== undefined ? (
+      <DamageSheet boat={boat} funds={ship.funds} error={ship.error} onClose={sheet.back === 'yard' ? () => setSheet({ kind: 'yard' }) : close} />
     ) : sheet?.kind === 'fuel' && boat !== undefined ? (
       <FuelSheet boat={boat} ship={ship} onClose={close} />
     ) : sheet?.kind === 'rename' && boat !== undefined ? (
@@ -190,14 +193,14 @@ export function ShipScreen({ view }: { view: Snapshot }) {
                 )}
               </div>
               {boat.damage.length > 0 && (
-                <div className="tile">
-                  <span className="tile-label">Schaden</span>
+                <button type="button" className="tile tile-open" aria-label="Schaden: Treffer ansehen und reparieren" onClick={() => setSheet({ kind: 'damage' })}>
+                  <span className="tile-label">Schaden ›</span>
                   <span className="tile-text negative">{boat.damage.length} Treffer</span>
                   <span className="tile-sub">
                     {boat.damage.join(', ')}
-                    {boat.turretsOut.length > 0 && boat.craftWeapons === undefined ? ` · Turret ${boat.turretsOut.join(', ')} ausgefallen` : ''} · Reparatur in der Werft
+                    {boat.turretsOut.length > 0 && boat.craftWeapons === undefined ? ` · Turret ${boat.turretsOut.join(', ')} ausgefallen` : ''}
                   </span>
-                </div>
+                </button>
               )}
               <div className="tile">
                 <span className="tile-label">{boat.craftWeapons !== undefined ? 'Bewaffnung' : 'Hardpoints'}</span>
@@ -457,21 +460,119 @@ function ArmamentSection({ ship, boat }: { ship: ShipView; boat: Boat }) {
   );
 }
 
-/** Reparatur des Schadens aus dem Raumkampf in der Werft (2026-11-21h, Hausregel: Cr 100.000 je Treffer, Cr 1.000.000 je kritischem). */
-function RepairSection({ boat, funds }: { boat: Boat; funds: number }) {
-  const game = useGame();
+/** In der Werft: der Schaden in einer Zeile und der Weg zur Detailseite Schaden (2026-11-27d). */
+function RepairSection({ boat, onOpen }: { boat: Boat; onOpen: () => void }) {
   return (
     <div className="shop-counter">
       <h2 className="section-title">Reparatur</h2>
       <p>
         {boat.name}: {boat.damage.join(', ')}
       </p>
-      {boat.repairBlocker && <p className="combat-hint">{boat.repairBlocker}</p>}
-      <button type="button" className="action gold" disabled={boat.repairBlocker !== undefined || boat.repairCost > funds} onClick={() => (haptic('pick'), game.repairShip())}>
-        Alles reparieren · {mcr(boat.repairCost)} MCr
+      <button type="button" className="action gold" onClick={onOpen}>
+        Schaden ansehen und reparieren ›
       </button>
-      <p className="shop-hint muted">Hausregel: Cr 100.000 je Treffer, Cr 1.000.000 je kritischem Treffer; die SR rechnen mit dem Neuwert der Baugruppen, die die App nicht kennt.</p>
     </div>
+  );
+}
+
+/**
+ * Die Detailseite Schaden (2026-11-27d): oben die Treffer zum Auswählen, darunter wer repariert. Unterwegs
+ * flickt ein Charakter einen Treffer (10+, einmal je Woche); in der Werft repariert ein Engineer selbst
+ * (8+, Material oder Gebühr) oder die Werft repariert alles Ausgewählte. Die Handlungen stehen unten.
+ */
+function DamageSheet({ boat, funds, error, onClose }: { boat: Boat; funds: number; error: string | undefined; onClose: () => void }) {
+  const game = useGame();
+  const repair = boat.repair;
+  const [picked, setPicked] = useState<readonly string[]>([]);
+  const [who, setWho] = useState<string | undefined>(repair.people.find((p) => p.blocker === undefined)?.id);
+  const key = (h: { ship: string; at: number }) => `${h.ship}-${h.at}`;
+  // Nach einer Reparatur stimmen alte Stellen nicht mehr: nur noch auswählen, was es gibt.
+  const chosen = repair.hits.filter((h) => picked.includes(key(h)));
+  const person = repair.people.find((p) => p.id === who);
+  const single = chosen.length === 1 ? chosen[0]! : undefined;
+  const attemptBlocker =
+    person === undefined ? 'Wer repariert?' : single === undefined ? 'Genau einen Treffer auswählen.' : person.blockers[repair.hits.indexOf(single)];
+  const yardCost = chosen.reduce((n, h) => n + h.yardPrice, 0);
+  const toggle = (h: { ship: string; at: number }) => setPicked((p) => (p.includes(key(h)) ? p.filter((k) => k !== key(h)) : repair.atYard ? [...p, key(h)] : [key(h)]));
+  const attemptLabel = repair.atYard ? `Selbst reparieren (${person?.need ?? repair.target}+)` : `Flicken (${person?.need ?? repair.target}+)`;
+  return (
+    <DetailPage
+      title="Schaden"
+      aside={boat.name}
+      onClose={onClose}
+      foot={
+        <>
+          <button
+            type="button"
+            className={repair.atYard ? 'action soft' : 'action gold'}
+            disabled={attemptBlocker !== undefined}
+            title={attemptBlocker}
+            onClick={() => {
+              haptic('shake');
+              game.attemptRepair(person!.id, single!.ship, single!.at);
+              setPicked([]);
+            }}
+          >
+            {attemptLabel}
+          </button>
+          {repair.atYard && (
+            <button
+              type="button"
+              className="action gold"
+              disabled={chosen.length === 0 || yardCost > funds || repair.yardBlocker !== undefined}
+              title={chosen.length === 0 ? 'Treffer auswählen' : yardCost > funds ? 'Zu wenig in der Kasse' : repair.yardBlocker}
+              onClick={() => {
+                haptic('pick');
+                game.repairHits(chosen.map((h) => ({ ship: h.ship, at: h.at })));
+                setPicked([]);
+              }}
+            >
+              Werft · {chosen.length === 0 ? 'auswählen' : `${mcr(yardCost)} MCr`}
+            </button>
+          )}
+        </>
+      }
+    >
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      <h4 className="section-title">
+        Treffer{repair.atYard ? ' · auswählen, was repariert wird' : ' · einen zum Flicken auswählen'}
+      </h4>
+      <div className="chips" role="group" aria-label="Treffer">
+        {repair.hits.map((h) => (
+          <button key={key(h)} type="button" aria-pressed={picked.includes(key(h))} onClick={() => toggle(h)}>
+            <span>{h.label}</span>
+            {h.critical && <span className="negative"> · kritisch</span>}
+            {h.patched && <span className="muted"> · geflickt</span>}
+            {repair.atYard && <span className="mono muted"> · {mcr(h.yardPrice)}</span>}
+          </button>
+        ))}
+      </div>
+      {repair.atYard && (
+        <button type="button" className="ghost compact" onClick={() => setPicked(chosen.length === repair.hits.length ? [] : repair.hits.map(key))}>
+          {chosen.length === repair.hits.length ? 'Keinen auswählen' : 'Alle auswählen'}
+        </button>
+      )}
+      <h4 className="section-title">Wer repariert · 2W6 + Engineering, {repair.target}+</h4>
+      <div className="chips" role="group" aria-label="Wer repariert">
+        {repair.people.map((p) => (
+          <button key={p.id} type="button" aria-pressed={who === p.id} title={p.blocker} onClick={() => setWho(p.id)}>
+            <span>{p.name}</span>
+            <span className="mono muted"> · Engineering-{p.engineering} · {p.need}+</span>
+          </button>
+        ))}
+      </div>
+      {attemptBlocker !== undefined && person !== undefined && single !== undefined && <p className="combat-hint">{attemptBlocker}</p>}
+      {person?.blocker !== undefined && <p className="combat-hint">{person.blocker}</p>}
+      <p className="shop-hint muted">
+        {repair.atYard
+          ? `In der Werft: Die Werft repariert, was ausgewählt ist (Cr 100.000 je Treffer, Cr 1.000.000 je kritischem). Oder ein Engineer ab Engineering-1 repariert einen Treffer selbst, 8+: gelingt es, kostet das Material ${credits(repair.material.hit)} (kritisch ${credits(repair.material.critical)}), sonst die Gebühr ${credits(repair.fee.hit)} (kritisch ${credits(repair.fee.critical)}). Je Engineer ein Treffer am Tag oder ein kritischer in der Woche.`
+          : 'Unterwegs nur provisorisch (SR 42): Je Charakter einmal in der Woche, 2W6 + Engineering 10+, dann ist der Treffer geflickt – er wirkt nicht mehr, die Werft berechnet ihn trotzdem. Kritische Treffer repariert nur die Werft.'}
+      </p>
+    </DetailPage>
   );
 }
 
@@ -518,7 +619,7 @@ function YardTable({ title, rows, funds, onBuy }: { title: string; rows: readonl
 }
 
 /** Die Werft als Detailseite: Reparatur und Bewaffnung des eigenen Schiffs (2026-11-21g/h), dann die Standardentwürfe und die Small Craft (2026-11-21c), der Preis als Knopf. */
-function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: ShipYardRow) => void; onClose: () => void }) {
+function YardSheet({ ship, onBuy, onDamage, onClose }: { ship: ShipView; onBuy: (design: ShipYardRow) => void; onDamage: () => void; onClose: () => void }) {
   return (
     <DetailPage title="Werft" aside="Standardentwürfe · SR 33–37" onClose={onClose}>
       {ship.error && (
@@ -526,7 +627,7 @@ function YardSheet({ ship, onBuy, onClose }: { ship: ShipView; onBuy: (design: S
           {ship.error}
         </p>
       )}
-      {ship.ship !== undefined && ship.ship.damage.length > 0 && <RepairSection boat={ship.ship} funds={ship.funds} />}
+      {ship.ship !== undefined && ship.ship.damage.length > 0 && <RepairSection boat={ship.ship} onOpen={onDamage} />}
       {ship.ship !== undefined && ship.ship.hardpoints > 0 && <ArmamentSection ship={ship} boat={ship.ship} />}
       <p className="shop-hint muted">Preis antippen zum Bestellen an der Werft. Bar oder über die Bank: 20&nbsp;% Anzahlung, 480 Monatsraten, zusammen 220&nbsp;% des Preises (SR&nbsp;29). Grau = nicht bezahlbar.</p>
       <div className="shop-counter">

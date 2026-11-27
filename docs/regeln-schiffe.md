@@ -838,6 +838,12 @@ Hauptbereich oder Engineering nach Wahl, 3+ normale Zufallslokalisierung) geziel
 - **Repair Parts**: provisorische Reparatur aus dem Ship's Locker; volle Reparatur/Ersatz nur an
   einer Werft, Kosten ca. 10–120 % des Neuwerts der Baugruppe je nach Fall (2W, in 10 %-Schritten),
   DM −2 bei Reparatur durch die eigene Crew statt einer Werft.
+- **Stand in der App** (2026-11-27d, Detailseite *Schaden*, `model/ship-repair.ts`): unterwegs ✔ ✱
+  je Charakter einmal je Woche 2W6 + Engineering 10+ (nach SR 28), dann geflickt; kritische Treffer
+  nicht. In der Werft ✔ ✱: die Werft repariert, was man auswählt (Cr 100.000 je Treffer, Cr 1.000.000
+  je kritischem), oder ein Engineer ab Engineering-1 repariert selbst ganz, 8+, gegen Material zum
+  halben Werftpreis, beim Fehlschlag eine Gebühr von Cr 10.000 (kritisch Cr 20.000); ein Treffer je
+  Tag oder ein kritischer je Woche. Die 10–120 % aus SR 42 bildet die App nicht ab (keine Baugruppen).
 
 ### Ship's Data Card (SR 39–40, SE 12)
 

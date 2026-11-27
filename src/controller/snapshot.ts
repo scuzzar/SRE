@@ -287,7 +287,7 @@ import { globeView, LANDFORM_NAMES, position, type GlobeView } from './globe-vie
 import { activeTripView, tripDayItem, tripPlanOf, type TripDayItem, type TripPlanView, type TripView } from './trip-view';
 import { tradeView, holdView, settlementView, type TradePage, type TradeView, type HoldView, type SettlementView } from './trade-view';
 import { tradeLogItem, type TradeLogItem } from './trade-log';
-import { skimmingItem, type SkimmingItem, spaceBattleItem, spaceAttackItem, spaceBattleEndItem, damageControlItem, type DamageControlItem, type SpaceBattleItem, type SpaceAttackItem, type SpaceBattleEndItem, checkItem, checksView, journeyItem, journeyView, legalView, monthEndItem, systemJourneyItem, systemJourneyView, timeItem, timeView, type SystemJourneyDraft, type SystemJourneyView, type SystemJourneyItem, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type MonthEndItem, type TimeItem, type TimeView } from './time-view';
+import { skimmingItem, type SkimmingItem, spaceBattleItem, spaceAttackItem, spaceBattleEndItem, damageControlItem, type DamageControlItem, shipRepairItem, type ShipRepairItem, type SpaceBattleItem, type SpaceAttackItem, type SpaceBattleEndItem, checkItem, checksView, journeyItem, journeyView, legalView, monthEndItem, systemJourneyItem, systemJourneyView, timeItem, timeView, type SystemJourneyDraft, type SystemJourneyView, type SystemJourneyItem, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type MonthEndItem, type TimeItem, type TimeView } from './time-view';
 
 /**
  * Was die View zu sehen bekommt: den Spielstand aus dem Model, schon ausgewertet, und den Zustand des
@@ -578,7 +578,7 @@ export interface CampaignSheetView {
   readonly canDelete: boolean;
 }
 
-export type LogItem = DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | MonthEndItem | JourneyItem | SystemJourneyItem | SkimmingItem | SpaceBattleItem | SpaceAttackItem | DamageControlItem | SpaceBattleEndItem | TripDayItem | TradeLogItem | NoteItem;
+export type LogItem = DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | MonthEndItem | JourneyItem | SystemJourneyItem | SkimmingItem | SpaceBattleItem | SpaceAttackItem | DamageControlItem | ShipRepairItem | SpaceBattleEndItem | TripDayItem | TradeLogItem | NoteItem;
 
 /** Ein Patron-Wurf: Liste, Würfel mit DMs, der Wurf 11–66 und die Zeile der Liste. */
 export interface PatronItem {
@@ -2789,6 +2789,8 @@ function logItem(campaign: Campaign, entry: LogEntry, index: number): LogItem {
       return spaceAttackItem(entry);
     case 'damageControl':
       return damageControlItem(campaign, entry);
+    case 'shipRepair':
+      return shipRepairItem(campaign, entry);
     case 'spaceBattleEnd':
       return spaceBattleEndItem(entry);
     case 'tripDay':
@@ -2956,7 +2958,8 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     ship: buildShipView(campaign, state.deckPlans, state.shipError),
     stash: stashView(campaign, state.shopError),
     location: campaign.location?.world,
-    result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : undefined,
+    // Ein Reparaturversuch (2026-11-27d) läuft auf der Würfelbühne wie eine Probe auf Engineering.
+    result: resultItem?.kind === 'task' || resultItem?.kind === 'attack' || resultItem?.kind === 'damage' ? resultItem : resultItem?.kind === 'shipRepair' ? repairAsTask(resultItem) : undefined,
     editor: state.editor && {
       id: state.editor.id,
       input: editing ? inputOf(editing) : state.editor.npc ? { ...emptyInput, npc: true, role: state.editor.role ?? 'other', ...(campaign.location === undefined ? {} : { place: campaign.location.world }) } : emptyInput,
@@ -2982,5 +2985,20 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     globeFocus: state.world && state.globe ? state.globeFocus : undefined,
     picking: pickingView(state, campaign),
     selected: state.selected && selectedView(campaign.hexes, state.selected.column, state.selected.row, state.selected.occurrence, state.world ? undefined : state.worldError),
+  };
+}
+
+/** Ein Reparaturversuch als Probe für die Würfelbühne (2026-11-27d): „Jonas Reyl flickt Maneuver · Engineering-1 · 10+“. */
+function repairAsTask(item: ShipRepairItem): TaskItem {
+  return {
+    kind: 'task',
+    at: item.at,
+    character: `${item.by} ${item.yard ? 'repariert' : 'flickt'} ${item.zone}`,
+    target: item.target,
+    dice: [item.dice[0]!, item.dice[1]!],
+    dm: item.dm,
+    total: item.total,
+    success: item.success,
+    parts: [{ kind: 'skill', name: 'Engineering', level: item.dm, dm: item.dm }],
   };
 }

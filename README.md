@@ -95,7 +95,7 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 - Die **Werft** verkauft die neun Standardentwürfe bar oder mit Bankkredit; die Monatsrate geht von selbst von der Kasse ab.
 - Das Schiff zeigt Treibstoff, Fracht, Kabinen, Antrieb, Hardpoints, Computer und Restschuld, dazu **Deckpläne** (eigene Bilder je Entwurf), **Crew** mit Posten und **Computer** mit Programmen.
 - **Systemflug** auf der Raumkarte mit Vektorbewegung nach Mayday, Treibstoff schöpfen am Gasriesen, Landen.
-- **Raumkampf** gegen ein fremdes Schiff mit Lasern, Trefferzonen und Schaden, Crew und Programmen, Antriebsschaden nach Buchstaben und Schadenskontrolle; Beiboote mit Launch und Andocken. Regeln und Stand: [docs/regeln-schiffe.md](docs/regeln-schiffe.md).
+- **Raumkampf** gegen ein fremdes Schiff mit Lasern, Trefferzonen und Schaden, Crew und Programmen, Antriebsschaden nach Buchstaben und Schadenskontrolle; Reparatur auf der Detailseite Schaden (unterwegs flicken, in der Werft auswählen oder selbst reparieren); Beiboote mit Launch und Andocken. Regeln und Stand: [docs/regeln-schiffe.md](docs/regeln-schiffe.md).
 
 ### Handel
 

@@ -14,7 +14,7 @@ import { checkJourney } from './travel';
 import { checkSystemJourney } from './system-journey';
 import { START_DAY } from './time';
 import { checkOf, encounterChecks } from './encounter-check';
-import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type GoodsRoll, type PriceRoll, type Journey, type SystemJourney, type SpaceBattle, type SpaceAttack, type DamageControl, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
+import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type GoodsRoll, type PriceRoll, type Journey, type SystemJourney, type SpaceBattle, type SpaceAttack, type DamageControl, type ShipRepair, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
 import { checkRecovery } from './wounds';
 import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
 import { armorClasses, computerModelOf, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
@@ -164,6 +164,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('skimming'), at, day, place, giant: z.string().min(1), ship: z.string().min(1), tons: z.number().positive() }),
   z.object({ kind: z.literal('spaceBattle'), at, day, place, foe: z.string().min(1), design: z.string().min(1), intent: z.enum(intents), encounter: dice.optional(), reaction: dice.optional(), attack: dice.optional(), occasion: z.enum(['departure', 'arrival']).optional(), jumpTo: z.string().min(1).optional(), travelTo: z.string().min(1).optional() }),
   z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), bands: z.number().int().min(1).optional(), computerHits: z.number().int().min(0).optional(), noComputer: z.boolean().optional(), predict: z.number().int().optional(), gunnery: z.number().int().optional(), evade: z.number().int().optional(), returnFire: z.boolean().optional(), hits: z.array(z.enum(hitZones)).max(4) }),
+  z.object({ kind: z.literal('shipRepair'), at, day, place, ship: z.string().min(1), by: z.string().min(1), dice, dm: z.number().int(), zone: z.enum(hitZones), yard: z.boolean() }),
   z.object({ kind: z.literal('damageControl'), at, day, place, round: z.number().int().min(1), unit: z.string().min(1), dice, dm: z.number().int(), zone: z.enum(hitZones), by: z.string().min(1).optional() }),
   z.object({ kind: z.literal('spaceBattleEnd'), at, day, place, foe: z.string().min(1), outcome: z.enum(battleOutcomes) }),
   z.object({ kind: z.literal('systemJourney'), at, day, place, from: z.string().min(1), to: z.string().min(1), hours: z.number().int(), travellers: z.array(z.string().min(1)), ship: z.string().min(1).optional(), departureRoll: dice.optional(), arrivalRoll: dice.optional() }),
@@ -899,6 +900,8 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
       return stripped({ ...entry, hits: [...entry.hits] }) as SpaceAttack;
     case 'damageControl':
       return stripped(entry) as DamageControl;
+    case 'shipRepair':
+      return stripped(entry) as ShipRepair;
     case 'tripDay':
       return stripped(entry) as TripDay;
     case 'check':
@@ -1058,6 +1061,11 @@ function validate(campaign: Campaign): void {
         break;
       case 'save':
         checkSave(campaign, entry, index);
+        break;
+      case 'shipRepair':
+        // Ein Reparaturversuch (2026-11-27d) verweist auf sein Schiff und den Charakter.
+        if (!campaign.ships.some((s) => s.id === entry.ship)) throw new DomainError('Ein Reparaturversuch verweist auf ein Schiff, das es nicht gibt.');
+        anyCharacterOf(campaign, entry.by);
         break;
       case 'butchering':
         checkButchering(campaign, entry, index);

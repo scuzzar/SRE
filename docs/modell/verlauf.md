@@ -733,3 +733,12 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > alle Warenwürfe eines Markts würfelt die App beim ersten Blick auf einmal. Regeln in
 > [`handel.md`](handel.md). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-27c-auftraege-zu-mehreren-zielen.png`](../changes/2026-11-27c-auftraege-zu-mehreren-zielen.png).
+
+> Am 27. November 2026 freigegeben (Kennzeichen **2026-11-27d**): **Reparatur außerhalb des Kampfs.**
+> Eine Detailseite *Schaden* im Bereich Schiff und in der Werft. Unterwegs flickt ein Charakter
+> einen Treffer (2W6 + Engineering 10+, einmal je Woche); in der Werft repariert ein Engineer mit
+> Engineering-1 oder mehr selbst ganz (8+, Material zum halben Werftpreis, beim Fehlschlag eine
+> Gebühr; ein Treffer je Tag oder ein kritischer je Woche); die Werft repariert, was man auswählt.
+> Neu im Bild: der Logeintrag `ShipRepair`. Regeln in [`schiffe.md`](schiffe.md) unter *Reparatur
+> außerhalb des Kampfs*. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-27d-reparatur.png`](../changes/2026-11-27d-reparatur.png).

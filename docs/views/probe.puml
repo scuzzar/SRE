@@ -92,7 +92,7 @@ hide <<browser>> stereotype
   class SpaceAttack $raum
   class SpaceBattleEnd $raum
   class DamageControl $raum
-  class ShipRepair $schiffe $newClass("2026-11-27d")
+  class ShipRepair $schiffe
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -171,7 +171,7 @@ LogEntry <|-- SpaceBattle
 LogEntry <|-- SpaceAttack
 LogEntry <|-- SpaceBattleEnd
 LogEntry <|-- DamageControl
-LogEntry <|-$newArrow("2026-11-27d")- ShipRepair
+LogEntry <|-- ShipRepair
 LogEntry <|-- Skimming
 
 ' Zeit und Reisen

@@ -104,6 +104,8 @@ import {
   fireHardpoint,
   controlDamage,
   repairShip,
+  repairSelected,
+  attemptRepair,
   type Intent,
   installWeapon,
   removeWeapon,
@@ -3143,6 +3145,25 @@ export class GameController {
   /** Repariert das eigene Schiff in der Werft (2026-11-21h). */
   repairShip(): void {
     this.inShip(() => repairShip(this.campaign, this.deps.clock));
+  }
+
+  /** Die Werft repariert die ausgewählten Treffer (Detailseite Schaden, 2026-11-27d). */
+  repairHits(hits: readonly { readonly ship: string; readonly at: number }[]): void {
+    this.inShip(() => repairSelected(this.campaign, hits, this.deps.clock));
+  }
+
+  /**
+   * Ein Charakter versucht, einen Treffer zu reparieren (2026-11-27d): unterwegs flicken, in der Werft
+   * selbst ganz reparieren. Der Wurf läuft auf der Würfelbühne.
+   */
+  attemptRepair(who: string, ship: string, at: number): void {
+    try {
+      const after = attemptRepair(this.campaign, who, { ship, at }, this.deps.random, this.deps.clock);
+      this.change(after, { shipError: undefined, result: after.log.length - 1 });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ shipError: error.message });
+    }
   }
 
   private openSpaceState(): OpenSpace {

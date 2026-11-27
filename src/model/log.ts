@@ -12,7 +12,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | Skimming | SpaceBattle | SpaceAttack | DamageControl | SpaceBattleEnd | TripDay | GoodsRoll | PriceRoll | Note;
+export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | Skimming | SpaceBattle | SpaceAttack | DamageControl | ShipRepair | SpaceBattleEnd | TripDay | GoodsRoll | PriceRoll | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -227,6 +227,21 @@ export interface DamageControl extends LogEntryBase {
   readonly dm: number;
   readonly zone: HitZone;
   readonly by?: CharacterId;
+}
+
+/**
+ * Ein Reparaturversuch außerhalb des Kampfs (Domänenmodell 2026-11-27d): Charakter `by` an einem
+ * Treffer der Zone `zone` von Schiff `ship`, 2W6 + Engineering (`dm`). `yard`: in der Werft (8+, ganz
+ * repariert), sonst unterwegs (10+, geflickt).
+ */
+export interface ShipRepair extends LogEntryBase {
+  readonly kind: 'shipRepair';
+  readonly ship: string;
+  readonly by: CharacterId;
+  readonly dice: Dice;
+  readonly dm: number;
+  readonly zone: HitZone;
+  readonly yard: boolean;
 }
 
 /** Das Ende eines Raumkampfs (2026-11-21h). */

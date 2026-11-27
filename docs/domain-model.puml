@@ -563,7 +563,7 @@ hide <<browser>> stereotype
     zone: HitZone
     /success: boolean
   }
-  class ShipRepair $schiffe $newClass("2026-11-27d") {
+  class ShipRepair $schiffe {
     dice: number[2]
     dm: number
     zone: HitZone
@@ -1560,10 +1560,10 @@ SpaceAttack "*" --> "0..1" Character : gunner
 LogEntry <|-- DamageControl
 DamageControl --> HitZone
 DamageControl "*" --> "0..1" Character : by
-LogEntry <|-$newArrow("2026-11-27d")- ShipRepair
-ShipRepair -$newArrow("2026-11-27d")-> HitZone
-ShipRepair "*" -$newArrow("2026-11-27d")-> "1" Ship : ship
-ShipRepair "*" -$newArrow("2026-11-27d")-> "1" Character : by
+LogEntry <|-- ShipRepair
+ShipRepair --> HitZone
+ShipRepair "*" --> "1" Ship : ship
+ShipRepair "*" --> "1" Character : by
 SpaceAttack --> HitZone
 SpaceBattleEnd --> BattleOutcome
 SpaceBattle --> EncounterOccasion

@@ -99,9 +99,6 @@ Die offenen Stufen aus dem Stufenplan in [`docs/konzept-raumkampf.md`](docs/konz
 [`docs/regeln-schiffe.md`](docs/regeln-schiffe.md#raumkampf). Jede Stufe ist eine eigene Änderung
 im Modell.
 
-- [ ] **Reparatur außerhalb des Kampfs** (Vorschlag 2026-11-27d, wartet auf Freigabe;
-  `docs/modell/schiffe.md`): Detailseite Schaden, unterwegs flicken (10+, 1× je Woche), in der Werft
-  selbst reparieren (8+, Material oder Gebühr), Werft repariert Ausgewähltes.
 - [ ] **Stufe 3: Raketen und Sand** (SR 39–42, SE 12–13; MD, SS3): Standardrakete 5G6 als eigene
   Einheit mit Brennschluss, Abfangen auf 2.500 km, Kontakt, Detonation 1W Treffer, Anti-Missile,
   ECM 9+, Nachladen (Gunner feuert in der Runde nicht), Munition in der Werft kaufen; Sandwolke als

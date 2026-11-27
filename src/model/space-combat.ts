@@ -8,8 +8,6 @@ import { starportLetter } from './surface-map';
 import { craftOf, shipById, shipOf, type Ship, type Turret } from './ship';
 import { evadeDmOf, evades, hasTarget, hasThrust, predictDm, returnsFire, slotOfProgram, TARGET_PROGRAM, usesGunner, type SoftwareSlot } from './software';
 import { gunnerPost, holderOf, postSkill, postsOf } from './crew';
-import { bookShip, fundsOf } from './shop';
-import { shipyardBlocker } from './armament';
 import type { DamageControl, SpaceAttack, SpaceBattle, SpaceBattleEnd } from './log';
 import {
   activeFlight,
@@ -1086,22 +1084,6 @@ export function repairCostOf(campaign: Campaign, ship: Ship): number {
   return damagedAtYard(campaign, ship)
     .flatMap((s) => s.damage?.hits ?? [])
     .reduce((n, h) => n + (isCritical(h) ? REPAIR_CRITICAL : REPAIR_HIT), 0);
-}
-
-/** Repariert das eigene Schiff samt seinen Beibooten an Bord an einer Werft (Raumhafen A oder B), alles auf einmal. */
-export function repairShip(campaign: Campaign, clock: Clock): Campaign {
-  const ship = shipOf(campaign);
-  if (ship === undefined) throw new DomainError('Die Gruppe hat kein Schiff.');
-  const damaged = damagedAtYard(campaign, ship);
-  if (damaged.length === 0) throw new DomainError(`${ship.name} hat keinen Schaden.`);
-  const blocker = shipyardBlocker(campaign);
-  if (blocker) throw new DomainError(blocker.replace('umgerüstet', 'repariert').replace('Umrüsten', 'Reparieren'));
-  const cost = repairCostOf(campaign, ship);
-  if (cost > fundsOf(campaign)) throw new DomainError(`Die Reparatur kostet Cr ${cost.toLocaleString('de-DE')}, in der Kasse ist Cr ${fundsOf(campaign).toLocaleString('de-DE')}.`);
-  const hits = damaged.reduce((n, s) => n + (s.damage?.hits.length ?? 0), 0);
-  const paid = bookShip(campaign, -cost, ship.id, 'repair', clock, `Reparatur, ${hits} Treffer`);
-  const ids = new Set(damaged.map((s) => s.id));
-  return { ...paid, ships: paid.ships.map((s) => (ids.has(s.id) ? (({ damage: _d, ...rest }) => (void _d, rest))(s) : s)) };
 }
 
 /** Prüft einen geladenen Schaden. */
