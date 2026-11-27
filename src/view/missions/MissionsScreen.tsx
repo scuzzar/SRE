@@ -12,7 +12,7 @@ import { CardSheet } from '../oracle/CardSheet';
 /**
  * Der Bereich Missionen (siehe modell/mission.md, *Missionen*): oben die offenen Missionen, darunter
  * eingeklappt die erledigten, gescheiterten und ausgeblendeten. Ein Ort-Chip öffnet den Globus an
- * diesem Feld, ein Tippen auf die Mission den Editor. Läuft das Ort wählen, steht hier nur der Hinweis.
+ * diesem Feld (eine ganze Welt: ihre Weltkarte), ein Tippen auf die Mission den Editor. Läuft das Ort wählen, steht hier nur der Hinweis.
  */
 export function MissionsScreen({ view }: { view: Snapshot }) {
   const game = useGame();
@@ -25,7 +25,7 @@ export function MissionsScreen({ view }: { view: Snapshot }) {
           <h2 id="missions-title" className="section-title">
             Missionsort wählen
           </h2>
-          <p className="npc-placing">Ort für „{missions.picking.title}“: auf dem Globus ein Feld antippen, dann „OK“. Im Subsektor erst eine Welt öffnen.</p>
+          <p className="npc-placing">Ort für „{missions.picking.title}“: auf dem Globus ein Feld antippen, dann „OK“. Für eine ganze Welt, etwa ohne Oberfläche, ihre Weltkarte öffnen (im Subsektor die Welt antippen, auf dem Globus oben den Namen), dann „OK“.</p>
         </section>
         <section className="dock" aria-label="Ort wählen">
           <div className="actions oracle-actions">
@@ -157,7 +157,13 @@ function PersonChip({ person }: { person: MissionPersonView }) {
 function PlaceChip({ place }: { place: MissionPlaceView }) {
   const game = useGame();
   return (
-    <button type="button" className="place-chip" aria-label={`${place.label ? `${place.label}: ` : ''}${place.text} auf dem Globus zeigen`} disabled={place.cell === undefined} onClick={() => place.cell !== undefined && game.showMissionPlace(place.world, place.cell)}>
+    // Eine ganze Welt oder eine Orbitalstadt (2026-11-27) hat kein Feld: Der Chip öffnet dann die Weltkarte.
+    <button
+      type="button"
+      className="place-chip"
+      aria-label={`${place.label ? `${place.label}: ` : ''}${place.text} ${place.cell === undefined ? 'als Weltkarte öffnen' : 'auf dem Globus zeigen'}`}
+      onClick={() => (place.cell === undefined ? game.showMissionWorld(place.world) : game.showMissionPlace(place.world, place.cell))}
+    >
       <PinIcon />
       {place.label && <b>{place.label}</b>}
       <span>{place.text}</span>

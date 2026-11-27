@@ -113,7 +113,9 @@ Feld und Stadt gehören zur Oberflächenkarte derselben Welt; eine Orbitalstadt 
   Aufenthaltsort der Gruppe, falls sie einen hat. Eine Reise (`Journey`) bekommt das Ziel. Einträge
   von vor dieser Änderung haben keinen Ort.
 - **Bewegen:** Auf dem Globus wählt man ein Feld oder eine Stadt und dann „Gruppe hierher setzen“ bzw.
-  „NSC hierher“. Das kostet keine Zeit und steht nicht im Log; eine Reise über die Oberfläche mit
+  „NSC hierher“. An der Weltkarte setzt „Gruppe platzieren“ die Gruppe, „NSC platzieren“ dauerhafte
+  NSC auf die ganze Welt, ohne Feld (NSC: geändert am 27. November 2026, Owner; nötig auf Welten
+  ohne Oberfläche). Das kostet keine Zeit und steht nicht im Log; eine Reise über die Oberfläche mit
   Tagen ist die *Fahrt*. Zwischen Welten reist die Gruppe weiter mit `Journey`; danach ist
   ihr Ort die neue Welt ohne Feld.
 - **Was hier geschah** ist abgeleitet: die Logeinträge mit diesem Ort, auf einer Welt alle mit
@@ -123,6 +125,6 @@ Feld und Stadt gehören zur Oberflächenkarte derselben Welt; eine Orbitalstadt 
 - **Städte haben eine Nummer** in der Reihenfolge ihrer Liste; darüber verweist ein Ort auf sie.
   Gespeichert wird ein Ort gepackt: das Hexfeld, dazu die Feldnummer oder die Nummer der Stadt.
 - Zu jedem Ort lässt sich ablesen, was dort geschah (die Logeinträge mit diesem Ort) und welche
-  NSC dort leben.
+  NSC dort leben; auf einer Welt alle NSC dieser Welt, ob auf der ganzen Welt oder genauer.
 - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
   dieser Welt, ohne Feld und Stadt.

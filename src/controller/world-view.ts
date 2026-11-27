@@ -43,6 +43,7 @@ import {
   surfaceDue,
   mapPossible,
   type Spaceport,
+  type NpcRole,
 } from '../model';
 import { nextWorldRoll, totalOf, type WorldRoll } from '../model/draft';
 
@@ -253,6 +254,10 @@ export interface WorldView {
   readonly subordinate: boolean;
   /** Die Reisezone des Systems (2026-11-27): Amber, Red oder grün (`undefined`). */
   readonly travelZone: 'amber' | 'red' | undefined;
+  /** Die dauerhaften NSC auf dieser Welt (2026-11-27), auf der ganzen Welt oder genauer; `where` sagt, wo genau. */
+  readonly npcs: readonly { readonly id: string; readonly name: string; readonly role: NpcRole; readonly where: string | undefined }[];
+  /** Die offenen Missionen mit einem Ort auf dieser Welt (2026-11-27), je mit den Etiketten ihrer Orte dort. */
+  readonly missions: readonly { readonly id: string; readonly title: string; readonly labels: readonly string[] }[];
 }
 
 /** Das Sternsystem in der Übersicht der Weltkarte (2026-11-20b): Sterne und was auf jeder Bahn liegt. */
@@ -532,6 +537,8 @@ export function worldView(hexes: readonly Hex[], column: number, row: number, ro
     system: systemView(hex),
     subordinate: false,
     travelZone: hex.travelZone,
+    npcs: [],
+    missions: [],
   };
 }
 
@@ -577,6 +584,8 @@ function subordinateView(hex: Hex, id: string, error: string | undefined, happen
     system: systemView(hex),
     subordinate: true,
     travelZone: hex.travelZone,
+    npcs: [],
+    missions: [],
   };
 }
 

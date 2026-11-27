@@ -742,3 +742,10 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > Neu im Bild: der Logeintrag `ShipRepair`. Regeln in [`schiffe.md`](schiffe.md) unter *Reparatur
 > außerhalb des Kampfs*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-27d-reparatur.png`](../changes/2026-11-27d-reparatur.png).
+
+> Am 27. November 2026 auf Wunsch des Owners, ohne Änderung am Bild (`Place` erlaubt schon einen Ort
+> nur mit Welt): **Missionsorte und NSC auf ganzen Welten.** Ein Missionsort darf eine ganze Welt
+> oder eine Orbitalstadt sein, nicht mehr nur ein Feld oder eine Stadt auf einem Feld; an der
+> Weltkarte wählt man die Welt als Missionsort und setzt dauerhafte NSC auf die ganze Welt. Nötig
+> für Welten ohne Oberfläche. Regeln in [`mission.md`](mission.md) unter *Missionen* und in
+> [`oberflaeche.md`](oberflaeche.md) unter *Orte*.

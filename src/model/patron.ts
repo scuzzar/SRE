@@ -6,7 +6,7 @@ import type { PatronRoll, RumorRoll } from './log';
 import type { Clock, Random } from './ports';
 import { patronOf, rumorOf, type Patron, type Rumor } from './reference';
 import { addNpc, generateNpc, type NpcTemplate } from './npcs';
-import { addMission, missionPlaceBlocker, type MissionId } from './mission';
+import { addMission, type MissionId } from './mission';
 
 /** Die beiden Patron-Listen der Patron Encounters Matrix (SE, Charts S. 20). */
 export const patronLists = [1, 2] as const;
@@ -144,7 +144,7 @@ export function createPatronMission(campaign: Campaign, index: number, random: R
 export function addPatronMission(campaign: Campaign, template: NpcTemplate, generation: Generation, random: Random): { campaign: Campaign; npc: CharacterId; mission: MissionId } {
   const { campaign: withNpc, id: npc } = addNpc(campaign, template, generation, random);
   const location = withNpc.location;
-  const places = location !== undefined && missionPlaceBlocker(withNpc, location) === undefined ? [{ place: location }] : [];
+  const places = location !== undefined ? [{ place: location }] : [];
   const { campaign: result, id: mission } = addMission(withNpc, { title: template.title ?? 'Ohne Titel', text: '', state: 'open', client: npc, places });
   return { campaign: result, npc, mission };
 }

@@ -139,7 +139,9 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 - Über der Navigationsleiste, im Daumenbereich: **drei bis fünf gleich breite Knöpfe mit Symbol und kurzem
   Wort**. Im Log *Notiz, Tag, 2W6, Karte*: „2W6“ öffnet die Detailseite Probe, lange gedrückt würfelt
   es gleich 2W6 (2026-11-27); am
-  angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen*.
+  angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen*; an der Weltkarte
+  *Hierher reisen, Gruppe platzieren, NSC platzieren, Öffnen bzw. Globus erzeugen, Raum* (NSC platzieren
+  dort für die ganze Welt, 2026-11-27).
 - Hat ein Bereich zwei Arten von Handlungen, bekommt er **zwei Aktionsleisten** übereinander, nie eine mit
   mehr als fünf Knöpfen: im Bereich Begegnung oben die Würfe *Zufall, Tiere, Patron, Gerücht,
   Polizei*, darunter die Zeit *Tage vergehen, Woche beenden* (auf einer Fahrt *Weiterfahren*).

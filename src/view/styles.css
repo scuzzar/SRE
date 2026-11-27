@@ -5050,6 +5050,12 @@ button:disabled {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+/* Fünf Knöpfe (2026-11-27: NSC platzieren an der Weltkarte) in einer Reihe wie am Feld des Globus. */
+.dock .actions.world-actions:has(> :nth-child(5)) {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
 /* Der Unterreiter oben in Begegnung (Begegnung, Kampf) und Charaktere (SC, NSC, Kasse), im Stil der Bereiche des Shops. */
 .sub-tabs {
   flex: 0 0 auto;

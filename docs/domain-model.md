@@ -177,11 +177,11 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Laufbahn eines Patrons | `Patron.career` | Die Laufbahn, in der ein Patron-NSC seine Charaktererschaffung durchläuft, z. B. Smuggler: Merchants (Hausregel) |
 | Rolle eines NSC | `Character.role`, `NpcRole` | Wozu ein dauerhafter NSC da ist, aus einer festen Liste: Patron, Begegnung, Feind, Rivale, Verbündeter, Kontakt, Behörde, Händler, Makler, Captain, Crew, Passagier, Sonstige |
 | NSC-Liste | (`npcs`) | Die dauerhaften NSC des Aufenthaltsorts, nach Rolle gruppiert; mit „Alle zeigen“ alle, nach Welt und darin nach Rolle |
-| NSC platzieren | (`startNpcPlacing`, `placeNpcs`) | Dauerhafte NSC auf ein Feld des Globus setzen (bzw. in die Stadt darauf, `Character.place`), auch NSC von anderen Welten oder ohne Ort; oder für das Feld einen neuen NSC aus einer Laufbahn erzeugen (siehe *NSC aus einer Laufbahn*) |
+| NSC platzieren | (`startNpcPlacing`, `placeNpcs`) | Dauerhafte NSC auf ein Feld des Globus setzen (bzw. in die Stadt darauf, `Character.place`) oder an der Weltkarte auf die ganze Welt (2026-11-27), auch NSC von anderen Welten oder ohne Ort; oder für das Feld einen neuen NSC aus einer Laufbahn erzeugen (siehe *NSC aus einer Laufbahn*) |
 | Mission | `Mission` | Ein Auftrag oder Ziel, das die Gruppe verfolgt, mit Titel, Text, Zustand, Auftraggeber und Orten (2026-11-18) |
 | Zustand einer Mission | `Mission.state`, `MissionState` | offen (`open`), erledigt (`done`), gescheitert (`failed`) (2026-11-18) |
 | Auftraggeber einer Mission | `Mission.client` | Der dauerhafte NSC, der die Mission vergeben hat; höchstens einer. Nicht zu verwechseln mit *Patron*, der Zeile der Patron-Liste (2026-11-18) |
-| Missionsort | `MissionPlace` | Ein Ort einer Mission mit seinem Etikett: immer ein Feld der Oberfläche oder eine Stadt auf einem Feld, nie eine ganze Welt (2026-11-18) |
+| Missionsort | `MissionPlace` | Ein Ort einer Mission mit seinem Etikett: ein Feld der Oberfläche, eine Stadt oder eine ganze Welt (2026-11-18; ganze Welt seit 2026-11-27) |
 | Etikett | `MissionPlace.label`, `MissionPerson.label` | Kurzer freier Text, was ein Missionsort bzw. ein Beteiligter für die Mission ist, z. B. „Treffpunkt“, „Ziel“, „Opfer“, „Fahrer“; darf fehlen (2026-11-18, 2026-11-18b) |
 | Beteiligter | `MissionPerson` | Ein Charakter der Kampagne (NSC oder SC), der mit einer Mission verknüpft ist, mit Etikett, z. B. das Opfer eines Mordes oder der gestellte Fahrer; nicht der Auftraggeber (2026-11-18b) |
 | Handlungsfaden | offene `Mission`; `Card.thread`, `CardPick.thread` | Eine offene Mission, wie das Orakel sie sieht; bei einem Fadenfokus lost die Karte einen aus (2026-11-18) |

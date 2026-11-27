@@ -28,7 +28,7 @@ import {
   removeMission,
   restoreMission,
   missionOf,
-  missionPlaceBlocker,
+  checkMissionPlace,
   openMissions,
   type MissionInput,
   rollSurprise,
@@ -2592,10 +2592,10 @@ export class GameController {
     return openMissions(this.campaign).map((m) => m.id);
   }
 
-  /** „+ Neue Mission“: der Editor im Bereich Missionen, mit dem Aufenthaltsort als erstem Ort, wenn er ein Feld hat. */
+  /** „+ Neue Mission“: der Editor im Bereich Missionen, mit dem Aufenthaltsort als erstem Ort, wenn die Gruppe einen hat. */
   newMission(): void {
     const location = this.campaign.location;
-    const places = location !== undefined && missionPlaceBlocker(this.campaign, location) === undefined ? [{ place: location }] : [];
+    const places = location !== undefined ? [{ place: location }] : [];
     this.openMissionEditor(undefined, { title: '', text: '', state: 'open', places, people: [] });
   }
 
@@ -2659,14 +2659,30 @@ export class GameController {
     let place: Place;
     try {
       place = this.pickedPlace();
-      const blocker = missionPlaceBlocker(this.campaign, place);
-      if (blocker) throw new DomainError(blocker);
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ worldError: error.message });
       return;
     }
     this.update({ screen: 'missions', globe: { picked: undefined }, worldError: undefined, missionEditor: { ...editor, draft: { ...editor.draft, places: [...editor.draft.places, { place }] }, rev: editor.rev + 1, picking: false } });
+  }
+
+  /** „OK“ beim Ort wählen an der Weltkarte (2026-11-27): Die ganze offene Welt kommt als Ort in den Editor. */
+  confirmMissionWorld(): void {
+    const editor = this.state.missionEditor;
+    const at = this.state.world;
+    if (!editor?.picking || !at) return;
+    const place: Place = { world: openWorldId(at) };
+    try {
+      checkMissionPlace(this.campaign, place);
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ worldError: error.message });
+      return;
+    }
+    // Die Weltkarte tritt zurück, damit der Editor zu sehen ist: im Subsektor schließt sie, auf dem Globus nur das Blatt.
+    const released = this.state.globe ? { globe: { picked: undefined } } : { world: undefined };
+    this.update({ screen: 'missions', ...released, worldError: undefined, missionEditor: { ...editor, draft: { ...editor.draft, places: [...editor.draft.places, { place }] }, rev: editor.rev + 1, picking: false } });
   }
 
   /** „Abbrechen“ beim Ort wählen: zurück in den Editor, ohne neuen Ort. */
@@ -2690,6 +2706,12 @@ export class GameController {
     if (!this.state.globe) return;
     if (this.state.trayStop === 'full') this.setTrayStop('half');
     this.update({ globe: { picked: cell }, globeFocus: { cell, n: (this.state.globeFocus?.n ?? 0) + 1 } });
+  }
+
+  /** Ein Missionsort, der eine ganze Welt ist (2026-11-27): öffnet ihre Weltkarte im Subsektor. */
+  showMissionWorld(world: string): void {
+    this.update({ missionEditor: undefined });
+    this.openWorld(world);
   }
 
   /** „Als Mission“ zum letzten Patron-Wurf: Patron-NSC und offene Mission; danach steht die Mission im Editor. */
@@ -3395,6 +3417,16 @@ export class GameController {
   }
 
   /**
+   * NSC platzieren an der Weltkarte (2026-11-27): wie am Feld, aber die gewählten NSC kommen auf die ganze
+   * offene Welt, ohne Feld; nötig auf Welten ohne Oberfläche.
+   */
+  startNpcPlacingOnWorld(): void {
+    const at = this.state.world;
+    if (!at) return;
+    this.update({ npcPlacing: { world: openWorldId(at), cell: undefined, screen: this.state.screen }, npcJoining: undefined, screen: 'npcs', npcAll: false, worldError: undefined });
+  }
+
+  /**
    * „OK“ beim Auswählen in der NSC-Liste. Beim NSC platzieren kommen die gewählten auf das Feld (bzw. in die
    * Stadt darauf), danach steht wieder das Feld da; beim NSC dazunehmen kommen sie zur Zufallsbegegnung,
    * die gleich gewürfelt wird (mit „Manuell wählen“ erst die Auswahl der Art).
@@ -3407,9 +3439,10 @@ export class GameController {
       else this.rollEncounter();
       return;
     }
+    const world = this.state.npcPlacing?.cell === undefined ? this.state.npcPlacing?.world : undefined;
     if (!this.endNpcPlacing() || ids.length === 0) return;
     this.onGlobe(() => {
-      const place = this.pickedPlace();
+      const place: Place = world !== undefined ? { world } : this.pickedPlace();
       return ids.reduce((campaign, id) => moveNpc(campaign, id, place), this.campaign);
     });
   }
@@ -3423,11 +3456,15 @@ export class GameController {
     this.endNpcPlacing();
   }
 
-  /** Beendet NSC platzieren und tippt das Feld wieder an; ob es noch zur offenen Welt gehörte. */
+  /** Beendet NSC platzieren und tippt das Feld wieder an (an der Weltkarte: sie bleibt offen); ob es noch zur offenen Welt gehörte. */
   private endNpcPlacing(): boolean {
     const p = this.state.npcPlacing;
     const at = this.state.world;
     if (!p) return false;
+    if (p.cell === undefined) {
+      this.update({ npcPlacing: undefined, screen: p.screen });
+      return at !== undefined && openWorldId(at) === p.world;
+    }
     const open = at !== undefined && this.state.globe !== undefined && openWorldId(at) === p.world;
     this.update({ npcPlacing: undefined, screen: p.screen, ...(open ? { globe: { picked: p.cell } } : {}) });
     return open;

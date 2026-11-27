@@ -6,6 +6,7 @@ import {
   surfaceGrid,
   missionPlaceBlocker,
   missionsIn,
+  missionsOnWorld,
   missionsOfCharacter,
   missionWorlds,
   placeCell,
@@ -1605,9 +1606,10 @@ export interface ControllerState {
   readonly missionEditor: { readonly id: string | undefined; readonly draft: MissionInput; readonly rev: number; readonly error: string | undefined; readonly picking: boolean } | undefined;
   /**
    * NSC platzieren: Die NSC-Liste wählt NSC für dieses Feld des Globus aus (Welt als Feld des
-   * Subsektors, Oberflächenfeld) und kehrt danach in den Bereich `screen` zum Feld zurück.
+   * Subsektors, Oberflächenfeld) und kehrt danach in den Bereich `screen` zum Feld zurück. Ohne `cell`
+   * (2026-11-27) an der Weltkarte für die ganze Welt.
    */
-  readonly npcPlacing: { readonly world: string; readonly cell: number; readonly screen: Screen } | undefined;
+  readonly npcPlacing: { readonly world: string; readonly cell: number | undefined; readonly screen: Screen } | undefined;
   /**
    * Der Shop ist mit „Einkaufen“ am Feld bzw. an der Weltkarte geöffnet: woher man kam, damit ✕ dorthin
    * zurückführt (Bereich, angetipptes Feld des Globus, Weltkarte und gewähltes Feld des Subsektors).
@@ -1707,7 +1709,13 @@ function placingView(campaign: Campaign, state: ControllerState): NpcScreenView[
   }
   const p = state.npcPlacing;
   const at = state.world;
-  if (!p || !at || !state.globe || hexId(at.column, at.row) !== p.world) return undefined;
+  if (p && at && p.cell === undefined && openWorldId(at) === p.world) {
+    // An der Weltkarte (2026-11-27): auf die ganze Welt; wer schon dort ist, ohne Feld und Stadt.
+    const name = worldById(campaign.hexes, p.world)?.name ?? p.world;
+    const here = campaign.characters.filter((c) => c.npc && !c.dead && c.place?.world === p.world && c.place.cell === undefined && c.place.city === undefined).map((c) => c.id);
+    return { question: `Welche NSC kommen nach ${name} (ganze Welt)?`, here, allowed: undefined, notAllowed: '', ok: `nach ${name}` };
+  }
+  if (!p || p.cell === undefined || !at || !state.globe || hexId(at.column, at.row) !== p.world) return undefined;
   const picked = globeView(campaign, openWorldId(at), p.cell)?.picked;
   if (!picked) return undefined;
   const label = picked.cities[0]?.name ?? `${picked.landform} · ${picked.position}`;
@@ -1730,14 +1738,30 @@ function npcScreenView(campaign: Campaign, all: boolean): Omit<NpcScreenView, 'p
   };
 }
 
-/** Ein Ort einer Mission in Worten: die Stadt bzw. Geländeart und Lage des Felds, dazu die Welt. */
+/** NSC und offene Missionen an der Weltkarte (2026-11-27): alle auf dieser Welt, auf der ganzen Welt oder genauer. */
+function worldPeople(campaign: Campaign, world: string): Pick<WorldView, 'npcs' | 'missions'> {
+  const npcs = campaign.characters
+    .filter((c) => c.npc && !c.dead && !c.retired && c.place?.world === world)
+    .sort((a, b) => a.name.localeCompare(b.name, 'de'))
+    .map((c) => ({ id: c.id, name: c.name, role: roleOf(c), where: placeWhere(campaign, c.place!) }));
+  const missions = missionsOnWorld(campaign, world).map(({ mission, places }) => ({ id: mission.id, title: mission.title, labels: places.flatMap((p) => (p.label === undefined ? [] : [p.label])) }));
+  return { npcs, missions };
+}
+
+/** Ein Ort einer Mission in Worten: die Stadt bzw. Geländeart und Lage des Felds, dazu die Welt; eine ganze Welt (2026-11-27) nur mit ihrem Namen. */
 function missionPlaceView(campaign: Campaign, place: Place, label?: string): MissionPlaceView {
+  const name = worldById(campaign.hexes, place.world)?.name ?? place.world;
+  const where = placeWhere(campaign, place);
+  return { place, label, text: [where, name].filter((t) => t !== undefined).join(' · '), world: place.world, cell: placeCell(campaign.hexes, place) };
+}
+
+/** Wo genau auf der Welt ein Ort ist: die Stadt bzw. Geländeart und Lage des Felds; die ganze Welt: nichts. */
+function placeWhere(campaign: Campaign, place: Place): string | undefined {
   const hex = worldById(campaign.hexes, place.world);
   const cell = placeCell(campaign.hexes, place);
   const city = place.city === undefined ? undefined : hex?.map?.cities?.[place.city]?.name;
   const grid = hex && gridSize(hex);
-  const where = city ?? (cell !== undefined && hex?.map && grid !== undefined ? `${LANDFORM_NAMES[landformAt(hex.map, cell)]} · ${position(surfaceGrid(grid), cell)}` : undefined);
-  return { place, label, text: [where, hex?.name ?? place.world].filter((t) => t !== undefined).join(' · '), world: place.world, cell };
+  return city ?? (cell !== undefined && hex?.map && grid !== undefined ? `${LANDFORM_NAMES[landformAt(hex.map, cell)]} · ${position(surfaceGrid(grid), cell)}` : undefined);
 }
 
 function missionPersonView(campaign: Campaign, id: string, label?: string): MissionPersonView {
@@ -1765,7 +1789,7 @@ function missionItem(campaign: Campaign, mission: Mission): MissionItem {
 
 function missionsView(campaign: Campaign, editor: ControllerState['missionEditor']): MissionsView {
   const location = campaign.location;
-  const hereBlocker = missionPlaceBlocker(campaign, location);
+  const hereBlocker = missionPlaceBlocker(location);
   const npcs = npcCharacters(campaign);
   const draft = editor?.draft;
   return {
@@ -2974,7 +2998,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     generationRunning: campaign.generation !== undefined,
     sector: sectorView(campaign.hexes, markedWorlds(campaign), missionWorlds(campaign)),
     worlds: worldList(campaign.hexes),
-    world: state.world && worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, openWorldId(state.world)), state.world.id),
+    world: state.world && { ...worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, openWorldId(state.world)), state.world.id), ...worldPeople(campaign, openWorldId(state.world)) },
     worldCard: state.world !== undefined && state.globe?.card === true,
     globe: state.world && state.globe ? globeView(campaign, openWorldId(state.world), state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace, state.landingPick === true, state.touchdown ?? 0) : undefined,
     landing: landingView(campaign, state.landingPick === true),

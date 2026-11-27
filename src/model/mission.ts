@@ -6,7 +6,6 @@
 import type { Campaign, CharacterId } from './campaign';
 import { DomainError } from './errors';
 import { checkPlace, placeCell, type Place } from './place';
-import { worldOf } from './sector';
 
 export const missionStates = ['open', 'done', 'failed'] as const;
 export type MissionState = (typeof missionStates)[number];
@@ -132,19 +131,25 @@ export function missionWorlds(campaign: Campaign): ReadonlySet<string> {
   return new Set(openMissions(campaign).flatMap((m) => m.places.map((p) => p.place.world)));
 }
 
-/** Warum ein Ort kein Missionsort sein kann; sonst `undefined`. Ein Missionsort ist ein Feld oder eine Stadt auf einem Feld, nie eine ganze Welt. */
-export function missionPlaceBlocker(campaign: Pick<Campaign, 'hexes'>, place: Place | undefined): string | undefined {
-  if (!place) return 'Die Gruppe hat keinen Aufenthaltsort.';
-  if (place.cell === undefined && place.city === undefined) return 'Ein Missionsort ist ein Feld der Oberfläche, keine ganze Welt.';
-  if (missionCell(campaign, place) === undefined) return 'Eine Orbitalstadt liegt auf keinem Feld; ein Missionsort ist ein Feld der Oberfläche.';
-  return undefined;
+/**
+ * Warum der Aufenthaltsort kein Missionsort sein kann; sonst `undefined`. Jeder Ort kann einer sein: ein Feld,
+ * eine Stadt (auch eine Orbitalstadt) oder eine ganze Welt (2026-11-27); fehlen kann nur der Aufenthaltsort.
+ */
+export function missionPlaceBlocker(place: Place | undefined): string | undefined {
+  return place ? undefined : 'Die Gruppe hat keinen Aufenthaltsort.';
 }
 
-/** Prüft einen Missionsort: einen gültigen Ort mit Feld (siehe `missionPlaceBlocker`). */
+/** Prüft einen Missionsort: einen gültigen Ort (Feld, Stadt oder ganze Welt). */
 export function checkMissionPlace(campaign: Pick<Campaign, 'hexes'>, place: Place): void {
   checkPlace(campaign.hexes, place);
-  const blocker = missionPlaceBlocker(campaign, place);
-  if (blocker) throw new DomainError(`${blocker} (${worldOf(campaign.hexes, place.world).name})`);
+}
+
+/** Die offenen Missionen mit einem Ort auf dieser Welt (ganze Welt, Feld oder Stadt), je mit ihren Orten dort. */
+export function missionsOnWorld(campaign: Campaign, world: string): readonly { readonly mission: Mission; readonly places: readonly MissionPlace[] }[] {
+  return openMissions(campaign).flatMap((mission) => {
+    const places = mission.places.filter((p) => p.place.world === world);
+    return places.length > 0 ? [{ mission, places }] : [];
+  });
 }
 
 /** Prüft die Eingabe; `before` ist die Mission, wie sie war (ein Auftraggeber, der inzwischen SC ist, darf bleiben). */

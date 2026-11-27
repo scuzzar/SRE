@@ -35,11 +35,12 @@ describe('Missionen (2026-11-18)', () => {
     expect(view.missions.editor?.places[0]?.text).toMatch(/Kessra$/);
   });
 
-  it('ohne Feld der Gruppe beginnt die Mission ohne Ort, und „+ Aufenthaltsort“ sagt warum', async () => {
+  it('ohne Feld der Gruppe beginnt die Mission mit der ganzen Welt als Ort (2026-11-27)', async () => {
     const game = await started();
+    const world = game.snapshot().location!;
     game.newMission();
-    expect(game.snapshot().missions.editor?.places).toEqual([]);
-    expect(game.snapshot().missions.hereBlocker).toMatch(/keine ganze Welt/);
+    expect(game.snapshot().missions.editor?.places.map((p) => [p.world, p.cell])).toEqual([[world, undefined]]);
+    expect(game.snapshot().missions.hereBlocker).toBeUndefined();
   });
 
   it('speichert, zeigt die Mission oben und hält einen Fehler im Editor fest', async () => {
@@ -68,6 +69,24 @@ describe('Missionen (2026-11-18)', () => {
     expect(editor.rev).toBeGreaterThan(rev);
     expect(editor.places.map((p) => p.cell)).toEqual([10, 20]);
     expect(game.snapshot().screen).toBe('missions');
+  });
+
+  it('Ort wählen an der Weltkarte (2026-11-27): „OK“ bringt die ganze Welt als Ort zurück', async () => {
+    const game = await onField();
+    game.newMission();
+    game.startMissionPicking({ title: 'Gürtel', text: '', state: 'open', places: [] });
+    game.openWorld('0405');
+    expect(game.snapshot().world?.id).toBe('0405');
+    game.confirmMissionWorld();
+    expect(game.snapshot().world).toBeUndefined();
+    const editor = game.snapshot().missions.editor!;
+    expect(editor.places.map((p) => [p.world, p.cell, p.text])).toEqual([['0405', undefined, 'Kessra']]);
+    expect(game.snapshot().screen).toBe('missions');
+    game.saveMission({ title: 'Gürtel', text: '', state: 'open', places: [{ place: { world: '0405' }, label: 'Ziel' }] });
+    // Der Ort-Chip öffnet die Weltkarte; dort steht die Mission mit ihrem Etikett.
+    game.showMissionWorld('0405');
+    expect(game.snapshot().world?.missions).toEqual([{ id: 'm1', title: 'Gürtel', labels: ['Ziel'] }]);
+    expect(game.snapshot().sector.find((h) => h.id === '0405')?.mission).toBe(true);
   });
 
   it('ein Tipp in die Navigationsleiste bricht das Ort wählen ab, die Eingabe bleibt', async () => {
