@@ -323,9 +323,9 @@ $gone("2026-11-27", "cargo: number")
   enum CargoKind <<value>> $handel $newClass("2026-11-27") {
     goods
     freight
-    mail
+    message
   }
-  class MailOffer <<value>> $handel $newClass("2026-11-27") {
+  class MessageOffer <<value>> $handel $newClass("2026-11-27") {
     dice: number[2]
     /available: boolean
     die: number
@@ -364,7 +364,7 @@ $gone("2026-11-27", "cargo: number")
     passage
     goods
     mail
-    privateMail
+    message
   }
   enum TravelZone <<value>> $handel $newClass("2026-11-27") {
     amber
@@ -1498,8 +1498,8 @@ FreightOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
 FreightOffer "1" *-$newArrow("2026-11-27")- "*" FreightLot : lots {ordered}
 FreightLot -$newArrow("2026-11-27")-> FreightSize
 PassengerOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
-Market "1" *-$newArrow("2026-11-27")- "0..1" MailOffer : mail
-MailOffer "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
+Market "1" *-$newArrow("2026-11-27")- "0..1" MessageOffer : message
+MessageOffer "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
 LogEntry <|-$newArrow("2026-11-27")- GoodsRoll
 LogEntry <|-$newArrow("2026-11-27")- PriceRoll
 GoodsRoll "*" -$newArrow("2026-11-27")-> "1" World : at

@@ -12,7 +12,7 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 - [ ] **Handel umsetzen** nach [`docs/regeln-handel.md`](docs/regeln-handel.md): die
   Auslegungsfragen sind entschieden (E1–E13), der Modell-Entwurf 2026-11-27
   ([`docs/modell/handel.md`](docs/modell/handel.md)) wartet auf Freigabe, danach in den Code.
-  Umfang: Spekulation, Fracht, zahlende Passagiere, Postvertrag und private Post,
+  Umfang: Spekulation, Fracht, zahlende Passagiere, Postvertrag und private Botschaften,
   Reisezonen.
 
 ### 2. Handel, was danach kommt
