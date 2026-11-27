@@ -5,6 +5,15 @@ immer gilt: Was das Modell berührt, geht zuerst ins Domänenmodell und wird fre
 Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/`](docs/) (`regeln-kampf.md`, `regeln-laufbahnen.md`,
 `regeln-schiffe.md`, `regeln-sternsystem.md`).
 
+## App-Update
+
+- [ ] **Neue Version anbieten, wenn eine Cloud-Datei nicht lesbar ist:** Scheitert beim OneDrive-Abgleich
+  das Lesen einer Kampagnendatei (etwa weil eine neuere App sie geschrieben hat), fragt die App den
+  Service Worker nach einer neuen Version. Gibt es eine, steht oben ein Banner „Neue Version da · Neu
+  laden“ (wie „OneDrive hat dich abgemeldet“), statt dass der Abgleich nur einen Fehler meldet.
+  Neu geladen wird erst auf Tipp, nicht automatisch, damit keine halb geschriebene Notiz verloren geht.
+  Anlass: Seit 2026-11-27 fehlt in Kampagnendateien die Stufe; eine ältere, noch offene App lehnt sie ab.
+
 ## Kampf
 
 ### 1. Weitere Regeln aus der Starter Edition
