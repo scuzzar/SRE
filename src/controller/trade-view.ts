@@ -116,6 +116,8 @@ export interface OrdersView {
   readonly empty: string | undefined;
   readonly blocker: string | undefined;
   readonly count: number;
+  /** Was nicht passt, solange die Häkchen mehr verlangen, als frei ist. */
+  readonly short: string | undefined;
   readonly mailContract: boolean;
   readonly error: string | undefined;
 }
@@ -135,7 +137,7 @@ function resaleText(good: TradeGood): string {
 }
 
 function tile(label: string, before: number, after: number | undefined, unit: string): CapacityTile {
-  return { label, before: `${n(before)}${unit}`, after: after === undefined || after === before ? undefined : `${n(after)}${unit}`, short: (after ?? before) < 0 };
+  return { label, before: `${n(before)}${unit}`, after: after === undefined || after === before ? undefined : `${n(after)}${unit}`, short: after !== undefined && after < 0 };
 }
 
 /** Die Ansicht der Markt- bzw. Auftragsseite für den Snapshot. */
@@ -243,6 +245,13 @@ function rollText(roll: PriceRoll): string {
 }
 
 function ordersView(campaign: Campaign, page: Extract<TradePage, { page: 'orders' }>): OrdersView | undefined {
+  const view = ordersBase(campaign, page);
+  if (view === undefined) return undefined;
+  const tight = view.capacity.find((t) => t.short);
+  return { ...view, short: tight === undefined ? undefined : `${tight.label}: zu wenig für die Auswahl` };
+}
+
+function ordersBase(campaign: Campaign, page: Extract<TradePage, { page: 'orders' }>): Omit<OrdersView, 'short'> | undefined {
   const ship = shipOf(campaign);
   const world = campaign.location?.world;
   const hex = hexById(campaign.hexes, page.to);
@@ -257,13 +266,14 @@ function ordersView(campaign: Campaign, page: Extract<TradePage, { page: 'orders
     const lots = offer?.lots ?? [];
     const groups = { major: 'Hauptladungen', minor: 'Nebenladungen', incidental: 'Gelegenheitsladungen' } as const;
     const chosen = new Set(page.lots);
-    const was = lots.reduce((a, l) => a + (l.taken ? lotTons(l) : 0), 0);
     const now = lots.reduce((a, l, i) => a + (chosen.has(i) ? lotTons(l) : 0), 0);
+    // Angenommene Lose stehen nicht mehr zur Wahl; sie sind an Bord (Laderaum).
+    const open = lots.flatMap((l, i) => (l.taken ? [] : [{ l, i }]));
     return {
       ...base,
-      capacity: [tile('Laderaum frei', free, free + was - now, ' t')],
-      lines: lots.map((l, i) => ({ key: String(i), group: groups[l.size], label: `${lotTons(l)} t`, pay: lotTons(l) * FREIGHT_RATE, checked: chosen.has(i) })),
-      empty: offer === undefined ? 'Noch nicht gewürfelt.' : lots.length === 0 ? `Diese Woche wartet keine Fracht nach ${toName}.` : undefined,
+      capacity: [tile('Laderaum frei', free, free - now, ' t')],
+      lines: open.map(({ l, i }) => ({ key: String(i), group: groups[l.size], label: `${lotTons(l)} t`, pay: lotTons(l) * FREIGHT_RATE, checked: chosen.has(i) })),
+      empty: offer === undefined ? 'Noch nicht gewürfelt.' : open.length === 0 ? (lots.length === 0 ? `Diese Woche wartet keine Fracht nach ${toName}.` : 'Alle Fracht dorthin ist angenommen.') : undefined,
       count: page.lots.length,
     };
   }
@@ -271,17 +281,19 @@ function ordersView(campaign: Campaign, page: Extract<TradePage, { page: 'orders
     const offer = market?.passengers.find((p) => p.to === page.to);
     const willing = offer === undefined ? { high: 0, middle: 0, low: 0 } : willingOf(campaign, offer);
     const lines: OrderLine[] = [];
+    // Wer schon mitfliegt, steht nicht mehr zur Wahl.
     for (const [cls, name] of [['high', 'High Passage'], ['middle', 'Middle Passage'], ['low', 'Low Passage']] as const) {
-      for (let i = 0; i < willing[cls]; i++) lines.push({ key: `${cls}-${i}`, group: name, label: `Passagier ${i + 1}`, pay: FARES[cls], checked: i < page[cls] });
+      const left = willing[cls] - (offer?.[cls] ?? 0);
+      for (let i = 0; i < left; i++) lines.push({ key: `${cls}-${i}`, group: name, label: `Passagier ${i + 1}`, pay: FARES[cls], checked: i < page[cls] });
     }
-    const was = offer === undefined ? { s: 0, l: 0 } : { s: offer.high + offer.middle, l: offer.low };
     const freeS = cabins.staterooms - cabins.usedStaterooms;
     const freeL = cabins.lowBerths - cabins.usedLowBerths;
+    const anyone = willing.high + willing.middle + willing.low > 0;
     return {
       ...base,
-      capacity: [tile('Kabinen frei', freeS, freeS + was.s - page.high - page.middle, ''), tile('Niedrigbetten frei', freeL, freeL + was.l - page.low, '')],
+      capacity: [tile('Kabinen frei', freeS, freeS - page.high - page.middle, ''), tile('Niedrigbetten frei', freeL, freeL - page.low, '')],
       lines,
-      empty: offer === undefined ? 'Noch nicht gewürfelt.' : lines.length === 0 ? `Diese Woche will niemand nach ${toName}.` : undefined,
+      empty: offer === undefined ? 'Noch nicht gewürfelt.' : lines.length === 0 ? (anyone ? 'Alle Passagiere dorthin sind an Bord.' : `Diese Woche will niemand nach ${toName}.`) : undefined,
       count: page.high + page.middle + page.low,
     };
   }
@@ -290,8 +302,8 @@ function ordersView(campaign: Campaign, page: Extract<TradePage, { page: 'orders
   return {
     ...base,
     capacity: [tile('Laderaum frei', free, undefined, ' t')],
-    lines: available ? [{ key: 'm', group: 'Private Botschaft', label: `Botschaft nach ${toName}`, pay: messageFee(offer), checked: page.take }] : [],
-    empty: offer === undefined ? 'Noch nicht gefragt.' : available ? undefined : 'Keine Botschaft diese Woche.',
+    lines: available && !offer.taken ? [{ key: 'm', group: 'Private Botschaft', label: `Botschaft nach ${toName}`, pay: messageFee(offer), checked: page.take }] : [],
+    empty: offer === undefined ? 'Noch nicht gefragt.' : !available ? 'Keine Botschaft diese Woche.' : offer.taken ? 'Die Botschaft ist an Bord.' : undefined,
     count: page.take ? 1 : 0,
   };
 }

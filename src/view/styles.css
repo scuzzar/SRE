@@ -10604,3 +10604,21 @@ button:disabled {
 .hex-zone-red {
   stroke: var(--accent);
 }
+
+/* Der Kapazitätskopf bleibt beim Scrollen oben stehen (GUI-Handbuch, *Handel*). */
+.trade-capacity {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 6px 0;
+  background: var(--bg);
+}
+
+/* Einnahmen am Ziel im Ergebnis der Reise (2026-11-27). */
+.trade-income {
+  margin: 10px 0;
+}
+
+.trade-income-total {
+  border-color: var(--gold);
+}

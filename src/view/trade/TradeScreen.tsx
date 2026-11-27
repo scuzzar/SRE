@@ -3,7 +3,7 @@ import { DetailPage } from '../DetailPage';
 import { credits } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
-import { CheckIcon, MinusIcon, PlusIcon, ShopIcon } from '../icons';
+import { CheckIcon, CloseIcon, MinusIcon, PlusIcon, ShopIcon } from '../icons';
 
 /**
  * Handel (2026-11-27, GUI-Handbuch *Handel: Markt und Aufträge*): die Markt-Detailseite für den
@@ -45,8 +45,15 @@ function MarketPage({ market, onClose }: { market: MarketView; onClose: () => vo
   const game = useGame();
   const action = market.action;
   const selling = market.sell.find((s) => s.selected);
+  const cancel = (
+    <button type="button" className="action note" onClick={() => game.cancelTradeSelection()}>
+      <CloseIcon />
+      Abbrechen
+    </button>
+  );
   const foot = action ? (
     <div className="actions oracle-actions trade-actions">
+      {cancel}
       <button type="button" className="action note" aria-label="Weniger" disabled={action.amount <= 1} onClick={() => game.setTradeAmount(action.amount - 1)}>
         <MinusIcon />
         Weniger
@@ -75,12 +82,20 @@ function MarketPage({ market, onClose }: { market: MarketView; onClose: () => vo
     </div>
   ) : market.brokerOpen && selling ? (
     <div className="actions oracle-actions trade-actions">
-      {[0, 1, 2, 3, 4].map((b) => (
-        <button key={b} type="button" className={`action ${market.broker === b ? 'draw' : 'note'}`} aria-pressed={market.broker === b} onClick={() => game.setBroker(b)}>
-          {b === 0 ? 'Ohne' : `+${b}`}
-          <small>{b === 0 ? 'Makler' : `${b * 5} %`}</small>
-        </button>
-      ))}
+      {cancel}
+      {/* Der Makler als eine Wahl mit − und + (eine Wahl, ein Bedienelement; höchstens fünf Knöpfe). */}
+      <button type="button" className="action note" aria-label="Makler weniger" disabled={market.broker <= 0} onClick={() => game.setBroker(market.broker - 1)}>
+        <MinusIcon />
+        Weniger
+      </button>
+      <span className="trade-amount mono" aria-live="polite">
+        {market.broker === 0 ? 'Ohne Makler' : `Makler +${market.broker}`}
+        <small>{market.broker === 0 ? 'keine Provision' : `${market.broker * 5} % Provision`}</small>
+      </span>
+      <button type="button" className="action note" aria-label="Makler mehr" disabled={market.broker >= 4} onClick={() => game.setBroker(market.broker + 1)}>
+        <PlusIcon />
+        Mehr
+      </button>
       <button type="button" className="action gold" onClick={() => game.rollSalePrice()}>
         <CheckIcon />
         Würfeln
@@ -167,8 +182,8 @@ function OrdersPage({ orders, onClose }: { orders: OrdersView; onClose: () => vo
       <button
         type="button"
         className="action draw"
-        disabled={orders.blocker !== undefined}
-        title={orders.blocker}
+        disabled={orders.blocker !== undefined || orders.short !== undefined}
+        title={orders.blocker ?? orders.short}
         onClick={() => {
           haptic('pick');
           game.acceptTrade();

@@ -368,6 +368,8 @@ export interface JourneyDraft {
   readonly error: string | undefined;
   /** Nach der Reise: ihre Stelle im Log; dann zeigt der Dialog das Ergebnis. */
   readonly done: number | undefined;
+  /** Bei der Ankunft mit eigenem Schiff: die Stellen der Buchungen der Ankunft (2026-11-27), für die Einnahmen am Ziel. */
+  readonly income?: { readonly from: number; readonly to: number };
 }
 
 /** Der Dialog der Reise im System, flüchtig im Zustand des Controllers (2026-11-20d). */
@@ -455,6 +457,8 @@ export interface JourneyView {
   readonly error: string | undefined;
   /** Nach der Reise das Ergebnis. */
   readonly result: JourneyItem | undefined;
+  /** Die Einnahmen am Ziel (2026-11-27): Fracht, Passagen, Botschaften, der Postvertrag des Sprungs und ein ausgezahlter Topf. */
+  readonly income: { readonly lines: readonly { readonly text: string; readonly amount: number }[]; readonly total: number } | undefined;
 }
 
 export function checkItem(entry: CheckRoll): CheckItem {
@@ -718,6 +722,15 @@ function shipForJourney(campaign: Campaign, shipBlocker: string | undefined) {
   return { name: ship.name, design: plan.name, jump: plan.jump, fuel: ship.fuel, perJump, after: ship.fuel - perJump, travellers: travellersOf(campaign).length, staterooms: plan.staterooms, lifeSupport: lifeSupportOf(campaign), blocker: shipBlocker };
 }
 
+/** Die Einnahmen der Ankunft: Buchungen der Ankunft mit Einnahme oder Lotterie, dazu der Postvertrag, der beim Abflug bezahlt wurde. */
+function arrivalIncome(campaign: Campaign, entry: Journey, range: { readonly from: number; readonly to: number }): JourneyView['income'] {
+  const lines = campaign.bookings.slice(range.from, range.to).flatMap((b) => (b.shipIncome !== undefined || b.shipCost === 'lottery' ? [{ text: b.text ?? '', amount: b.amount }] : []));
+  if (entry.mail) lines.unshift({ text: 'Postvertrag (beim Abflug bezahlt)', amount: 25_000 });
+  const lost = entry.berths.filter((b) => b.for === undefined && !survived(b)).length;
+  if (lost > 0) lines.push({ text: `${lost} Low-Fahrgast${lost === 1 ? '' : 'gäste'} nicht aufgewacht, zahlt nicht`, amount: 0 });
+  return lines.length === 0 ? undefined : { lines, total: lines.reduce((a, l) => a + l.amount, 0) };
+}
+
 export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyView | undefined {
   if (draft.done !== undefined) {
     const entry = campaign.log[draft.done];
@@ -742,6 +755,7 @@ export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyVie
       funds: fundsOf(campaign),
       error: undefined,
       result,
+      income: draft.income === undefined ? undefined : arrivalIncome(campaign, entry, draft.income),
     };
   }
   const from = locationOf(campaign);
@@ -763,7 +777,7 @@ export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyVie
     passageBlocker,
   };
   if (draft.mode === 'ship') {
-    return { ...base, passages: [], travellers: [], npcs: 0, lowTotal: 0, pot: 0, cost: 0, funds: fundsOf(campaign), error: draft.error ?? shipBlocker, result: undefined };
+    return { ...base, passages: [], travellers: [], npcs: 0, lowTotal: 0, pot: 0, cost: 0, funds: fundsOf(campaign), error: draft.error ?? shipBlocker, result: undefined, income: undefined };
   }
   const travellers = travellersOf(campaign);
   const choice = Object.fromEntries(travellers.map((c) => [c.id, draft.choice[c.id] ?? lastPassage(campaign, c.id)])) as Record<string, PassageId>;
@@ -786,5 +800,6 @@ export function journeyView(campaign: Campaign, draft: JourneyDraft): JourneyVie
     funds: fundsOf(campaign),
     error: draft.error ?? passageBlocker,
     result: undefined,
+    income: undefined,
   };
 }

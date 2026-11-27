@@ -1136,6 +1136,7 @@ export class GameController {
   travelOn(): void {
     try {
       const index = this.campaign.voyage?.entry;
+      const before = this.campaign.bookings.length;
       const day = voyageDay(this.campaign, this.deps.clock);
       const cleanup = { timeNote: undefined, combatNote: undefined, animalNote: undefined, patronNote: undefined, rumorNote: undefined, legalNote: undefined };
       if (!day.arrived || index === undefined) return this.change(day.campaign, cleanup);
@@ -1143,7 +1144,7 @@ export class GameController {
       const check = (entry.kind === 'journey' || entry.kind === 'systemJourney') && entry.ship !== undefined ? this.arrivalCheck(day.campaign) : undefined;
       const dialog =
         entry.kind === 'journey'
-          ? { journey: { to: entry.to, mode: entry.ship === undefined ? ('passage' as const) : ('ship' as const), npcDie: entry.npcDie ?? 0, choice: {}, guesses: {}, error: undefined, done: index } }
+          ? { journey: { to: entry.to, mode: entry.ship === undefined ? ('passage' as const) : ('ship' as const), npcDie: entry.npcDie ?? 0, choice: {}, guesses: {}, error: undefined, done: index, ...(entry.ship === undefined ? {} : { income: { from: before, to: day.campaign.bookings.length } }) } }
           : entry.kind === 'systemJourney'
             ? { systemJourney: { to: entry.to, mode: entry.ship === undefined ? ('ticket' as const) : ('ship' as const), error: undefined, done: index } }
             : {};
@@ -2074,15 +2075,21 @@ export class GameController {
     this.update({ trade: { ...page, ...change(page) } });
   }
 
-  private inTrade(step: () => Campaign, rest: Partial<ControllerState> = {}): void {
+  /** Ein Schritt des Handels; geht er nicht, steht der Grund als Meldung oben (GUI-Handbuch). */
+  private inTrade(step: () => Campaign, rest: Partial<ControllerState> = {}): boolean {
     try {
       this.change(step(), rest);
+      return true;
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
-      const page = this.state.trade;
-      if (page) this.update({ trade: { ...page, error: error.message } });
-      else this.showError(error);
+      this.showError(error);
+      return false;
     }
+  }
+
+  /** „Abbrechen“ auf dem Markt: Die gewählte Zeile wird losgelassen, ohne zu kaufen oder zu verkaufen (E3). */
+  cancelTradeSelection(): void {
+    this.marketPage(() => ({ selected: undefined, amount: 0, broker: 0, error: undefined }));
   }
 
   /**
@@ -2101,7 +2108,7 @@ export class GameController {
         campaign = rollPurchase(campaign, index, focusOf(campaign)?.id, this.deps.random, this.deps.clock);
       } catch (error) {
         if (!(error instanceof DomainError)) throw error;
-        return this.update({ trade: { ...page, error: error.message } });
+        return this.showError(error);
       }
     }
     const trade = { ...page, selected: { buy: index }, amount: maxPurchase(campaign, index), error: undefined };
@@ -2161,21 +2168,9 @@ export class GameController {
     try {
       const campaign = openTradeOrders(this.campaign, to, kind, this.deps.random);
       const world = campaign.location!.world;
-      const market = marketOf(campaign, world);
-      const freight = market?.freight.find((f) => f.to === to);
-      const passengers = market?.passengers.find((p) => p.to === to);
-      const message = market?.messages.find((x) => x.to === to);
-      const trade = {
-        page: 'orders' as const,
-        to,
-        kind,
-        lots: (freight?.lots ?? []).flatMap((l, i) => (l.taken ? [i] : [])),
-        high: passengers?.high ?? 0,
-        middle: passengers?.middle ?? 0,
-        low: passengers?.low ?? 0,
-        take: message?.taken ?? false,
-        error: undefined,
-      };
+      void world;
+      // Die Häkchen beginnen leer: Angenommenes steht nicht mehr in der Auswahl, sondern an Bord (Owner, 27. November 2026).
+      const trade = { page: 'orders' as const, to, kind, lots: [], high: 0, middle: 0, low: 0, take: false, error: undefined };
       this.change(campaign, { shopFrom: from, screen: 'trade', trade, world: undefined, selected: undefined, worldError: undefined });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
@@ -2204,8 +2199,18 @@ export class GameController {
   acceptTrade(): void {
     const page = this.state.trade;
     if (page?.page !== 'orders') return;
-    const choice = page.kind === 'freight' ? { kind: 'freight' as const, lots: page.lots } : page.kind === 'passengers' ? { kind: 'passengers' as const, high: page.high, middle: page.middle, low: page.low } : { kind: 'message' as const, take: page.take };
-    this.inTrade(() => acceptOrders(this.campaign, page.to, choice), { trade: { ...page, error: undefined } });
+    // Neu Angekreuztes kommt zu dem dazu, was schon angenommen ist.
+    const market = this.campaign.location?.world === undefined ? undefined : marketOf(this.campaign, this.campaign.location.world);
+    const taken = (market?.freight.find((f) => f.to === page.to)?.lots ?? []).flatMap((l, i) => (l.taken ? [i] : []));
+    const booked = market?.passengers.find((p) => p.to === page.to);
+    const choice =
+      page.kind === 'freight'
+        ? { kind: 'freight' as const, lots: [...new Set([...taken, ...page.lots])] }
+        : page.kind === 'passengers'
+          ? { kind: 'passengers' as const, high: (booked?.high ?? 0) + page.high, middle: (booked?.middle ?? 0) + page.middle, low: (booked?.low ?? 0) + page.low }
+          : { kind: 'message' as const, take: page.take || (market?.messages.find((x) => x.to === page.to)?.taken ?? false) };
+    // Angenommen: zurück zur Welt, wo die Knöpfe Fracht, Passagiere und Post stehen; was an Bord ist, steht im Laderaum.
+    if (this.inTrade(() => acceptOrders(this.campaign, page.to, choice), { trade: { ...page, error: undefined } })) this.closeTrade();
   }
 
   /** ✕ auf Markt oder Auftragsseite: zurück dorthin, woher sie kam. */
