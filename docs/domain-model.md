@@ -424,6 +424,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Antriebsbuchstabe | `ShipDesign.maneuverDrive`, `jumpDrive`, `powerPlant` | Der Buchstabe von Maneuver Drive, Jump Drive und Power Plant (A–Z, SE 10); seine Leistung folgt aus dem Drive Potential (2026-11-22d) |
 | Drive Potential | `DrivePotential` | Referenzdaten: Leistung eines Antriebsbuchstabens in einem Rumpf (G, Sprungzahl oder Energiewerkszahl, SE 10) (2026-11-22d) |
 | Schadenskontrolle | `DamageControl`, `ShipDamage.patched` | Logeintrag: Der Engineer flickt im Raumkampf einen Treffer, 2W6 + Engineering, 9+ (SR 42); geflickt wirkt der Treffer nicht mehr, kostet in der Werft aber weiter (2026-11-22d) |
+| Reparaturversuch | `ShipRepair` | Logeintrag: Ein Charakter repariert einen Treffer außerhalb des Kampfs; unterwegs flickt er ihn (10+, einmal je Woche), in der Werft repariert er ihn ganz (8+, gegen Material oder Gebühr) (Vorschlag 2026-11-27d) |
 | Ausweichen | `SpaceUnit./evading` | In der CPU läuft Maneuver/Evade oder Auto-Evade: Verteidigungs-DM gegen Laser, dafür 1 G weniger Schub (Mayday) (2026-11-22d) |
 | Rückfeuer | `SpaceUnit.returned`, `SpaceAttack.returnFire` | Mit dem Programm Return Fire feuert eine beschossene Einheit einmal je Raumrunde zurück, auch wenn sie schon gefeuert hat (2026-11-22d) |
 | Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; über Kampagnen hinweg gehalten und mit OneDrive abgeglichen (2026-11-17), der Export nimmt sie nicht mit |
