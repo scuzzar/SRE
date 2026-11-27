@@ -560,14 +560,22 @@ export function messageFee(offer: MessageOffer): number {
   return offer.die * MESSAGE_FEE;
 }
 
-/** Was an Bord des Schiffs Platz braucht: Kabinen für Gruppe und Fahrgäste, Niedrigbetten. */
-export function cabinsOf(campaign: Campaign, ship: Ship): { readonly staterooms: number; readonly usedStaterooms: number; readonly lowBerths: number; readonly usedLowBerths: number } {
+/**
+ * Was an Bord des Schiffs Platz braucht: Kabinen für Gruppe und Fahrgäste, Niedrigbetten. Jeder der
+ * Gruppe hat eine eigene Kabine, solange es reicht; zur Not teilt sie zu zweit (2026-11-17b), Fahrgäste
+ * nie. `freeForFares`: wie viele Fahrgäste in Kabinen noch dazukönnen, wenn die Gruppe zusammenrückt.
+ */
+export function cabinsOf(campaign: Campaign, ship: Ship): { readonly staterooms: number; readonly usedStaterooms: number; readonly groupCabins: number; readonly freeForFares: number; readonly lowBerths: number; readonly usedLowBerths: number } {
   const plan = shipDesignOf(ship.design);
   const fares = (ship.fares ?? []).filter((f) => !f.retired);
-  const group = Math.ceil(livingCharacters(campaign).length / 2);
+  const fareCabins = fares.reduce((a, f) => a + f.high + f.middle, 0);
+  const group = livingCharacters(campaign).length;
+  const groupCabins = Math.min(group, Math.max(Math.ceil(group / 2), plan.staterooms - fareCabins));
   return {
     staterooms: plan.staterooms,
-    usedStaterooms: Math.min(group, plan.staterooms) + fares.reduce((a, f) => a + f.high + f.middle, 0),
+    usedStaterooms: fareCabins + groupCabins,
+    groupCabins,
+    freeForFares: Math.max(0, plan.staterooms - fareCabins - Math.ceil(group / 2)),
     lowBerths: plan.lowBerths,
     usedLowBerths: fares.reduce((a, f) => a + f.low, 0),
   };
@@ -617,7 +625,7 @@ export function acceptOrders(campaign: Campaign, to: string, choice: OrderChoice
     }
     const others = (ship.fares ?? []).filter((f) => !f.retired && !(f.from === origin && f.to === to));
     const cabins = cabinsOf(campaign, { ...ship, fares: others });
-    if (cabins.usedStaterooms + choice.high + choice.middle > cabins.staterooms) throw new DomainError(`Es sind nur ${cabins.staterooms - cabins.usedStaterooms} Kabinen frei.`);
+    if (choice.high + choice.middle > cabins.freeForFares) throw new DomainError(`Es sind nur ${cabins.freeForFares} Kabinen frei.`);
     if (cabins.usedLowBerths + choice.low > cabins.lowBerths) throw new DomainError(`Es sind nur ${cabins.lowBerths - cabins.usedLowBerths} Niedrigbetten frei.`);
     const existing = (ship.fares ?? []).find((f) => !f.retired && f.from === origin && f.to === to);
     const none = choice.high + choice.middle + choice.low === 0;

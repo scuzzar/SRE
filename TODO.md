@@ -15,14 +15,6 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
   Regression laufen lassen (Owner: Tests und Regression erst nach seiner Freigabe).
 - [ ] **Würfelbühne für den Handel**: Waren-, Preis- und Auftragswürfe laufen noch ohne Würfelbühne
   (GUI-Handbuch, *Handel*).
-- [ ] **Kacheln Kabinen und Fracht im Bereich Schiff öffnen Detailseiten** (Owner, 27. November
-  2026): ein Tipp auf die Kachel *Kabinen* zeigt, wer in den Kabinen und Niedrigbetten ist (Gruppe,
-  Fahrgäste je Klasse) und wohin sie wollen; ein Tipp auf *Fracht* zeigt die Ladungen mit Ziel
-  (heute im Unterreiter *Laderaum*, der dann entfällt; Postvertrag und „Über Bord“ ziehen mit um).
-  Erst ins GUI-Handbuch, dann bauen.
-- [ ] **Einnahmen am Ziel im Browser prüfen**: Der Abschnitt im Ergebnis der Reise ist gebaut
-  (Fracht, Passagen, Botschaften, Postvertrag des Sprungs, ausgezahlter Topf, nicht aufgewachte
-  Low-Fahrgäste), aber noch nicht in der Vorschau angesehen.
 
 ### 2. Handel, was danach kommt
 

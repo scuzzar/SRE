@@ -9,10 +9,10 @@ import { DetailPage } from '../DetailPage';
 import { CrewPersonSheet, CrewPostSheet, CrewTab } from './CrewTab';
 import { ComputerTab, ProgramSheet, SoftwareYard } from './ComputerTab';
 import { deckImage } from './deck-image';
-import { HoldTab } from './HoldTab';
+import { CabinsList, HoldTab } from './HoldTab';
 
 /** Die Ansicht unter den Kacheln: eigene Deckpläne, die Crew und der Rechner. */
-type Tab = 'deck' | 'crew' | 'computer' | 'hold';
+type Tab = 'deck' | 'crew' | 'computer';
 
 /** Die Detailseite, die an der Stelle des Bereichs steht; die Werft ist eine, kein eigener Unterreiter. */
 type Sheet =
@@ -20,6 +20,8 @@ type Sheet =
   | { readonly kind: 'buy'; readonly design: string; readonly method: 'cash' | 'bank' }
   | { readonly kind: 'edit' }
   | { readonly kind: 'fuel' }
+  | { readonly kind: 'hold' }
+  | { readonly kind: 'cabins' }
   | { readonly kind: 'rename' }
   | { readonly kind: 'deck'; readonly name: string }
   | { readonly kind: 'post'; readonly shipId: string; readonly at: number }
@@ -73,6 +75,14 @@ export function ShipScreen({ view }: { view: Snapshot }) {
       />
     ) : sheet?.kind === 'edit' && boat !== undefined ? (
       <EditSheet boat={boat} onClose={close} />
+    ) : sheet?.kind === 'hold' && boat !== undefined ? (
+      <DetailPage title="Laderaum" aside={boat.name} onClose={close}>
+        <HoldTab hold={view.hold} error={ship.error} />
+      </DetailPage>
+    ) : sheet?.kind === 'cabins' && boat !== undefined ? (
+      <DetailPage title="Kabinen" aside={boat.name} onClose={close}>
+        <CabinsList hold={view.hold} />
+      </DetailPage>
     ) : sheet?.kind === 'fuel' && boat !== undefined ? (
       <FuelSheet boat={boat} ship={ship} onClose={close} />
     ) : sheet?.kind === 'rename' && boat !== undefined ? (
@@ -148,17 +158,17 @@ export function ShipScreen({ view }: { view: Snapshot }) {
                     {boat.fuel} / {boat.fuelMax} t
                   </span>
                 </span>
-                <span className="duo-col">
-                  <span className="tile-label">Fracht</span>
+                <button type="button" className="duo-col tile-open" aria-label="Laderaum: was an Bord ist und wohin es soll" onClick={() => setSheet({ kind: 'hold' })}>
+                  <span className="tile-label">Fracht ›</span>
                   <span className="tile-text">
                     {boat.cargo} / {boat.cargoMax} t
                   </span>
-                </span>
+                </button>
                 {boat.unrefined > 0 && <span className="tile-sub">davon {boat.unrefined} t unraffiniert (Sprung DM +1)</span>}
               </div>
-              <div className="tile duo">
+              <button type="button" className="tile duo tile-open" aria-label="Kabinen und Niedrigbetten: wer an Bord ist und wohin" onClick={() => setSheet({ kind: 'cabins' })}>
                 <span className="duo-col">
-                  <span className="tile-label">Kabinen</span>
+                  <span className="tile-label">Kabinen ›</span>
                   <span className="tile-text">
                     {boat.cabins} / {boat.cabinsMax}
                   </span>
@@ -169,7 +179,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
                     {boat.lowBerthsUsed} / {boat.lowBerthsMax}
                   </span>
                 </span>
-              </div>
+              </button>
               <div className="tile">
                 <span className="tile-label">Antrieb</span>
                 <span className="tile-text">{boat.thruster}</span>
@@ -214,15 +224,10 @@ export function ShipScreen({ view }: { view: Snapshot }) {
               <button type="button" role="tab" aria-selected={tab === 'computer'} onClick={() => setTab('computer')}>
                 Computer
               </button>
-              <button type="button" role="tab" aria-selected={tab === 'hold'} onClick={() => setTab('hold')}>
-                Laderaum
-              </button>
             </div>
-            <div className="ship-panel" role="tabpanel" aria-label={tab === 'deck' ? 'Deckplan' : tab === 'crew' ? 'Crew' : tab === 'hold' ? 'Laderaum' : 'Computer'}>
+            <div className="ship-panel" role="tabpanel" aria-label={tab === 'deck' ? 'Deckplan' : tab === 'crew' ? 'Crew' : 'Computer'}>
               {tab === 'deck' ? (
               <DeckPlans ship={ship} onView={(name) => setSheet({ kind: 'deck', name })} />
-            ) : tab === 'hold' ? (
-              <HoldTab hold={view.hold} error={ship.error} />
             ) : tab === 'crew' ? (
               <CrewTab crews={boat?.crews ?? []} onOpenPost={(shipId, at) => setSheet({ kind: 'post', shipId, at })} onOpenPerson={(shipId, who) => setSheet({ kind: 'person', shipId, who })} />
             ) : (

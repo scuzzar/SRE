@@ -10,6 +10,7 @@ import {
   fundsOf,
   goodsOf,
   holdTonsOf,
+  livingCharacters,
   leftOf,
   lotTons,
   marketOf,
@@ -286,7 +287,7 @@ function ordersBase(campaign: Campaign, page: Extract<TradePage, { page: 'orders
       const left = willing[cls] - (offer?.[cls] ?? 0);
       for (let i = 0; i < left; i++) lines.push({ key: `${cls}-${i}`, group: name, label: `Passagier ${i + 1}`, pay: FARES[cls], checked: i < page[cls] });
     }
-    const freeS = cabins.staterooms - cabins.usedStaterooms;
+    const freeS = cabins.freeForFares;
     const freeL = cabins.lowBerths - cabins.usedLowBerths;
     const anyone = willing.high + willing.middle + willing.low > 0;
     return {
@@ -316,6 +317,8 @@ export interface HoldView {
   readonly fares: readonly { readonly id: string; readonly label: string; readonly detail: string }[];
   readonly mailContract: boolean;
   readonly mailBlocker: string | undefined;
+  /** Die Kabinen und Niedrigbetten (2026-11-27): wer drin ist und wohin er will. */
+  readonly cabins: { readonly staterooms: number; readonly used: number; readonly lowBerths: number; readonly usedLow: number; readonly group: readonly string[]; readonly groupCabins: number };
 }
 
 export function holdView(campaign: Campaign): HoldView | undefined {
@@ -340,7 +343,17 @@ export function holdView(campaign: Campaign): HoldView | undefined {
     .filter((f) => !f.retired)
     .map((f) => ({ id: f.id, label: `Fahrgäste nach ${place(f.to)}`, detail: [f.high ? `${f.high} High` : '', f.middle ? `${f.middle} Middle` : '', f.low ? `${f.low} Low` : ''].filter(Boolean).join(', ') }));
   const mailBlocker = ship.mailContract ? undefined : freeCargoOf(campaign, ship) < MAIL_TONS ? `Der Postvertrag braucht ${MAIL_TONS} t freien Laderaum.` : undefined;
-  return { capacity: plan.cargo - holdTonsOf(campaign, ship), used: cargoOf(ship), lots, fares, mailContract: ship.mailContract === true, mailBlocker };
+  const cabins = cabinsOf(campaign, ship);
+  const group = livingCharacters(campaign).map((c) => c.name);
+  return {
+    capacity: plan.cargo - holdTonsOf(campaign, ship),
+    used: cargoOf(ship),
+    lots,
+    fares,
+    mailContract: ship.mailContract === true,
+    mailBlocker,
+    cabins: { staterooms: cabins.staterooms, used: cabins.usedStaterooms, lowBerths: cabins.lowBerths, usedLow: cabins.usedLowBerths, group, groupCabins: cabins.groupCabins },
+  };
 }
 
 export const BROKER_PERCENT = BROKER_SHARE * 100;

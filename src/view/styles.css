@@ -10622,3 +10622,17 @@ button:disabled {
 .trade-income-total {
   border-color: var(--gold);
 }
+
+/* Kacheln, die eine Detailseite öffnen (Kabinen, Fracht; 2026-11-27). */
+button.tile-open {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.duo-col.tile-open {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}

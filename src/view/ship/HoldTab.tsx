@@ -4,8 +4,8 @@ import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 
 /**
- * Unterreiter Laderaum im Bereich Schiff (2026-11-27): die Ladungen an Bord, die Fahrgäste und der
- * Postvertrag. „Über Bord“ geht erst beim zweiten Tippen, wie Löschen sonst auch.
+ * Detailseite Laderaum im Bereich Schiff (Tipp auf die Kachel Fracht, 2026-11-27): die Ladungen an Bord
+ * mit Herkunft und Ziel und der Postvertrag. „Über Bord“ geht erst beim zweiten Tippen, wie Löschen sonst auch.
  */
 export function HoldTab({ hold, error }: { hold: HoldView | undefined; error: string | undefined }) {
   const game = useGame();
@@ -45,8 +45,41 @@ export function HoldTab({ hold, error }: { hold: HoldView | undefined; error: st
           </li>
         ))}
       </ul>
+      <h2 className="section-title">Postvertrag</h2>
+      <p className="muted trade-note">5 t Laderaum fest reserviert; je Sprung Cr 25.000, wenn das Schiff bewaffnet ist und ein Gunner auf Posten steht.</p>
+      <button type="button" className={hold.mailContract ? 'ghost' : 'primary'} disabled={hold.mailBlocker !== undefined} title={hold.mailBlocker} onClick={() => game.toggleMailContract()}>
+        {hold.mailContract ? 'Postvertrag kündigen' : 'Postvertrag schließen'}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Detailseite Kabinen (Tipp auf die Kachel Kabinen, 2026-11-27): wer in den Kabinen und Niedrigbetten
+ * ist – die Gruppe und die Fahrgäste je Ziel und Klasse.
+ */
+export function CabinsList({ hold }: { hold: HoldView | undefined }) {
+  if (hold === undefined) return null;
+  const c = hold.cabins;
+  return (
+    <div className="trade-hold">
+      <p className="trade-hold-sum mono">
+        Kabinen {c.used} / {c.staterooms} · Niedrigbetten {c.usedLow} / {c.lowBerths}
+      </p>
+      <h2 className="section-title">Gruppe</h2>
+      <ul className="trade-list">
+        <li className="trade-row">
+          <span className="trade-row-main">
+            <b>{c.group.join(', ') || 'niemand'}</b>
+            <span className="muted">
+              {c.groupCabins} {c.groupCabins === 1 ? 'Kabine' : 'Kabinen'}
+              {c.group.length > c.groupCabins ? ', zur Not zu zweit' : ''}
+            </span>
+          </span>
+        </li>
+      </ul>
       <h2 className="section-title">Fahrgäste</h2>
-      {hold.fares.length === 0 && <p className="log-empty">Keine Fahrgäste an Bord.</p>}
+      {hold.fares.length === 0 && <p className="log-empty">Keine Fahrgäste an Bord. Passagiere gibt es an einer Welt im Subsektor.</p>}
       <ul className="trade-list">
         {hold.fares.map((f) => (
           <li key={f.id} className="trade-row">
@@ -57,11 +90,6 @@ export function HoldTab({ hold, error }: { hold: HoldView | undefined; error: st
           </li>
         ))}
       </ul>
-      <h2 className="section-title">Postvertrag</h2>
-      <p className="muted trade-note">5 t Laderaum fest reserviert; je Sprung Cr 25.000, wenn das Schiff bewaffnet ist und ein Gunner auf Posten steht.</p>
-      <button type="button" className={hold.mailContract ? 'ghost' : 'primary'} disabled={hold.mailBlocker !== undefined} title={hold.mailBlocker} onClick={() => game.toggleMailContract()}>
-        {hold.mailContract ? 'Postvertrag kündigen' : 'Postvertrag schließen'}
-      </button>
     </div>
   );
 }

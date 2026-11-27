@@ -28,7 +28,7 @@ Umschalter, Reihe, großes und kleines Blatt, Würfelfenster und Hinweis).
 | Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links die **Seitenspalte** mit der Navigationsleiste oben, darunter das Log mit der Charakterleiste; ein Bereich (oder ein angetipptes Feld) steht an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Aktionsleiste des Logs, auch unter Bereichen mit eigener (Schiff), nur unter dem Kampf nicht; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
 | Navigationsleiste | (View, `nav` „Bereiche“) | Die Leiste mit den fünf Bereichen, ganz unten im Ziehblatt bzw. oben in der Seitenspalte. Ein Tipp darauf öffnet den Bereich und bricht einen laufenden Ablauf ab (NSC platzieren, Ort wählen) |
 | Bereich | `Screen` | Einer der fünf Teile der App: **Log, Begegnung, Charaktere, Schiff, Missionen** (Missionen seit 2026-11-18). Begegnung und Charaktere haben Unterreiter |
-| Unterreiter | `SubTabs` | Die Wahl oben in einem Bereich, welcher Teil zu sehen ist: im Bereich Begegnung *Begegnung · Kampf*, im Bereich Charaktere *SC · Kasse · NSC*, im Bereich Schiff *Deckplan · Crew · Computer · Laderaum* (Laderaum seit 2026-11-27), an der Weltkarte *Welt · System* |
+| Unterreiter | `SubTabs` | Die Wahl oben in einem Bereich, welcher Teil zu sehen ist: im Bereich Begegnung *Begegnung · Kampf*, im Bereich Charaktere *SC · Kasse · NSC*, im Bereich Schiff *Deckplan · Crew · Computer*, an der Weltkarte *Welt · System* |
 | Aktionsleiste | `…Dock` (`OracleDock`, `EncounterDock`, `FieldDock`) | Die drei bis fünf gleich breiten Knöpfe zum Handeln über der Navigationsleiste, im Daumenbereich. Im Log *Notiz, Tag, 2W6, Karte*, am angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen* |
 | Charakterleiste | `CharacterStrip` | Oben im Log, im Kampf ohne Begegnung und im Shop: die Karte des Charakters oben (Name, UPP, Fertigkeiten bzw. Waffen), Wischen wechselt ihn, ein Tipp auf den Namen klappt sie ein |
 | Detailseite | (View; `DetailPage`, `FieldDock`, `WorldSheet`) | Ein Inhalt, der an die Stelle des Bereichs tritt, ohne die App abzudunkeln: oben Titel und ✕, unten seine Aktionsleiste. Das Feld ist eine, ebenso Charakter- und Missions-Editor und im Bereich Schiff Treibstoff, Bearbeiten, Werft, Posten und Programm (2026-11-26) |
@@ -321,6 +321,17 @@ als fünf, als zweite Aktionsleiste darüber).
 - **Post**: die private Botschaft dorthin, wenn es eine gibt (Honorar), sonst „Keine Botschaft
   diese Woche“; darunter ein Hinweis auf den **Postvertrag**, den man im Bereich Schiff schließt.
 - Bezahlt wird bei Ankunft am Ziel; jede Zeile sagt den Betrag.
+- **Rückmeldung** (Owner, 27. November 2026): Was nicht geht, steht als Meldung oben; der
+  Kapazitätskopf bleibt beim Scrollen stehen; „Annehmen“ ist gesperrt, solange etwas nicht passt,
+  und führt danach zurück zur Welt. Angenommenes verschwindet aus der Auswahl, die Häkchen beginnen
+  leer. Auf dem Markt steht nach dem Preiswurf links **Abbrechen** (kein Zwang zu kaufen oder zu
+  verkaufen); der Makler ist eine Wahl mit − und +.
+- **Bereich Schiff** (Owner, 27. November 2026): Ein Tipp auf die Kachel *Kabinen* öffnet die
+  Detailseite **Kabinen** (Gruppe, Fahrgäste je Ziel und Klasse), ein Tipp auf *Fracht* die Detailseite
+  **Laderaum** (Ladungen mit Herkunft und Ziel, „Über Bord“, Postvertrag).
+- **Ankunft**: Das Ergebnis der Reise mit eigenem Schiff zeigt den Abschnitt **Einnahmen am Ziel**
+  (Fracht, Passagen, Botschaften, Postvertrag des Sprungs, ausgezahlter Topf der Low Lottery,
+  nicht aufgewachte Low-Fahrgäste) mit der Summe.
 
 ### Meldung und Hinweis
 
