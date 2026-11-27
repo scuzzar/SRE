@@ -144,6 +144,12 @@ hide <<browser>> stereotype
     npcMoved: number [0..1]
     npcRuns: number [0..1]
     alarm: number [0..1]
+    $new("2026-11-27d", "npcMorale: MoraleRoll [0..1]")
+    $new("2026-11-27d", "pcMorale: MoraleRoll [0..1]")
+    $new("2026-11-27d", "npcFleeing: boolean [0..1]")
+    $new("2026-11-27d", "leaderDown: number [0..1]")
+    $new("2026-11-27d", "/retreat: boolean")
+    $new("2026-11-27d", "/npcEscaped: boolean")
     /surprise: Side [0..1]
     /surprising: Side [0..1]
     /first: Side
@@ -162,6 +168,11 @@ hide <<browser>> stereotype
   class SurpriseRoll <<value>> $begegnung {
     die: number
     dm: number
+  }
+  class MoraleRoll <<value>> $begegnung $newClass("2026-11-27d") {
+    dice: number[0..2]
+    dm: number
+    round: number
   }
   enum Side <<value>> $begegnung {
     pcs
@@ -363,6 +374,8 @@ AnimalSizeRow -[hidden]- AnimalTraitRow
 Encounter "*" --> "0..1" Terrain : terrain
 Encounter "1" *-- "0..1" SurpriseRoll : pcSurprise
 Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
+Encounter "1" *-$newArrow("2026-11-27d")-> "0..1" MoraleRoll : npcMorale
+Encounter "1" *-$newArrow("2026-11-27d")-> "0..1" MoraleRoll : pcMorale
 Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange
@@ -386,4 +399,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Encounter #line:d0021b;line.bold
 @enduml
