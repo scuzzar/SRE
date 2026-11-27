@@ -255,8 +255,8 @@ verteilt, **außer** er bringt es auf 0.
   im Editor zurücknehmen.
 - Ein Treffer ohne Ziel (frei gewählte Rüstung) würfelt seinen Schaden wie bisher, verteilt ihn
   aber nicht (`to` fehlt).
-- **Später**: Medical Drugs, Wunden mit Zeit, Fahrzeuge, Überraschung, Entfernung,
-  Moral und Kampfrunden.
+- **Später**: Medical Drugs, Wunden mit Zeit, Fahrzeuge. Moral steht unter [Moral](#moral),
+  Überraschung, Entfernung und Kampfrunden unter [Kampfsimulation](#kampfsimulation).
 
 ## Begegnungsarten und zwei Modi im Kampf
 
@@ -390,10 +390,55 @@ ausgeblendet, ohne dauerhafte NSC) gegen die NSC der Begegnung (`npcs`).
   **Ausweichen** oder mit **Aussetzen**. Wunden wirken sofort: Wer bewusstlos wird, ist in dieser
   Runde nicht mehr dran.
 - Ist eine Partei ganz außer Gefecht (alle bewusstlos, schwer verwundet oder tot), ist der Kampf
-  entschieden; die Begegnung läuft weiter, bis man sie beendet.
-- **Später**: Flucht (S. 5), Ausweichen mit Überraschung, Moral, Bewegung je NSC statt als
+  entschieden; die Begegnung läuft weiter, bis man sie beendet. Wann eine Partei vorher **flieht**,
+  steht unter [Moral](#moral).
+- **Später**: Ausweichen mit Überraschung, Bewegung je NSC statt als
   Gruppe, SC auf beiden Seiten der NSC, schneller laufen (3 und 4 Bands), Tiere mit ihrer
   Geschwindigkeit (S. 19), Deckung, mehrere Gegnergruppen, Schalldämpfer.
+
+## Moral
+
+*S. 5, „Morale“; SR 23, „Morale“.* Gilt für die laufende Begegnung und für **beide Parteien**; die
+App würfelt die Probe auch für die SC-Seite. Für Tiere gilt sie nicht, sie fliehen nach ihrem
+Verhalten (SR 47–49, siehe [Tiere](begegnung.md#tiere)).
+
+- *Verluste* einer Partei sind ihre Kämpfer, die nicht mehr kämpfen können – bewusstlose, schwer
+  verwundete und tote –, geteilt durch die Zahl ihrer Kämpfer. Parteien sind die der
+  [Kampfsimulation](#kampfsimulation): die SC und die NSC-Seite mit den dazugenommenen NSC.
+- *Fällig* ist die Probe, sobald eine Partei auf **25 % Verluste oder mehr** kommt. Dann würfelt die
+  App **zu Beginn jeder neuen Runde** je Partei **2W6 gegen 7+**, nach dem Stand der Partei in
+  dieser Runde. Der Wurf bleibt an der Begegnung: `npcMorale` und `pcMorale` halten je einen
+  `MoraleRoll` mit den Würfeln (`dice`), dem DM (`dm`) und der Runde (`round`) des letzten Wurfs.
+  Jede Runde wird neu gewürfelt; besteht die Partei, kämpft sie weiter.
+- *DMs der NSC-Partei* (S. 5): militärische oder Söldnereinheit (`EncounterType.military`) +1; ein
+  Anführer ist dabei (`leader`) +1; der Anführer hat Tactics +1 (gibt es nur, wenn er die Fertigkeit
+  hat); Verluste über 50 % −2; der Anführer ist bewusstlos, schwer verwundet oder tot −2.
+- *DMs der SC-Seite* wie bei der Überraschung: jemand diente in Army oder Marines +1; jemand hat
+  Leader +1; jemand hat Tactics +1; Verluste über 50 % −2. ✱ Die SC-Seite hat keinen Anführer, darum
+  fehlt ihr der Anführer-DM.
+- *Anführer ausgefallen* (`leaderDown`): die App merkt sich die Runde, in der der Anführer
+  bewusstlos, schwer verwundet oder tot wurde. Der −2 gilt in dieser Runde und in der nächsten,
+  danach nicht mehr – die Partei hat einen neuen Anführer, der +1 bleibt (S. 5). Kämpft der Anführer
+  wieder und fällt erneut aus, steht in dem Feld die neue Runde.
+- *Durchgefallen* heißt: die Partei **flieht** (SR 23: sie bricht ab).
+  - *Die NSC-Partei* (`npcFleeing`): Sie greift nicht mehr an; ihre Kämpfer sind in jeder Runde von
+    selbst fertig, ohne Wurf. Zu Beginn jeder neuen Runde rückt die NSC-Gruppe **2 Bands** weiter
+    weg, wie im Lauf. ✱ Das kostet sie keine Combat-Schläge, denn sie flieht, ohne zu kämpfen
+    (SR 20 zählt Laufen als Combat-Schlag). Die SC dürfen ihr hinterherlaufen und sie beschießen,
+    solange sie in Reichweite ist: Eine fliehende Partei ist ein Ziel wie jedes andere.
+    - Über 20 Bands ist sie **entkommen** (`/npcEscaped`): dann liegt jeder SC, der kämpft, auf
+      Band 21 (SR 21: das Feld verlässt man nur durch Bewegung). Der Kampf ist entschieden; die
+      Begegnung läuft weiter, bis man sie beendet. Mit dem Ende der Begegnung endet die Flucht.
+    - Eine Partei, die schon über 20 Bands weg ist, kann nicht mehr fliehen; sie ist es schon.
+  - *Die SC-Seite* verliert nichts: Ob sie sich zurückzieht, entscheidet der Spieler allein. Die App
+    sagt es ihm, solange die verlorene Probe aus der laufenden Runde ist (`/retreat`: „Rückzug
+    empfohlen“). Zurückziehen ist Bewegung wie sonst: Wer sich über 20 Bands bringt, ist entkommen
+    (`/escaped`).
+- *Vor dem Kampf* ist die Moral nicht fällig; S. 5 nennt sie erst ab 25 % Verlusten. Entkommen und
+  Ausweichen vor dem ersten Schuss sind eigene Würfe und stehen in
+  [`regeln-kampf.md`](../regeln-kampf.md) unter *Entkommen und Ausweichen* (noch offen, `TODO.md`).
+- **Später**: Moral nach Book 4 (B4 28–31) mit Erfahrungspunkten, Moralzahl und Moralbonus für
+  Einheiten ab Zuggröße; Moral für Tiere.
 
 ## Ausdauer
 

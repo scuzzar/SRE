@@ -3121,6 +3121,20 @@ button:disabled {
   opacity: 1;
 }
 
+/* Moral und Flucht (S. 5): dieselbe Bühne wie die Überraschung, das Urteil je Partei – stehen golden,
+ fliehen rot; die Verluste stehen unter den DMs. */
+.morale-side .surprise-total {
+  color: var(--gold-bright);
+}
+
+.morale-side.fled .surprise-total {
+  color: var(--danger);
+}
+
+.morale-side .surprise-parts {
+  min-height: 3em;
+}
+
 .die-face .pip {
   place-self: center;
   width: 74%;
@@ -6739,6 +6753,24 @@ button:disabled {
 
 .arena-side.npcs .arena-label {
   text-align: right;
+}
+
+/* Moral (S. 5): Badges an den Seiten der Arena – „Rückzug empfohlen“ bei den SC, „⇉ flieht“ bei den NSC. */
+.arena-flag {
+  align-self: flex-start;
+  padding: 2px 7px;
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--danger);
+  white-space: nowrap;
+}
+
+.arena-side.npcs .arena-flag {
+  align-self: flex-end;
 }
 
 .fcard {

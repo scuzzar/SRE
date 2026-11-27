@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
 import type { AnimalSimView, AttackOption, CombatView, FighterView, Impact, MeleeView, SimView } from '../../controller';
-import type { Range } from '../../model';
+import type { Range, Side } from '../../model';
 import { hex, rangeText, signed } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -422,6 +422,12 @@ function FightDock({ combat, sim }: { combat: CombatView; sim: SimView }) {
             {combat.damage.victim ? `Schaden ${combat.damage.victim.split(' ')[0]}` : 'Schaden'} ({combat.damage.label}){combat.damage.left > 1 ? ` · noch ${combat.damage.left}` : ''}
           </button>
         </div>
+      ) : sim.npcEscaped ? (
+        <>
+          {/* Die fliehende Gruppe ist über 20 Bands weg (SR 21): kein Angriff mehr, nur noch Beenden. */}
+          <p className="combat-pick">Die NSC sind entkommen: über 20 Bands weg.</p>
+          <div className="fight-actions">{end}</div>
+        </>
       ) : turn ? (
         <>
           {/* Wie im Log: links, was seltener gebraucht wird, rechts im Daumenbereich die Angriffe (2026-11-26). */}
@@ -605,6 +611,60 @@ export function SurpriseDialog({ sim }: { sim: SimView }) {
         {/* Esc schließt erst, wenn der Wurf steht; vorher springt es wie ein Tippen zum Ergebnis. */}
         <button type="button" className="primary" data-escape={landed || undefined} onClick={() => game.closeSurprise()}>
           Kampf beginnen
+        </button>
+      </section>
+    </div>
+  );
+}
+
+/** Der Moralwurf einer Partei auf der Bühne: „stehen“ oder das Urteil, wenn er verloren ist. */
+function moraleVerdict(side: Side, holds: boolean): string {
+  if (holds) return 'stehen';
+  return side === 'pcs' ? 'Rückzug empfohlen' : 'flieht';
+}
+
+/**
+ * Die Moralprobe zu Beginn der neuen Runde (S. 5, SR 23): Dieselbe Bühne wie die Überraschung – die
+ * Würfel der SC weiß, die der NSC schwarz, je Partei ihre DMs einzeln und zuletzt ihr Urteil: „stehen“
+ * golden, „flieht“ rot. Bei den SC ist das verlorene Urteil nur die Empfehlung, entschieden wird sie
+ * beim Spieler. Ein Tippen springt zum Urteil, „Weiter“ schließt.
+ */
+export function MoraleDialog({ sim }: { sim: SimView }) {
+  const game = useGame();
+  const [phase, skip] = useTimeline([200, THROW_MS, 250]);
+  const landed = phase >= 2;
+  const dice = sim.morale.flatMap((r) => [...r.dice]);
+  const tones = sim.morale.flatMap((r) => (r.side === 'pcs' ? (['white', 'white'] as const) : (['black', 'black'] as const)));
+  const side = (roll: SimView['morale'][number]) => (
+    <div className={landed && !roll.holds ? 'surprise-side morale-side fled' : 'surprise-side morale-side'}>
+      <span className="small-label">{sideName[roll.side]}</span>
+      <span className="surprise-total">{landed ? roll.total : '–'}</span>
+      <span className="surprise-parts">
+        2W6 {landed ? roll.dice.join(' + ') : '? + ?'} {signed(roll.dm)} · {roll.losses} % Verluste
+        <br />
+        {partsText(roll.parts)}
+      </span>
+    </div>
+  );
+  return (
+    <div className="modal">
+      <section className="result surprise-roll morale-roll" role="dialog" aria-modal="true" aria-labelledby="morale-title" onClick={() => phase < 3 && skip(3)}>
+        <span className="kicker">Moral je Partei · S. 5 · Runde {sim.round}</span>
+        <h2 id="morale-title" className="shop-buy-title">
+          Moral
+        </h2>
+        {phase >= 1 ? (
+          <DiceView dice={dice} seed={dice.reduce((total, die, i) => total + die * (i + 1), 0)} landed={landed} tones={tones} />
+        ) : (
+          <div className="dice-stage large" aria-hidden="true" />
+        )}
+        <div className="surprise-sides">{sim.morale.map((roll) => <Fragment key={roll.side}>{side(roll)}</Fragment>)}</div>
+        <p className={landed ? 'surprise-verdict shown' : 'surprise-verdict'} aria-live="polite">
+          {sim.morale.map((roll) => `${sideName[roll.side]}: ${moraleVerdict(roll.side, roll.holds)}`).join(' · ')}
+        </p>
+        {/* Esc springt wie ein Tippen erst zum Urteil und schließt dann. */}
+        <button type="button" className="primary" data-escape={landed || undefined} onClick={() => game.closeMorale()}>
+          Weiter
         </button>
       </section>
     </div>

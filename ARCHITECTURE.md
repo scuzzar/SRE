@@ -105,7 +105,7 @@ den `controller/*-view.ts`.
 | Spielzeit | `time.ts` | `time-view.ts` | `oracle/OracleDock.tsx` |
 | Begegnungen (Personen, Patron, Gerücht, Polizei) | `encounter.ts`, `encounter-check.ts`, `patron.ts`, `npcs.ts`; `data/encounters.json` | `game.ts` | `combat/EncounterScreen.tsx`, `EncounterDock.tsx`, `EncounterRollDialog.tsx` |
 | Tiere (Tabellen, Ereignisse, Fallen, Beute) | `animals.ts`, `events.ts`, `hold.ts`, `loot.ts` | `game.ts` | `combat/LootDialogs.tsx` |
-| Kampf (Angriff, Kampfsimulation, Wunden, Heilung) | `combat.ts`, `fight.ts`, `stamina.ts`, `wounds.ts`, `draft/attack.ts`, `draft/wounding.ts`; `data/weapons.json` | `game.ts` | `combat/CombatScreen.tsx`, `FightScreen.tsx`, `Arena.tsx` |
+| Kampf (Angriff, Kampfsimulation, Moral und Flucht, Wunden, Heilung) | `combat.ts`, `fight.ts`, `morale.ts`, `stamina.ts`, `wounds.ts`, `draft/attack.ts`, `draft/wounding.ts`; `data/weapons.json` | `game.ts` | `combat/CombatScreen.tsx`, `FightScreen.tsx`, `Arena.tsx` |
 | Charaktere und Erschaffung | `campaign.ts`, `generation.ts`, `career.ts`, `npcs.ts`; `data/services.json`, `skills.json` | `generation-view.ts` | `characters/` |
 | Shop, Kasse, Gepäck | `shop.ts`, `stash.ts`; `data/items.json` | `game.ts` | `shop/`, `characters/FundsScreen.tsx`, `StashPanel.tsx` |
 | Missionen | `mission.ts` | `game.ts` | `missions/` |

@@ -228,6 +228,28 @@ Dialog                               Kurzdialog
 - Dieselbe Würfelbühne zeigt die Tests von Begegnungen: Würfel, was herauskam, was
   danach geht („Als NSC“, „Zur Begegnung“).
 
+### Moral und Flucht im Kampf
+
+*Regel: [modell/kampf.md](modell/kampf.md#moral) (2026-11-27e).* Die App würfelt von selbst, sobald
+eine Partei bei 25 % oder mehr Verlusten liegt. Keiner davon ist ein Knopf: Es sind Würfel, Badges
+und ein Satz.
+
+- **Moralwurf** (Würfelbühne): zu Beginn jeder neuen Runde, in der eine Partei auf 25 % Verluste
+  oder mehr kommt. Dieselbe Bühne wie die Überraschung: zwei Würfel (SC weiß, NSC schwarz), je
+  Partei ihre DMs einzeln mit Namen, zuletzt das Urteil **je Partei** – „stehen“ golden, „flieht“
+  rot. Ein Tippen springt zum Urteil, „Weiter“ schließt. Liegt keine Partei bei 25 %, würfelt die
+  App nicht und sagt nichts.
+- **Rückzug empfohlen** (Badge an der SC-Seite, Familie `--danger`): solange die verlorene
+  Moralprobe der SC-Seite aus der laufenden Runde ist. Nicht ausblendbar – es ist Zustand, keine
+  Erklärung. Die Aktionsleiste bleibt, wie sie ist: Zurückziehen ist Bewegung, kein eigener Knopf.
+- **Flieht** (Badge **⇉** an der NSC-Gruppe): solange die NSC-Partei flieht. Ihre Kämpfer behalten
+  kein ▶ – sie sind in jeder Runde von selbst fertig, ohne Wurf. Mit jeder neuen Runde rückt die
+  NSC-Gruppe auf der Entfernungsleiste zwei Bands nach „weg“; verfolgt und beschossen werden kann
+  sie, solange sie in Reichweite ist.
+- **Entkommen** (Satz statt der Angriffsknöpfe): ist die fliehende Gruppe über 20 Bands weg, steht
+  im Kampf „Die NSC sind entkommen“, wo sonst die Angriffe stehen; **Beenden** bleibt. Ein
+  Logeintrag kommt nicht dazu – die Würfe stehen an der Begegnung, nicht im Verlauf.
+
 ### Wartenscheibe
 
 - Rechnet die App ohne Animation eine Weile (der Lauf eines NSC), steht eine kleine Scheibe in der
@@ -437,7 +459,8 @@ Feld.
   und Aufschlag, `--emblem-feld` das Feld im Emblem der App.
 - **Schrift**: IBM Plex Sans, Werte und Codes (UPP, UWP) in IBM Plex Mono; zählende Zahlen mit
   festen Ziffernbreiten, damit nichts springt.
-- **Zeichen**: ✕ schließen, ☰ Menü, Stift bearbeiten, ⌖ Ziel bzw. Aufenthaltsort, ▶ am Zug, ★ Anführer.
+- **Zeichen**: ✕ schließen, ☰ Menü, Stift bearbeiten, ⌖ Ziel bzw. Aufenthaltsort, ▶ am Zug, ★ Anführer,
+  ↯ weicht aus, ⇉ flieht.
 
 ---
 

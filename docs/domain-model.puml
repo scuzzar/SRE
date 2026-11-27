@@ -936,6 +936,12 @@ hide <<browser>> stereotype
     npcMoved: number [0..1]
     npcRuns: number [0..1]
     alarm: number [0..1]
+    npcMorale: MoraleRoll [0..1]
+    pcMorale: MoraleRoll [0..1]
+    npcFleeing: boolean [0..1]
+    leaderDown: number [0..1]
+    /retreat: boolean
+    /npcEscaped: boolean
     /surprise: Side [0..1]
     /surprising: Side [0..1]
     /first: Side
@@ -954,6 +960,11 @@ hide <<browser>> stereotype
   class SurpriseRoll <<value>> $begegnung {
     die: number
     dm: number
+  }
+  class MoraleRoll <<value>> $begegnung {
+    dice: number[0..2]
+    dm: number
+    round: number
   }
   enum Side <<value>> $begegnung {
     pcs
@@ -1827,6 +1838,8 @@ AnimalSizeRow -[hidden]- AnimalTraitRow
 Encounter "*" --> "0..1" Terrain : terrain
 Encounter "1" *-- "0..1" SurpriseRoll : pcSurprise
 Encounter "1" *-- "0..1" SurpriseRoll : npcSurprise
+Encounter "1" *-- "0..1" MoraleRoll : npcMorale
+Encounter "1" *-- "0..1" MoraleRoll : pcMorale
 Encounter --> Side
 EncounterRange -[hidden]- Terrain
 RangeBand -[hidden]- EncounterRange

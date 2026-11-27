@@ -32,6 +32,7 @@ import {
   openMissions,
   type MissionInput,
   rollSurprise,
+  startRound,
   alarmAfterAttack,
   logDamage as logDamageWithAlarm,
   appendLog,
@@ -346,7 +347,7 @@ const NPC_REPAINT_EVERY = 10;
 /** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
 const slotKey = (slot: { readonly design: string; readonly name: string }): string => `${slot.design}/${slot.name}`;
 
-const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, taskPage: false, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, systemJourney: undefined, shipCheck: undefined, nextShipCheck: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, taskPage: false, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, systemJourney: undefined, shipCheck: undefined, nextShipCheck: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, encounterIntro: false, surpriseShown: false, moraleShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -449,6 +450,7 @@ export class GameController {
       simTarget: undefined,
       encounterIntro: false,
       surpriseShown: false,
+      moraleShown: false,
       shopError: undefined,
       shipError: undefined,
       deckPlans: [],
@@ -1812,6 +1814,11 @@ export class GameController {
     this.update({ surpriseShown: false });
   }
 
+  /** Schließt die Moralprobe zu Beginn der neuen Runde; gekämpft wird weiter, wie sie ausgeht. */
+  closeMorale(): void {
+    this.update({ moraleShown: false });
+  }
+
   /** Öffnet „Beute nehmen“ (NSC) bzw. „Ausweiden“ (Tier); schließt mit `undefined`. */
   openLoot(id: string | undefined): void {
     this.update({ lootOpen: id, combatNote: undefined });
@@ -1889,8 +1896,18 @@ export class GameController {
   private nextTurn(campaign: Campaign, rest: Partial<ControllerState> = {}, evade = false): void {
     // Hat der Zug den Kampf entschieden, ist keiner mehr dran; dann gibt es nichts zu beenden.
     const ended = turnOf(campaign) ? (evade ? evadeTurn(campaign) : endTurn(campaign)) : campaign;
-    const prepared = this.prepareTurn(ended, this.state.simTarget);
-    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget, combatNote: undefined });
+    this.openRound(ended, rest);
+  }
+
+  /**
+   * Der Anfang einer neuen Runde (S. 5, SR 23) und der nächste Zug: Eine fliehende NSC-Gruppe rückt 2
+   * Bands weg, und ab 25 % Verlusten würfelt jede Partei je Runde einmal 2W6 gegen 7+. Beides ist je
+   * Runde einmal getan; der Aufruf darf jeden Zug begleiten, auch den eines Laufs, der die Runde endet.
+   */
+  private openRound(campaign: Campaign, rest: Partial<ControllerState> = {}): void {
+    const opened = startRound(campaign, this.deps.random);
+    const prepared = this.prepareTurn(opened.campaign, this.state.simTarget);
+    this.change(prepared.campaign, { ...rest, simTarget: prepared.simTarget, combatNote: undefined, moraleShown: opened.morale });
   }
 
   /** Führt eine Eingabe der Kampfsimulation aus; verletzt sie eine Regel, steht das im Kampf. */
@@ -1936,10 +1953,7 @@ export class GameController {
       const moved = moveSide(this.campaign, step);
       // Nach dem Laufen ziehen die Kämpfer der Partei von selbst; ist danach ein anderer dran, wie nach einem Zug.
       if (turnOf(moved)?.id === before) this.change(moved, { combatNote: undefined });
-      else {
-        const prepared = this.prepareTurn(moved, this.state.simTarget);
-        this.change(prepared.campaign, { simTarget: prepared.simTarget, combatNote: undefined });
-      }
+      else this.openRound(moved);
     });
   }
 

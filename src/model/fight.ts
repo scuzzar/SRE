@@ -5,6 +5,7 @@ import { DomainError } from './errors';
 import { currentEncounter, distanceOf, encounterAnimalRow, ESCAPED_BAND, isAnimalEncounter, isEscapedDistance, needsSurprise, npcSideIds, steppedPosition, withDistance, type Encounter } from './encounter';
 import { canFight, woundStateOf } from './wounds';
 import { isHeld } from './hold';
+import { isFleeing } from './morale';
 
 /** Die beiden Parteien eines Kampfs: die SC und die NSC der Begegnung. */
 export type Side = 'pcs' | 'npcs';
@@ -26,11 +27,13 @@ export function surpriseOf(encounter: Encounter): Side | undefined {
 
 /**
  * `/surprising`: die Partei mit Überraschung, solange die Überraschung hält: bis zum Ende der Runde,
- * in der die andere Partei Alarm gegeben hat (SR 20).
+ * in der die andere Partei Alarm gegeben hat (SR 20). Eine geflohene NSC-Partei hält sie nicht – sie
+ * will nur noch weg (S. 5).
  */
 export function surprisingOf(encounter: Encounter): Side | undefined {
   const surprise = surpriseOf(encounter);
-  if (surprise === undefined || (encounter.alarm !== undefined && encounter.round > encounter.alarm)) return undefined;
+  if (surprise === undefined || (surprise === 'npcs' && isFleeing(encounter))) return undefined;
+  if (encounter.alarm !== undefined && encounter.round > encounter.alarm) return undefined;
   return surprise;
 }
 
@@ -86,9 +89,11 @@ export function defeatedSide(campaign: Campaign, encounter: Encounter): Side | u
 function waiting(campaign: Campaign, encounter: Encounter): readonly FightSlot[] {
   // Vor dem Wurf auf die Überraschung ist keiner am Zug: Er ist der erste Wurf im Kampf.
   if (needsSurprise(encounter)) return [];
+  // Eine fliehende NSC-Partei kämpft nicht mehr: Ihre Kämpfer sind nie am Zug, ohne Wurf und ohne Zug (S. 5).
+  const fleeing = isFleeing(encounter);
   const surprise = surprisingOf(encounter);
   return fightOrder(campaign, encounter).filter(
-    (s) => (surprise === undefined || s.side === surprise) && !encounter.acted.includes(s.id) && canFight(woundStateOf(campaign, s.id)),
+    (s) => (surprise === undefined || s.side === surprise) && !(fleeing && s.side === 'npcs') && !encounter.acted.includes(s.id) && canFight(woundStateOf(campaign, s.id)),
   );
 }
 

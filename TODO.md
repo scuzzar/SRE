@@ -65,8 +65,9 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
 - [ ] **Entkommen und Ausweichen vor dem Kampf** (SE 5, SR 20): mit Überraschung immer ausweichen;
   NSC in Unterzahl mit Überraschung bei 7+; ohne Überraschung entkommen bei 9+ mit DM nach
   Reichweite. Bisher nur „über 20 Bands“.
-- [ ] **Moral** (SE 5, SR 23): ab 25 % Verlusten jede Runde 7+, sonst Flucht; DMs für Militär,
-  Leader, Tactics, über 50 % Verluste, Anführer ausgefallen.
+- [ ] **Moral: Anführer fällt zweimal aus** (`model/morale.ts`, `startRound`): `leaderDown` wird nur
+  gesetzt, solange es leer ist. Kämpft der Anführer wieder und fällt erneut aus, muss laut
+  `docs/modell/kampf.md` (*Moral*) die neue Runde drinstehen; heute bleibt die alte.
 - [ ] **Deckung und Verbergen** (SE 5, SR 26–27): aus der Deckung angegriffen −4, aus dem Verborgenen
   −1; wer in Deckung bleibt, kann nicht angegriffen werden.
 - [ ] **Dunkelheit** (SE 5, SR 26): völlig −9 über Short, teilweise −6 über Medium (entschieden: nach

@@ -785,6 +785,16 @@
         "LogEntry",
         "Booking"
       ]
+    },
+    {
+      "id": "2026-11-27e",
+      "file": "2026-11-27e-moral-und-flucht",
+      "title": "Moral und Flucht (SE 5, SR 23): ab 25 % Verlusten würfelt die App zu Beginn jeder neuen Runde je Partei 2W6 gegen 7+ mit den DMs der Partei. Neu MoraleRoll; Encounter bekommt npcMorale, pcMorale, npcFleeing, leaderDown und die abgeleiteten /retreat und /npcEscaped. Eine Partei, die durchfällt, flieht: Die NSC-Gruppe rückt je neuer Runde 2 Bands weg, kämpft nicht mehr und ist über 20 Bands entkommen; bei den SC bleibt die Entscheidung beim Spieler (Empfehlung)",
+      "approved": true,
+      "show": [
+        "Character",
+        "SurpriseRoll"
+      ]
     }
   ]
 }

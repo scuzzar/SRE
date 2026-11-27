@@ -211,6 +211,11 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Parade | (Regel) | Wer mit Faust oder Klinge angegriffen wird und selbst Faust, Klinge oder ein Gewehr führt, zieht seine Stufe darin vom Wurf ab (SR 22) |
 | Partei | `Side` | Die SC (`pcs`) oder die NSC der Begegnung (`npcs`) |
 | Runde, Zug | `round`, `acted`, `/turn` | Eine Kampfrunde, in der jeder Kämpfer einmal dran ist; wer gerade dran ist |
+| Verluste | (Regel) | Die Kämpfer einer Partei, die nicht mehr kämpfen können, durch ihre Zahl; ab 25 % ist die Moral fällig (S. 5) |
+| Moraltest | `npcMorale`, `pcMorale`, `MoraleRoll` | Der 2W6-Wurf einer Partei auf die Moral mit ihrem DM und der Runde des Wurfs; ab 25 % Verlusten je neue Runde, 7+ heißt stehenbleiben (S. 5, SR 23) |
+| Flucht | `Encounter.npcFleeing`, `/npcEscaped` | Die NSC-Partei hat ihre Moralprobe verloren und läuft weg: je neue Runde 2 Bands weiter, über 20 Bands ist sie entkommen (SR 21, SR 23) |
+| Rückzug empfohlen | `Encounter./retreat` | Die verlorene Moralprobe der SC-Seite in der laufenden Runde; ob die SC sich zurückziehen, entscheidet der Spieler |
+| Anführer ausgefallen | `Encounter.leaderDown` | Die Runde, in der der Anführer bewusstlos, schwer verwundet oder tot wurde; in ihr und der folgenden −2 auf die Moral (S. 5) |
 | Angreifer, Ziel | `AttackResult.for`, `AttackResult.against` | Wer angreift (immer einer) und wen er angreift (höchstens einer), SC oder NSC, beides ein Charakter |
 | Heilung | `Recovery` | Ein Logeintrag, der Wunden zurücknimmt: Aufwachen, Behandlung oder Ruhe (S. 7) |
 | Aufwachen | `RecoveryKind.wake` | Ein Bewusstloser kommt zu sich; die Wunden gehen zur Hälfte zurück, bei einer schweren Wunde nur auf mindestens 1 |

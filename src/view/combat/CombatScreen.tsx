@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { DiceRoll } from '../oracle/DiceRoll';
 import type { CombatView, HealingView, Snapshot } from '../../controller';
-import { EncounterIntro, FightScreen, SurpriseDialog } from './FightScreen';
+import { EncounterIntro, FightScreen, MoraleDialog, SurpriseDialog } from './FightScreen';
 import { SubTabs, encounterParts } from '../SubTabs';
 import { ButcheredDialog, LootDialog } from './LootDialogs';
 import { FireNote } from './FireNote';
@@ -60,6 +60,7 @@ export function CombatScreen({ view, patient, onPatient: setPatient }: { view: S
       )}
       {combat?.intro && combat.sim && <EncounterIntro sim={combat.sim} />}
       {combat?.surpriseShown && combat.sim && !combat.intro && <SurpriseDialog sim={combat.sim} />}
+      {combat?.moraleShown && combat.sim && combat.sim.morale.length > 0 && <MoraleDialog sim={combat.sim} />}
       {combat?.loot && <LootDialog key={combat.loot.id} combat={combat} />}
       {combat?.butchered && <ButcheredDialog key={combat.butchered.at} combat={combat} />}
       {combat?.wounding && <WoundingDialog key={`${combat.wounding.victim}-${combat.wounding.dice.join('-')}-${view.log.length}`} combat={combat} />}

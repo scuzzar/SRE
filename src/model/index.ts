@@ -13,6 +13,7 @@ export * from './events';
 export * from './loot';
 export * from './encounter-check';
 export * from './fight';
+export * from './morale';
 export * from './flight';
 export * from './wounds';
 export * from './stamina';
