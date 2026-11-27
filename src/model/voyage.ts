@@ -8,7 +8,6 @@ import { journeyDays } from './system-journey';
 import { lotteryPaid, potOf, survived, winnerOf } from './travel';
 import { passTime } from './time';
 import { arrive } from './upkeep';
-import { deliverAt } from './trade';
 
 // Unterwegs: die Reise Tag für Tag (Domänenmodell 2026-11-22c).
 
@@ -84,9 +83,9 @@ function arriveVoyage(campaign: Campaign, voyage: Voyage, clock: Clock): Campaig
   void _v;
   let after: Campaign = { ...rest, location: worldPlace(entry.to) };
   if (entry.ship !== undefined) after = arrive(shipArrives(after, entry.to, entry.ship), clock, entry.ship);
-  // Handel (2026-11-27c): Fracht, Botschaften und Fahrgäste zu diesem Ziel werden bezahlt.
-  if (entry.kind === 'journey' && entry.ship !== undefined) after = deliverAt(after, entry.ship, entry, voyage.entry, clock);
-  else if (entry.kind === 'journey' && entry.berths.length > 0) {
+  // Handel: Abgerechnet wird bei der Landung (Owner, 27. November 2026, `landAt`); braucht die Welt
+  // keinen Landeplatz, rechnet der Controller gleich nach der Ankunft ab (`settleOnLanding`).
+  if (entry.kind === 'journey' && entry.ship === undefined && entry.berths.length > 0) {
     const dead = new Set(entry.berths.filter((b) => b.for !== undefined && !survived(b)).map((b) => b.for!));
     const winner = winnerOf(entry);
     const pc = winner === undefined ? undefined : entry.berths[winner]!.for;

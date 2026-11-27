@@ -1,6 +1,8 @@
 import {
   HANDS,
   openMarket as openTradeMarket,
+  settleOnLanding,
+  needsLanding,
   rollPurchase,
   buyGoods,
   rollSale,
@@ -1144,11 +1146,16 @@ export class GameController {
       const check = (entry.kind === 'journey' || entry.kind === 'systemJourney') && entry.ship !== undefined ? this.arrivalCheck(day.campaign) : undefined;
       const dialog =
         entry.kind === 'journey'
-          ? { journey: { to: entry.to, mode: entry.ship === undefined ? ('passage' as const) : ('ship' as const), npcDie: entry.npcDie ?? 0, choice: {}, guesses: {}, error: undefined, done: index, ...(entry.ship === undefined ? {} : { income: { from: before, to: day.campaign.bookings.length } }) } }
+          ? { journey: { to: entry.to, mode: entry.ship === undefined ? ('passage' as const) : ('ship' as const), npcDie: entry.npcDie ?? 0, choice: {}, guesses: {}, error: undefined, done: index } }
           : entry.kind === 'systemJourney'
             ? { systemJourney: { to: entry.to, mode: entry.ship === undefined ? ('ticket' as const) : ('ship' as const), error: undefined, done: index } }
             : {};
       this.change(day.campaign, { ...cleanup, ...dialog, nextShipCheck: check });
+      // Ohne Landeplatz (Welt ohne Globus) kommt die Abrechnung des Handels gleich mit der Ankunft (2026-11-27).
+      if (entry.kind === 'journey' && entry.ship !== undefined && !needsLanding(this.campaign)) {
+        const settled = settleOnLanding(this.campaign, entry.ship, this.deps.clock);
+        if (settled !== this.campaign) this.change(settled, { journey: { ...(this.state.journey as NonNullable<ControllerState['journey']>), income: { from: before, to: settled.bookings.length } } });
+      }
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ timeNote: error.message });
@@ -3119,8 +3126,21 @@ export class GameController {
 
   /** Landet in einer Stadt mit Hafen (aus dem Dialog Landeplatz). */
   landAtPort(city: number): void {
+    const before = this.campaign.bookings.length;
     this.change(landAt(this.campaign, { city }, this.deps.clock), { landingPick: undefined, notice: undefined });
     this.showTouchdown();
+    this.showSettlement(before);
+  }
+
+  /** Nach der Landung: hat sie Einnahmen gebracht, erscheint der Dialog Abrechnung (2026-11-27). */
+  private showSettlement(before: number): void {
+    const range = { from: before, to: this.campaign.bookings.length };
+    if (range.to > range.from && this.campaign.bookings.slice(range.from).some((b) => b.shipIncome !== undefined || b.shipCost === 'lottery')) this.update({ settlement: range });
+  }
+
+  /** „Weiter“ im Dialog Abrechnung. */
+  closeSettlement(): void {
+    this.update({ settlement: undefined });
   }
 
   /** Nach der Landung: der Globus der Welt mit der Weltkarte unten, und die Landeanimation spielt (`touchdown` zählt hoch). */
@@ -3152,8 +3172,10 @@ export class GameController {
     const cell = this.state.globe?.picked;
     if (cell === undefined) return;
     try {
+      const before = this.campaign.bookings.length;
       this.change(landAt(this.campaign, { cell }, this.deps.clock), { landingPick: undefined, globe: { picked: undefined, card: true } });
       this.showTouchdown();
+      this.showSettlement(before);
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ worldError: error.message });

@@ -111,7 +111,10 @@ entfällt. Freier Laderaum ist Entwurf minus Beiboote im Laderaum minus `/cargo`
 mehreren Zielen zugleich.* Das Schiff nimmt Aufträge zu **verschiedenen Welten** an und muss nicht
 direkt hinfliegen; Umwege sind erlaubt. Ein angekündigtes Ziel gibt es nicht mehr (`Ship.destination`
 entfällt), und Passagiere gibt es auch ohne vorher angenommene Fracht. **Bezahlt wird bei der
-Ankunft am Ziel** (✱ statt beim Abflug, SE 9), dann ist der Auftrag erledigt. Die Angebote gehören
+Landung im Zielsystem** (✱ statt beim Abflug, SE 9; Owner, 27. November 2026: erst bei der
+Landung, nicht schon bei der Ankunft), dann ist der Auftrag erledigt. Braucht die Welt keinen
+Landeplatz (ohne Globus), gilt die Ankunft als Landung. Danach zeigt der Dialog **Abrechnung** die
+Einnahmen. Die Angebote gehören
 zum Markt der Welt, an der das Schiff steht (Herkunft), und gelten je Ziel: **Ziel** ist jedes System
 mit Welt in Sprungweite des Schiffs (`ShipDesign.jump`). Beim ersten Blick auf ein Ziel in der
 Woche würfelt die App **alle Lose dieses Ziels auf einmal** (Fracht, Passagiere oder Botschaft, je
@@ -125,7 +128,7 @@ nach Aktion); sie bleiben bis zum Ende der Woche.
    Größenwürfel (`FreightLot.die`), `/tons` = Würfel × 10, 5 bzw. 1.
 2. **Annehmen**: einzelne Ladungen, nicht teilbar (`taken`); jede wird eine Ladung `freight` mit
    Ziel (`Cargo.to`), soweit Laderaum frei ist.
-3. **Bezahlt** wird bei der Ankunft am Ziel: Cr1.000 je Tonne, Buchung `ship` mit `shipIncome`
+3. **Bezahlt** wird bei der Landung im Zielsystem: Cr1.000 je Tonne, Buchung `ship` mit `shipIncome`
    freight und `forCargo`; die Ladung wird ausgeblendet. Wie viele Sprünge es dauert, ist egal.
 
 #### Passagiere
@@ -142,14 +145,14 @@ nach Aktion); sie bleiben bis zum Ende der Woche.
 3. **Unterwegs**: Jede Reise hält fest, wie viele Fahrgäste je Klasse an Bord waren
    (`Journey.high`, `middle`, `low`); dafür wird die Lebenserhaltung gebucht: Cr2.000 je High- und
    Middle-Fahrgast und Cr100 je Low-Fahrgast und Sprung (`shipCost` lifeSupport).
-4. **Ankunft am Ziel**: Die Fahrgäste dieses Ziels zahlen (Cr10.000, 8.000, 1.000 je Kopf, eine
+4. **Landung im Zielsystem**: Die Fahrgäste dieses Ziels zahlen (Cr10.000, 8.000, 1.000 je Kopf, eine
    Buchung je Klasse mit `shipIncome` passage und `forFare`) und steigen aus; der `Fare` wird
    ausgeblendet. ✱ Ein Umweg kostet sie nichts extra und bringt nicht mehr Geld (RAW gilt ein
    Ticket für einen Sprung).
-5. **Low-Fahrgäste**: Aufgeweckt werden sie bei der Ankunft an ihrem Ziel; ihre Kojen (ohne
+5. **Low-Fahrgäste**: Aufgeweckt werden sie bei der Ankunft an ihrem Ziel (bezahlt wird bei der Landung); ihre Kojen (ohne
    Charakter) stehen an der Reise, die dort ankommt (`Journey.berths`), mit Aufwachwurf 5+, DM +1,
    wenn ein Medic mit Medic-2 oder besser auf Posten steht (SR 28). Wer nicht aufwacht, ist tot und
-   zahlt nicht (✱, da erst bei Ankunft bezahlt wird). **Low Lottery** wie in
+   zahlt nicht (✱, da erst bei der Landung bezahlt wird). **Low Lottery** wie in
    [Low Lottery](reise.md#low-lottery): der nächstliegende Tipp, bei Gleichstand das Los; ist der
    Gewinner tot, behält der Kapitän den Topf (E10). Gewinnt ein NSC, zahlt der Kapitän den Topf aus
    (Buchung `ship` mit `shipCost` lottery); sonst wird nichts gebucht.
@@ -168,7 +171,7 @@ nach Aktion); sie bleiben bis zum Ende der Woche.
 - **Private Botschaft** (`MessageOffer`, je Ziel und Markt, E13, 2026-11-27c): Beim ersten Blick
   auf ein Ziel würfelt die App 2W6 (`dice`), `/available` bei **9+**, und das Honorar (`die`,
   `/fee` = Würfel × Cr20, E11). Angenommen (`taken`) wird sie eine Ladung `message` mit Ziel und
-  Honorar (0 t); bezahlt wird bei der **Ankunft am Ziel** (Buchung `shipIncome` message). Dass der
+  Honorar (0 t); bezahlt wird bei der **Landung im Zielsystem** (Buchung `shipIncome` message). Dass der
   Bote beim Empfänger als verlässlich gilt, steht als Text im Log; einen Patron legt die App nicht an.
 
 ### Buchungen

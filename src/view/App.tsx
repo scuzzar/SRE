@@ -8,6 +8,7 @@ import { EncounterScreen, type EncounterOptions } from './combat/EncounterScreen
 import { EncounterChoiceDialog, EncounterRollDialog } from './combat/EncounterRollDialog';
 import { EncounterDock } from './combat/EncounterDock';
 import { TradeScreen } from './trade/TradeScreen';
+import { SettlementDialog } from './trade/SettlementDialog';
 import { ShopScreen } from './shop/ShopScreen';
 import { ShipScreen } from './ship/ShipScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
@@ -262,6 +263,7 @@ export function App() {
         </div>
       )}
       {view.journey && <JourneySheet journey={view.journey} />}
+      {view.settlement && !view.journey && !view.landing && <SettlementDialog settlement={view.settlement} />}
       {view.systemJourney && <SystemJourneySheet journey={view.systemJourney} />}
       {view.landing && !view.landing.picking && !view.systemJourney && !view.journey && !view.shipCheck && <LandingSheet landing={view.landing} />}
       {view.card && !view.card.forNote && <CardSheet card={view.card} />}

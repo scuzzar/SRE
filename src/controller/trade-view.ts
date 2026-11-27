@@ -357,3 +357,25 @@ export function holdView(campaign: Campaign): HoldView | undefined {
 }
 
 export const BROKER_PERCENT = BROKER_SHARE * 100;
+
+/** Der Dialog Abrechnung nach der Landung (2026-11-27): was die Landung an Einnahmen brachte. */
+export interface SettlementView {
+  readonly world: string;
+  readonly lines: readonly { readonly text: string; readonly amount: number }[];
+  readonly total: number;
+}
+
+export function settlementView(campaign: Campaign, range: { readonly from: number; readonly to: number }): SettlementView | undefined {
+  const here = campaign.location?.world;
+  if (here === undefined) return undefined;
+  const hex = here.split('-')[0]!;
+  const lines = campaign.bookings.slice(range.from, range.to).flatMap((b) => (b.shipIncome !== undefined || b.shipCost === 'lottery' ? [{ text: b.text ?? '', amount: b.amount }] : []));
+  const journey = campaign.log.findLast((e) => e.kind === 'journey' && e.ship !== undefined && e.to === hex);
+  if (journey?.kind === 'journey') {
+    if (journey.mail) lines.unshift({ text: 'Postvertrag (beim Abflug bezahlt)', amount: 25_000 });
+    const lost = journey.berths.filter((b) => b.for === undefined && b.revive[0] + b.revive[1] + b.dm < 5).length;
+    if (lost > 0) lines.push({ text: `${lost} Low-Fahrgast${lost === 1 ? '' : 'gäste'} nicht aufgewacht, zahlt nicht`, amount: 0 });
+  }
+  if (lines.length === 0) return undefined;
+  return { world: worldOf(campaign.hexes, here).name, lines, total: lines.reduce((a, l) => a + l.amount, 0) };
+}

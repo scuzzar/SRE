@@ -6,6 +6,7 @@ import { monthlyPaymentOf, shipOf, vesselsOf, without, type Ship } from './ship'
 import { bookShip, fundsOf, isRunningCost, setLocation } from './shop';
 import { monthStartsIn, nextMonthStart } from './time';
 import { arrivedVessel, chooseLanding, leaveShipBehind } from './landing';
+import { settleOnLanding } from './trade';
 
 /**
  * Die laufenden Kosten der Schiffe (2026-11-17b, siehe modell/schiffe.md, *Laufende Kosten und
@@ -77,7 +78,11 @@ export function landAt(campaign: Campaign, place: { readonly city: number } | { 
   const vessel = arrivedVessel(campaign);
   const justArrived = vessel?.place !== undefined;
   const landed = chooseLanding(campaign, place);
-  return justArrived ? arrive(landed, clock, vessel.id) : landed;
+  const berthed = justArrived ? arrive(landed, clock, vessel.id) : landed;
+  // Die Abrechnung des Handels kommt mit der Landung (Owner, 27. November 2026).
+  // Abgerechnet wird für das Schiff der Gruppe, auch wenn sie mit einem Beiboot landet.
+  const ship = shipOf(berthed);
+  return ship === undefined ? berthed : settleOnLanding(berthed, ship.id, clock);
 }
 
 /**

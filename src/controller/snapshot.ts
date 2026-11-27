@@ -285,7 +285,7 @@ import { sectorView, selectedView, worldList, worldView, type HexView, type Sele
 import { spaceView, type OpenSpace, type SpaceView } from './space-view';
 import { globeView, LANDFORM_NAMES, position, type GlobeView } from './globe-view';
 import { activeTripView, tripDayItem, tripPlanOf, type TripDayItem, type TripPlanView, type TripView } from './trip-view';
-import { tradeView, holdView, type TradePage, type TradeView, type HoldView } from './trade-view';
+import { tradeView, holdView, settlementView, type TradePage, type TradeView, type HoldView, type SettlementView } from './trade-view';
 import { tradeLogItem, type TradeLogItem } from './trade-log';
 import { skimmingItem, type SkimmingItem, spaceBattleItem, spaceAttackItem, spaceBattleEndItem, type SpaceBattleItem, type SpaceAttackItem, type SpaceBattleEndItem, checkItem, checksView, journeyItem, journeyView, legalView, monthEndItem, systemJourneyItem, systemJourneyView, timeItem, timeView, type SystemJourneyDraft, type SystemJourneyView, type SystemJourneyItem, type CheckItem, type ChecksView, type JourneyDraft, type JourneyItem, type JourneyView, type LegalView, type MonthEndItem, type TimeItem, type TimeView } from './time-view';
 
@@ -381,6 +381,8 @@ export interface Snapshot {
   readonly trade: TradeView | undefined;
   /** Der Laderaum im Bereich Schiff (2026-11-27). */
   readonly hold: HoldView | undefined;
+  /** Der Dialog Abrechnung nach der Landung (2026-11-27). */
+  readonly settlement: SettlementView | undefined;
   /** Warum am Feld kein Markt geht; `undefined`, wenn er geht. */
   readonly marketBlocker: string | undefined;
   /** An der offenen Welt im Subsektor: ob es Aufträge geben kann (nur mit Schiff) und warum nicht. */
@@ -1598,6 +1600,8 @@ export interface ControllerState {
    */
   /** Markt oder Auftragsseite des Handels (2026-11-27); flüchtig. */
   readonly trade: TradePage | undefined;
+  /** Die Abrechnung des Handels nach der Landung (2026-11-27): die Stellen ihrer Buchungen; flüchtig. */
+  readonly settlement?: { readonly from: number; readonly to: number } | undefined;
   readonly shopFrom: { readonly screen: Screen; readonly picked: number | undefined; readonly world: OpenWorld | undefined; readonly selected: ControllerState['selected'] } | undefined;
   /**
    * NSC dazunehmen: Die NSC-Liste wählt die NSC für die nächste Zufallsbegegnung aus; danach geht es
@@ -2877,7 +2881,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
   const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
   if (!campaign) {
     return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcRun: undefined,
-    npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, termsGoal: [], placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, trade: undefined, hold: undefined, marketBlocker: undefined, orders: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, landing: undefined, shipCheck: undefined, shipEncounter: undefined, space: undefined, spaceVolley: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
+    npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, termsGoal: [], placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, trade: undefined, hold: undefined, settlement: undefined, marketBlocker: undefined, orders: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, landing: undefined, shipCheck: undefined, shipEncounter: undefined, space: undefined, spaceVolley: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
   const log = campaign.log.map((entry, index) => logItem(campaign, entry, index));
@@ -2928,6 +2932,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     shop: shopView(campaign, state.shopError),
     trade: tradeView(campaign, state.trade),
     hold: holdView(campaign),
+    settlement: state.settlement === undefined ? undefined : settlementView(campaign, state.settlement),
     marketBlocker: tradeBlocker(campaign),
     orders: state.world && shipOf(campaign) !== undefined ? { blocker: orderBlocker(campaign, hexIdOfWorld(openWorldId(state.world))) } : undefined,
     ship: buildShipView(campaign, state.deckPlans, state.shipError),

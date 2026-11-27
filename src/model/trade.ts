@@ -730,9 +730,35 @@ export function deliverAt(campaign: Campaign, shipId: string, journey: Journey, 
   }
   after = { ...after, ships: after.ships.map((s) => (s.id !== shipId ? s : { ...s, hold: (s.hold ?? []).map((c) => (!c.retired && c.to === to ? { ...c, retired: true } : c)), fares: (s.fares ?? []).map((f) => (!f.retired && f.to === to ? { ...f, retired: true } : f)) })) };
   // Gewinnt ein NSC die Lotterie und wacht auf, zahlt der Kapitän den Topf aus; sonst behält er ihn (E10).
-  if (journey.berths.length > 0 && lotteryPaid(journey)) after = bookShip(after, -Math.min(potOf(journey), fundsOf(after)), shipId, 'lottery', clock, potOf(journey) > fundsOf(after) ? 'Topf der Low Lottery nicht bezahlt' : 'Topf der Low Lottery an einen Fahrgast');
+  // Nur einmal: wenn jetzt Low-Fahrgäste dieses Ziels ausstiegen.
+  const lowHere = (ship.fares ?? []).some((f) => !f.retired && f.to === to && f.low > 0);
+  if (lowHere && journey.berths.length > 0 && lotteryPaid(journey)) after = bookShip(after, -Math.min(potOf(journey), fundsOf(after)), shipId, 'lottery', clock, potOf(journey) > fundsOf(after) ? 'Topf der Low Lottery nicht bezahlt' : 'Topf der Low Lottery an einen Fahrgast');
   void entryIndex;
   return after;
+}
+
+/** Hat das Schiff etwas für das System an Bord, in dem die Gruppe ist (Fracht, Botschaft, Fahrgäste)? */
+export function dueHere(campaign: Campaign, shipId: string): boolean {
+  const here = campaign.location?.world;
+  const ship = campaign.ships.find((s) => s.id === shipId);
+  if (here === undefined || ship === undefined) return false;
+  const to = hexIdOfWorld(here);
+  // Das Schiff muss in diesem System sein: an einem Ort dort oder bei der Gruppe.
+  if (ship.place !== undefined && hexIdOfWorld(ship.place.world) !== to) return false;
+  return (ship.hold ?? []).some((c) => !c.retired && c.to === to) || (ship.fares ?? []).some((f) => !f.retired && f.to === to);
+}
+
+/**
+ * Die Abrechnung bei der Landung (Owner, 27. November 2026): Erst wenn das Schiff im Zielsystem landet,
+ * werden Fracht, Botschaften und Fahrgäste dorthin bezahlt; der Aufwachwurf und die Lotterie der
+ * Low-Fahrgäste stehen an der letzten Reise mit diesem Schiff dorthin. Ohne Fälliges geschieht nichts.
+ */
+export function settleOnLanding(campaign: Campaign, shipId: string, clock: Clock): Campaign {
+  if (!dueHere(campaign, shipId)) return campaign;
+  const to = hexIdOfWorld(campaign.location!.world);
+  const index = campaign.log.findLastIndex((e) => e.kind === 'journey' && e.ship === shipId && e.to === to);
+  const journey: Journey = index >= 0 ? (campaign.log[index] as Journey) : { kind: 'journey', at: clock.now(), from: to, to, days: 0, passengers: [], berths: [] };
+  return deliverAt(campaign, shipId, { ...journey, to }, index, clock);
 }
 
 

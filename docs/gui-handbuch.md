@@ -329,9 +329,10 @@ als fünf, als zweite Aktionsleiste darüber).
 - **Bereich Schiff** (Owner, 27. November 2026): Ein Tipp auf die Kachel *Kabinen* öffnet die
   Detailseite **Kabinen** (Gruppe, Fahrgäste je Ziel und Klasse), ein Tipp auf *Fracht* die Detailseite
   **Laderaum** (Ladungen mit Herkunft und Ziel, „Über Bord“, Postvertrag).
-- **Ankunft**: Das Ergebnis der Reise mit eigenem Schiff zeigt den Abschnitt **Einnahmen am Ziel**
-  (Fracht, Passagen, Botschaften, Postvertrag des Sprungs, ausgezahlter Topf der Low Lottery,
-  nicht aufgewachte Low-Fahrgäste) mit der Summe.
+- **Abrechnung** (Owner, 27. November 2026): Nach der **Landung** im Zielsystem erscheint der Dialog
+  „Abrechnung in …“ mit Fracht, Passagen, Botschaften, Postvertrag des Sprungs, ausgezahltem Topf der
+  Low Lottery und nicht aufgewachten Low-Fahrgästen, darunter die Summe, und „Weiter“. Braucht die Welt
+  keinen Landeplatz, steht derselbe Abschnitt im Ergebnis der Reise.
 
 ### Meldung und Hinweis
 
