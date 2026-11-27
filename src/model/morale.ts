@@ -179,10 +179,7 @@ export function startRound(campaign: Campaign, random: Random): RoundStart {
   let encounter = stored;
   // Die fliehende Gruppe rennt: 2 Bands je neue Runde, ohne Combat-Schläge (Hausregel unter *Moral*).
   if (isFleeing(encounter) && (encounter.npcMoved ?? 0) < FLEE_BANDS) encounter = runAway(campaign, encounter);
-  // Der Anführer ist ausgefallen: Die Fallrunde wird notiert (S. 5: −2 für zwei Runden).
-  if (encounter.leader !== undefined && encounter.leaderDown === undefined && !canFight(woundStateOf(campaign, encounter.leader))) {
-    encounter = { ...encounter, leaderDown: encounter.round };
-  }
+  encounter = withLeaderDown(campaign, encounter);
   let morale = false;
   let fled = false;
   for (const side of ['pcs', 'npcs'] as const) {
@@ -200,6 +197,25 @@ export function startRound(campaign: Campaign, random: Random): RoundStart {
   if (encounter === stored) return none;
   const after: Campaign = { ...campaign, encounters: campaign.encounters.map((e) => (e.id === encounter.id ? encounter : e)) };
   return { campaign: after, morale, fled, escaped: npcEscaped(after, encounter) };
+}
+
+/**
+ * Notiert die Runde, in der der Anführer ausfiel (S. 5: −2 in ihr und der nächsten). Der Aufruf
+ * begleitet jeden Zug; ist am Anfang einer Runde noch keiner dran gewesen (`acted` leer), fiel er im
+ * letzten Zug der vorigen. Kämpft er wieder, sobald der −2 abgelaufen ist, wird das Feld frei: Fällt
+ * er erneut aus, steht dort die neue Runde (`docs/modell/kampf.md` unter *Moral*).
+ */
+function withLeaderDown(campaign: Campaign, encounter: Encounter): Encounter {
+  if (encounter.leader === undefined) return encounter;
+  const down = !canFight(woundStateOf(campaign, encounter.leader));
+  if (down && encounter.leaderDown === undefined) {
+    const fell = encounter.acted.length === 0 && encounter.round > 1 ? encounter.round - 1 : encounter.round;
+    return { ...encounter, leaderDown: fell };
+  }
+  if (!down && encounter.leaderDown !== undefined && leaderDownDm(encounter) === 0) {
+    return Object.fromEntries(Object.entries(encounter).filter(([key]) => key !== 'leaderDown')) as unknown as Encounter;
+  }
+  return encounter;
 }
 
 /** Die fliehende NSC-Gruppe geht 2 Bands weiter weg: Sie bleibt auf Band 0, also rückt jeder SC. */

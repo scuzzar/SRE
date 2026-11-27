@@ -152,6 +152,26 @@ describe('Moral (S. 5, SR 23)', () => {
     expect(npcEscaped(fight(24, 4), currentEncounter(fight(24, 4))!)).toBe(false);
   });
 
+  it('der ausgefallene Anführer: die Fallrunde auch im letzten Zug, und ein zweiter Ausfall zählt neu', () => {
+    const campaign = fight(24, 4);
+    const leader = currentEncounter(campaign)!.leader!;
+    // Er fällt mitten in Runde 3: Es ist schon einer dran gewesen, die Runde ist die Fallrunde.
+    const mid = withEncounter(down(inRound(campaign, 3), leader), { ...currentEncounter(campaign)!, round: 3, acted: ['c1'] });
+    expect(currentEncounter(startRound(mid, fixedRandom(6, 6)).campaign)!.leaderDown).toBe(3);
+    // Er fällt im letzten Zug von Runde 3; bemerkt wird es am Anfang von Runde 4 – gefallen ist er in 3.
+    const late = startRound(inRound(down(campaign, leader), 4), fixedRandom(6, 6)).campaign;
+    expect(currentEncounter(late)!.leaderDown).toBe(3);
+    // Er wacht auf (Runde 6, der −2 ist abgelaufen): das Feld wird frei.
+    const woken = { ...late, log: [...late.log, { kind: 'recovery' as const, at: '2026-11-27T16:00:00.000Z', how: 'wake' as const, for: leader }] };
+    const up = startRound(inRound(woken, 6), fixedRandom(6, 6)).campaign;
+    expect(currentEncounter(up)!.leaderDown).toBeUndefined();
+    // Er fällt erneut, mitten in Runde 8: jetzt steht die neue Runde da, und der −2 gilt wieder.
+    const again = withEncounter(down(up, leader), { ...currentEncounter(up)!, round: 8, acted: ['c1'] });
+    const second = currentEncounter(startRound(again, fixedRandom(6, 6)).campaign)!;
+    expect(second.leaderDown).toBe(8);
+    expect(leaderDownDm(second)).toBe(-2);
+  });
+
   it('für Tiere gilt die Moral nicht', () => {
     const row: AnimalRow = { roll: 7, type: 'grazer', weight: 400, hits: [10, 10], attacks: [{ with: 'hooves', dm: 0, damage: 6 }], attack: 6, flee: 6, speed: 2 };
     const rows = Array.from({ length: 11 }, (_, i) => (i + 2 === 7 ? row : { roll: i + 2, event: 'tracks' }));
