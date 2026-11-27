@@ -1,0 +1,486 @@
+{
+  "format": "solo-rpg-engine/kampagne",
+  "version": 1,
+  "campaign": {
+    "key": "key-k1",
+    "changedAt": "1970-01-01T00:00:00.000Z",
+    "name": "Kampagne",
+    "characters": [
+      {
+        "id": "c1",
+        "name": "Kira Vant",
+        "background": "Ex-Scout · 4 Terms · 34 Jahre",
+        "equipment": "",
+        "credits": 12400,
+        "note": "Schuldet Dr. Halvek einen Gefallen",
+        "upp": {
+          "str": 7,
+          "dex": 10,
+          "end": 8,
+          "int": 9,
+          "edu": 7,
+          "soc": 5
+        },
+        "possessions": [
+          {
+            "of": "automatic-pistol",
+            "count": 1
+          },
+          {
+            "of": "jack",
+            "count": 1
+          }
+        ],
+        "dead": false,
+        "retired": false,
+        "npc": false,
+        "skills": [
+          {
+            "of": "pilot",
+            "level": 2,
+            "retired": false
+          },
+          {
+            "of": "navigation",
+            "level": 1,
+            "retired": false
+          },
+          {
+            "of": "auto-pistol",
+            "level": 1,
+            "retired": false
+          },
+          {
+            "of": "vacc-suit",
+            "level": 1,
+            "retired": false
+          }
+        ],
+        "wears": "jack",
+        "primary": "automatic-pistol"
+      },
+      {
+        "id": "c2",
+        "name": "Jonas Reyl",
+        "background": "Ex-Merchant · 3 Terms · 30 Jahre",
+        "equipment": "",
+        "credits": 3150,
+        "note": "Sucht seinen verschollenen Bruder",
+        "upp": {
+          "str": 6,
+          "dex": 8,
+          "end": 7,
+          "int": 10,
+          "edu": 8,
+          "soc": 8
+        },
+        "possessions": [
+          {
+            "of": "blade",
+            "count": 1
+          },
+          {
+            "of": "mesh",
+            "count": 1
+          }
+        ],
+        "dead": false,
+        "retired": false,
+        "npc": false,
+        "skills": [
+          {
+            "of": "steward",
+            "level": 1,
+            "retired": false
+          },
+          {
+            "of": "bribery",
+            "level": 1,
+            "retired": false
+          },
+          {
+            "of": "admin",
+            "level": 1,
+            "retired": false
+          },
+          {
+            "of": "blade",
+            "level": 1,
+            "retired": false
+          }
+        ],
+        "wears": "mesh",
+        "primary": "blade"
+      }
+    ],
+    "log": [
+      {
+        "kind": "attack",
+        "at": "2026-11-27T15:00:00.000Z",
+        "for": "c1",
+        "against": "n2",
+        "with": "hands",
+        "armor": "nothing",
+        "range": "close",
+        "dice": [
+          6,
+          6
+        ],
+        "dm": 0,
+        "target": 8
+      },
+      {
+        "kind": "damage",
+        "at": "2026-11-27T15:00:00.000Z",
+        "of": 0,
+        "dice": [
+          6
+        ],
+        "to": [
+          "STR"
+        ],
+        "points": [
+          6
+        ]
+      },
+      {
+        "kind": "attack",
+        "at": "2026-11-27T15:00:00.000Z",
+        "for": "c1",
+        "against": "n3",
+        "with": "hands",
+        "armor": "nothing",
+        "range": "close",
+        "dice": [
+          6,
+          6
+        ],
+        "dm": 0,
+        "target": 8
+      },
+      {
+        "kind": "damage",
+        "at": "2026-11-27T15:00:00.000Z",
+        "of": 2,
+        "dice": [
+          6
+        ],
+        "to": [
+          "STR"
+        ],
+        "points": [
+          6
+        ]
+      },
+      {
+        "kind": "attack",
+        "at": "2026-11-27T15:00:00.000Z",
+        "for": "c1",
+        "against": "c2",
+        "with": "hands",
+        "armor": "nothing",
+        "range": "close",
+        "dice": [
+          6,
+          6
+        ],
+        "dm": 0,
+        "target": 8
+      },
+      {
+        "kind": "damage",
+        "at": "2026-11-27T15:00:00.000Z",
+        "of": 4,
+        "dice": [
+          6
+        ],
+        "to": [
+          "STR"
+        ],
+        "points": [
+          6
+        ]
+      }
+    ],
+    "hexes": [
+      {
+        "column": 1,
+        "row": 1,
+        "empty": false,
+        "navalBase": false,
+        "scoutBase": true,
+        "gasGiant": true,
+        "worlds": [
+          {
+            "id": "0101",
+            "kind": "world",
+            "name": "Regina",
+            "uwp": {
+              "starport": 10,
+              "size": 7,
+              "atmosphere": 6,
+              "hydrographics": 6,
+              "population": 7,
+              "government": 5,
+              "law": 4,
+              "tech": 10
+            },
+            "temperature": "temperate",
+            "surface": {
+              "water": 60,
+              "plates": 5,
+              "majorContinents": 2,
+              "minorContinents": 3,
+              "majorIslands": 4,
+              "archipelagos": 2,
+              "majorOceans": 0,
+              "minorOceans": 0,
+              "smallSeas": 0,
+              "scatteredLakes": 0,
+              "life": true
+            },
+            "note": "Startwelt der Demo-Kampagne: Raumhafen A, TL A, Gesetz 4. Hier steht die Gruppe zu Beginn."
+          }
+        ],
+        "main": "0101"
+      }
+    ],
+    "focus": "c1",
+    "location": {
+      "world": "0101"
+    },
+    "bookings": [],
+    "ships": [],
+    "stash": [
+      {
+        "of": "vacc-suit-tl12",
+        "count": 1
+      },
+      {
+        "of": "hand-computer",
+        "count": 1
+      }
+    ],
+    "encounters": [
+      {
+        "id": "e1",
+        "at": "2026-10-23T14:00:00.000Z",
+        "quantityDie": 6,
+        "of": 24,
+        "in": "0101",
+        "reaction": 2,
+        "reactionDice": [
+          1,
+          1
+        ],
+        "reactionDm": 0,
+        "ended": false,
+        "npcs": [
+          {
+            "id": "n1",
+            "name": "Ada Abara",
+            "background": "Marines · Anführer",
+            "equipment": "",
+            "credits": 200,
+            "note": "",
+            "dead": false,
+            "retired": false,
+            "npc": true,
+            "upp": {
+              "str": 2,
+              "dex": 2,
+              "end": 2,
+              "int": 2,
+              "edu": 2,
+              "soc": 2
+            },
+            "skills": [
+              {
+                "of": "laser-rifle",
+                "level": 2,
+                "retired": false
+              }
+            ],
+            "possessions": [
+              {
+                "of": "laser-rifle",
+                "count": 1
+              },
+              {
+                "of": "lr-power-pack",
+                "count": 1
+              },
+              {
+                "of": "reflec",
+                "count": 1
+              }
+            ],
+            "primary": "laser-rifle",
+            "wields": "laser-rifle",
+            "wears": "reflec"
+          },
+          {
+            "id": "n2",
+            "name": "Ada Abara",
+            "background": "Marines",
+            "equipment": "",
+            "credits": 20,
+            "note": "",
+            "dead": false,
+            "retired": false,
+            "npc": true,
+            "upp": {
+              "str": 2,
+              "dex": 2,
+              "end": 2,
+              "int": 2,
+              "edu": 2,
+              "soc": 2
+            },
+            "skills": [
+              {
+                "of": "body-pistol",
+                "level": 1,
+                "retired": false
+              }
+            ],
+            "possessions": [
+              {
+                "of": "body-pistol",
+                "count": 1
+              },
+              {
+                "of": "body-pistol-ammo",
+                "count": 1
+              },
+              {
+                "of": "jack",
+                "count": 1
+              }
+            ],
+            "primary": "body-pistol",
+            "wields": "body-pistol",
+            "wears": "jack"
+          },
+          {
+            "id": "n3",
+            "name": "Ada Abara",
+            "background": "Marines",
+            "equipment": "",
+            "credits": 20,
+            "note": "",
+            "dead": false,
+            "retired": false,
+            "npc": true,
+            "upp": {
+              "str": 2,
+              "dex": 2,
+              "end": 2,
+              "int": 2,
+              "edu": 2,
+              "soc": 2
+            },
+            "skills": [
+              {
+                "of": "body-pistol",
+                "level": 1,
+                "retired": false
+              }
+            ],
+            "possessions": [
+              {
+                "of": "body-pistol",
+                "count": 1
+              },
+              {
+                "of": "body-pistol-ammo",
+                "count": 1
+              },
+              {
+                "of": "jack",
+                "count": 1
+              }
+            ],
+            "primary": "body-pistol",
+            "wields": "body-pistol",
+            "wears": "jack"
+          },
+          {
+            "id": "n4",
+            "name": "Ada Abara",
+            "background": "Marines",
+            "equipment": "",
+            "credits": 20,
+            "note": "",
+            "dead": false,
+            "retired": false,
+            "npc": true,
+            "upp": {
+              "str": 2,
+              "dex": 2,
+              "end": 2,
+              "int": 2,
+              "edu": 2,
+              "soc": 2
+            },
+            "skills": [
+              {
+                "of": "body-pistol",
+                "level": 1,
+                "retired": false
+              }
+            ],
+            "possessions": [
+              {
+                "of": "body-pistol",
+                "count": 1
+              },
+              {
+                "of": "body-pistol-ammo",
+                "count": 1
+              },
+              {
+                "of": "jack",
+                "count": 1
+              }
+            ],
+            "primary": "body-pistol",
+            "wields": "body-pistol",
+            "wears": "jack"
+          }
+        ],
+        "leader": "n1",
+        "rangeDice": [
+          1,
+          1
+        ],
+        "startBand": 0,
+        "startClose": true,
+        "round": 1,
+        "acted": [],
+        "pcSurprise": {
+          "die": 3,
+          "dm": 0
+        },
+        "npcSurprise": {
+          "die": 3,
+          "dm": 2
+        },
+        "distances": [
+          {
+            "of": "c1",
+            "band": 0,
+            "close": true
+          },
+          {
+            "of": "c2",
+            "band": 0,
+            "close": true
+          }
+        ]
+      }
+    ],
+    "day": 403325,
+    "missions": []
+  }
+}
