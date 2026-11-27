@@ -30,6 +30,7 @@ import {
   tonsOf,
   tradeBlocker,
   tradeDmOf,
+  tradeCodesOf,
   tradeGoodOf,
   willingOf,
   worldOf,
@@ -68,6 +69,10 @@ export interface MarketBuyItem {
   readonly unit: string;
   readonly purchaseDm: number;
   readonly resale: string;
+  /** Die DMs je Handelscode (2026-11-27): beim Kauf gelten hier die markierten (`active`). */
+  readonly purchaseDms: readonly DmChip[];
+  /** Die Verkaufs-DMs je Handelscode; markiert ist keiner, sie gelten erst am Verkaufsort. */
+  readonly resaleDms: readonly DmChip[];
   /** Erst nach dem Antippen: die gewürfelte Menge, was noch zu haben ist, der Preis. */
   readonly revealed: { readonly quantity: number; readonly left: number; readonly percent: number; readonly price: number; readonly roll: string } | undefined;
   readonly selected: boolean;
@@ -79,14 +84,26 @@ export interface MarketSellItem {
   readonly amount: string;
   readonly paid: number | undefined;
   readonly resaleDm: number;
+  /** Die Verkaufs-DMs je Handelscode; markiert die, die hier gelten. */
+  readonly resaleDms: readonly DmChip[];
   readonly blocker: string | undefined;
   readonly rolled: { readonly percent: number; readonly price: number; readonly total: number; readonly roll: string } | undefined;
   readonly selected: boolean;
 }
 
+/** Ein DM einer Ware für einen Handelscode, als Chip; `active`, wenn die Welt den Code hat. */
+export interface DmChip {
+  readonly code: string;
+  readonly name: string;
+  readonly dm: number;
+  readonly active: boolean;
+}
+
 export interface MarketView {
   readonly page: 'market';
   readonly world: string;
+  /** Die Handelscodes dieser Welt, die beim Handel zählen (Ag, Na, In, Ni, Ri, Po). */
+  readonly codes: readonly { readonly code: string; readonly name: string }[];
   readonly capacity: readonly CapacityTile[];
   readonly buy: readonly MarketBuyItem[];
   readonly sell: readonly MarketSellItem[];
@@ -137,6 +154,13 @@ function resaleText(good: TradeGood): string {
   return good.resale.map((d) => `${d.code} ${dm(d.dm)}`).join(', ') || '±0';
 }
 
+/** Die DMs einer Ware als Chips; `mark`: die Codes dieser Welt markieren. */
+function chips(good: TradeGood, world: ReturnType<typeof worldOf>, sale: boolean, mark: boolean): DmChip[] {
+  const codes = new Map(tradeCodesOf(world).map((c) => [c.id, c.name]));
+  const names: Record<string, string> = { Ag: 'Agricultural', Na: 'Non-Agricultural', In: 'Industrial', Ni: 'Non-Industrial', Ri: 'Rich', Po: 'Poor' };
+  return (sale ? good.resale : good.purchase).map((d) => ({ code: d.code, name: names[d.code] ?? d.code, dm: d.dm, active: mark && codes.has(d.code) }));
+}
+
 function tile(label: string, before: number, after: number | undefined, unit: string): CapacityTile {
   return { label, before: `${n(before)}${unit}`, after: after === undefined || after === before ? undefined : `${n(after)}${unit}`, short: after !== undefined && after < 0 };
 }
@@ -170,6 +194,8 @@ function marketView(campaign: Campaign, page: Extract<TradePage, { page: 'market
       unit: good.tonsPerItem === undefined ? 't' : 'Stück',
       purchaseDm: tradeDmOf(good, here, false),
       resale: resaleText(good),
+      purchaseDms: chips(good, here, false, true),
+      resaleDms: chips(good, here, true, false),
       revealed: price === undefined ? undefined : { quantity: quantityOf(entry), left: leftOf(campaign, market!, index), percent: percentOf(price), price: priceOf(price), roll: rollText(price) },
       selected: page.selected !== undefined && 'buy' in page.selected && page.selected.buy === index,
     };
@@ -186,6 +212,7 @@ function marketView(campaign: Campaign, page: Extract<TradePage, { page: 'market
         amount: amountLabel(good, amountOfLot(good, c)),
         paid: c.paid,
         resaleDm: tradeDmOf(good, here, true),
+        resaleDms: chips(good, here, true, true),
         blocker: saleBlocker(campaign, c),
         rolled: roll === undefined ? undefined : { percent: percentOf(roll), price: priceOf(roll), total: priceOf(roll) * amountOfLot(good, c), roll: rollText(roll) },
         selected: page.selected !== undefined && 'sell' in page.selected && page.selected.sell === c.id,
@@ -222,9 +249,11 @@ function marketView(campaign: Campaign, page: Extract<TradePage, { page: 'market
     }
   }
   const brokerOpen = sel !== undefined && 'sell' in sel && (market === undefined || saleOf(campaign, market, sel.sell) === undefined);
+  const tradeDmIds = new Set(['Ag', 'Na', 'In', 'Ni', 'Ri', 'Po']);
   return {
     page: 'market',
     world: here.name,
+    codes: tradeCodesOf(here).filter((c) => tradeDmIds.has(c.id)).map((c) => ({ code: c.id, name: c.name })),
     capacity: [tile('Kasse', funds, afterFunds, ' Cr'), tile('Laderaum frei', free, afterFree, ' t')],
     buy,
     sell,

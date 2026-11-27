@@ -10636,3 +10636,138 @@ button.tile-open {
   background: transparent;
   padding: 0;
 }
+
+/* Warenkarten auf dem Markt (2026-11-27): Name und Grundpreis, Menge, DMs als Chips, Preisfeld. */
+.goods-card {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  background: var(--card);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+}
+
+.goods-card.revealed {
+  border-left-color: var(--gold);
+}
+
+.goods-card.selected {
+  border-color: var(--gold);
+  background: var(--gold-wash);
+}
+
+.goods-card:disabled {
+  opacity: 0.6;
+}
+
+.goods-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.goods-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.goods-base {
+  display: grid;
+  justify-items: end;
+  font-size: 14px;
+}
+
+.goods-base small,
+.goods-amount small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.goods-sub,
+.goods-hint {
+  font-size: 12px;
+}
+
+.dm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.dm-label {
+  min-width: 72px;
+}
+
+.dm-chip {
+  padding: 1px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.dm-chip.active {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.dm-total {
+  margin-left: auto;
+  font-weight: 700;
+}
+
+.dm-total.good {
+  color: var(--gold-bright);
+}
+
+.dm-total.bad {
+  color: var(--accent);
+}
+
+.goods-price {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 10px;
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.goods-percent {
+  grid-row: span 2;
+  padding: 4px 8px;
+  border: 1px solid var(--gold);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold-bright);
+}
+
+.goods-amount {
+  display: grid;
+  font-size: 13px;
+}
+
+.goods-roll {
+  font-size: 10px;
+}
+
+.trade-codes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+  font-size: 12px;
+}

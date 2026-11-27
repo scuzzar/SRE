@@ -279,6 +279,12 @@ Gruppe mit ihrem Schiff dort ist (sonst ausgegraut mit Grund).
 └──────────────────────────────┘
 ```
 
+- **Warenkarten** (Owner, 27. November 2026): je Ware eine Karte mit Name und Grundpreis oben, darunter
+  wer sie fand und die Menge, dann die DMs je Handelscode als **Chips**: Die Codes, die an dieser
+  Welt gelten, sind gold gefüllt, dahinter die Summe (beim Kauf ist ein Minus gut, beim Verkauf ein
+  Plus). Oben auf dem Markt stehen die Handelscodes der Welt als gefüllte Chips. Nach dem Preiswurf
+  ein Preisfeld: das Prozent groß, der Preis je Tonne bzw. Stück, die Restmenge, klein der Wurf; beim
+  Verkauf der Erlös für alles und Gewinn oder Verlust gegenüber dem Einkauf.
 - Beim ersten Öffnen in der Woche würfelt die App alle Warenwürfe der Gruppe (⚑ im Code noch ohne
   Würfelbühne: die Ergebnisse stehen gleich in der Liste und im Log). Jede Zeile *Zu kaufen*: Ware, wer sie gefunden hat,
   Grundpreis, Menge als Würfelausdruck und die DMs für Kauf an dieser Welt und für Verkauf (je

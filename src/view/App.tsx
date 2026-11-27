@@ -208,7 +208,9 @@ export function App() {
   // Der Charakter-Editor ist eine Detailseite (2026-11-26): Er tritt an die Stelle dessen, was gerade offen ist.
   const editorPage = view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />;
   // Eine Detailseite bringt Kopf und Aktionsleiste selbst mit: kein Kopf des Bereichs, keine Leiste des Logs.
-  const detail = view.editor !== undefined || (screen === 'missions' && view.missions.editor !== undefined && !view.missions.picking) || screen === 'trade';
+  // Steht ein angetipptes Feld oder eine Welt vor einer offenen Detailseite (Missions-Editor, Markt,
+  // Aufträge), zeigt die App das Feld mit seiner Aktionsleiste; nur der Charakter-Editor geht immer vor.
+  const detail = view.editor !== undefined || (field === undefined && ((screen === 'missions' && view.missions.editor !== undefined && !view.missions.picking) || screen === 'trade'));
   const body = <div className="screen-host">{editorPage ?? field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>;
   const areaTitle = screen === 'shop' ? 'Shop' : screen === 'about' ? 'Über die App' : (areaOf(screen)?.label ?? '');
 

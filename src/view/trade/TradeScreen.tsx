@@ -1,4 +1,4 @@
-import type { CapacityTile, MarketView, OrdersView, Snapshot } from '../../controller';
+import type { CapacityTile, DmChip, MarketView, OrdersView, Snapshot } from '../../controller';
 import { DetailPage } from '../DetailPage';
 import { credits } from '../format';
 import { useGame } from '../game-context';
@@ -110,65 +110,112 @@ function MarketPage({ market, onClose }: { market: MarketView; onClose: () => vo
           {market.error}
         </p>
       )}
+      {market.codes.length > 0 && (
+        <p className="trade-codes">
+          <span className="muted">Hier gelten</span>
+          {market.codes.map((c) => (
+            <span key={c.code} className="dm-chip active" title={c.name}>
+              {c.code}
+            </span>
+          ))}
+        </p>
+      )}
       <p className="muted trade-note">
         Antippen würfelt Menge und Preis{market.helper ? `; ${market.helper} hilft mit Admin oder Bribery` : ''}. Wer hilft, wählt man in der Charakterleiste.
       </p>
       <h2 className="section-title">Zu kaufen</h2>
       {market.buy.length === 0 && <p className="log-empty">Keine Ware diese Woche.</p>}
       <ul className="trade-list">
-        {market.buy.map((item) => (
-          <li key={item.index}>
-            <button type="button" className={`trade-row trade-pick${item.selected ? ' selected' : ''}`} aria-pressed={item.selected} onClick={() => game.tapGoods(item.index)}>
-              <span className="trade-row-main">
-                <b>{item.name}</b>
-                <span className="muted">
-                  {item.by} · Grundpreis {credits(item.basePrice)} je {item.unit === 't' ? 'Tonne' : 'Stück'} · Menge {item.quantity}
-                </span>
-                <span className="muted">
-                  Kauf hier {dm(item.purchaseDm)} · Verkauf {item.resale}
-                </span>
-                {item.revealed && (
-                  <span className="trade-revealed">
-                    <span>
-                      {item.revealed.left.toLocaleString('de-DE')} von {item.revealed.quantity.toLocaleString('de-DE')} {item.unit} · {item.revealed.percent} % = <b>{credits(item.revealed.price)}</b> je {item.unit === 't' ? 'Tonne' : 'Stück'}
-                    </span>
-                    <small className="mono muted">{item.revealed.roll}</small>
+        {market.buy.map((item) => {
+          const per = item.unit === 't' ? 'Tonne' : 'Stück';
+          return (
+            <li key={item.index}>
+              <button type="button" className={`goods-card${item.selected ? ' selected' : ''}${item.revealed ? ' revealed' : ''}`} aria-pressed={item.selected} onClick={() => game.tapGoods(item.index)}>
+                <span className="goods-head">
+                  <span className="goods-name">{item.name}</span>
+                  <span className="goods-base mono">
+                    {credits(item.basePrice)}
+                    <small>je {per}</small>
                   </span>
+                </span>
+                <span className="goods-sub muted">
+                  gefunden von {item.by} · Menge {item.quantity.replace('W6', ' W6')} {item.unit}
+                </span>
+                <DmRow label="Kauf hier" chips={item.purchaseDms} total={item.purchaseDm} />
+                <DmRow label="Verkauf" chips={item.resaleDms} />
+                {item.revealed ? (
+                  <span className="goods-price">
+                    <span className="goods-percent mono">{item.revealed.percent} %</span>
+                    <span className="goods-amount">
+                      <span>
+                        <b className="mono">{credits(item.revealed.price)}</b> je {per}
+                      </span>
+                      <small className="muted">
+                        {item.revealed.left.toLocaleString('de-DE')} von {item.revealed.quantity.toLocaleString('de-DE')} {item.unit} zu haben
+                      </small>
+                    </span>
+                    <small className="goods-roll mono muted">{item.revealed.roll}</small>
+                  </span>
+                ) : (
+                  <span className="goods-hint muted">Antippen: Menge und Preis würfeln</span>
                 )}
-              </span>
-            </button>
-          </li>
-        ))}
+              </button>
+            </li>
+          );
+        })}
       </ul>
       <h2 className="section-title">Zu verkaufen</h2>
       {market.sell.length === 0 && <p className="log-empty">Keine eigene Ware an Bord.</p>}
       <ul className="trade-list">
         {market.sell.map((item) => (
           <li key={item.id}>
-            <button type="button" className={`trade-row trade-pick${item.selected ? ' selected' : ''}`} aria-pressed={item.selected} disabled={item.blocker !== undefined} title={item.blocker} onClick={() => game.tapLot(item.id)}>
-              <span className="trade-row-main">
-                <b>
-                  {item.name} · {item.amount}
-                </b>
-                <span className="muted">
-                  {item.paid !== undefined ? `gekauft für ${credits(item.paid)} · ` : ''}Verkauf hier {dm(item.resaleDm)}
-                </span>
-                {item.blocker && <span className="muted">{item.blocker}</span>}
-                {item.rolled && (
-                  <span className="trade-revealed">
-                    <span>
-                      {item.rolled.percent} % = <b>{credits(item.rolled.price)}</b> je Einheit, alles {credits(item.rolled.total)}
-                    </span>
-                    <small className="mono muted">{item.rolled.roll}</small>
-                  </span>
-                )}
-                {item.selected && !item.rolled && <span className="trade-revealed">Makler unten wählen, dann würfeln.</span>}
+            <button type="button" className={`goods-card${item.selected ? ' selected' : ''}${item.rolled ? ' revealed' : ''}`} aria-pressed={item.selected} disabled={item.blocker !== undefined} title={item.blocker} onClick={() => game.tapLot(item.id)}>
+              <span className="goods-head">
+                <span className="goods-name">{item.name}</span>
+                <span className="goods-base mono">{item.amount}</span>
               </span>
+              {item.paid !== undefined && <span className="goods-sub muted">gekauft für {credits(item.paid)}</span>}
+              <DmRow label="Verkauf hier" chips={item.resaleDms} total={item.resaleDm} sale />
+              {item.blocker && <span className="goods-hint muted">{item.blocker}</span>}
+              {item.rolled && (
+                <span className="goods-price">
+                  <span className="goods-percent mono">{item.rolled.percent} %</span>
+                  <span className="goods-amount">
+                    <span>
+                      <b className="mono">{credits(item.rolled.total)}</b> für alles
+                    </span>
+                    <small className="muted">
+                      {credits(item.rolled.price)} je Einheit
+                      {item.paid !== undefined ? ` · ${item.rolled.total - item.paid >= 0 ? 'Gewinn' : 'Verlust'} ${credits(Math.abs(item.rolled.total - item.paid))}` : ''}
+                    </small>
+                  </span>
+                  <small className="goods-roll mono muted">{item.rolled.roll}</small>
+                </span>
+              )}
+              {item.selected && !item.rolled && <span className="goods-hint">Makler unten wählen, dann würfeln.</span>}
             </button>
           </li>
         ))}
       </ul>
     </DetailPage>
+  );
+}
+
+/** Die DMs einer Ware je Handelscode als Chips; die hier gültigen sind markiert, dahinter die Summe. */
+function DmRow({ label, chips, total, sale = false }: { label: string; chips: readonly DmChip[]; total?: number; /** Beim Verkauf ist ein Plus gut, beim Kauf ein Minus. */ sale?: boolean }) {
+  const good = total !== undefined && (sale ? total > 0 : total < 0);
+  const bad = total !== undefined && (sale ? total < 0 : total > 0);
+  return (
+    <span className="dm-row">
+      <span className="dm-label muted">{label}</span>
+      {chips.length === 0 && <span className="dm-chip">keine</span>}
+      {chips.map((c) => (
+        <span key={c.code} className={`dm-chip${c.active ? ' active' : ''}`} title={`${c.name}${c.active ? ' – gilt hier' : ''}`}>
+          {c.code} {dm(c.dm)}
+        </span>
+      ))}
+      {total !== undefined && <span className={`dm-total mono${good ? ' good' : bad ? ' bad' : ''}`}>= {dm(total)}</span>}
+    </span>
   );
 }
 
