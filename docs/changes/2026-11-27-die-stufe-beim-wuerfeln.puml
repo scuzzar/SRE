@@ -1,0 +1,189 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-27"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-27: Die Stufe beim Würfeln: Die Kampagne merkt sich **keine Stufe** mehr (`Campaign → Odds : odds` entfällt) – das Orakel wählt sie je Frage auf der Karte, die Probe erst beim Würfeln, mit einem der drei Knöpfe Leicht, Mittel, Schwer (je mit Zielwert). Dafür bekommt die Stufe ihren Namen als Schwierigkeit (`difficulty`); Hoch/Mittel/Gering bleibt fürs Orakel. Die Probe in Vorbereitung rechnet `/need` und `/chance` **für alle drei Stufen**; das Ergebnis im Log hält seine Stufe wie bisher fest
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne {
+    name: string
+    key: string
+    changedAt: datetime
+    /funds: number
+    /ship: Ship [0..1]
+    quantityDie: number [0..1]
+    /load: number
+    /capacity: number
+    /burden: number
+    day: number
+    /date: string
+    /weekday: number [0..1]
+  }
+  class Character $charakter
+
+' Schiffe
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Missionen
+
+' Verlauf
+  class CardPick $karte
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+  class Conflict <<transient>> $kampagne
+  class Card <<transient>> $karte
+  class Task <<transient>> $probe {
+    unskilled: boolean
+    /dm: number
+    $gone("2026-11-27", "/need: number")
+    $new("2026-11-27", "/need: number[3]")
+    $gone("2026-11-27", "/chance: number")
+    $new("2026-11-27", "/chance: number[3]")
+  }
+  class TaskResult $probe
+
+' Referenzdaten
+  class Odds <<reference>> $karte {
+    name: string
+    $new("2026-11-27", "difficulty: string")
+    chance: number
+    target: number
+  }
+' Fahrzeuge und Wege auf der Oberfläche
+  ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
+
+' Kampagne
+Campaign "1" *-- "*" Character : characters
+Campaign "*" -$goneArrow("2026-11-27")-> "1" Odds : odds
+Campaign "0..1" --> "0..1" Character : focus
+Conflict "*" --> "0..1" Campaign : local
+Conflict "*" --> "0..1" Campaign : remote
+
+' Schiffe
+
+' Raumkarte und Systemflug
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+TaskResult "*" --> "1" Odds : odds
+
+' Probe
+Task "0..1" --> "1" Campaign : in
+Task "*" --> "1" Character : /for
+Task ..> TaskResult : on roll
+
+' Angriff
+
+' Begegnung
+
+' Karte
+Card "0..1" --> "1" Campaign : in
+CardPick "*" --> "0..1" Odds : odds
+Card "*" --> "0..1" Odds : pickedOdds
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+class Task #line:d0021b;line.bold
+class Odds #line:d0021b;line.bold
+@enduml

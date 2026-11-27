@@ -162,6 +162,7 @@ hide <<browser>> stereotype
 ' Referenzdaten
   class Odds <<reference>> $karte {
     name: string
+    difficulty: string
     chance: number
     target: number
   }
@@ -192,7 +193,6 @@ hide <<browser>> stereotype
   }
 
 ' Kampagne
-Campaign "*" --> "1" Odds : odds
 
 ' Schiffe
 

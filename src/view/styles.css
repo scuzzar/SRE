@@ -650,51 +650,6 @@ button:disabled {
   padding-top: 8px;
 }
 
-/* --- Stufenauswahl -------------------------------------------------------------------------- */
-
-.odds {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  border: 1px solid var(--line-strong);
-}
-
-.odds button {
-  min-height: 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 0;
-  color: var(--text);
-}
-
-.odds button[aria-checked='true'] {
-  background: var(--text);
-  color: var(--ink);
-}
-
-.odds .odds-name {
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.odds .odds-target {
-  font-family: var(--mono);
-  font-weight: 700;
-  font-size: 16px;
-}
-
-.odds .odds-sub {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.odds button[aria-checked='true'] .odds-sub {
-  color: var(--ink-muted);
-}
-
 /* --- Orakel-Screen -------------------------------------------------------------------------- */
 
 .log-scroll {
@@ -4624,13 +4579,6 @@ button:disabled {
   gap: 4px;
 }
 
-.task-bar .odds button {
-  min-height: 40px;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 6px;
-}
-
 .task-bar .task-info {
   flex: 1 1 auto;
   min-width: 0;
@@ -4648,6 +4596,53 @@ button:disabled {
 .action.task-roll {
   background: var(--gold);
   color: var(--ink);
+}
+
+/* Der Zielwert über dem Namen der Schwierigkeit, so groß wie sonst das Symbol. */
+.action .difficulty-target {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.action.task-roll:disabled {
+  background: transparent;
+  color: var(--dim);
+}
+
+/* Die Detailseite Probe (2026-11-27): die Charakterkarten untereinander, kompakt wie die Charakterleiste. */
+.task-cards.strip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 12px;
+  border-bottom: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.task-cards .strip-card {
+  flex: 0 0 auto;
+}
+
+.task-cards .strip-card.chosen {
+  border-color: var(--gold-deep);
+  border-top-color: var(--gold);
+}
+
+.task-cards .strip-title {
+  cursor: default;
+}
+
+.task-empty {
+  padding: 10px 0;
+}
+
+/* Ohne gewählte Fertigkeit nur der Hinweis über den Knöpfen. */
+.task-bar .task-hint {
+  margin: 0;
+  padding: 4px 0;
 }
 
 /* --- Menü hinter ☰ -------------------------------------------------------------------------- */

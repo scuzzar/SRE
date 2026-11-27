@@ -69,7 +69,6 @@ describe('Kampagnendatei', () => {
     ['kein JSON', () => 'Kampagne', /kein JSON/],
     ['eine andere Datei', () => JSON.stringify({ format: 'etwas', version: 1 }), /keine gültige Kampagnendatei/],
     ['ohne Namen', () => fileWith((c) => (c.name = ' ')), /braucht einen Namen/],
-    ['mit unbekannter Stufe', () => fileWith((c) => (c.odds = 'sicher')), /Stufe sicher/],
     ['mit UPP über 15', () => fileWith((c) => ((c.characters as { upp: { str: number } }[])[0]!.upp.str = 16)), /zwischen 0 und 15/],
     ['mit unbekannter Fertigkeit', () => fileWith((c) => ((c.characters as { skills: { of: string }[] }[])[0]!.skills[0]!.of = 'zauberei')), /Fertigkeit zauberei/],
     ['mit unbekanntem Karteneintrag', () => fileWith((c) => ((c.log as { items?: { picked: string[] }[] }[])[2]!.items![0]!.picked = ['gibt.es.nicht'])), /Eintrag/],
@@ -91,6 +90,12 @@ describe('Kampagnendatei', () => {
     ],
   ])('weist eine Datei %s zurück', (_, text, message) => {
     expect(() => fromCampaignFile(text(), 'k2')).toThrow(message);
+  });
+
+  it('übergeht die gewählte Stufe aus Dateien von vor 2026-11-27', () => {
+    const campaign = fromCampaignFile(fileWith((c) => (c.odds = 'low')), 'k2');
+    expect('odds' in campaign).toBe(false);
+    expect(JSON.parse(toCampaignFile(campaign)).campaign.odds).toBeUndefined();
   });
 });
 

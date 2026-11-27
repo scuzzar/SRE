@@ -199,7 +199,7 @@ export function WeaponChips({ character }: { character: Snapshot['characters'][n
 const uppKeys = ['str', 'dex', 'end', 'int', 'edu', 'soc'] as const;
 
 /** Im Kampf die Attribute als schmale Zeile wie bei den NSC; verwundete Werte rot. */
-function UppLine({ character, impacts = [] }: { character: Snapshot['characters'][number]; impacts?: readonly Impact[] }) {
+export function UppLine({ character, impacts = [] }: { character: Snapshot['characters'][number]; impacts?: readonly Impact[] }) {
   return (
     <p className="strip-upp mono" aria-label="Attribute">
       {uppKeys.map((k) => (

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { characters, host, wuerfelgleich } from './layout';
+import { host, openTaskPage, taskCard, wuerfelgleich } from './layout';
 
 async function openCharacters(page: Page) {
   await page.goto('/');
@@ -105,8 +105,9 @@ test('Charaktererschaffung: Attribute einzeln, Laufbahn, Terms, Abmusterung, Nam
   await dialog.getByRole('button', { name: 'Übernehmen' }).click();
   await expect(dialog).toBeHidden();
 
-  // Der neue Charakter steht oben im Orakel-Screen; die Details stehen im Charakter-Screen.
-  await expect(characters(page).getByRole('region', { name: 'Spielercharaktere' }).getByRole('article', { name: 'Mara Quell' })).toBeVisible();
+  // Der neue Charakter steht auf der Detailseite Probe; die Details stehen im Charakter-Screen.
+  await openTaskPage(page);
+  await expect(taskCard(page, 'Mara Quell')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
   const mara = host(page).getByRole('article', { name: 'Mara Quell' });
   // Bei einer 2 misslingt auch die Musterung für Other; dann wird man eingezogen.

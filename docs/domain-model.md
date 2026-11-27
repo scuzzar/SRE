@@ -89,7 +89,8 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Last | `Campaign./load` | Was die Gruppe trägt, in kg: das Gepäck und die ausgerüsteten Waffen, ohne Rüstung (außer Vacc Suit) und Fahrzeuge |
 | Traglast | `Campaign./capacity` | Wie viel die Gruppe ohne Belastung trägt: die Summe der STR der lebenden SC in kg, nach der Schwerkraft des Aufenthaltsorts |
 | Belastung | `Campaign./burden` | 0, 1 oder 2: um so viel zählen STR, DEX und END aller SC niedriger, wenn die Last über der Traglast bzw. ihrem Doppelten liegt (Hausregel) |
-| Stufe (Hoch/Mittel/Gering) | `Odds` | Die eine Auswahl für Orakel und Proben |
+| Stufe (Hoch/Mittel/Gering) | `Odds` | Wie leicht etwas ist: beim Orakel je Frage auf der Karte gewählt, bei der Probe beim Würfeln (2026-11-27) |
+| Schwierigkeit (Leicht/Mittel/Schwer) | `Odds.difficulty` | Der Name der Stufe bei Proben: Leicht 6+ (Hoch), Mittel 8+, Schwer 10+ (Gering); beim Orakel heißt sie weiter Hoch, Mittel, Gering (2026-11-27) |
 | Hausregeln | `HouseRules` | Die Zahlen, nach denen Proben gerechnet werden |
 | Log | `LogEntry` | Ein Eintrag im Verlauf |
 | Orakelantwort | `CardPick./answer` | Die Antwort des Orakels auf eine Frage; sie steht in der Kartenauswahl |

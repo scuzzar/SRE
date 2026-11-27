@@ -24,6 +24,38 @@ export const oracle = (page: Page) => page.locator('.side-panel, .app:not(:has(.
 /** Wo der Charakter oben steht: im gewählten Bereich, im Ziehblatt wie in der Seitenspalte. */
 export const characters = (page: Page) => page.locator('.screen-host');
 
+/** Die Detailseite Probe (2026-11-27): alle Charaktere untereinander, an der Stelle des offenen Bereichs. */
+export const taskPage = (page: Page) => host(page).getByRole('region', { name: 'Probe', exact: true });
+
+/** Die Charakterkarte eines Charakters auf der Detailseite Probe. */
+export const taskCard = (page: Page, name: string) => taskPage(page).getByRole('article', { name });
+
+/** Die Aktionsleiste des Logs; ist die Detailseite Probe offen, mit 2W6 und den drei Schwierigkeiten. */
+export const dock = (page: Page) => oracle(page).getByRole('region', { name: 'Orakel und Proben' });
+
+/** „2W6“ im Log antippen: Die Detailseite Probe geht auf. */
+export async function openTaskPage(page: Page) {
+  await dock(page).getByRole('button', { name: '2W6', exact: true }).click();
+  await taskPage(page).waitFor();
+}
+
+/** 2W6 würfeln wie im Spiel: „2W6“ öffnet die Detailseite Probe, dort würfelt „2W6“ und schließt sie. */
+export async function rollDice(page: Page) {
+  await openTaskPage(page);
+  await dock(page).getByRole('button', { name: '2W6', exact: true }).click();
+  await expect(taskPage(page)).toBeHidden();
+}
+
+/**
+ * Eine Probe würfeln: Detailseite Probe öffnen, beim Charakter die Fertigkeit antippen, dann den Knopf
+ * der Schwierigkeit (Leicht, Mittel, Schwer).
+ */
+export async function rollTask(page: Page, name: string, skill: string, difficulty: 'Leicht' | 'Mittel' | 'Schwer' = 'Mittel') {
+  await openTaskPage(page);
+  await taskCard(page, name).getByRole('button', { name: skill, exact: true }).click();
+  await dock(page).getByRole('button', { name: new RegExp(`^Probe ${difficulty}`) }).click();
+}
+
 /** Zum Log mit dem Charakter oben wechseln, über den Bereich Log. */
 export async function openOracle(page: Page) {
   await page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Log', exact: true }).click();

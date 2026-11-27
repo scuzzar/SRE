@@ -36,7 +36,7 @@ describe('Start', () => {
     expect(view.ready).toBe(true);
     expect(view.screen).toBe('oracle');
     expect(view.characters.map((c) => c.name)).toEqual(['Kira Vant', 'Jonas Reyl']);
-    expect(view.odds.find((o) => o.selected)?.name).toBe('Mittel');
+    expect(view.taskPage).toBe(false);
     expect(repository.saved?.characters).toHaveLength(2);
   });
 
@@ -172,11 +172,34 @@ describe('Orakel-Screen', () => {
     expect(game.snapshot().log).toEqual([{ kind: 'note', at: expect.any(String), text: 'Wir landen auf Mora.', interprets: undefined, editedAt: expect.any(String) }]);
   });
 
-  it('die Stufe der Proben bleibt stehen und wird gespeichert', async () => {
-    const { game, repository } = await started(fixedRandom());
-    game.setOdds('low');
+  it('die Kampagne merkt sich keine Stufe; eine Probe würfelt mit der Stufe ihres Knopfs (2026-11-27)', async () => {
+    const { game, repository } = await started(fixedRandom(4, 3));
+    game.openTaskPage();
+    expect(game.snapshot().taskPage).toBe(true);
+    game.chooseSkill('pilot');
+    expect(game.snapshot().task?.steps.map((s) => s.name)).toEqual(['Leicht', 'Mittel', 'Schwer']);
+    game.rollTask('low');
     await game.whenSaved();
-    expect(repository.saved?.odds).toBe('low');
+    expect(repository.saved?.log.at(-1)).toMatchObject({ kind: 'task', odds: 'low', target: 10 });
+    expect('odds' in repository.saved!).toBe(false);
+    // Nach dem Wurf ist die Detailseite zu und die Probe zu Ende.
+    expect(game.snapshot().taskPage).toBe(false);
+    expect(game.snapshot().task).toBeUndefined();
+  });
+
+  it('2W6 aus der Detailseite Probe schließt sie; ✕ beendet die Probe ohne Wurf', async () => {
+    const { game } = await started(fixedRandom(5, 4));
+    game.openTaskPage();
+    game.rollDice();
+    expect(game.snapshot().taskPage).toBe(false);
+    game.openTaskPage();
+    game.chooseSkillOf('c2', null);
+    expect(game.snapshot().focus).toBe('c2');
+    expect(game.snapshot().task?.ready).toBe(true);
+    expect(game.snapshot().taskPage).toBe(true);
+    game.closeTaskPage();
+    expect(game.snapshot().task).toBeUndefined();
+    expect(game.snapshot().taskPage).toBe(false);
   });
 
   it('würfelt 2W6 in den Log', async () => {
@@ -261,30 +284,29 @@ describe('Orakel-Screen', () => {
 });
 
 describe('Charakter oben: Probe im Orakel-Screen', () => {
-  it('bereitet die Probe für den Charakter oben vor, würfelt, zeigt das Ergebnis; „Weiter“ lässt sie vorbereitet', async () => {
+  it('bereitet die Probe für den Charakter oben vor, würfelt mit der Stufe des Knopfs und zeigt das Ergebnis', async () => {
     const { game } = await started(fixedRandom(4, 5));
     expect(game.snapshot()).toMatchObject({ screen: 'oracle', focus: 'c1', task: undefined });
     game.chooseSkill('pilot');
     game.toggleCharacteristic('DEX');
-    game.setOdds('low');
     const task = game.snapshot().task!;
-    expect(task).toMatchObject({ character: 'Kira Vant', ready: true, dm: 3, target: 10, need: 7 });
-    expect(Math.round(task.chance)).toBe(58);
+    expect(task).toMatchObject({ character: 'Kira Vant', ready: true, dm: 3 });
+    expect(task.steps[2]).toMatchObject({ odds: 'low', name: 'Schwer', target: 10, need: 7 });
+    expect(Math.round(task.steps[2]!.chance)).toBe(58);
     expect(task.parts).toEqual([
       { kind: 'skill', name: 'Pilot', level: 2, dm: 2 },
       { kind: 'characteristic', characteristic: 'DEX', value: 10, dm: 1 },
     ]);
 
-    game.rollTask();
+    game.rollTask('low');
     const view = game.snapshot();
     expect(view.screen).toBe('oracle');
     expect(view.result).toMatchObject({ character: 'Kira Vant', dice: [4, 5], dm: 3, total: 12, target: 10, success: true });
     expect(view.log.at(-1)).toEqual(view.result);
 
+    // Gewürfelt ist die Probe zu Ende; die nächste beginnt auf der Detailseite Probe neu.
     game.closeResult();
-    expect(game.snapshot()).toMatchObject({ result: undefined, task: { character: 'Kira Vant', ready: true } });
-    game.endTask();
-    expect(game.snapshot().task).toBeUndefined();
+    expect(game.snapshot()).toMatchObject({ result: undefined, task: undefined });
   });
 
   it('Wischen stellt einen anderen Charakter nach oben, speichert ihn und beendet die Probe', async () => {
@@ -1380,14 +1402,14 @@ describe('Charaktere anlegen, bearbeiten, entfernen', () => {
     const { game } = await started(fixedRandom(1, 1));
     game.focusCharacter('c2');
     game.chooseSkill(null);
-    game.rollTask();
+    game.rollTask('medium');
     game.closeResult();
     expect(game.snapshot().characters.map((c) => [c.name, c.inLog])).toEqual([
       ['Kira Vant', false],
       ['Jonas Reyl', true],
     ]);
     game.removeCharacter('c1');
-    expect(game.snapshot()).toMatchObject({ focus: 'c2', task: { character: 'Jonas Reyl' } });
+    expect(game.snapshot()).toMatchObject({ focus: 'c2' });
     game.removeCharacter('c2');
     expect(game.snapshot()).toMatchObject({ characters: [], focus: undefined, task: undefined });
     expect(game.snapshot().retired).toEqual([{ id: 'c2', name: 'Jonas Reyl' }]);
@@ -1465,7 +1487,7 @@ describe('Log', () => {
     const { game } = await started();
     game.focusCharacter('c2');
     game.chooseSkill(null);
-    game.rollTask();
+    game.rollTask('medium');
     game.closeResult();
     expect(game.snapshot().characters[1]?.inLog).toBe(true);
     game.deleteLogEntry(0);
@@ -1486,7 +1508,7 @@ describe('Kampagnen', () => {
     const view = game.snapshot();
     expect(view.campaignSheet).toBeUndefined();
     expect(view.campaign).toEqual({ id: 'k2', name: 'Spinward Run' });
-    expect(view).toMatchObject({ characters: [], log: [], odds: expect.arrayContaining([expect.objectContaining({ name: 'Mittel', selected: true })]) });
+    expect(view).toMatchObject({ characters: [], log: [], taskPage: false });
     expect(repository.open).toBe('k2');
     expect([...repository.campaigns.keys()]).toEqual(['k1', 'k2']);
   });

@@ -13,13 +13,13 @@ die letzte lässt sich nicht löschen. Jede hat einen Namen, der nicht leer ist 
 lässt; zwei Kampagnen dürfen gleich heißen. Gespielt wird immer in genau einer, der **offenen
 Kampagne**. Welche das ist, merkt sich das Gerät über einen Neustart hinweg; zum Spielstand gehört
 das nicht. Wechselt man die Kampagne, sind offene Karte, Probe und Angriff in Vorbereitung weg. Eine neue
-Kampagne beginnt leer: ohne Charaktere (also ohne Charakter oben), ohne Log, ohne Hexfelder, mit der Stufe Mittel. Eine Kampagne löschen
+Kampagne beginnt leer: ohne Charaktere (also ohne Charakter oben), ohne Log, ohne Hexfelder. Eine Kampagne löschen
 löscht alles, was an ihr hängt, endgültig.
 
 ## Kampagnendatei
 
 Eine Kampagne lässt sich als Datei exportieren und wieder importieren. Die
-Datei enthält alles, was an der Kampagne hängt (Name, Stufe, Charakter oben, Charaktere mit ausgeblendeten, Log,
+Datei enthält alles, was an der Kampagne hängt (Name, Charakter oben, Charaktere mit ausgeblendeten, Log,
 Hexfelder), aber keine Entwürfe und keine Referenzdaten: Verweise bleiben Ids. Beim Import wird die Datei
 gegen die Regeln dieses Modells geprüft, auch jeder Verweis in die Referenzdaten und auf die
 eigenen Charaktere; ist etwas falsch, wird nichts importiert. Ein Import legt immer eine neue

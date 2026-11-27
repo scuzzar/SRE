@@ -3,6 +3,7 @@ import {
   activeCharacters,
   addCharacter,
   appendLog,
+  renameCampaign,
   characterOf,
   createCampaign,
   focusOf,
@@ -12,7 +13,6 @@ import {
   restoreCharacter,
   retiredCharacters,
   setFocus,
-  setOdds,
   updateCharacter,
   type Campaign,
   type CharacterInput,
@@ -35,19 +35,14 @@ function taskFor(id: string, uses?: string): TaskResult {
 }
 
 describe('Kampagne', () => {
-  it('beginnt mit Stufe Mittel, leerem Log und den Beispielcharakteren', () => {
+  it('beginnt ohne gemerkte Stufe, mit leerem Log und den Beispielcharakteren', () => {
     const campaign = createCampaign();
-    expect(campaign.odds).toBe('medium');
+    expect('odds' in campaign).toBe(false);
     expect(campaign.log).toEqual([]);
     expect(campaign.characters.map((c) => [c.id, c.name])).toEqual([
       ['c1', 'Kira Vant'],
       ['c2', 'Jonas Reyl'],
     ]);
-  });
-
-  it('merkt sich die gewählte Stufe', () => {
-    expect(setOdds(createCampaign(), 'low').odds).toBe('low');
-    expect(() => setOdds(createCampaign(), 'sure')).toThrow();
   });
 
   it('hängt Logeinträge nur an', () => {
@@ -166,7 +161,7 @@ describe('Charakter oben', () => {
   });
 
   it('bleibt bei anderen Änderungen der Kampagne erhalten', () => {
-    const campaign = setOdds(setFocus(three(), 'c2'), 'high');
+    const campaign = renameCampaign(setFocus(three(), 'c2'), 'Andere');
     expect(campaign.focus).toBe('c2');
     expect(keepFocus(campaign, campaign)).toBe(campaign);
   });

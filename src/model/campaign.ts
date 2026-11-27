@@ -15,7 +15,7 @@ import { START_DAY } from './time';
 import { unseat, type Ship } from './ship';
 import type { SystemFlight } from './flight';
 import type { Mission } from './mission';
-import { defaultOdds, HANDS, itemOf, itemOfWeapon, oddsOf, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
+import { HANDS, itemOf, itemOfWeapon, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
 import type { Market } from './trade';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
@@ -116,7 +116,6 @@ export interface Campaign {
   readonly name: string;
   readonly characters: readonly Character[];
   /** Die eine gewählte Stufe für Orakel und Proben. */
-  readonly odds: string;
   /** In der Reihenfolge der Ereignisse. */
   readonly log: readonly LogEntry[];
   /** Die Charaktererschaffung, die gerade läuft; höchstens eine. */
@@ -195,7 +194,7 @@ export function createCampaign(
   id: CampaignId = 'k1',
   stamp: Stamp = { key: `key-${id}`, changedAt: EPOCH },
 ): Campaign {
-  let campaign: Campaign = { id, key: stamp.key, changedAt: stamp.changedAt, name: validName(name), characters: [], odds: defaultOdds.id, log: [], hexes: [], bookings: [], ships: [], encounters: [], stash: [], day: START_DAY, missions: [] };
+  let campaign: Campaign = { id, key: stamp.key, changedAt: stamp.changedAt, name: validName(name), characters: [], log: [], hexes: [], bookings: [], ships: [], encounters: [], stash: [], day: START_DAY, missions: [] };
   for (const { primary, wears, ...example } of examples) campaign = addCharacter(campaign, { ...example, ...(primary === undefined ? {} : { primary }), ...(wears === undefined ? {} : { wears }) }).campaign;
   // Bei mehreren Beispielen steht der erste oben, nicht der zuletzt angelegte.
   return withFocus(campaign, livingCharacters(campaign)[0]?.id);
@@ -253,10 +252,6 @@ export function validName(name: string): string {
 
 export function renameCampaign(campaign: Campaign, name: string): Campaign {
   return { ...campaign, name: validName(name) };
-}
-
-export function setOdds(campaign: Campaign, oddsId: string): Campaign {
-  return { ...campaign, odds: oddsOf(oddsId).id };
 }
 
 export function appendLog(campaign: Campaign, ...entries: readonly LogEntry[]): Campaign {

@@ -315,7 +315,10 @@ export interface Snapshot {
   /** Was nach einer Eingabe nicht ging, als Meldung zum Wegklicken; sonst `undefined`. */
   readonly notice: string | undefined;
   readonly screen: Screen;
-  readonly odds: readonly OddsChoice[];
+  /** Ob die Detailseite Probe offen ist (2026-11-27): alle Charaktere, darunter 2W6 und die drei Stufen. */
+  readonly taskPage: boolean;
+  /** Die drei Schwierigkeiten (Leicht, Mittel, Schwer) mit Zielwert für die Knöpfe der Detailseite Probe, auch bevor eine Probe beginnt. */
+  readonly difficulties: readonly DifficultyView[];
   /** In der Reihenfolge der Ereignisse; dass das Neueste unten steht, ist Sache der Anzeige. */
   readonly log: readonly LogItem[];
   /** Je Logeintrag das Datum seines Spieltags („Montag, 002-1105“); fehlt bei Einträgen von vor der Spielzeit. */
@@ -572,14 +575,6 @@ export interface CampaignSheetView {
   readonly error: string | undefined;
   /** Die letzte Kampagne lässt sich nicht löschen. */
   readonly canDelete: boolean;
-}
-
-export interface OddsChoice {
-  readonly id: string;
-  readonly name: string;
-  readonly chance: number;
-  readonly target: number;
-  readonly selected: boolean;
 }
 
 export type LogItem = DiceItem | CardItem | TaskItem | AttackItem | DamageItem | RecoveryItem | PatronItem | RumorItem | EventItem | SaveItem | ButcheringItem | CheckItem | TimeItem | MonthEndItem | JourneyItem | SystemJourneyItem | SkimmingItem | SpaceBattleItem | SpaceAttackItem | SpaceBattleEndItem | TripDayItem | TradeLogItem | NoteItem;
@@ -1415,10 +1410,26 @@ export interface TaskView {
   /** Ist eine Fertigkeit gewählt, gibt es etwas zu würfeln. */
   readonly ready: boolean;
   readonly dm: number;
+  /** Je Schwierigkeit (Leicht, Mittel, Schwer) Zielwert, nötiger Wurf und Chance; gewählt wird beim Würfeln. */
+  readonly steps: readonly TaskStepView[];
+  readonly parts: readonly DmPart[];
+}
+
+export interface DifficultyView {
+  /** Die Stufe (`Odds.id`), mit der der Knopf würfelt. */
+  readonly odds: string;
+  /** Leicht, Mittel, Schwer (`Odds.difficulty`). */
+  readonly name: string;
+  readonly target: number;
+}
+
+export interface TaskStepView {
+  /** Die Stufe (`Odds.id`), mit der der Knopf würfelt. */
+  readonly odds: string;
+  readonly name: string;
   readonly target: number;
   readonly need: number;
   readonly chance: number;
-  readonly parts: readonly DmPart[];
 }
 
 export interface EditorView {
@@ -1522,6 +1533,8 @@ export interface ControllerState {
   /** Die offene Namenswahl. */
   readonly names: NameChoices | undefined;
   readonly task: Task | undefined;
+  /** Ob die Detailseite Probe offen ist; reine Darstellung wie der Bereich, nicht gespeichert. */
+  readonly taskPage: boolean;
   /** Der Angriff in Vorbereitung, für den Charakter oben. */
   readonly attack: Attack | undefined;
   /** Was im Shop zuletzt nicht ging. */
@@ -2853,9 +2866,11 @@ function characterView(campaign: Campaign, character: Character, state: Controll
 
 function taskView(campaign: Campaign, task: Task): TaskView {
   const character = focusOf(campaign)!;
-  return { character: character.name, ready: hasSkill(task), ...evaluateTask(task, campaign), parts: dmParts(campaign, character, task.uses, task.unskilled, task.counts) };
+  const { dm, steps } = evaluateTask(task, campaign);
+  return { character: character.name, ready: hasSkill(task), dm, steps: steps.map((s) => ({ ...s, name: oddsOf(s.odds).difficulty })), parts: dmParts(campaign, character, task.uses, task.unskilled, task.counts) };
 }
 
+const difficulties: readonly DifficultyView[] = ref.odds.map((o) => ({ odds: o.id, name: o.difficulty, target: o.target }));
 const skills: readonly SkillChoice[] = ref.skills.map((s) => ({ ...s, leveled: shownLevel({ of: s.id, level: 0 }) !== undefined }));
 const items: readonly ItemChoice[] = ref.items.map((i) => ({ id: i.id, label: itemLabel(i), kind: i.kind, once: i.once, weapon: i.weapon, armor: i.armor !== undefined }));
 
@@ -2878,9 +2893,9 @@ function pickingView(state: ControllerState, campaign: Campaign): { readonly tit
 
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
-  const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, skills, items };
+  const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, difficulties, skills, items };
   if (!campaign) {
-    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, odds: [], log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcRun: undefined,
+    return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, taskPage: false, log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcRun: undefined,
     npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, termsGoal: [], placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, trade: undefined, hold: undefined, settlement: undefined, marketBlocker: undefined, orders: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, landing: undefined, shipCheck: undefined, shipEncounter: undefined, space: undefined, spaceVolley: undefined, globeFocus: undefined, selected: undefined, picking: undefined };
   }
   const editing = state.editor?.id === undefined ? undefined : characterOf(campaign, state.editor.id);
@@ -2892,7 +2907,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     campaign: { id: campaign.id, name: campaign.name },
     campaigns: byName(state.campaigns).map((c) => ({ id: c.id, name: c.name, open: c.id === campaign.id, characters: livingCharacters(c).length, entries: c.log.length })),
     campaignSheet: state.campaignSheet && { error: state.campaignSheet.error, canDelete: state.campaigns.length > 1 },
-    odds: ref.odds.map((o) => ({ id: o.id, name: o.name, chance: o.chance, target: o.target, selected: o.id === campaign.odds })),
+    taskPage: state.taskPage,
     log,
     logDays: campaign.log.map((e) => (e.day === undefined ? undefined : dateLabel(e.day))),
     time: timeView(campaign, state.timeNote, animalsPossible(campaign)),

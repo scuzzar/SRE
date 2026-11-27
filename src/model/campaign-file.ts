@@ -509,7 +509,8 @@ const CampaignFileSchema = z.object({
     /** Schlüssel und Änderungszeit, für den Abgleich; fehlen in Dateien von vorher. Ein Import vergibt sie neu. */
     key: z.string().trim().min(1).optional(),
     changedAt: at.optional(),
-    odds: z.string(),
+    /** Die gewählte Stufe von vor 2026-11-27; wird übergangen. */
+    odds: z.string().optional(),
     characters: z.array(CharacterSchema),
     log: z.array(LogEntrySchema),
     generation: z.object({ career: CareerSchema }).optional(),
@@ -595,8 +596,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight, voyage, markets } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, odds, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight, voyage, markets } }, null, 2);
+  const { key, changedAt, name, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight, voyage, markets } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight, voyage, markets } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -644,7 +645,6 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       id,
       ...stampOf(file),
       name: validName(file.name),
-      odds: oddsOf(file.odds).id,
       characters,
       log: file.log.map(logEntry),
       hexes: file.hexes.map(hexOf),

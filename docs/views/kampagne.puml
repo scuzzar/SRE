@@ -132,7 +132,6 @@ hide <<browser>> stereotype
   class Terrain <<reference>> $begegnung
 
 ' Referenzdaten
-  class Odds <<reference>> $karte
   class Place <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
   class Trip $logistik
@@ -140,7 +139,6 @@ hide <<browser>> stereotype
 
 ' Kampagne
 Campaign "1" *-- "*" Character : characters
-Campaign "*" --> "1" Odds : odds
 Campaign "0..1" --> "0..1" Character : focus
 Campaign "1" *-- "*" LogEntry : log {ordered}
 Campaign "1" *-- "0..1" Place : location
