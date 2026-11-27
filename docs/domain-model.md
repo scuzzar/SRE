@@ -598,6 +598,11 @@ Diagramm mit diesen Ausnahmen:
   (`SystemFlight.party`, 2026-11-21b) aus, und fremde Schiffe zielen auf sie; andere eigene Einheiten
   (ein Mutterschiff ohne Gruppe) nehmen am Raumkampf nicht teil. Ein fremdes Schiff bekommt beim Auftauchen eine Spur so lang wie die Raumrunden
   (lauter Punkte an seinem Startort), damit sie zur Raumrunde passt.
+- **Raumkampf, Stufe 2b** (2026-11-22d) ist zum Teil gebaut: Schiffspositionen (`model/crew.ts`) und
+  Programme mit Ausweichen und Rückfeuer (`model/software.ts`, `model/space-combat.ts`) wirken.
+  Noch nicht im Code: der **Antriebsbuchstabe** mit **`DrivePotential`** (ein Treffer auf Maneuver,
+  Jump oder Power Plant zählt weiter −1 G bzw. −1 Sprung wie in Stufe 2) und die
+  **Schadenskontrolle** (`DamageControl`, `ShipDamage.patched`).
 - **Bewaffnung der Small Craft** (2026-11-22) ist gebaut (`model/armament.ts`, `model/space-combat.ts`,
   Referenzdaten in `src/data/ships.json`), auf Wunsch des Owners schon vor der Freigabe des Bilds.
 - **Bewaffnung** (2026-11-21g) ist gebaut (`model/armament.ts`, Referenzdaten in
