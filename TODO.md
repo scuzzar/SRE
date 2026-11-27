@@ -3,7 +3,14 @@
 Was als Nächstes ansteht, der Reihe nach. Erledigtes fliegt raus (der Verlauf steht in Git). Wie
 immer gilt: Was das Modell berührt, geht zuerst ins Domänenmodell und wird freigegeben, dann in den
 Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/`](docs/) (`regeln-kampf.md`, `regeln-laufbahnen.md`,
-`regeln-schiffe.md`, `regeln-sternsystem.md`).
+`regeln-schiffe.md`, `regeln-handel.md`, `regeln-sternsystem.md`).
+
+## Handel
+
+- [ ] **Handel umsetzen** nach [`docs/regeln-handel.md`](docs/regeln-handel.md): erst die zehn
+  *Offenen Fragen zur Auslegung* mit dem Owner klären, dann ins Domänenmodell (Laderaum mit
+  Ladungen, Passagiere an Bord, angekündigtes Ziel, Warenwurf je Woche, Makler); Reisezonen
+  (Amber, Red) fehlen der App noch und werden für Fracht und Passagiere gebraucht.
 
 ## Kampf
 
