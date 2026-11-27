@@ -59,7 +59,9 @@ test('Markt: Warenkarten mit den Handelscodes der Welt; Antippen würfelt Menge 
   await expect(dock).toHaveCount(0);
   // Der Kaufpreis steht im Log.
   await page.getByRole('button', { name: /^Markt · Kessra schließen/ }).click();
-  await openOracle(page);
+  // Im Desktop-Modus steht das Log schon in der Seitenspalte.
+  const log = page.getByRole('navigation', { name: 'Bereiche' }).getByRole('button', { name: 'Log', exact: true });
+  if (await log.count()) await openOracle(page);
   await expect(page.getByText(/^Kaufpreis /).first()).toBeVisible();
 });
 
@@ -80,7 +82,10 @@ test('Aufträge: Fracht annehmen, springen, landen – die Abrechnung kommt nach
   await expect(accept).toBeDisabled();
   await lots.first().click();
   await lots.nth(1).click();
-  await lots.last().click();
+  // Das kleinste Los passt in die 11 t der Yacht.
+  const names = await page.getByRole('checkbox').evaluateAll((boxes) => boxes.map((b) => b.closest('label')?.textContent ?? ''));
+  const tons = names.map((n) => Number(/(\d+) t/.exec(n)?.[1] ?? 999));
+  await lots.nth(tons.indexOf(Math.min(...tons))).click();
   await expect(accept).toHaveText(/Annehmen 1/);
   await accept.click();
   // Zurück an der Welt; die Fracht steht im Laderaum.
