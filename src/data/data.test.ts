@@ -11,6 +11,20 @@ describe('Referenzdaten', () => {
     ]);
   });
 
+  it('geben den Standardentwürfen Antriebsbuchstaben, deren Drive Potential genau ihre Sprungzahl und G ergibt (SE 10, 2026-11-22d)', () => {
+    const rating = (hull: number, letter: string) => {
+      const row = [...new Set(referenceData.drivePotential.map((p) => p.hull))].sort((a, b) => a - b).find((h) => h >= hull);
+      return referenceData.drivePotential.find((p) => p.hull === row && p.letter === letter)?.rating ?? 0;
+    };
+    const lettered = referenceData.ships.filter((s) => s.jumpDrive !== undefined);
+    expect(lettered.map((s) => s.id)).toEqual(['S', 'A', 'R', 'M', 'Y', 'C', 'T', 'L', 'K']);
+    for (const s of lettered) {
+      const plant = rating(s.hull, s.powerPlant!);
+      expect([Math.min(rating(s.hull, s.jumpDrive!), plant), Math.min(rating(s.hull, s.maneuverDrive!), plant)]).toEqual([s.jump, s.maneuver]);
+    }
+    expect(referenceData.ships.filter((s) => s.kind === 'smallCraft').every((s) => s.maneuverDrive === undefined)).toBe(true);
+  });
+
   it('haben die Bereiche der GMA2e-Karte in Kartenreihenfolge, dann die Themen-Tafeln', () => {
     expect(referenceData.sections.map((s) => `${s.kind}:${s.name}`)).toEqual([
       'card:Zufallsereignis',

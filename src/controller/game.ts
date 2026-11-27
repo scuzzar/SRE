@@ -102,6 +102,7 @@ import {
   placeFoe,
   endFirePhase,
   fireHardpoint,
+  controlDamage,
   repairShip,
   type Intent,
   installWeapon,
@@ -3099,6 +3100,21 @@ export class GameController {
       const shot = fireHardpoint(this.campaign, ship, target, turret, this.deps.random, this.deps.clock);
       const lost = shot.lost ? { notice: `${shipById(this.campaign, activeFlight(this.campaign).party).name} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` } : {};
       this.change(shot.campaign, { space: without(space, 'run'), volley: { from: before, delay: 0 }, ...lost });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ notice: error.message });
+    }
+  }
+
+  /**
+   * Der Engineer des eigenen Schiffs `ship` flickt den Treffer `hit` – ein Tipp im Blatt (SR 42,
+   * 2026-11-22d); der Wurf rollt im Vordergrund.
+   */
+  controlDamage(ship: number, hit: number): void {
+    const space = this.openSpaceState();
+    const before = this.campaign.log.length;
+    try {
+      this.change(controlDamage(this.campaign, ship, hit, this.deps.random, this.deps.clock), { space: without(space, 'run'), volley: { from: before, delay: 0 } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       this.update({ notice: error.message });

@@ -26,6 +26,14 @@ import {
   fireBlocker,
   dmPartsOf,
   firePreview,
+  controlDamage,
+  damageControlBlocker,
+  driveLettersAfter,
+  engineerOf,
+  patchableHits,
+  postsOf,
+  seat,
+  turretsDown,
   startFlight,
   toCampaignFile,
   type Campaign,
@@ -129,7 +137,8 @@ describe('Raumkampf: ein fremdes Schiff (2026-11-21h)', () => {
   });
 
   it('Schaden senkt Antrieb und Sprung; zu viel Schaden springt nicht', () => {
-    expect(maneuverAfter('S', { hits: ['maneuver'], turretsOut: [] })).toBe(1);
+    // Der Scout hat A-Antriebe: ein Treffer, und der Buchstabe fällt unter A (2026-11-22d).
+    expect(maneuverAfter('S', { hits: ['maneuver'], turretsOut: [] })).toBe(0);
     expect(maneuverAfter('S', { hits: ['maneuver', 'powerPlant', 'maneuver'], turretsOut: [] })).toBe(0);
     expect(maneuverAfter('S', { hits: ['crew'], turretsOut: [] })).toBe(0);
     expect(jumpAfter('S', { hits: ['criticalJump'], turretsOut: [] })).toBe(0);
@@ -208,6 +217,11 @@ describe('Das Raumkampf-Interface: Phasen, Hardpoints und Programme (2026-11-23)
     expect(end.campaign.flight!.phase).toBe('thrust');
   });
 
+  it('ein Stand in der Feuerphase übersteht die Kampagnendatei (die Spur ist dann eine Runde länger)', () => {
+    const moved = runRound(withFoe('ignore'), clock, always(2)).campaign;
+    expect(fromCampaignFile(toCampaignFile(moved), 'x').flight).toMatchObject({ round: 1, phase: 'fire' });
+  });
+
   it('keine zweite Bewegung in der Feuerphase und kein „End Turn“ vor der Bewegung', () => {
     expect(() => endFirePhase(withFoe(), clock, always(2))).toThrow('Erst die Bewegung');
     const moved = runRound(withFoe(), clock, always(2)).campaign;
@@ -274,5 +288,85 @@ describe('Das Raumkampf-Interface: Phasen, Hardpoints und Programme (2026-11-23)
     const first = fireHardpoint(c, 0, 1, 0, always(2), clock).campaign;
     const end = endFirePhase(runRound(first, clock, always(2)).campaign, clock, always(2)).campaign;
     expect(shots(end).some((e) => e.kind === 'spaceAttack' && e.attacker === end.ships[0]!.name && e.returnFire === true)).toBe(false);
+  });
+});
+
+describe('Antriebsbuchstaben und Schadenskontrolle (Stufe 2b, 2026-11-22d)', () => {
+  it('ein Treffer senkt den Buchstaben; die Leistung kommt aus dem Drive Potential, Power Plant begrenzt beide', () => {
+    // Patrol Cruiser: 400 t, Jump F, Maneuver H, Power Plant H → Sprung 3, 4 G.
+    const none = { hits: [], turretsOut: [] };
+    expect([jumpAfter('T', none), maneuverAfter('T', none)]).toEqual([3, 4]);
+    expect(maneuverAfter('T', { hits: ['maneuver'], turretsOut: [] })).toBe(3); // H → G: 3 G
+    expect(driveLettersAfter('T', { hits: ['maneuver'], turretsOut: [] })).toEqual({ jump: 'F', maneuver: 'G', powerPlant: 'H' });
+    // Drei Treffer aufs Power Plant: H → E, Leistung 2; Antrieb und Sprung höchstens 2.
+    const plant = { hits: ['powerPlant', 'powerPlant', 'powerPlant'] as const, turretsOut: [] };
+    expect([jumpAfter('T', { ...plant, hits: [...plant.hits] }), maneuverAfter('T', { ...plant, hits: [...plant.hits] })]).toEqual([2, 2]);
+    // Subsidized Liner: 600 t, Jump J → H: Sprung 2 statt 3.
+    expect(jumpAfter('M', { hits: ['jump'], turretsOut: [] })).toBe(2);
+    // Kritisch: 0, der Buchstabe ist weg.
+    expect(driveLettersAfter('T', { hits: ['criticalJump'], turretsOut: [] })?.jump).toBe('–');
+    // Ohne Buchstaben (Corsair, Small Craft) wie in Stufe 2: je Treffer 1 G.
+    expect(maneuverAfter('P', { hits: ['maneuver'], turretsOut: [] })).toBe(2);
+    expect(driveLettersAfter('P', none)).toBeUndefined();
+  });
+
+  it('ein geflickter Treffer wirkt nicht mehr, auch nicht auf Turrets; die Werft berechnet ihn trotzdem', () => {
+    expect(maneuverAfter('T', { hits: ['maneuver'], patched: [0], turretsOut: [] })).toBe(4);
+    // Zwei Turret-Treffer auf Turret 1 und 0; der erste ist geflickt, also ist nur Turret 0 aus.
+    expect(turretsDown({ hits: ['turret', 'hull', 'turret'], patched: [0], turretsOut: [1, 0] })).toEqual([0]);
+    expect(patchableHits({ hits: ['turret', 'hull', 'criticalJump'], patched: [0], turretsOut: [1] })).toEqual([1]);
+    const c = flying();
+    const damaged: Campaign = { ...c, ships: c.ships.map((s) => (s.id === c.flight!.party ? { ...s, damage: { hits: ['maneuver', 'criticalJump'], patched: [0], turretsOut: [] } } : s)) };
+    expect(repairCostOf(damaged, shipById(damaged, c.flight!.party))).toBe(1_100_000);
+  });
+
+  /** Kampf gegen einen Free Trader, der nichts tut; die Yacht hat einen Maneuver-Treffer und einen kritischen. */
+  const battle = (): Campaign => {
+    const c = placeFoe(flying(), 'A', 'ignore', clock);
+    return { ...c, ships: c.ships.map((s) => (s.id === c.flight!.party ? { ...s, damage: { hits: ['maneuver', 'criticalComputer'], turretsOut: [] } } : s)) };
+  };
+  /** Jonas Reyl auf den Posten Engineer, mit Engineering-2 (zwei Posten: zählt 1). */
+  const withEngineer = (c: Campaign): Campaign => {
+    const ship = shipById(c, c.flight!.party);
+    const jonas = c.characters.find((p) => p.name === 'Jonas Reyl')!;
+    const trained = { ...c, characters: c.characters.map((p) => (p.id === jonas.id ? { ...p, skills: [...p.skills, { of: 'engineering', level: 2, retired: false }] } : p)) };
+    return seat(trained, ship.id, postsOf(ship).findIndex((p) => p.post === 'engineer'), jonas.id);
+  };
+
+  it('nur im Raumkampf, nach der Bewegung, mit einem Engineer; kritische Treffer lassen sich nicht flicken', () => {
+    expect(damageControlBlocker(battle(), 0)).toMatch(/Bewegung/);
+    const moved = runRound(battle(), clock, always(2)).campaign;
+    expect(damageControlBlocker(moved, 0)).toMatch(/keinen Engineer/);
+    const ready = withEngineer(moved);
+    expect(engineerOf(ready, shipById(ready, ready.flight!.party))).toMatchObject({ skill: 1 });
+    expect(damageControlBlocker(ready, 0, 0)).toBeUndefined();
+    expect(damageControlBlocker(ready, 0, 1)).toMatch(/kritisch/);
+    expect(damageControlBlocker(ready, 1)).toMatch(/fremdes Schiff/);
+  });
+
+  it('9+ auf 2W6 + Engineering flickt; einmal je Raumrunde, in der nächsten wieder', () => {
+    const ready = withEngineer(runRound(battle(), clock, always(2)).campaign);
+    const own = ready.flight!.party;
+    const failed = controlDamage(ready, 0, 0, always(3), clock); // 3 + 3 + 1 = 7
+    expect(failed.log.at(-1)).toMatchObject({ kind: 'damageControl', round: 1, zone: 'maneuver', dice: [3, 3], dm: 1, by: ready.characters.find((p) => p.name === 'Jonas Reyl')!.id });
+    expect(shipById(failed, own).damage!.patched).toBeUndefined();
+    expect(damageControlBlocker(failed, 0, 0)).toMatch(/schon geflickt/);
+    const later = runRound(endFirePhase(failed, clock, always(2)).campaign, clock, always(2)).campaign;
+    const patched = controlDamage(later, 0, 0, always(4), clock); // 4 + 4 + 1 = 9
+    expect(shipById(patched, own).damage!.patched).toEqual([0]);
+    expect(maxGOf(patched, patched.flight!.units[0]!)).toBe(1);
+    // Übersteht die Kampagnendatei: geflickt am Schiff, der Logeintrag.
+    const loaded = fromCampaignFile(toCampaignFile(patched), 'x');
+    expect(shipById(loaded, own).damage!.patched).toEqual([0]);
+    expect(loaded.log.at(-1)).toMatchObject({ kind: 'damageControl', zone: 'maneuver' });
+  });
+
+  it('ein fremdes Schiff flickt am Ende der Raumrunde von selbst, zuerst den Antrieb, mit Engineering 1', () => {
+    const c = placeFoe(flying(), 'T', 'ignore', clock);
+    const hurt: Campaign = { ...c, flight: { ...c.flight!, units: c.flight!.units.map((u, i) => (i === 1 ? { ...u, damage: { hits: ['hull', 'maneuver'], turretsOut: [] } } : u)) } };
+    const end = endFirePhase(runRound(hurt, clock, always(2)).campaign, clock, always(4)).campaign; // 4 + 4 + 1 = 9
+    expect(end.flight!.units[1]!.damage!.patched).toEqual([1]);
+    expect(end.log.filter((e) => e.kind === 'damageControl')).toEqual([expect.objectContaining({ unit: 'Patrol Cruiser', zone: 'maneuver', dm: 1 })]);
+    expect(end.log.at(-1)).toMatchObject({ kind: 'damageControl' });
   });
 });

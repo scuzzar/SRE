@@ -227,6 +227,28 @@ function SpaceBattlePanel({ space }: { space: SpaceView }) {
         )}
       </div>
 
+      {mine.flatMap((ship) =>
+        ship.repair === undefined
+          ? []
+          : [
+              <div key={`repair-${ship.index}`} className="rk-repair">
+                <h4 className="section-title">
+                  Schadenskontrolle · {mine.length > 1 ? `${ship.name} · ` : ''}
+                  {ship.repair.engineer === undefined ? 'kein Engineer' : `${ship.repair.engineer} (Engineering ${ship.repair.skill})`}
+                </h4>
+                <div className="chips rk-hardpoints" role="group" aria-label={`Schadenskontrolle ${ship.name}`}>
+                  {ship.repair.hits.map((h) => (
+                    <button key={h.at} type="button" disabled={ship.repair!.blocker !== undefined} title={ship.repair!.blocker ?? `${h.label} flicken`} onClick={() => game.controlDamage(ship.index, h.at)}>
+                      <span>{h.label}</span>
+                      <span className="rk-hp-need mono">{ship.repair!.need}+</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="combat-hint">{ship.repair.blocker ?? `Einmal je Raumrunde: 2W6 + Engineering, 9+ flickt den Treffer; er wirkt dann nicht mehr, die Werft berechnet ihn trotzdem.`}</p>
+              </div>,
+            ],
+      )}
+
       {target && own.fire.length > 0 && (
         <div className="space-dms">
           <p>

@@ -12,7 +12,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | Skimming | SpaceBattle | SpaceAttack | SpaceBattleEnd | TripDay | GoodsRoll | PriceRoll | Note;
+export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | Skimming | SpaceBattle | SpaceAttack | DamageControl | SpaceBattleEnd | TripDay | GoodsRoll | PriceRoll | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -212,6 +212,21 @@ export interface SpaceAttack extends LogEntryBase {
   /** Der Schuss war ein Rückfeuer (2026-11-23); fehlt heißt nein. */
   readonly returnFire?: boolean;
   readonly hits: readonly HitZone[];
+}
+
+/**
+ * Schadenskontrolle (SR 42, Domänenmodell 2026-11-22d): Der Engineer (`by`) einer Einheit (`unit`,
+ * ihr Name wie bei `SpaceAttack`) versucht in Raumrunde `round`, einen Treffer der Zone `zone` zu
+ * flicken: 2W6 + `dm` (Engineering), 9+ gelingt (`/success`). Ein fremdes Schiff hat keinen `by`.
+ */
+export interface DamageControl extends LogEntryBase {
+  readonly kind: 'damageControl';
+  readonly round: number;
+  readonly unit: string;
+  readonly dice: Dice;
+  readonly dm: number;
+  readonly zone: HitZone;
+  readonly by?: CharacterId;
 }
 
 /** Das Ende eines Raumkampfs (2026-11-21h). */

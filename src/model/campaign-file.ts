@@ -14,7 +14,7 @@ import { checkJourney } from './travel';
 import { checkSystemJourney } from './system-journey';
 import { START_DAY } from './time';
 import { checkOf, encounterChecks } from './encounter-check';
-import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type GoodsRoll, type PriceRoll, type Journey, type SystemJourney, type SpaceBattle, type SpaceAttack, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
+import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type GoodsRoll, type PriceRoll, type Journey, type SystemJourney, type SpaceBattle, type SpaceAttack, type DamageControl, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
 import { checkRecovery } from './wounds';
 import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
 import { armorClasses, computerModelOf, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
@@ -164,6 +164,7 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('skimming'), at, day, place, giant: z.string().min(1), ship: z.string().min(1), tons: z.number().positive() }),
   z.object({ kind: z.literal('spaceBattle'), at, day, place, foe: z.string().min(1), design: z.string().min(1), intent: z.enum(intents), encounter: dice.optional(), reaction: dice.optional(), attack: dice.optional(), occasion: z.enum(['departure', 'arrival']).optional(), jumpTo: z.string().min(1).optional(), travelTo: z.string().min(1).optional() }),
   z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), bands: z.number().int().min(1).optional(), computerHits: z.number().int().min(0).optional(), noComputer: z.boolean().optional(), predict: z.number().int().optional(), gunnery: z.number().int().optional(), evade: z.number().int().optional(), returnFire: z.boolean().optional(), hits: z.array(z.enum(hitZones)).max(4) }),
+  z.object({ kind: z.literal('damageControl'), at, day, place, round: z.number().int().min(1), unit: z.string().min(1), dice, dm: z.number().int(), zone: z.enum(hitZones), by: z.string().min(1).optional() }),
   z.object({ kind: z.literal('spaceBattleEnd'), at, day, place, foe: z.string().min(1), outcome: z.enum(battleOutcomes) }),
   z.object({ kind: z.literal('systemJourney'), at, day, place, from: z.string().min(1), to: z.string().min(1), hours: z.number().int(), travellers: z.array(z.string().min(1)), ship: z.string().min(1).optional(), departureRoll: dice.optional(), arrivalRoll: dice.optional() }),
 ]);
@@ -332,7 +333,7 @@ const TripSchema = z.object({
 /** Ein Vektor in der Ebene (2026-11-18). */
 const VecSchema = z.object({ x: z.number().finite(), y: z.number().finite() });
 /** Schaden aus dem Raumkampf (2026-11-21h). */
-const DamageSchema = z.object({ hits: z.array(z.enum(hitZones)), turretsOut: z.array(z.number().int().min(0)) });
+const DamageSchema = z.object({ hits: z.array(z.enum(hitZones)), patched: z.array(z.number().int().min(0)).optional(), turretsOut: z.array(z.number().int().min(0)) });
 /** Der laufende Systemflug (2026-11-18c). */
 const FlightSchema = z.object({
   world: z.string().min(1),
@@ -794,7 +795,7 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
       ...(u.design === undefined ? {} : { design: u.design }),
       ...(u.name === undefined ? {} : { name: u.name }),
       ...(u.intent === undefined ? {} : { intent: u.intent }),
-      ...(u.damage === undefined ? {} : { damage: { hits: [...u.damage.hits], turretsOut: [...u.damage.turretsOut] } }),
+      ...(u.damage === undefined ? {} : { damage: { hits: [...u.damage.hits], ...(u.damage.patched?.length ? { patched: [...u.damage.patched] } : {}), turretsOut: [...u.damage.turretsOut] } }),
       // Die Hardpoints, die in dieser Raumrunde schon gefeuert haben (2026-11-23). Dateien von vorher
       // kannten nur `fired`; beim Laden darf jede Einheit wieder feuern.
       ...(u.firedTurrets === undefined ? {} : { firedTurrets: [...u.firedTurrets] }),
@@ -896,6 +897,8 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
       return stripped(entry) as SpaceBattle;
     case 'spaceAttack':
       return stripped({ ...entry, hits: [...entry.hits] }) as SpaceAttack;
+    case 'damageControl':
+      return stripped(entry) as DamageControl;
     case 'tripDay':
       return stripped(entry) as TripDay;
     case 'check':

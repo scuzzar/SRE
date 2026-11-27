@@ -9,7 +9,7 @@ import { passTime, START_DAY } from './time';
 import { placeGroup } from './upkeep';
 import { needsLanding, shipArrives, shipDepartureBlocker } from './landing';
 import type { Random } from './ports';
-import { battleRunning, breakOffBattle, checkDamage, foesFire, foesWillFire, planFoe, settleBattle, unitMaxG, type Intent, type ShipDamage } from './space-combat';
+import { battleRunning, breakOffBattle, checkDamage, foesControlDamage, foesFire, foesWillFire, planFoe, settleBattle, unitMaxG, type Intent, type ShipDamage } from './space-combat';
 import { worldPlace } from './place';
 
 // Systemflug (Domänenmodell 2026-11-18c, Stufe 1 des Raumkampfs; Konzept: docs/konzept-raumkampf.md).
@@ -657,6 +657,8 @@ export function endFirePhase(campaign: Campaign, clock: Clock, random: Random): 
   if (phaseOf(activeFlight(campaign)) !== 'fire') throw new DomainError('Erst die Bewegung dieser Raumrunde, dann „End Turn“.');
   let result = campaign;
   if (foesWillFire(result)) result = foesFire(result, random, clock);
+  // Schiffsbetrieb (Phase 6, 2026-11-22d): Die fremden Schiffe versuchen die Schadenskontrolle.
+  result = foesControlDamage(result, random, clock);
   const settled = settleBattle(result, clock);
   if (settled.lost) return { campaign: settled.campaign, frames: [], lost: true };
   const now = activeFlight(settled.campaign);
@@ -914,7 +916,8 @@ export function checkFlight(campaign: Campaign, flight: SystemFlight): void {
     if (unit.ship !== undefined && shipById(campaign, unit.ship).aboard) throw new DomainError('Ein Beiboot an Bord ist keine eigene Einheit.');
     const maxG = maxGOf(campaign, unit);
     if (unit.thrust !== undefined && lengthOf(unit.thrust) > maxG + 1e-6) throw new DomainError('Der Schub einer Einheit ist größer als ihr höchster Schub.');
-    if (unit.track.length !== flight.round - 1) throw new DomainError('Die Spur einer Einheit passt nicht zur Raumrunde.');
+    // In der Feuerphase (2026-11-23) ist die Bewegung der Raumrunde schon gelaufen, die Raumrunde rückt erst mit „End Turn“ weiter.
+    if (unit.track.length !== flight.round - 1 + (phaseOf(flight) === 'fire' ? 1 : 0)) throw new DomainError('Die Spur einer Einheit passt nicht zur Raumrunde.');
   }
   if (flight.departure !== undefined) {
     const { jumpTo, travelTo } = flight.departure;

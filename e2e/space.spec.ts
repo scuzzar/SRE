@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { schwererLauf, openHomeGlobe, openTab, wuerfelgleich } from './layout';
+import { expandTray, schwererLauf, openHomeGlobe, openTab, wuerfelgleich } from './layout';
 
 // Jeder Test lädt die App selbst (2026-11-26): Der letzte von ihnen würfelt fest und muss die
 // Zahlenfolge setzen, bevor die App zum ersten Mal lädt.
@@ -170,4 +170,47 @@ test('Werft und Raumkampf: der Beam Laser der Demo-Yacht, ein fremdes Schiff von
   await page.getByRole('button', { name: 'End Turn' }).click();
   while (await volley.isVisible().catch(() => false)) await volley.click();
   await expect(card).toContainText('Raumrunde 2');
+});
+
+test('Schadenskontrolle: der Engineer flickt im Raumkampf einen Treffer, einmal je Raumrunde (2026-11-22d)', async ({ page }) => {
+  await wuerfelgleich(page, 20261127);
+  await page.goto('/');
+  await openHomeGlobe(page);
+  // Jonas Reyl wird Engineer (er bleibt Gunner; zwei Posten zählen je einen Punkt weniger).
+  await openTab(page, 'Schiff');
+  await expandTray(page);
+  await page.getByRole('tablist', { name: 'Ansichten des Schiffs' }).getByRole('tab', { name: 'Crew', exact: true }).click();
+  await page.getByRole('tabpanel', { name: 'Crew' }).getByRole('button', { name: /Engineer/ }).click();
+  await page.getByRole('region', { name: 'Engineer besetzen' }).getByRole('button', { name: /Jonas Reyl/ }).click();
+  await expect(page.getByRole('tabpanel', { name: 'Crew' }).getByRole('group', { name: 'Engineer' })).toContainText('Jonas Reyl');
+  // Im Desktop-Modus bleibt der Bereich offen; ein zweiter Tipp auf „Schiff“ würde ihn schließen.
+  const start = page.getByRole('button', { name: 'Starten', exact: true });
+  if (!(await start.isVisible())) await openTab(page, 'Schiff');
+  await start.click();
+  const card = page.getByRole('region', { name: 'Systemflug' });
+  await card.getByRole('button', { name: 'Von Hand …' }).click();
+  await card.getByRole('combobox', { name: 'Entwurf des fremden Schiffs' }).selectOption('J');
+  await card.getByRole('combobox', { name: 'Absicht' }).selectOption('attack');
+  await card.getByRole('button', { name: 'Auftauchen lassen' }).click();
+  const volley = page.locator('.space-volley');
+  const repair = page.getByRole('group', { name: /^Schadenskontrolle / });
+  // Raumrunden, bis das fremde Schiff die Yacht getroffen hat.
+  for (let round = 0; round < 12 && !(await repair.isVisible()); round++) {
+    await page.getByRole('button', { name: 'Bewegen' }).click();
+    await expect(card).toContainText('· Feuer');
+    if (await repair.isVisible()) break;
+    await page.getByRole('button', { name: 'End Turn' }).click();
+    while (await volley.isVisible().catch(() => false)) await volley.click();
+  }
+  if (!(await card.getByText('· Feuer').isVisible())) {
+    await page.getByRole('button', { name: 'Bewegen' }).click();
+    await expect(card).toContainText('· Feuer');
+  }
+  const chip = repair.getByRole('button').first();
+  await expect(chip).toBeEnabled();
+  await chip.click();
+  await expect(volley).toContainText('SCHADENSKONTROLLE');
+  while (await volley.isVisible().catch(() => false)) await volley.click();
+  // Einmal je Raumrunde; der Versuch steht im Log.
+  if (await repair.isVisible()) await expect(repair.getByRole('button').first()).toHaveAttribute('title', /schon geflickt/);
 });

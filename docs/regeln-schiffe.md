@@ -63,7 +63,7 @@ dabei.
 | [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ◐ (die acht Entwürfe als Beiboote der Standardentwürfe, aussetzen, andocken, landen und Reise im System, 2026-11-21b;andocken am Knopf „Andocken“ der Knopfreihe mit Hausregel (2026-11-23c: genug Schub, um den Ort des Mutterschiffs in der nächsten Bewegung zu erreichen, und Platz – Liegeplatz des Entwurfs oder freier Laderaum; aus 100 km dockt es sofort an, weiter weg fliegt es mit der nächsten Bewegung heim), 2026-11-23; einzeln zu kaufen als Beiboot im Laderaum oder eigenständig, 2026-11-21c; ab Werft mit Beam Lasern, feuern im Raumkampf, Trefferzonen der Small Craft, 2026-11-22; Fittings, Module, Raketen, Sand, Computer und Charter offen) |
 | [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ◐ (bei Abreise und Ankunft mit eigenem Schiff und von Hand, mit Dialog; ohne Small Craft; 2026-11-21h, 2026-11-22b) |
 | [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ◐ ✱ (Handel, Schritt 1, 2026-11-27; Stand in [`regeln-handel.md`](regeln-handel.md)) |
-| [Raumkampf](#raumkampf) | SR 39–42 | ◐ ✱ (Laserfeuer, Rückfeuer, Trefferzonen, Schaden, ein fremdes Schiff mit Absicht, 2026-11-21h; Schiffspositionen und Programme mit Ausweichen, 2026-11-22d; Flucht per Sprung, 2026-11-22b. Antriebsschaden über den Buchstaben und Schadenskontrolle sind freigegeben (2026-11-22d), aber nicht gebaut; Raketen, Sand, Ortung, Entern ○) |
+| [Raumkampf](#raumkampf) | SR 39–42 | ◐ ✱ (Laserfeuer, Rückfeuer, Trefferzonen, Schaden, ein fremdes Schiff mit Absicht, 2026-11-21h; Schiffspositionen und Programme mit Ausweichen, Antriebsschaden über den Buchstaben, Schadenskontrolle, 2026-11-22d; Flucht per Sprung, 2026-11-22b. Raketen, Sand, Ortung, Entern, Dekompression ○) |
 | [Vektorbewegung (Mayday, Supplement 3)](#vektorbewegung-mayday-supplement-3) | MD, SS3 4–11 | ◐ ✱ (Bewegung mit echter Schwerkraft als Systemflug, 2026-11-18c; Waffen, Raketen, Sand offen) |
 
 ---
@@ -778,11 +778,15 @@ in `modell/raum.md`): Laserfeuer ✔ (8+, Pulse −1, Entfernung über 25 und 50
 Rückfeuer ✔ gleichzeitig nach der Bewegung, ✱ ohne Programme und ohne Schiffspositionen; Trefferzonen
 und kritische Treffer ✔; Schaden ✱ ohne Antriebsbuchstaben (je Treffer −1 G bzw. −1 Sprung,
 kritisch 0); Hull ohne Folgen; Turret-Treffer legt ein zufälliges Turret still; Crew: das Schiff
-handelt nicht mehr; Explode: zerstört. Raketen, Sand, Ortung, Schadenskontrolle, Entern ○. Seit 2026-11-22d wirken
+handelt nicht mehr; Explode: zerstört. Raketen, Sand, Ortung, Entern ○. Seit 2026-11-22d wirken
 Schiffspositionen und Programme (Target, Predict, Gunner Interact, Maneuver/Evade, Auto-Evade,
-Return Fire; `modell/schiffe.md`). Antriebsschaden über den Buchstaben (Drive Potential) und die
-Schadenskontrolle 9+ sind mit 2026-11-22d freigegeben, im Code aber noch nicht: Antriebstreffer
-zählen weiter −1 G bzw. −1 Sprung.
+Return Fire; `modell/schiffe.md`). Antriebsschaden ✔ seit 2026-11-27 über den Buchstaben: jeder
+Treffer senkt Maneuver, Jump oder Power Plant um eine Stufe, die Leistung kommt aus dem Drive
+Potential, das Power Plant begrenzt beide (Corsair und Seeker ohne Buchstaben ✱: je Treffer −1).
+Schadenskontrolle ✔ seit 2026-11-27 (SR 42): einmal je Raumrunde und Schiff in der Feuerphase,
+2W6 + Engineering des Engineers, 9+ flickt einen nicht kritischen Treffer; geflickt wirkt er nicht
+mehr, ✱ die Werft berechnet ihn weiter. ✱ Fremde Schiffe flicken bei „End Turn“ von selbst mit
+Engineering 1, zuerst Maneuver und Power Plant, dann Turret.
 Schiffsbegegnungen im System ✔ als Knopf im Systemflug (SE 13 mit Reaktion nach SE 21), ✔ seit
 2026-11-22b beim Start von der Welt und bei der Ankunft jeder Reise mit eigenem Schiff (Sprung und
 Reise im System) und von Hand im Bereich Begegnung, je mit Dialog (Zielwert, Würfeln, Abbrechen lang

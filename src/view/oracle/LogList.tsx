@@ -1,6 +1,6 @@
 import { Fragment, memo, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { DamageItem, JourneyItem, LogItem, NoteItem, TripDayItem } from '../../controller';
-import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle, tripDayDetail, credits, monthEndDetail, spaceAttackDetail } from '../format';
+import { answerText, attackTitle, checkDetail, clockTime, damageDetail, isYesAnswer, recoveryLine, recoveryText, mapText, partLabel, patronDetail, patronName, rumorDetail, rumorName, eventDetail, saveDetail, butcheringDetail, pickText, quoted, resultLine, scatterText, taskDetail, taskTitle, tripDayDetail, credits, monthEndDetail, spaceAttackDetail, damageControlTitle, damageControlDetail } from '../format';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
 import { FlagIcon, LightbulbIcon, PencilIcon, TrashIcon } from '../icons';
@@ -450,6 +450,7 @@ function kicker(item: LogItem, volley = false): string {
       return 'Handel';
     case 'spaceBattle':
     case 'spaceAttack':
+    case 'damageControl':
     case 'spaceBattleEnd':
       return 'Raumkampf';
     case 'tripDay':
@@ -461,7 +462,7 @@ function kicker(item: LogItem, volley = false): string {
 
 /** Zeit und Reisen haben den Stand geändert; sie lassen sich nicht löschen. */
 function deletable(item: LogItem | undefined): boolean {
-  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey' && item.kind !== 'monthEnd' && item.kind !== 'skimming' && item.kind !== 'trade' && item.kind !== 'spaceBattle' && item.kind !== 'spaceAttack' && item.kind !== 'spaceBattleEnd';
+  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey' && item.kind !== 'monthEnd' && item.kind !== 'skimming' && item.kind !== 'trade' && item.kind !== 'spaceBattle' && item.kind !== 'spaceAttack' && item.kind !== 'damageControl' && item.kind !== 'spaceBattleEnd';
 }
 
 function EntryBody({ item }: { item: LogItem }) {
@@ -686,6 +687,13 @@ function EntryBody({ item }: { item: LogItem }) {
             {item.attacker} → {item.target}: {item.hit ? 'Treffer' : 'daneben'}
           </span>
           <span className="entry-detail">{spaceAttackDetail(item)}</span>
+        </>
+      );
+    case 'damageControl':
+      return (
+        <>
+          <span className={`verdict small${item.success ? '' : ' negative'}`}>{damageControlTitle(item)}</span>
+          <span className="entry-detail">{damageControlDetail(item)}</span>
         </>
       );
     case 'spaceBattleEnd':

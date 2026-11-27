@@ -99,9 +99,6 @@ Die offenen Stufen aus dem Stufenplan in [`docs/konzept-raumkampf.md`](docs/konz
 [`docs/regeln-schiffe.md`](docs/regeln-schiffe.md#raumkampf). Jede Stufe ist eine eigene Änderung
 im Modell.
 
-- [ ] **Stufe 2b, Rest** (freigegeben mit 2026-11-22d, `modell/schiffe.md`): Antriebsschaden über
-  den Buchstaben mit `DrivePotential` (SR 41, heute −1 G bzw. −1 Sprung je Treffer) und die
-  Schadenskontrolle 9+ durch den Engineer (SR 42).
 - [ ] **Stufe 3: Raketen und Sand** (SR 39–42, SE 12–13; MD, SS3): Standardrakete 5G6 als eigene
   Einheit mit Brennschluss, Abfangen auf 2.500 km, Kontakt, Detonation 1W Treffer, Anti-Missile,
   ECM 9+, Nachladen (Gunner feuert in der Runde nicht), Munition in der Werft kaufen; Sandwolke als

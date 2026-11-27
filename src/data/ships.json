@@ -22,7 +22,10 @@
           "type": "double",
           "weapons": []
         }
-      ]
+      ],
+      "jumpDrive": "A",
+      "maneuverDrive": "A",
+      "powerPlant": "A"
     },
     {
       "id": "A",
@@ -40,7 +43,10 @@
       "crew": "4 (Pilot, Engineer, Medic, Steward)",
       "basePrice": 37080000,
       "months": 11,
-      "streamlined": true
+      "streamlined": true,
+      "jumpDrive": "A",
+      "maneuverDrive": "A",
+      "powerPlant": "A"
     },
     {
       "id": "R",
@@ -61,7 +67,10 @@
       "craft": [
         "launch"
       ],
-      "streamlined": true
+      "streamlined": true,
+      "jumpDrive": "C",
+      "maneuverDrive": "C",
+      "powerPlant": "C"
     },
     {
       "id": "M",
@@ -82,7 +91,10 @@
       "craft": [
         "launch"
       ],
-      "streamlined": false
+      "streamlined": false,
+      "jumpDrive": "J",
+      "maneuverDrive": "C",
+      "powerPlant": "J"
     },
     {
       "id": "Y",
@@ -103,7 +115,10 @@
       "craft": [
         "boat"
       ],
-      "streamlined": true
+      "streamlined": true,
+      "jumpDrive": "A",
+      "maneuverDrive": "A",
+      "powerPlant": "A"
     },
     {
       "id": "C",
@@ -159,7 +174,10 @@
           "type": "triple",
           "weapons": []
         }
-      ]
+      ],
+      "jumpDrive": "M",
+      "maneuverDrive": "M",
+      "powerPlant": "M"
     },
     {
       "id": "T",
@@ -195,7 +213,10 @@
             "missile-rack"
           ]
         }
-      ]
+      ],
+      "jumpDrive": "F",
+      "maneuverDrive": "H",
+      "powerPlant": "H"
     },
     {
       "id": "L",
@@ -216,7 +237,10 @@
       "craft": [
         "pinnace"
       ],
-      "streamlined": false
+      "streamlined": false,
+      "jumpDrive": "D",
+      "maneuverDrive": "C",
+      "powerPlant": "F"
     },
     {
       "id": "K",
@@ -243,7 +267,10 @@
           "type": "double",
           "weapons": []
         }
-      ]
+      ],
+      "jumpDrive": "B",
+      "maneuverDrive": "A",
+      "powerPlant": "B"
     },
     {
       "id": "P",
@@ -1076,6 +1103,583 @@
       "price": 300000,
       "effect": "Nachschlagewerk zu Region und Subsektor",
       "writeSkills": "1, keine"
+    }
+  ],
+  "drivePotential": [
+    {
+      "hull": 100,
+      "letter": "A",
+      "rating": 2
+    },
+    {
+      "hull": 100,
+      "letter": "B",
+      "rating": 4
+    },
+    {
+      "hull": 100,
+      "letter": "C",
+      "rating": 6
+    },
+    {
+      "hull": 200,
+      "letter": "A",
+      "rating": 1
+    },
+    {
+      "hull": 200,
+      "letter": "B",
+      "rating": 2
+    },
+    {
+      "hull": 200,
+      "letter": "C",
+      "rating": 3
+    },
+    {
+      "hull": 200,
+      "letter": "D",
+      "rating": 4
+    },
+    {
+      "hull": 200,
+      "letter": "E",
+      "rating": 5
+    },
+    {
+      "hull": 200,
+      "letter": "F",
+      "rating": 6
+    },
+    {
+      "hull": 400,
+      "letter": "B",
+      "rating": 1
+    },
+    {
+      "hull": 400,
+      "letter": "C",
+      "rating": 1
+    },
+    {
+      "hull": 400,
+      "letter": "D",
+      "rating": 2
+    },
+    {
+      "hull": 400,
+      "letter": "E",
+      "rating": 2
+    },
+    {
+      "hull": 400,
+      "letter": "F",
+      "rating": 3
+    },
+    {
+      "hull": 400,
+      "letter": "G",
+      "rating": 3
+    },
+    {
+      "hull": 400,
+      "letter": "H",
+      "rating": 4
+    },
+    {
+      "hull": 400,
+      "letter": "J",
+      "rating": 4
+    },
+    {
+      "hull": 400,
+      "letter": "K",
+      "rating": 5
+    },
+    {
+      "hull": 400,
+      "letter": "L",
+      "rating": 5
+    },
+    {
+      "hull": 400,
+      "letter": "M",
+      "rating": 6
+    },
+    {
+      "hull": 400,
+      "letter": "N",
+      "rating": 6
+    },
+    {
+      "hull": 600,
+      "letter": "C",
+      "rating": 1
+    },
+    {
+      "hull": 600,
+      "letter": "D",
+      "rating": 1
+    },
+    {
+      "hull": 600,
+      "letter": "E",
+      "rating": 1
+    },
+    {
+      "hull": 600,
+      "letter": "F",
+      "rating": 2
+    },
+    {
+      "hull": 600,
+      "letter": "G",
+      "rating": 2
+    },
+    {
+      "hull": 600,
+      "letter": "H",
+      "rating": 2
+    },
+    {
+      "hull": 600,
+      "letter": "J",
+      "rating": 3
+    },
+    {
+      "hull": 600,
+      "letter": "K",
+      "rating": 3
+    },
+    {
+      "hull": 600,
+      "letter": "L",
+      "rating": 3
+    },
+    {
+      "hull": 600,
+      "letter": "M",
+      "rating": 4
+    },
+    {
+      "hull": 600,
+      "letter": "N",
+      "rating": 4
+    },
+    {
+      "hull": 600,
+      "letter": "P",
+      "rating": 4
+    },
+    {
+      "hull": 600,
+      "letter": "Q",
+      "rating": 5
+    },
+    {
+      "hull": 600,
+      "letter": "R",
+      "rating": 5
+    },
+    {
+      "hull": 600,
+      "letter": "S",
+      "rating": 5
+    },
+    {
+      "hull": 600,
+      "letter": "T",
+      "rating": 6
+    },
+    {
+      "hull": 600,
+      "letter": "U",
+      "rating": 6
+    },
+    {
+      "hull": 600,
+      "letter": "V",
+      "rating": 6
+    },
+    {
+      "hull": 800,
+      "letter": "D",
+      "rating": 1
+    },
+    {
+      "hull": 800,
+      "letter": "E",
+      "rating": 1
+    },
+    {
+      "hull": 800,
+      "letter": "F",
+      "rating": 1
+    },
+    {
+      "hull": 800,
+      "letter": "G",
+      "rating": 1
+    },
+    {
+      "hull": 800,
+      "letter": "H",
+      "rating": 2
+    },
+    {
+      "hull": 800,
+      "letter": "J",
+      "rating": 2
+    },
+    {
+      "hull": 800,
+      "letter": "K",
+      "rating": 2
+    },
+    {
+      "hull": 800,
+      "letter": "L",
+      "rating": 2
+    },
+    {
+      "hull": 800,
+      "letter": "M",
+      "rating": 3
+    },
+    {
+      "hull": 800,
+      "letter": "N",
+      "rating": 3
+    },
+    {
+      "hull": 800,
+      "letter": "P",
+      "rating": 3
+    },
+    {
+      "hull": 800,
+      "letter": "Q",
+      "rating": 3
+    },
+    {
+      "hull": 800,
+      "letter": "R",
+      "rating": 4
+    },
+    {
+      "hull": 800,
+      "letter": "S",
+      "rating": 4
+    },
+    {
+      "hull": 800,
+      "letter": "T",
+      "rating": 4
+    },
+    {
+      "hull": 800,
+      "letter": "U",
+      "rating": 4
+    },
+    {
+      "hull": 800,
+      "letter": "V",
+      "rating": 5
+    },
+    {
+      "hull": 800,
+      "letter": "W",
+      "rating": 5
+    },
+    {
+      "hull": 800,
+      "letter": "X",
+      "rating": 6
+    },
+    {
+      "hull": 800,
+      "letter": "Y",
+      "rating": 6
+    },
+    {
+      "hull": 800,
+      "letter": "Z",
+      "rating": 6
+    },
+    {
+      "hull": 1000,
+      "letter": "E",
+      "rating": 1
+    },
+    {
+      "hull": 1000,
+      "letter": "F",
+      "rating": 1
+    },
+    {
+      "hull": 1000,
+      "letter": "G",
+      "rating": 1
+    },
+    {
+      "hull": 1000,
+      "letter": "H",
+      "rating": 1
+    },
+    {
+      "hull": 1000,
+      "letter": "J",
+      "rating": 1
+    },
+    {
+      "hull": 1000,
+      "letter": "K",
+      "rating": 2
+    },
+    {
+      "hull": 1000,
+      "letter": "L",
+      "rating": 2
+    },
+    {
+      "hull": 1000,
+      "letter": "M",
+      "rating": 2
+    },
+    {
+      "hull": 1000,
+      "letter": "N",
+      "rating": 2
+    },
+    {
+      "hull": 1000,
+      "letter": "P",
+      "rating": 2
+    },
+    {
+      "hull": 1000,
+      "letter": "Q",
+      "rating": 3
+    },
+    {
+      "hull": 1000,
+      "letter": "R",
+      "rating": 3
+    },
+    {
+      "hull": 1000,
+      "letter": "S",
+      "rating": 3
+    },
+    {
+      "hull": 1000,
+      "letter": "T",
+      "rating": 3
+    },
+    {
+      "hull": 1000,
+      "letter": "U",
+      "rating": 3
+    },
+    {
+      "hull": 1000,
+      "letter": "V",
+      "rating": 4
+    },
+    {
+      "hull": 1000,
+      "letter": "W",
+      "rating": 5
+    },
+    {
+      "hull": 1000,
+      "letter": "X",
+      "rating": 6
+    },
+    {
+      "hull": 1000,
+      "letter": "Y",
+      "rating": 6
+    },
+    {
+      "hull": 1000,
+      "letter": "Z",
+      "rating": 6
+    },
+    {
+      "hull": 2000,
+      "letter": "J",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "K",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "L",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "M",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "N",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "P",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "Q",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "R",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "S",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "T",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "U",
+      "rating": 1
+    },
+    {
+      "hull": 2000,
+      "letter": "V",
+      "rating": 2
+    },
+    {
+      "hull": 2000,
+      "letter": "W",
+      "rating": 2
+    },
+    {
+      "hull": 2000,
+      "letter": "X",
+      "rating": 3
+    },
+    {
+      "hull": 2000,
+      "letter": "Y",
+      "rating": 4
+    },
+    {
+      "hull": 2000,
+      "letter": "Z",
+      "rating": 6
+    },
+    {
+      "hull": 3000,
+      "letter": "Q",
+      "rating": 1
+    },
+    {
+      "hull": 3000,
+      "letter": "R",
+      "rating": 1
+    },
+    {
+      "hull": 3000,
+      "letter": "S",
+      "rating": 1
+    },
+    {
+      "hull": 3000,
+      "letter": "T",
+      "rating": 1
+    },
+    {
+      "hull": 3000,
+      "letter": "U",
+      "rating": 1
+    },
+    {
+      "hull": 3000,
+      "letter": "V",
+      "rating": 1
+    },
+    {
+      "hull": 3000,
+      "letter": "W",
+      "rating": 1
+    },
+    {
+      "hull": 3000,
+      "letter": "X",
+      "rating": 2
+    },
+    {
+      "hull": 3000,
+      "letter": "Y",
+      "rating": 2
+    },
+    {
+      "hull": 3000,
+      "letter": "Z",
+      "rating": 4
+    },
+    {
+      "hull": 4000,
+      "letter": "V",
+      "rating": 1
+    },
+    {
+      "hull": 4000,
+      "letter": "W",
+      "rating": 1
+    },
+    {
+      "hull": 4000,
+      "letter": "X",
+      "rating": 1
+    },
+    {
+      "hull": 4000,
+      "letter": "Y",
+      "rating": 2
+    },
+    {
+      "hull": 4000,
+      "letter": "Z",
+      "rating": 3
+    },
+    {
+      "hull": 5000,
+      "letter": "W",
+      "rating": 1
+    },
+    {
+      "hull": 5000,
+      "letter": "X",
+      "rating": 1
+    },
+    {
+      "hull": 5000,
+      "letter": "Y",
+      "rating": 1
+    },
+    {
+      "hull": 5000,
+      "letter": "Z",
+      "rating": 2
     }
   ]
 }
