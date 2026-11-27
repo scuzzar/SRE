@@ -321,7 +321,8 @@ Voraussetzung: freier Laderaum und freies Kapital.
    erste Würfel ist die Zehnerstelle). Auf den **ersten** Würfel: DM **+1**, wenn die Bevölkerung
    der Welt **9 oder mehr** ist; DM **−1**, wenn sie **5 oder weniger** ist. Ein modifizierter
    erster Würfel unter 1 zählt als 1, über 6 als 6. Das Ergebnis ist die **beste verfügbare
-   Ware** für die Zwecke der Händler. **Einmal je Woche** würfeln.
+   Ware** für die Zwecke der Händler. **Einmal je Woche** würfeln. **In der App** (E14, ✱):
+   je Charakter 1 + Stufe in Admin oder Streetwise Würfe je Welt und Woche.
 2. **Menge:** nach der Spalte *Quantity* würfeln (3D×5 heißt drei Würfel mal 5). Die Partie
    enthält so viel Ware, in **Tonnen** – außer bei 51 bis 56, dort in **Stück** (siehe
    [Waren in Stück](#waren-in-stück)). Es gibt höchstens so viel, wie gewürfelt wurde.
@@ -594,3 +595,4 @@ weil die Quelle nichts dazu sagt; die übrigen sind die Wahl zwischen zwei Lesar
 | E11 | Honorar für private Post | ✱ 1D × Cr20. |
 | E12 | Wer darf einen Postvertrag schließen? | ✱ Jedes Schiff, nicht nur subventionierte; bezahlt wird nur, wenn es beim Abflug bewaffnet ist und ein Gunner auf Posten steht. |
 | E13 | Private Botschaften in der App | 9+ je Woche und Welt; Ziel ein System in Sprungweite, Honorar 1D × Cr20, bezahlt bei Lieferung am Ziel. Welches Crewmitglied angesprochen wird, würfelt die App nicht; die Einführung beim Empfänger bleibt Text. |
+| E14 | Wie oft darf die Ware gewürfelt werden? | ✱ Hausregel statt „einmal je Woche“: Jeder Charakter der Gruppe darf je Welt und Woche 1 + seine Stufe in Admin oder Streetwise würfeln; jeder Wurf ist eine eigene Partie mit eigenem Kaufpreis. |

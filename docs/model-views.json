@@ -733,6 +733,18 @@
       "show": [
         "TradeCode"
       ]
+    },
+    {
+      "id": "2026-11-27b",
+      "file": "2026-11-27b-mehrere-warenwuerfe",
+      "title": "Mehrere Warenwürfe je Markt (Hausregel): jeder Charakter 1 + Stufe in Admin oder Streetwise; ein Markt hat beliebig viele Warenwürfe mit je eigenem Kaufpreis, der Warenwurf weiß, wer gewürfelt hat",
+      "approved": false,
+      "show": [
+        "Market",
+        "GoodsRoll",
+        "PriceRoll",
+        "Character"
+      ]
     }
   ]
 }

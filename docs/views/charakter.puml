@@ -126,6 +126,7 @@ hide <<browser>> stereotype
   class CrewPost $schiffe
 
 ' Handel (Regeln: docs/regeln-handel.md)
+  class GoodsRoll $handel
   class PriceRoll $handel
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
@@ -197,6 +198,7 @@ Booking "*" --> "0..1" Character : for
 CrewPost "*" --> "1" Character : who
 
 ' Handel
+GoodsRoll "*" -$newArrow("2026-11-27b")-> "1" Character : by
 PriceRoll "*" --> "0..1" Character : helper
 
 ' Raumkarte und Systemflug

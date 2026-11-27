@@ -1,0 +1,206 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-27b"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-27b: Mehrere Warenwürfe je Markt (Hausregel): jeder Charakter 1 + Stufe in Admin oder Streetwise; ein Markt hat beliebig viele Warenwürfe mit je eigenem Kaufpreis, der Warenwurf weiß, wer gewürfelt hat
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Character $charakter {
+    name: string
+    background: string
+    equipment: string
+    credits: number
+    note: string
+    dead: boolean
+    retired: boolean
+    npc: boolean
+    role: NpcRole [0..1]
+    /wounds: Wounds
+    /hurt: number [0..1]
+    /state: WoundState
+    /blows: number [0..1]
+  }
+  enum NpcRole <<value>> $charakter
+  class Upp <<value>> $charakter
+  class SkillLevel $charakter
+
+' Schiffe
+
+' Handel (Regeln: docs/regeln-handel.md)
+  class Market $handel {
+    week: number
+    /current: boolean
+  }
+  class GoodsRoll $handel {
+    dice: number[2]
+    dm: number
+    quantityDice: number[*]
+    /quantity: number
+  }
+  class PriceRoll $handel {
+    sale: boolean
+    dice: number[2]
+    tradeDm: number
+    skillDm: number
+    brokerDm: number
+    /percent: number
+    /price: number
+  }
+  class Cargo $handel
+  class MessageOffer <<value>> $handel
+  class FreightOffer <<value>> $handel
+  class PassengerOffer <<value>> $handel
+  class TradeGood <<reference>> $handel
+  class ActualValue <<reference>> $handel
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+
+' Missionen
+
+' Verlauf
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+' Fahrzeuge und Wege auf der Oberfläche
+  ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
+
+' Kampagne
+
+' Schiffe
+
+' Handel
+Market "*" -$goneArrow("2026-11-27b")-> "0..1" GoodsRoll : goods
+Market "*" -$newArrow("2026-11-27b")-> "*" GoodsRoll : goods {ordered}
+Market "*" -$goneArrow("2026-11-27b")-> "0..1" PriceRoll : purchase
+Market "*" -$newArrow("2026-11-27b")-> "*" PriceRoll : purchases
+Market "*" --> "*" PriceRoll : sales
+Market "1" *-- "*" FreightOffer : freight
+Market "1" *-- "*" PassengerOffer : passengers
+Market "1" *-- "0..1" MessageOffer : message
+GoodsRoll "*" --> "1" TradeGood : /goods
+GoodsRoll "*" -$newArrow("2026-11-27b")-> "1" Character : by
+PriceRoll "*" --> "0..1" GoodsRoll : offer
+PriceRoll "*" --> "0..1" Cargo : lot
+PriceRoll "*" --> "0..1" Character : helper
+PriceRoll "*" --> "1" ActualValue : /value
+
+' Raumkarte und Systemflug
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+Character --> NpcRole
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+Character "1" *-- "1" Upp : upp
+Character "1" *-- "*" SkillLevel : skills
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+@enduml

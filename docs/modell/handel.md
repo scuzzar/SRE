@@ -54,16 +54,22 @@ neu gewürfelt.
 1. **Warenwurf** (`GoodsRoll`, Logeintrag): zwei W6 nacheinander (`dice`), DM auf den ersten
    (`dm`: +1 bei Bevölkerung 9+, −1 bei 5−, gespeichert), der erste begrenzt auf 1–6; `/goods`
    folgt aus der Tabelle. Dazu die Würfel der Menge (`quantityDice`), `/quantity` mit `times`.
-   Einmal je Markt (`Market.goods`).
+   **Wie viele Warenwürfe** (Hausregel ✱, Owner, 27. November 2026, Kennzeichen 2026-11-27b; RAW
+   ist einer je Woche): Jeder lebende, nicht ausgeblendete Charakter der Gruppe darf je Markt
+   **1 + Stufe in Admin oder Streetwise** würfeln (die höhere der beiden; Admin-2 heißt drei
+   Würfe, ohne beide Fertigkeiten einer). Der Warenwurf weiß, wer gewürfelt hat (`by`); ein Markt
+   hat so viele Warenwürfe, wie gewürfelt wurden (`Market.goods`). Jeder ist eine eigene Partie mit
+   eigener Menge und eigenem Kaufpreis, auch wenn zweimal dieselbe Ware fällt.
 2. **Kaufpreis** (`PriceRoll`, `sale` = false, Verweis `offer` auf den Warenwurf): 2W6 und die DMs,
    die damals galten, gespeichert: `tradeDm` (Summe der Purchase DMs der Handelscodes der Welt),
    `skillDm` (**minus** Admin oder Bribery des gewählten Charakters `helper`, die höhere der beiden
    Stufen; E1), `brokerDm` = 0 (Makler helfen nur beim Verkauf). `/percent` aus der Actual Value
-   Table, `/price` = Prozent × Grundpreis je Tonne bzw. Stück. Einmal je Markt (`Market.purchase`).
+   Table, `/price` = Prozent × Grundpreis je Tonne bzw. Stück. Einmal je Warenwurf
+   (`Market.purchases`, je Warenwurf höchstens ein Kaufpreis).
 3. **Kaufen** (E3, E5): ganz, teilweise oder gar nicht. Ein Kauf bucht `ship` mit `shipCost` goods
    (Preis × Menge) und, bei einem Teilkauf, eine zweite Buchung `handling` (1 % davon); er legt
    eine **Ladung** an oder vergrößert die gleiche Ware vom selben Markt. Gekauft werden kann
-   höchstens die Menge, abzüglich dessen, was am Markt schon gekauft wurde, und nur so viel, wie
+   höchstens die Menge des Warenwurfs, abzüglich dessen, was davon schon gekauft wurde, und nur so viel, wie
    Laderaum frei ist und die Kasse hergibt. Verzichten kostet nichts.
 
 ### Spekulation: Ware verkaufen

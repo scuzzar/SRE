@@ -1489,8 +1489,10 @@ Booking "*" --> "0..1" Ship : forShip
 ' Handel
 Campaign "1" *-- "0..*" Market : markets
 Market "*" --> "1" World : at
-Market "*" --> "0..1" GoodsRoll : goods
-Market "*" --> "0..1" PriceRoll : purchase
+Market "*" -$goneArrow("2026-11-27b")-> "0..1" GoodsRoll : goods
+Market "*" -$newArrow("2026-11-27b")-> "*" GoodsRoll : goods {ordered}
+Market "*" -$goneArrow("2026-11-27b")-> "0..1" PriceRoll : purchase
+Market "*" -$newArrow("2026-11-27b")-> "*" PriceRoll : purchases
 Market "*" --> "*" PriceRoll : sales
 Market "1" *-- "*" FreightOffer : freight
 Market "1" *-- "*" PassengerOffer : passengers
@@ -1504,6 +1506,7 @@ LogEntry <|-- GoodsRoll
 LogEntry <|-- PriceRoll
 GoodsRoll "*" --> "1" World : at
 GoodsRoll "*" --> "1" TradeGood : /goods
+GoodsRoll "*" -$newArrow("2026-11-27b")-> "1" Character : by
 PriceRoll "*" --> "1" World : at
 PriceRoll "*" --> "0..1" GoodsRoll : offer
 PriceRoll "*" --> "0..1" Cargo : lot

@@ -706,3 +706,10 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > angekündigte Ziel am Schiff, zahlende Passagiere an der Reise, Postvertrag und private Botschaften, Reisezonen am Hex, die Tabellen
 > aus SE 9 und SE 22 als Referenzdaten. Regeln in [`handel.md`](handel.md). Der Ausschnitt dazu
 > liegt unter [`changes/2026-11-27-handel.png`](../changes/2026-11-27-handel.png).
+
+> Wartet auf Freigabe (Kennzeichen **2026-11-27b**): **Mehrere Warenwürfe je Markt** (Hausregel).
+> Statt eines Warenwurfs je Woche (SR 52) darf jeder Charakter der Gruppe je Markt 1 + seine Stufe
+> in Admin oder Streetwise würfeln. `Market.goods` wird eine Liste, `Market.purchase` wird
+> `purchases` (je Warenwurf ein Kaufpreis), und der Warenwurf verweist auf den Charakter, der
+> gewürfelt hat (`by`). Regeln in [`handel.md`](handel.md). Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-27b-mehrere-warenwuerfe.png`](../changes/2026-11-27b-mehrere-warenwuerfe.png).
