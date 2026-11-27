@@ -733,3 +733,16 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > alle Warenwürfe eines Markts würfelt die App beim ersten Blick auf einmal. Regeln in
 > [`handel.md`](handel.md). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-27c-auftraege-zu-mehreren-zielen.png`](../changes/2026-11-27c-auftraege-zu-mehreren-zielen.png).
+
+> Am 27. November 2026 freigegeben (Kennzeichen **2026-11-27d**): **Moral und Flucht** (S. 5, SR 23).
+> Ab **25 % Verlusten** einer Partei würfelt die App **zu Beginn jeder neuen Runde** je Partei
+> **2W6 gegen 7+**, auch für die SC-Seite; bei ihr ist der Wurf nur die Empfehlung „Rückzug
+> empfohlen“, entschieden wird er vom Spieler (Owner). Neu `MoraleRoll` (`dice`, `dm`, `round`) und an
+> der Begegnung `npcMorale`, `pcMorale`, `npcFleeing`, `leaderDown` mit den abgeleiteten `/retreat`
+> und `/npcEscaped`. Eine durchgefallene NSC-Partei **flieht**: Sie kämpft nicht mehr und rückt je
+> neuer Runde **2 Bands** weg, über 20 Bands ist sie **entkommen** (SR 21); die SC können verfolgen
+> und beschießen sie weiter (Owner: Flucht als Zustand, nicht als Sprung). S. 5 begrenzt den DM für
+> den ausgefallenen Anführer auf zwei Kampfrunden, darum hält die App die Fallrunde fest
+> (`leaderDown`, Owner). Für Tiere gilt die Moral nicht; sie fliehen nach ihrem Verhalten. Moral nach
+> Book 4 bleibt offen. Regeln in [`kampf.md`](kampf.md) unter *Moral*. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-27d-moral-und-flucht.png`](../changes/2026-11-27d-moral-und-flucht.png).
