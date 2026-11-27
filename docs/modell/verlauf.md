@@ -713,3 +713,12 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > `purchases` (je Warenwurf ein Kaufpreis), und der Warenwurf verweist auf den Charakter, der
 > gewürfelt hat (`by`). Regeln in [`handel.md`](handel.md). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-27b-mehrere-warenwuerfe.png`](../changes/2026-11-27b-mehrere-warenwuerfe.png).
+
+> Wartet auf Freigabe (Kennzeichen **2026-11-27c**): **Aufträge zu mehreren Zielen.** Mit dem
+> UI-Vorschlag des Owners: Das angekündigte Ziel entfällt (`Ship.destination`). Fracht, Fahrgäste
+> und private Botschaften zu verschiedenen Welten dürfen zugleich an Bord sein, Umwege sind
+> erlaubt, bezahlt wird bei Ankunft am Ziel. Neu sind die Fahrgäste an Bord (`Fare`, `Ship.fares`)
+> und `Journey.low`; private Botschaften gibt es je Ziel statt je Markt. Alle Lose eines Ziels und
+> alle Warenwürfe eines Markts würfelt die App beim ersten Blick auf einmal. Regeln in
+> [`handel.md`](handel.md). Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-27c-auftraege-zu-mehreren-zielen.png`](../changes/2026-11-27c-auftraege-zu-mehreren-zielen.png).

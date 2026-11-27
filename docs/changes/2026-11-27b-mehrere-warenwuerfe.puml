@@ -160,7 +160,8 @@ Market "*" -$newArrow("2026-11-27b")-> "*" PriceRoll : purchases
 Market "*" --> "*" PriceRoll : sales
 Market "1" *-- "*" FreightOffer : freight
 Market "1" *-- "*" PassengerOffer : passengers
-Market "1" *-- "0..1" MessageOffer : message
+Market "1" *-$goneArrow("2026-11-27c")- "0..1" MessageOffer : message
+Market "1" *-$newArrow("2026-11-27c")- "*" MessageOffer : messages
 GoodsRoll "*" --> "1" TradeGood : /goods
 GoodsRoll "*" -$newArrow("2026-11-27b")-> "1" Character : by
 PriceRoll "*" --> "0..1" GoodsRoll : offer

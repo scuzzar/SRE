@@ -325,6 +325,12 @@ hide <<browser>> stereotype
     freight
     message
   }
+  class Fare $handel $newClass("2026-11-27c") {
+    high: number
+    middle: number
+    low: number
+    retired: boolean
+  }
   class MessageOffer <<value>> $handel {
     dice: number[2]
     /available: boolean
@@ -758,6 +764,7 @@ hide <<browser>> stereotype
     days: number
     high: number
     middle: number
+    $new("2026-11-27c", "low: number")
     mail: boolean
     npcDie: number [0..1]
     lot: number [0..1]
@@ -1500,8 +1507,10 @@ FreightOffer "*" --> "1" Hex : to
 FreightOffer "1" *-- "*" FreightLot : lots {ordered}
 FreightLot --> FreightSize
 PassengerOffer "*" --> "1" Hex : to
-Market "1" *-- "0..1" MessageOffer : message
-MessageOffer "*" --> "0..1" Hex : to
+Market "1" *-$goneArrow("2026-11-27c")- "0..1" MessageOffer : message
+Market "1" *-$newArrow("2026-11-27c")- "*" MessageOffer : messages
+MessageOffer "*" -$goneArrow("2026-11-27c")-> "0..1" Hex : to
+MessageOffer "*" -$newArrow("2026-11-27c")-> "1" Hex : to
 LogEntry <|-- GoodsRoll
 LogEntry <|-- PriceRoll
 GoodsRoll "*" --> "1" World : at
@@ -1513,7 +1522,11 @@ PriceRoll "*" --> "0..1" Cargo : lot
 PriceRoll "*" --> "0..1" Character : helper
 PriceRoll "*" --> "1" ActualValue : /value
 Ship "1" *-- "*" Cargo : hold {ordered}
-Ship "*" --> "0..1" Hex : destination
+Ship "*" -$goneArrow("2026-11-27c")-> "0..1" Hex : destination
+Ship "1" *-$newArrow("2026-11-27c")- "*" Fare : fares {ordered}
+Fare "*" -$newArrow("2026-11-27c")-> "1" World : from
+Fare "*" -$newArrow("2026-11-27c")-> "1" Hex : to
+Booking "*" -$newArrow("2026-11-27c")-> "0..1" Fare : forFare
 Cargo --> CargoKind
 Cargo "*" --> "0..1" TradeGood : goods
 Cargo "*" --> "1" World : from

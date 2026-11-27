@@ -745,6 +745,21 @@
         "PriceRoll",
         "Character"
       ]
+    },
+    {
+      "id": "2026-11-27c",
+      "file": "2026-11-27c-auftraege-zu-mehreren-zielen",
+      "title": "Aufträge zu mehreren Zielen: das angekündigte Ziel entfällt; Fracht, Passagiere und Botschaften zu verschiedenen Welten zugleich an Bord, bezahlt bei Ankunft am Ziel; Fahrgäste an Bord (Fare); private Botschaften je Ziel",
+      "approved": false,
+      "show": [
+        "Ship",
+        "Journey",
+        "MessageOffer",
+        "Market",
+        "Cargo",
+        "Booking",
+        "LowBerth"
+      ]
     }
   ]
 }

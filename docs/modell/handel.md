@@ -60,6 +60,9 @@ neu gewürfelt.
    Würfe, ohne beide Fertigkeiten einer). Der Warenwurf weiß, wer gewürfelt hat (`by`); ein Markt
    hat so viele Warenwürfe, wie gewürfelt wurden (`Market.goods`). Jeder ist eine eigene Partie mit
    eigener Menge und eigenem Kaufpreis, auch wenn zweimal dieselbe Ware fällt.
+   **Wann** (Owner, 27. November 2026): Beim ersten Öffnen des Markts in der Woche würfelt die App
+   **alle** Warenwürfe der Gruppe auf einmal, ohne Menge. Die **Menge** würfelt sie erst, wenn der
+   Spieler die Ware antippt (`quantityDice` ist bis dahin leer), danach den Kaufpreis.
 2. **Kaufpreis** (`PriceRoll`, `sale` = false, Verweis `offer` auf den Warenwurf): 2W6 und die DMs,
    die damals galten, gespeichert: `tradeDm` (Summe der Purchase DMs der Handelscodes der Welt),
    `skillDm` (**minus** Admin oder Bribery des gewählten Charakters `helper`, die höhere der beiden
@@ -96,72 +99,77 @@ Stückzahl (`count`, Tonnen = Stück × `tonsPerItem`), bei Ware der bezahlte Pr
 ausgeblendeten Ladungen (und 5 t bei einem Postvertrag); das bisher frei einzugebende Feld `cargo`
 entfällt. Freier Laderaum ist Entwurf minus Beiboote im Laderaum minus `/cargo`.
 - **Über Bord geben**: Jede Ladung lässt sich ausblenden (`retired`), ohne Geld; Fracht mit Ziel
-  ist dann verloren, bezahlt war sie schon.
+  ist dann verloren und bringt kein Geld.
 - **Alte Stände** (Owner, 27. November 2026): Ein frei eingetragener Wert `cargo` über 0 wird beim
   Laden zu einer Ladung `freight` **ohne Ziel** (`to` fehlt) und ohne Geld, mit diesen Tonnen, von
   der Welt, an der das Schiff steht (ohne Ort: die Heimatwelt der Gruppe bzw. die erste Welt; ⚑
   `from` ist Pflicht). Sie bringt nie Geld und bleibt, bis sie über Bord geht.
 
-### Fracht
+### Aufträge zu einem Ziel
 
-1. **Angebot** (`FreightOffer`, je Ziel und Markt): Das Ziel ist jedes System mit Welt in
-   Sprungweite des Schiffs (`ShipDesign.jump`), das der Spieler ansieht; die App würfelt erst
-   dann, nicht für alle auf einmal (das Ergebnis ist dasselbe). Gespeichert: die drei Würfel der
-   Zahlen (`dice`, Haupt-, Neben-, Gelegenheitsladungen) und der DM der Zielwelt (`dm`:
-   Bevölkerung 4− −4, 8+ +1, TL Ursprung − TL Ziel). Red Zone: kein Angebot; Amber Zone: keine
-   Hauptladungen. Je Ladung ein Größenwürfel (`FreightLot.die`), `/tons` = Würfel × 10, 5 bzw. 1.
+*Fracht, Passagiere und private Botschaften; seit 2026-11-27c (Owner, 27. November 2026) zu
+mehreren Zielen zugleich.* Das Schiff nimmt Aufträge zu **verschiedenen Welten** an und muss nicht
+direkt hinfliegen; Umwege sind erlaubt. Ein angekündigtes Ziel gibt es nicht mehr (`Ship.destination`
+entfällt), und Passagiere gibt es auch ohne vorher angenommene Fracht. **Bezahlt wird bei der
+Ankunft am Ziel** (✱ statt beim Abflug, SE 9), dann ist der Auftrag erledigt. Die Angebote gehören
+zum Markt der Welt, an der das Schiff steht (Herkunft), und gelten je Ziel: **Ziel** ist jedes System
+mit Welt in Sprungweite des Schiffs (`ShipDesign.jump`). Beim ersten Blick auf ein Ziel in der
+Woche würfelt die App **alle Lose dieses Ziels auf einmal** (Fracht, Passagiere oder Botschaft, je
+nach Aktion); sie bleiben bis zum Ende der Woche.
+
+#### Fracht
+
+1. **Angebot** (`FreightOffer`, je Ziel und Markt): die drei Würfel der Zahlen (`dice`, Haupt-,
+   Neben-, Gelegenheitsladungen) und der DM der Zielwelt (`dm`: Bevölkerung 4− −4, 8+ +1, TL
+   Ursprung − TL Ziel). Red Zone: kein Angebot; Amber Zone: keine Hauptladungen. Je Ladung ein
+   Größenwürfel (`FreightLot.die`), `/tons` = Würfel × 10, 5 bzw. 1.
 2. **Annehmen**: einzelne Ladungen, nicht teilbar (`taken`); jede wird eine Ladung `freight` mit
-   Ziel. Mit der ersten angenommenen Fracht ist das Ziel **angekündigt** (`Ship.destination`);
-   danach gibt es Fracht und Passagiere nur noch für dieses Ziel, bis es aufgehoben wird (geht nur,
-   solange nichts für das Ziel an Bord ist).
-3. **Bezahlt** wird bei der **Abreise** (SE 9: „Collect income for all aspects of current trip“):
-   Cr1.000 je Tonne Fracht für das Ziel der Reise, Buchung `ship` mit `shipIncome` freight und
-   `forCargo`. **Geliefert** ist sie bei der Ankunft am Ziel: Die Ladung wird ausgeblendet.
-   **Falsches Ziel** (Owner, 27. November 2026): Fliegt das Schiff anderswohin als angekündigt,
-   gibt es kein Geld; die Fracht bleibt an Bord, bis sie ans Ziel kommt, und wird dort ohne weitere
-   Zahlung geliefert. Der Sprung ist nicht gesperrt.
+   Ziel (`Cargo.to`), soweit Laderaum frei ist.
+3. **Bezahlt** wird bei der Ankunft am Ziel: Cr1.000 je Tonne, Buchung `ship` mit `shipIncome`
+   freight und `forCargo`; die Ladung wird ausgeblendet. Wie viele Sprünge es dauert, ist egal.
 
-### Passagiere
+#### Passagiere
 
-1. **Angebot** (`PassengerOffer`, je Ziel und Markt, nur für das angekündigte Ziel – Passagiere
-   melden sich erst, wenn Fracht für das Ziel angenommen ist): die Würfel je Klasse (`highDice`,
+1. **Angebot** (`PassengerOffer`, je Ziel und Markt): die Würfel je Klasse (`highDice`,
    `middleDice`, `lowDice`, abgezogene Würfel mitgezählt) und der DM der Zielwelt (`dm`:
    Bevölkerung 4− −3, 8+ +3, Amber −6, Red −12 und keine Middle und Low, TL Ursprung − TL Ziel),
    auf jede Klasse (E9). `/high`, `/middle`, `/low` sind die Reisewilligen, nicht unter 0.
-2. **Annehmen**: wie viele je Klasse mitfliegen (`high`, `middle`, `low`), höchstens so viele wie
-   Reisewillige, High und Middle zusammen höchstens die Kabinen, die die Gruppe nicht braucht, Low
-   höchstens die Niedrigbetten.
-3. **Abreise**: Die Zahlen gehen an die Reise (`Journey.high`, `Journey.middle`; die
-   Low-Passagiere als Kojen ohne Charakter in `berths`, mit Aufwachwurf 5+, DM +1, wenn ein
-   Medic mit Medic-2 oder besser auf Posten steht, SR 28). Bezahlt wird beim Abflug: Cr10.000, 8.000, 1.000 je Kopf, eine Buchung je
-   Klasse (`shipIncome` passage). Lebenserhaltung: Cr2.000 je High- und Middle-Passagier und Cr100
-   je Low-Passagier, wie für die Gruppe (`shipCost` lifeSupport).
-4. **Low Lottery** an Bord des eigenen Schiffs: Der Kapitän (die Gruppe) zahlt Cr10 je
-   Low-Passagier in den Topf; die NSC tippen wie bisher zufällig; Gewinner nach der Regel in
+2. **Annehmen**: wie viele je Klasse mitfliegen (`high`, `middle`, `low` am Angebot), höchstens so
+   viele wie Reisewillige. Sie kommen als **Fahrgäste** an Bord (`Ship.fares`: je Ziel und Markt
+   ein `Fare` mit den Zahlen je Klasse, Herkunft und Ziel). Alle Fahrgäste an Bord zusammen mit der
+   Gruppe brauchen Platz: High und Middle je eine Kabine (die Gruppe darf zur Not doppelt belegen,
+   Fahrgäste nicht), Low je ein Niedrigbett.
+3. **Unterwegs**: Jede Reise hält fest, wie viele Fahrgäste je Klasse an Bord waren
+   (`Journey.high`, `middle`, `low`); dafür wird die Lebenserhaltung gebucht: Cr2.000 je High- und
+   Middle-Fahrgast und Cr100 je Low-Fahrgast und Sprung (`shipCost` lifeSupport).
+4. **Ankunft am Ziel**: Die Fahrgäste dieses Ziels zahlen (Cr10.000, 8.000, 1.000 je Kopf, eine
+   Buchung je Klasse mit `shipIncome` passage und `forFare`) und steigen aus; der `Fare` wird
+   ausgeblendet. ✱ Ein Umweg kostet sie nichts extra und bringt nicht mehr Geld (RAW gilt ein
+   Ticket für einen Sprung).
+5. **Low-Fahrgäste**: Aufgeweckt werden sie bei der Ankunft an ihrem Ziel; ihre Kojen (ohne
+   Charakter) stehen an der Reise, die dort ankommt (`Journey.berths`), mit Aufwachwurf 5+, DM +1,
+   wenn ein Medic mit Medic-2 oder besser auf Posten steht (SR 28). Wer nicht aufwacht, ist tot und
+   zahlt nicht (✱, da erst bei Ankunft bezahlt wird). **Low Lottery** wie in
    [Low Lottery](reise.md#low-lottery): der nächstliegende Tipp, bei Gleichstand das Los; ist der
-   Gewinner tot, behält der Kapitän den Topf (Owner, 27. November 2026: eine Regel für alle
-   Schiffe, E10). Gebucht wird nur, was wirklich abfließt: Gewinnt ein NSC, zahlt der Kapitän bei
-   der Ankunft den Topf aus (Buchung `ship` mit `shipCost` lottery); behält er ihn, wird nichts
-   gebucht. Reist ein SC in einer der Kojen mit, gewinnt er wie bisher (`lottery` an die Kasse).
-5. **Ankunft**: Die Passagiere steigen aus; Low-Passagiere, die nicht aufwachen, sind tot (keine
-   Erstattung). Steward- und Medic-Pflicht prüft die App in diesem Schritt nicht.
+   Gewinner tot, behält der Kapitän den Topf (E10). Gewinnt ein NSC, zahlt der Kapitän den Topf aus
+   (Buchung `ship` mit `shipCost` lottery); sonst wird nichts gebucht.
+6. Steward- und Medic-Pflicht prüft die App in diesem Schritt nicht.
 
-### Post
+#### Post
 
 - **Postvertrag** (`Ship.mailContract`, E12 ✱): Jedes Schiff darf einen schließen, nicht nur
-  subventionierte (die App bildet Subventionen nicht ab). Abschließen und kündigen geht an jeder
-  Welt mit Raumhafen A bis E. Solange er gilt, sind **5 t Laderaum** fest für die Post reserviert
-  (sie zählen zu `Ship./cargo`, ohne eigene Ladung); abschließen geht nur mit 5 t frei.
-- **Bezahlt** wird je Sprung mit dem eigenen Schiff beim Abflug, **Cr25.000**, unabhängig von der
-  Postmenge und vom Ziel (`Journey.mail`, Buchung `shipIncome` mail) – aber nur, wenn das Schiff
-  beim Abflug **bewaffnet** ist (mindestens eine Turret mit Waffe) und ein **Gunner auf Posten**
-  steht (`CrewPost` gunner). Fehlt eins, fliegt die Post ohne Geld mit, und der Log sagt warum.
-- **Private Botschaft** (`MessageOffer`, je Markt eine, E13): Beim ersten Blick auf den Markt
-  würfelt die App 2W6 (`dice`), `/available` bei **9+**. Dann auch das Ziel (`to`: ein
-  zufälliges System mit Welt in Sprungweite) und das Honorar (`die`, `/fee` = Würfel × Cr20, E11).
-  Angenommen (`taken`) wird sie eine Ladung `message` mit Ziel und Honorar; bezahlt wird erst bei
-  der **Ankunft am Ziel** (Buchung `shipIncome` message), dann ist sie geliefert. Dass der Bote
-  beim Empfänger als verlässlich gilt, steht als Text im Log; einen Patron legt die App nicht an.
+  subventionierte. Abschließen und kündigen geht im Bereich Schiff an jeder Welt mit Raumhafen A
+  bis E. Solange er gilt, sind **5 t Laderaum** fest für die Post reserviert (sie zählen zu
+  `Ship./cargo`, ohne eigene Ladung); abschließen geht nur mit 5 t frei. **Bezahlt** wird je Sprung
+  beim Abflug, **Cr25.000**, unabhängig von Postmenge und Ziel (`Journey.mail`, Buchung
+  `shipIncome` mail) – aber nur, wenn das Schiff dann **bewaffnet** ist (mindestens eine Turret mit
+  Waffe) und ein **Gunner auf Posten** steht. Fehlt eins, fliegt die Post ohne Geld mit, und der
+  Log sagt warum.
+- **Private Botschaft** (`MessageOffer`, je Ziel und Markt, E13, 2026-11-27c): Beim ersten Blick
+  auf ein Ziel würfelt die App 2W6 (`dice`), `/available` bei **9+**, und das Honorar (`die`,
+  `/fee` = Würfel × Cr20, E11). Angenommen (`taken`) wird sie eine Ladung `message` mit Ziel und
+  Honorar (0 t); bezahlt wird bei der **Ankunft am Ziel** (Buchung `shipIncome` message). Dass der
+  Bote beim Empfänger als verlässlich gilt, steht als Text im Log; einen Patron legt die App nicht an.
 
 ### Buchungen
 

@@ -180,7 +180,8 @@ anderswo mit Gewinn zu verkaufen – das ist der [Spekulative Handel](#spekulati
 ### Ablauf
 
 1. **Erst Fracht, dann Passagiere:** Hat das Schiff Fracht für ein bestimmtes Ziel angenommen,
-   melden sich Passagiere für **genau dieses angekündigte Ziel**.
+   melden sich Passagiere für **genau dieses angekündigte Ziel**. **In der App** (E15, ✱): ohne diese
+   Bedingung, Aufträge zu mehreren Zielen zugleich, bezahlt bei Ankunft.
 2. Die Zahl der Reisewilligen je Klasse folgt aus der Passagiertabelle: Zeile nach der
    Bevölkerung der **Ursprungswelt**, DMs nach Bevölkerung und Reisezone der **Zielwelt**.
 3. Die angegebenen Würfel werfen (z. B. 3D−1D: drei Würfel, dann das Ergebnis eines weiteren
@@ -596,3 +597,4 @@ weil die Quelle nichts dazu sagt; die übrigen sind die Wahl zwischen zwei Lesar
 | E12 | Wer darf einen Postvertrag schließen? | ✱ Jedes Schiff, nicht nur subventionierte; bezahlt wird nur, wenn es beim Abflug bewaffnet ist und ein Gunner auf Posten steht. |
 | E13 | Private Botschaften in der App | 9+ je Woche und Welt; Ziel ein System in Sprungweite, Honorar 1D × Cr20, bezahlt bei Lieferung am Ziel. Welches Crewmitglied angesprochen wird, würfelt die App nicht; die Einführung beim Empfänger bleibt Text. |
 | E14 | Wie oft darf die Ware gewürfelt werden? | ✱ Hausregel statt „einmal je Woche“: Jeder Charakter der Gruppe darf je Welt und Woche 1 + seine Stufe in Admin oder Streetwise würfeln; jeder Wurf ist eine eigene Partie mit eigenem Kaufpreis. |
+| E15 | Aufträge zu mehreren Zielen? | ✱ Ja (Owner, 27. November 2026): Fracht, Passagiere und Botschaften zu verschiedenen Welten zugleich, ohne angekündigtes Ziel und ohne „erst Fracht, dann Passagiere“; bezahlt wird bei Ankunft am Ziel statt beim Abflug; ein Umweg ändert den Preis nicht. |

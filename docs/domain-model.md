@@ -43,7 +43,8 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Handel | [views/handel.png](views/handel.png) | [modell/handel.md](modell/handel.md) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
-**2026-11-27b** (mehrere Warenwürfe, [`changes/2026-11-27b-mehrere-warenwuerfe.png`](changes/2026-11-27b-mehrere-warenwuerfe.png)).
+**2026-11-27b** (mehrere Warenwürfe, [`changes/2026-11-27b-mehrere-warenwuerfe.png`](changes/2026-11-27b-mehrere-warenwuerfe.png))
+und **2026-11-27c** (Aufträge zu mehreren Zielen, [`changes/2026-11-27c-auftraege-zu-mehreren-zielen.png`](changes/2026-11-27c-auftraege-zu-mehreren-zielen.png)).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -350,10 +351,11 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Makler | `PriceRoll.brokerDm` | Hilft beim Verkauf mit DM +1 bis +4 gegen 5 % je +1 vom gewürfelten Erlös (2026-11-27) |
 | Ladung | `Cargo`, `Ship.hold` | Was im Laderaum liegt: eigene Ware oder fremde Fracht mit Ziel (2026-11-27) |
 | Frachtangebot | `FreightOffer`, `FreightLot` | Die Haupt-, Neben- und Gelegenheitsladungen, die an einer Welt auf ein Ziel warten (2026-11-27) |
-| Passagierangebot | `PassengerOffer` | Wie viele Passagiere je Klasse zum angekündigten Ziel reisen wollen und wie viele mitfliegen (2026-11-27) |
+| Passagierangebot | `PassengerOffer` | Wie viele Passagiere je Klasse an einer Welt zu einem Ziel reisen wollen und wie viele davon mitfliegen (2026-11-27, 2026-11-27c) |
+| Fahrgast | `Fare`, `Ship.fares` | Zahlende Passagiere an Bord, je Herkunft und Ziel mit der Zahl je Klasse; sie zahlen bei Ankunft am Ziel (2026-11-27c) |
 | Postvertrag | `Ship.mailContract`, `Journey.mail` | Das Schiff führt Post: 5 t Laderaum reserviert, Cr25.000 je Sprung, wenn es bewaffnet ist und ein Gunner auf Posten steht (2026-11-27) |
 | Private Botschaft | `MessageOffer`, `Cargo` mit `kind` message | Eine Nachricht an eine Stelle im Zielsystem, 0 t, Honorar bei Lieferung (2026-11-27) |
-| Angekündigtes Ziel | `Ship.destination` | Das System, für das das Schiff Fracht und Passagiere aufnimmt (2026-11-27) |
+| Ziel eines Auftrags | `Cargo.to`, `Fare.to`, `FreightOffer.to`, `PassengerOffer.to`, `MessageOffer.to` | Das System, in das Fracht, Fahrgäste oder eine Botschaft sollen; das Schiff kann Aufträge zu mehreren Zielen zugleich haben (2026-11-27c; vorher ein angekündigtes Ziel `Ship.destination`) |
 | Schiff | `Ship`, `Campaign.ships`, `Campaign./ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld. Die Kampagne hält alle ihre Schiffe (auch die ausgeblendeten, 2026-11-16c); `/ship` ist das nicht ausgeblendete, wie `focus` beim Charakter; die Schiffs-Id (s1, s2, …) ist wie bei Charakteren nicht gezeichnet |
 | Schiffsentwurf | `ShipDesign` | Referenzdaten eines Standardentwurfs (Scout/Courier, Free Trader, …): Rumpf, Antriebe, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf, Bauzeit; siehe [`regeln-schiffe.md`](regeln-schiffe.md) unter *Standardentwürfe* |
 | Art des Entwurfs | `ShipDesign.kind`, `ShipKind` | Ob ein Entwurf ein Schiff (`starship`, 100 t und mehr) oder ein Small Craft (`smallCraft`, unter 100 t, ohne Sprungantrieb, SR 33) ist (2026-11-21b) |
