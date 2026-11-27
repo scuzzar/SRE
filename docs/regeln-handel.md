@@ -248,8 +248,8 @@ Ergebnisse unter 0 zählen als 0 (✱ selbstverständlich, nicht ausdrücklich g
   Lotterie gibt. Jeder Niedrigpassagier rät, wie viele Niedrigpassagiere die Reise überleben. Wer
   richtig liegt, gewinnt den Topf; überlebt der Gewinner selbst nicht, bekommt ihn der Kapitän. Der
   Steward führt die Lotterie. ⚑ Wer gewinnt, wenn mehrere richtig raten oder keiner, sagt die
-  Regel nicht. **Entschieden ✱:** Mehrere überlebende Richtige teilen den Topf; trifft keiner oder
-  ist kein Richtiger am Leben, bekommt ihn der Kapitän (E10).
+  Regel nicht. **Entschieden ✱:** Es gewinnt der nächstliegende
+  Tipp, bei Gleichstand das Los; ist der Gewinner tot, behält der Kapitän den Topf (E10).
 - **Working Passage:** höchstens drei Sprünge, sonst gilt die Person als zum Standardlohn angeheuert;
   sie braucht Fertigkeit im Posten (Jack-of-all-Trades geht zur Not).
 - **Blinde Passagiere** (SR 28): Entdeckung 4+ je Tag (DMs nach Ermessen der Spielleitung). Bei
@@ -590,7 +590,7 @@ weil die Quelle nichts dazu sagt; die übrigen sind die Wahl zwischen zwei Lesar
 | E7 | Stückwaren 51–56: Preis und Tonnage | Grundpreis = Preis je Stück. Tonnage je Stück fest: Aircraft 5 t, Air/raft 4 t, ATV 10 t (aus SR 55–56); ✱ Computers, Armored Vehicles und Farm Machinery je 1 t. |
 | E8 | Non-Agricultural mit oder ohne Hydrographie? | Mit Hydrographie 0–3 (SR 45, Charts S. 15), wie die App es schon rechnet. |
 | E9 | Passagier-DMs je Klasse? | Ja, die DMs der Zielwelt wirken auf jede der drei Klassen einzeln. |
-| E10 | Low Lottery bei mehreren oder keinen Richtigen | ✱ Mehrere überlebende Richtige teilen den Topf; sonst bekommt ihn der Kapitän. |
+| E10 | Low Lottery bei mehreren oder keinen Richtigen | ✱ Es gewinnt der nächstliegende Tipp, bei Gleichstand das Los; ist der Gewinner tot, behält der Kapitän den Topf. So gilt es in der App schon für Passagen (`modell/reise.md`, *Low Lottery*); beim Modellieren am 27. November 2026 von „mehrere Richtige teilen“ hierauf geändert, damit auf allen Schiffen dieselbe Regel gilt. |
 | E11 | Honorar für private Post | ✱ 1D × Cr20. |
 | E12 | Wer darf einen Postvertrag schließen? | ✱ Jedes Schiff, nicht nur subventionierte; bezahlt wird nur, wenn es beim Abflug bewaffnet ist und ein Gunner auf Posten steht. |
 | E13 | Private Botschaften in der App | 9+ je Woche und Welt; Ziel ein System in Sprungweite, Honorar 1D × Cr20, bezahlt bei Lieferung am Ziel. Welches Crewmitglied angesprochen wird, würfelt die App nicht; die Einführung beim Empfänger bleibt Text. |

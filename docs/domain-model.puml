@@ -196,6 +196,7 @@ $gone("2026-11-27", "cargo: number")
     $new("2026-11-27", "goods")
     $new("2026-11-27", "handling")
     $new("2026-11-27", "broker")
+    $new("2026-11-27", "lottery")
   }
   class ShipSoftware $schiffe {
     slot: SoftwareSlot

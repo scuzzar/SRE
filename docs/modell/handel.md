@@ -72,7 +72,8 @@ neu gewürfelt.
    (Resale DMs der Handelscodes der Welt), `skillDm` (**plus** Admin oder Bribery von `helper`),
    `brokerDm` (0–4, gewählter Makler). Makler und Charakter dürfen zusammen helfen (E2). Je Ladung
    und Markt einmal (`Market.sales`); nicht an der Welt, an der die Ware gekauft wurde, in derselben
-   Woche (sonst wäre Kaufen und sofort Verkaufen ein Würfelspiel ohne Reise).
+   Woche (Owner, 27. November 2026: sonst wäre Kaufen und sofort Verkaufen ein Würfelspiel ohne
+   Reise).
 2. **Makler** (E4): Hat ein Makler geholfen, wird seine Provision (5 % je +1 vom gewürfelten Erlös)
    **gleich mit dem Wurf** gebucht (`ship`, `shipCost` broker), ob verkauft wird oder nicht.
 3. **Verkaufen**: ganz oder teilweise; Buchung `ship` mit `shipIncome` goods und `forCargo`.
@@ -83,11 +84,17 @@ neu gewürfelt.
 ### Ladung
 
 `Ship.hold` sind die Ladungen im Laderaum (`Cargo`): Art (`goods` eigene Ware, `freight` fremde
-Fracht, `message` private Botschaft mit 0 t und Honorar `fee`), Tonnen, bei Stückwaren die Stückzahl (`count`, Tonnen = Stück × `tonsPerItem`), bei Ware
-der bezahlte Preis (`paid`), woher (`from`), bei Fracht das Ziel (`to`). `Ship./cargo` ist jetzt
-die **Summe der Tonnen** aller nicht ausgeblendeten Ladungen; das bisher frei einzugebende Feld
-`cargo` entfällt (was aus alten Ständen wird: siehe offene Fragen). Freier Laderaum ist Entwurf minus Beiboote im Laderaum minus
-`/cargo`.
+Fracht, `message` private Botschaft mit 0 t und Honorar `fee`), Tonnen, bei Stückwaren die
+Stückzahl (`count`, Tonnen = Stück × `tonsPerItem`), bei Ware der bezahlte Preis (`paid`), woher
+(`from`), bei Fracht das Ziel (`to`). `Ship./cargo` ist jetzt die **Summe der Tonnen** aller nicht
+ausgeblendeten Ladungen (und 5 t bei einem Postvertrag); das bisher frei einzugebende Feld `cargo`
+entfällt. Freier Laderaum ist Entwurf minus Beiboote im Laderaum minus `/cargo`.
+- **Über Bord geben**: Jede Ladung lässt sich ausblenden (`retired`), ohne Geld; Fracht mit Ziel
+  ist dann verloren, bezahlt war sie schon.
+- **Alte Stände** (Owner, 27. November 2026): Ein frei eingetragener Wert `cargo` über 0 wird beim
+  Laden zu einer Ladung `freight` **ohne Ziel** (`to` fehlt) und ohne Geld, mit diesen Tonnen, von
+  der Welt, an der das Schiff steht (ohne Ort: die Heimatwelt der Gruppe bzw. die erste Welt; ⚑
+  `from` ist Pflicht). Sie bringt nie Geld und bleibt, bis sie über Bord geht.
 
 ### Fracht
 
@@ -104,8 +111,9 @@ die **Summe der Tonnen** aller nicht ausgeblendeten Ladungen; das bisher frei ei
 3. **Bezahlt** wird bei der **Abreise** (SE 9: „Collect income for all aspects of current trip“):
    Cr1.000 je Tonne Fracht für das Ziel der Reise, Buchung `ship` mit `shipIncome` freight und
    `forCargo`. **Geliefert** ist sie bei der Ankunft am Ziel: Die Ladung wird ausgeblendet.
-   ⚑ Fliegt das Schiff anderswohin, als angekündigt, gibt es kein Geld; die Fracht bleibt an Bord,
-   bis sie ans Ziel kommt (dann ohne weitere Zahlung).
+   **Falsches Ziel** (Owner, 27. November 2026): Fliegt das Schiff anderswohin als angekündigt,
+   gibt es kein Geld; die Fracht bleibt an Bord, bis sie ans Ziel kommt, und wird dort ohne weitere
+   Zahlung geliefert. Der Sprung ist nicht gesperrt.
 
 ### Passagiere
 
@@ -118,14 +126,17 @@ die **Summe der Tonnen** aller nicht ausgeblendeten Ladungen; das bisher frei ei
    Reisewillige, High und Middle zusammen höchstens die Kabinen, die die Gruppe nicht braucht, Low
    höchstens die Niedrigbetten.
 3. **Abreise**: Die Zahlen gehen an die Reise (`Journey.high`, `Journey.middle`; die
-   Low-Passagiere als Kojen ohne Charakter in `berths`, mit Aufwachwurf ohne DM, ⚑ dem DM +1 eines
-   Medic-2 an Bord). Bezahlt wird beim Abflug: Cr10.000, 8.000, 1.000 je Kopf, eine Buchung je
+   Low-Passagiere als Kojen ohne Charakter in `berths`, mit Aufwachwurf 5+, DM +1, wenn ein
+   Medic mit Medic-2 oder besser auf Posten steht, SR 28). Bezahlt wird beim Abflug: Cr10.000, 8.000, 1.000 je Kopf, eine Buchung je
    Klasse (`shipIncome` passage). Lebenserhaltung: Cr2.000 je High- und Middle-Passagier und Cr100
    je Low-Passagier, wie für die Gruppe (`shipCost` lifeSupport).
 4. **Low Lottery** an Bord des eigenen Schiffs: Der Kapitän (die Gruppe) zahlt Cr10 je
    Low-Passagier in den Topf; die NSC tippen wie bisher zufällig; Gewinner nach der Regel in
-   [Low Lottery](reise.md#low-lottery). Behält der Kapitän den Topf, gibt es nichts zu buchen.
-   ⚑ Siehe offene Frage zur Low Lottery.
+   [Low Lottery](reise.md#low-lottery): der nächstliegende Tipp, bei Gleichstand das Los; ist der
+   Gewinner tot, behält der Kapitän den Topf (Owner, 27. November 2026: eine Regel für alle
+   Schiffe, E10). Gebucht wird nur, was wirklich abfließt: Gewinnt ein NSC, zahlt der Kapitän bei
+   der Ankunft den Topf aus (Buchung `ship` mit `shipCost` lottery); behält er ihn, wird nichts
+   gebucht. Reist ein SC in einer der Kojen mit, gewinnt er wie bisher (`lottery` an die Kasse).
 5. **Ankunft**: Die Passagiere steigen aus; Low-Passagiere, die nicht aufwachen, sind tot (keine
    Erstattung). Steward- und Medic-Pflicht prüft die App in diesem Schritt nicht.
 
@@ -150,18 +161,8 @@ die **Summe der Tonnen** aller nicht ausgeblendeten Ladungen; das bisher frei ei
 
 - `Booking.shipIncome` sagt, wofür eine Einnahme des Schiffs ist (freight, passage, goods, mail,
   message);
-  `ShipCost` bekommt goods (Wareneinkauf), handling (Teilkaufgebühr) und broker (Makler).
+  `ShipCost` bekommt goods (Wareneinkauf), handling (Teilkaufgebühr), broker (Makler) und
+  lottery (ausgezahlter Topf der Low Lottery).
 - **Monatsabrechnung**: Wareneinkauf (goods) zählt wie der Kaufpreis des Schiffs **nicht** zu den laufenden
   Kosten und steht nicht in `MonthEnd.costs`; handling und broker schon. Einnahmen stehen nicht in
   der Monatsabrechnung.
-
-### Offene Fragen
-
-1. **Low Lottery (E10 gegen den Stand der App).** Die App hat schon eine Regel (seit 2026-11-13d,
-   [Low Lottery](reise.md#low-lottery)): Es gewinnt der **nächstliegende** Tipp, bei Gleichstand
-   das Los. E10 sagt: nur exakte Tipps, mehrere teilen. Empfehlung: die bestehende Regel behalten
-   und E10 entsprechend ändern – sonst gelten auf fremdem und eigenem Schiff zwei Regeln.
-2. **Alte Fracht.** Was wird aus einem freien Wert `cargo` über 0 in alten Ständen? Empfehlung:
-   eine Ladung `freight` ohne Ziel und ohne Geld, die der Spieler über Bord geben (ausblenden) kann.
-3. **Verkauf am Kaufort.** Gesperrt in derselben Woche (siehe oben) – recht so?
-4. **Fracht zum falschen Ziel** (⚑ oben): kein Geld, Fracht bleibt an Bord?
