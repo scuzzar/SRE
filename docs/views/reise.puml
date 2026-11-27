@@ -127,6 +127,7 @@ hide <<browser>> stereotype
     days: number
     $new("2026-11-27", "high: number")
     $new("2026-11-27", "middle: number")
+    $new("2026-11-27", "mail: boolean")
     npcDie: number [0..1]
     lot: number [0..1]
     /pot: number

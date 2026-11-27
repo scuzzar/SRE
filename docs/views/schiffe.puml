@@ -97,6 +97,7 @@ $gone("2026-11-27", "cargo: number")
     aboard: boolean
     inOrbit: boolean
     inHold: boolean
+    $new("2026-11-27", "mailContract: boolean")
   }
   enum ShipCost <<value>> $schiffe {
     price

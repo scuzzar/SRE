@@ -108,11 +108,20 @@ hide <<browser>> stereotype
     tons: number
     count: number [0..1]
     paid: number [0..1]
+    fee: number [0..1]
     retired: boolean
   }
   enum CargoKind <<value>> $handel $newClass("2026-11-27") {
     goods
     freight
+    message
+  }
+  class MessageOffer <<value>> $handel $newClass("2026-11-27") {
+    dice: number[2]
+    /available: boolean
+    die: number
+    /fee: number
+    taken: boolean
   }
   class FreightOffer <<value>> $handel $newClass("2026-11-27") {
     dice: number[3]
@@ -145,6 +154,8 @@ hide <<browser>> stereotype
     freight
     passage
     goods
+    mail
+    message
   }
   enum TravelZone <<value>> $handel $newClass("2026-11-27") {
     amber
@@ -216,6 +227,8 @@ FreightOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
 FreightOffer "1" *-$newArrow("2026-11-27")- "*" FreightLot : lots {ordered}
 FreightLot -$newArrow("2026-11-27")-> FreightSize
 PassengerOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
+Market "1" *-$newArrow("2026-11-27")- "0..1" MessageOffer : message
+MessageOffer "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
 LogEntry <|-$newArrow("2026-11-27")- GoodsRoll
 LogEntry <|-$newArrow("2026-11-27")- PriceRoll
 GoodsRoll "*" -$newArrow("2026-11-27")-> "1" World : at

@@ -182,6 +182,7 @@ $gone("2026-11-27", "cargo: number")
     aboard: boolean
     inOrbit: boolean
     inHold: boolean
+    $new("2026-11-27", "mailContract: boolean")
   }
   enum ShipCost <<value>> $schiffe {
     price
@@ -316,11 +317,20 @@ $gone("2026-11-27", "cargo: number")
     tons: number
     count: number [0..1]
     paid: number [0..1]
+    fee: number [0..1]
     retired: boolean
   }
   enum CargoKind <<value>> $handel $newClass("2026-11-27") {
     goods
     freight
+    message
+  }
+  class MessageOffer <<value>> $handel $newClass("2026-11-27") {
+    dice: number[2]
+    /available: boolean
+    die: number
+    /fee: number
+    taken: boolean
   }
   class FreightOffer <<value>> $handel $newClass("2026-11-27") {
     dice: number[3]
@@ -353,6 +363,8 @@ $gone("2026-11-27", "cargo: number")
     freight
     passage
     goods
+    mail
+    message
   }
   enum TravelZone <<value>> $handel $newClass("2026-11-27") {
     amber
@@ -746,6 +758,7 @@ $gone("2026-11-27", "cargo: number")
     days: number
     $new("2026-11-27", "high: number")
     $new("2026-11-27", "middle: number")
+    $new("2026-11-27", "mail: boolean")
     npcDie: number [0..1]
     lot: number [0..1]
     /pot: number
@@ -1485,6 +1498,8 @@ FreightOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
 FreightOffer "1" *-$newArrow("2026-11-27")- "*" FreightLot : lots {ordered}
 FreightLot -$newArrow("2026-11-27")-> FreightSize
 PassengerOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
+Market "1" *-$newArrow("2026-11-27")- "0..1" MessageOffer : message
+MessageOffer "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
 LogEntry <|-$newArrow("2026-11-27")- GoodsRoll
 LogEntry <|-$newArrow("2026-11-27")- PriceRoll
 GoodsRoll "*" -$newArrow("2026-11-27")-> "1" World : at

@@ -10,11 +10,11 @@ Büchern mit allen Tabellen und die Entscheidungen zur Auslegung (E1–E11) steh
 ## Handel, Schritt 1
 
 *Entwurf, wartet auf Freigabe, Kennzeichen 2026-11-27.* Zweiter Schritt der Schiffe (nach Basis
-und Raumkampf, siehe [Schiffe](schiffe.md)). Er bringt **spekulativen Handel**, **Fracht** und
-**zahlende Passagiere** mit dem eigenen Schiff, dazu die **Reisezonen**. Gehandelt wird nur mit
+und Raumkampf, siehe [Schiffe](schiffe.md)). Er bringt **spekulativen Handel**, **Fracht**,
+**zahlende Passagiere** und **Post** mit dem eigenen Schiff, dazu die **Reisezonen**. Gehandelt wird nur mit
 dem aktiven Schiff (`Campaign./ship`), nur an einer Welt mit Raumhafen A bis E, nur wenn die Gruppe
 beim Schiff ist (wie beim Abflug, siehe [Landeplatz](reise.md#reise)) und nicht unterwegs.
-**Nicht in diesem Schritt:** Post und private Botschaften, Charter, Shuttle-Gebühren, Blinde
+**Nicht in diesem Schritt:** Charter, Shuttle-Gebühren, Blinde
 Passagiere und Entführung, Bumping der Middle Passage, subventionierte Schiffe (50 % der
 Einnahmen an die Regierung), Verlust von Ladung im Raumkampf über die Tonnen hinaus.
 
@@ -83,7 +83,7 @@ neu gewürfelt.
 ### Ladung
 
 `Ship.hold` sind die Ladungen im Laderaum (`Cargo`): Art (`goods` eigene Ware, `freight` fremde
-Fracht), Tonnen, bei Stückwaren die Stückzahl (`count`, Tonnen = Stück × `tonsPerItem`), bei Ware
+Fracht, `message` private Botschaft mit 0 t und Honorar `fee`), Tonnen, bei Stückwaren die Stückzahl (`count`, Tonnen = Stück × `tonsPerItem`), bei Ware
 der bezahlte Preis (`paid`), woher (`from`), bei Fracht das Ziel (`to`). `Ship./cargo` ist jetzt
 die **Summe der Tonnen** aller nicht ausgeblendeten Ladungen; das bisher frei einzugebende Feld
 `cargo` entfällt (was aus alten Ständen wird: siehe offene Fragen). Freier Laderaum ist Entwurf minus Beiboote im Laderaum minus
@@ -129,9 +129,27 @@ die **Summe der Tonnen** aller nicht ausgeblendeten Ladungen; das bisher frei ei
 5. **Ankunft**: Die Passagiere steigen aus; Low-Passagiere, die nicht aufwachen, sind tot (keine
    Erstattung). Steward- und Medic-Pflicht prüft die App in diesem Schritt nicht.
 
+### Post
+
+- **Postvertrag** (`Ship.mailContract`, E12 ✱): Jedes Schiff darf einen schließen, nicht nur
+  subventionierte (die App bildet Subventionen nicht ab). Abschließen und kündigen geht an jeder
+  Welt mit Raumhafen A bis E. Solange er gilt, sind **5 t Laderaum** fest für die Post reserviert
+  (sie zählen zu `Ship./cargo`, ohne eigene Ladung); abschließen geht nur mit 5 t frei.
+- **Bezahlt** wird je Sprung mit dem eigenen Schiff beim Abflug, **Cr25.000**, unabhängig von der
+  Postmenge und vom Ziel (`Journey.mail`, Buchung `shipIncome` mail) – aber nur, wenn das Schiff
+  beim Abflug **bewaffnet** ist (mindestens eine Turret mit Waffe) und ein **Gunner auf Posten**
+  steht (`CrewPost` gunner). Fehlt eins, fliegt die Post ohne Geld mit, und der Log sagt warum.
+- **Private Botschaft** (`MessageOffer`, je Markt eine, E13): Beim ersten Blick auf den Markt
+  würfelt die App 2W6 (`dice`), `/available` bei **9+**. Dann auch das Ziel (`to`: ein
+  zufälliges System mit Welt in Sprungweite) und das Honorar (`die`, `/fee` = Würfel × Cr20, E11).
+  Angenommen (`taken`) wird sie eine Ladung `message` mit Ziel und Honorar; bezahlt wird erst bei
+  der **Ankunft am Ziel** (Buchung `shipIncome` message), dann ist sie geliefert. Dass der Bote
+  beim Empfänger als verlässlich gilt, steht als Text im Log; einen Patron legt die App nicht an.
+
 ### Buchungen
 
-- `Booking.shipIncome` sagt, wofür eine Einnahme des Schiffs ist (freight, passage, goods);
+- `Booking.shipIncome` sagt, wofür eine Einnahme des Schiffs ist (freight, passage, goods, mail,
+  message);
   `ShipCost` bekommt goods (Wareneinkauf), handling (Teilkaufgebühr) und broker (Makler).
 - **Monatsabrechnung**: Wareneinkauf (goods) zählt wie der Kaufpreis des Schiffs **nicht** zu den laufenden
   Kosten und steht nicht in `MonthEnd.costs`; handling und broker schon. Einnahmen stehen nicht in

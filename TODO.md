@@ -9,8 +9,7 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 
 - [ ] **Handel umsetzen** nach [`docs/regeln-handel.md`](docs/regeln-handel.md): die
   Auslegungsfragen sind entschieden (E1–E11), Modell-Entwurf
-  2026-11-27 (`docs/modell/handel.md`) wartet auf Freigabe, danach in den Code. Später: Post und
-  private Botschaften, Charter, Shuttle, subventionierte Schiffe, Bumping, Blinde Passagiere.
+  2026-11-27 (`docs/modell/handel.md`) wartet auf Freigabe, danach in den Code. Später: Charter, Shuttle, subventionierte Schiffe, Bumping, Blinde Passagiere.
 
 ## Kampf
 
