@@ -36,6 +36,7 @@ export function Arena({ sim, impacts, selection, onHeal, quiet }: { sim: SimView
   return (
     <div className="arena" ref={arena}>
       <div className="arena-side pcs" aria-label="SC">
+        {sim.retreat && <span className="arena-flag">Rückzug empfohlen</span>}
         {pcs.map((f) => (
           <FighterCard key={f.id} fighter={f} selection={selection} onHeal={onHeal} impacts={impacts.filter((i) => i.id === f.id)} />
         ))}
@@ -43,6 +44,7 @@ export function Arena({ sim, impacts, selection, onHeal, quiet }: { sim: SimView
       <div className="arena-gap" aria-hidden="true" />
       <div className="arena-side npcs" aria-label="NSC">
         {/* Gold und Rot sagen schon, wer wohin gehört; beschriftet wird nur die Auswahl zum Übernehmen. */}
+        {sim.fleeing && <span className="arena-flag">⇉ flieht</span>}
         {selection.picked && <span className="arena-label">Übernehmen</span>}
         {npcs.map((f) => (
           <FighterCard key={f.id} fighter={f} selection={selection} onHeal={onHeal} impacts={impacts.filter((i) => i.id === f.id)} />

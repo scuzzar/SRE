@@ -221,6 +221,14 @@ import {
   parryDm,
   strikeDm,
   surprisingOf,
+  moraleParts,
+  MORALE_TARGET,
+  lossesOf,
+  isFleeing,
+  npcEscaped,
+  retreatSuggested,
+  type Losses,
+  type MoraleRoll,
   encounterStart,
   needsSurprise,
   surpriseParts,
@@ -1002,6 +1010,21 @@ export interface SimView {
   readonly first: Side;
   readonly pcSurprise: { readonly die: number; readonly dm: number } | undefined;
   readonly npcSurprise: { readonly die: number; readonly dm: number } | undefined;
+  /** Die Moralprobe je Partei: 2W6, DM und Runde (S. 5); fehlt, solange die Partei nicht gewürfelt hat. */
+  readonly pcMorale: MoraleRoll | undefined;
+  readonly npcMorale: MoraleRoll | undefined;
+  /** Die Moralproben der laufenden Runde, eine je Partei, die gewürfelt hat; leer, wenn keine. */
+  readonly morale: readonly MoraleSideView[];
+  /** Die DMs auf die Moral je Partei, einzeln, nach dem heutigen Stand. */
+  readonly moraleParts: { readonly pcs: readonly SurpriseDmPart[]; readonly npcs: readonly SurpriseDmPart[] };
+  /** Die Verluste je Partei: ab 25 % würfelt sie jede neue Runde auf die Moral (S. 5). */
+  readonly losses: { readonly pcs: Losses; readonly npcs: Losses };
+  /** Die NSC-Partei flieht: Sie kämpft nicht mehr und rückt je neuer Runde 2 Bands weg. */
+  readonly fleeing: boolean;
+  /** Die fliehende NSC-Partei ist über 20 Bands weg; statt anzugreifen bleibt im Kampf nur noch „Beenden“. */
+  readonly npcEscaped: boolean;
+  /** Die verlorene Moralprobe der SC-Seite ist von der laufenden Runde: Rückzug empfohlen. */
+  readonly retreat: boolean;
   /** Alle Kämpfer in Zugreihenfolge. */
   readonly fighters: readonly FighterView[];
   /** Wer am Zug ist, mit Waffe und, wenn ein Ziel gewählt ist, nötigem Wurf. */
@@ -1198,6 +1221,8 @@ export interface CombatView {
   readonly intro: boolean;
   /** Der eben gewürfelte Wurf auf die Überraschung steht im Vordergrund. */
   readonly surpriseShown: boolean;
+  /** Die Moralprobe zu Beginn der neuen Runde steht im Vordergrund (S. 5). */
+  readonly moraleShown: boolean;
   /** Der Würfel der Anzahl für die nächste Begegnung: 6, 4 oder 3. */
   readonly quantityDie: number;
   /** Die Arten der Random Encounter List, zum Wählen. */
@@ -1581,6 +1606,8 @@ export interface ControllerState {
   readonly encounterIntro: boolean;
   /** Der Wurf auf die Überraschung steht im Vordergrund. */
   readonly surpriseShown: boolean;
+  /** Die Moralprobe zu Beginn der neuen Runde steht im Vordergrund (S. 5). */
+  readonly moraleShown: boolean;
   /** Der Charakter, dessen Details im Charakter-Screen aufgeklappt sind. */
   readonly opened: string | undefined;
   /** Die Charakterleiste ist eingeklappt; das Gerät merkt es sich. */
@@ -2012,7 +2039,7 @@ function weaponName(id: string): string {
   return id === HANDS ? 'Hände' : weaponOf(id).name;
 }
 
-function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, surpriseShown = false, animalNote: string | undefined = undefined, log: readonly LogItem[] = [], lootOpen: string | undefined = undefined, butchered: ControllerState['butchered'] = undefined, joining: readonly string[] = []): CombatView | undefined {
+function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wounding | undefined, note: string | undefined, simTarget: string | undefined, intro: boolean, surpriseShown = false, animalNote: string | undefined = undefined, log: readonly LogItem[] = [], lootOpen: string | undefined = undefined, butchered: ControllerState['butchered'] = undefined, joining: readonly string[] = [], moraleShown = false): CombatView | undefined {
   const character = focusOf(campaign);
   if (!character) return undefined;
   const current = attack ?? {};
@@ -2094,6 +2121,7 @@ function combatView(campaign: Campaign, attack: Attack | undefined, wounding: Wo
     worlds: worldChoices(campaign.hexes),
     intro: intro && encounter !== undefined,
     surpriseShown: surpriseShown && encounter !== undefined && !needsSurprise(encounter),
+    moraleShown: moraleShown && encounter !== undefined && !needsSurprise(encounter),
     quantityDie: quantityDieOf(campaign),
     encounterTypes: ref.encounters.types.map((t) => ({ roll: t.roll, name: t.name, quantity: t.quantity })),
     joinable: joinableNpcs(campaign).map((c) => ({ id: c.id, name: c.name, role: roleOf(c) })),
@@ -2274,6 +2302,31 @@ function fighterView(campaign: Campaign, slot: FightSlot, encounter: Encounter, 
   };
 }
 
+/**
+ * Eine Moralprobe auf der Würfelbühne (S. 5): die Würfel einer Partei, ihre DMs einzeln, ihr Urteil
+ * und die Verluste, die den Wurf ausgelöst haben. `holds` heißt: sie bleibt stehen (7+).
+ */
+export interface MoraleSideView {
+  readonly side: Side;
+  readonly dice: readonly number[];
+  readonly dm: number;
+  readonly total: number;
+  readonly parts: readonly SurpriseDmPart[];
+  readonly holds: boolean;
+  readonly losses: number;
+}
+
+/** Die Moralproben der laufenden Runde, so wie die Würfelbühne sie zeigt (S. 5). */
+function moraleRolls(campaign: Campaign, encounter: Encounter): readonly MoraleSideView[] {
+  const parts = moraleParts(campaign, encounter);
+  return (['pcs', 'npcs'] as const).flatMap((side) => {
+    const roll = side === 'pcs' ? encounter.pcMorale : encounter.npcMorale;
+    if (roll === undefined || roll.round !== encounter.round) return [];
+    const losses = lossesOf(campaign, encounter, side);
+    return [{ side, dice: roll.dice, dm: roll.dm, total: roll.dice[0] + roll.dice[1] + roll.dm, parts: parts[side], holds: roll.dice[0] + roll.dice[1] + roll.dm >= MORALE_TARGET, losses: losses.percent }];
+  });
+}
+
 function simView(campaign: Campaign, running: Encounter, target: string | undefined): SimView {
   const turn = turnOf(campaign);
   const encounter = fightState(campaign, running);
@@ -2367,6 +2420,14 @@ function simView(campaign: Campaign, running: Encounter, target: string | undefi
     first: firstSide(encounter),
     pcSurprise: encounter.pcSurprise,
     npcSurprise: encounter.npcSurprise,
+    pcMorale: encounter.pcMorale,
+    npcMorale: encounter.npcMorale,
+    morale: moraleRolls(campaign, encounter),
+    moraleParts: moraleParts(campaign, encounter),
+    losses: { pcs: lossesOf(campaign, encounter, 'pcs'), npcs: lossesOf(campaign, encounter, 'npcs') },
+    fleeing: isFleeing(encounter),
+    npcEscaped: npcEscaped(campaign, encounter),
+    retreat: retreatSuggested(encounter),
     fighters: order.map((slot) => fighterView(campaign, slot, encounter, turn, turnView?.target, previewNeighbours(campaign, order, turn, turnView?.target))),
     turn: turnView,
     defeated: defeatedSide(campaign, encounter),
@@ -2936,7 +2997,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     missions: missionsView(campaign, state.missionEditor),
     retired: retiredCharacters(campaign).map((c) => ({ id: c.id, name: c.name })),
     task: state.task && taskView(campaign, state.task),
-    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.surpriseShown, state.animalNote, log, state.lootOpen, state.butchered, state.joining),
+    combat: combatView(campaign, state.attack, state.wounding, state.combatNote, state.simTarget, state.encounterIntro, state.surpriseShown, state.animalNote, log, state.lootOpen, state.butchered, state.joining, state.moraleShown),
     patron: {
       lists: patronLists.map((list) => ({ list, parts: patronDmParts(campaign, list) })),
       last: log.findLast((item): item is PatronItem => item.kind === 'patron'),

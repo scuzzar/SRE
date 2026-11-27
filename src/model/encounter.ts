@@ -72,6 +72,13 @@ export interface Encounter {
   /** Die Überraschung je Partei: 1W6 und DM (S. 5). Fehlt, bis sie zu Beginn des Kampfs gewürfelt ist. */
   readonly pcSurprise?: SurpriseRoll;
   readonly npcSurprise?: SurpriseRoll;
+  /** Der Moraltest je Partei: 2W6, DM und Runde (S. 5). Fehlt, solange die Partei unter 25 % Verlusten liegt. */
+  readonly pcMorale?: MoraleRoll;
+  readonly npcMorale?: MoraleRoll;
+  /** Flieht die NSC-Partei, weil sie ihre Moralprobe verloren hat? Sie kämpft nicht mehr und rückt je neuer Runde 2 Bands weg (S. 5, SR 23). */
+  readonly npcFleeing?: boolean;
+  /** Die Runde, in der der Anführer ausfiel; −2 auf die Moral in ihr und der nächsten (S. 5). Fehlt, solange er kämpft. */
+  readonly leaderDown?: number;
   /** Die Kampfrunde, ab 1, und wer in ihr schon dran war (Verweise auf SC und NSC). */
   readonly round: number;
   readonly acted: readonly CharacterId[];
@@ -101,6 +108,13 @@ export interface Distance {
 export interface SurpriseRoll {
   readonly die: number;
   readonly dm: number;
+}
+
+/** Der Moraltest einer Partei (S. 5): 2W6, ihr DM und die Runde, in der er fiel. */
+export interface MoraleRoll {
+  readonly dice: readonly [number, number];
+  readonly dm: number;
+  readonly round: number;
 }
 
 export function encounterTypeOfEncounter(encounter: Encounter): EncounterType {

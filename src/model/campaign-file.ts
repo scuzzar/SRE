@@ -45,6 +45,8 @@ export const campaignFileFormat = 'solo-rpg-engine/kampagne';
 export const campaignFileVersion = 1;
 
 const die = z.number().int().min(1).max(6);
+/** Der Moraltest einer Partei: 2W6, ihr DM und die Runde, in der er fiel (S. 5). */
+const morale = z.object({ dice: z.tuple([die, die]), dm: z.number().int(), round: z.number().int().min(1) });
 const dice = z.tuple([die, die]);
 const at = z.string().refine((s) => !Number.isNaN(Date.parse(s)), 'kein Zeitpunkt');
 const question = z.string().trim().min(1).optional();
@@ -486,6 +488,10 @@ const EncounterSchema = z
     terrain: z.string().optional(),
     pcSurprise: z.object({ die, dm: z.number().int() }).optional(),
     npcSurprise: z.object({ die, dm: z.number().int() }).optional(),
+    pcMorale: morale.optional(),
+    npcMorale: morale.optional(),
+    npcFleeing: z.boolean().optional(),
+    leaderDown: z.number().int().min(1).optional(),
     round: z.number().int().min(1).default(1),
     acted: z.array(z.string()).default([]),
     pcMoved: z.number().int().min(0).max(2).optional(),

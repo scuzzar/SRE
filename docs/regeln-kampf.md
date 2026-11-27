@@ -46,7 +46,7 @@ davon baut, kommt wie immer zuerst ins Domänenmodell ([`domain-model.md`](domai
 | [Überraschung](#überraschung) | SE 5, SR 19–20 | ✔ ✱ (bis zum Alarm; ohne Tiere, Ausweichen, Schalldämpfer) |
 | [Anfangsentfernung und Gelände](#anfangsentfernung-und-gelände) | SE 5, SR 20 | ✔ |
 | [Entkommen und Ausweichen](#entkommen-und-ausweichen) | SE 5, SR 20–21 | ◐ (nur über 20 Bands) |
-| [Moral (einfach)](#moral-einfach) | SE 5, SR 23 | ○ |
+| [Moral (einfach)](#moral-einfach) | SE 5, SR 23 | ✔ ✱ (bei den SC nur die Empfehlung „Rückzug“) |
 | [Reichweiten, Range Bands, Geschwindigkeiten](#reichweiten-range-bands-und-geschwindigkeiten) | SE 7, 24, SR 20 | ✔ ✱, Geschwindigkeiten ◐ ✱ |
 | [Bewegungsstatus](#bewegungsstatus) | SR 20–21 | ◐ ✱ (Gehen, Laufen und Ausweichen je SC, die NSC als Gruppe; Ansage vor der Runde ○) |
 | [Angriff: Grundwurf und DMs](#angriff-grundwurf-und-erlaubte-dms) | SE 6, SR 21–22 | ◐ |
@@ -380,7 +380,7 @@ Entkommen über 20 Bands)
 
 ### Moral (einfach)
 
-*SE 5, „Morale“; SR 23, „Morale“.* App: ○. Für Zufallsbegegnungen; Book 4 hat eine genauere
+*SE 5, „Morale“; SR 23, „Morale“.* App: ✔ ✱. Für Zufallsbegegnungen; Book 4 hat eine genauere
 [Moral für Militär](#moral-nach-book-4).
 
 Sobald **25 %** einer Partei bewusstlos oder tot sind, würfelt sie **jede Kampfrunde** auf die Moral:
@@ -399,6 +399,19 @@ eine durchschnittliche Partei; für **tapfere Parteien** darf der Wurf anders li
 may have a higher throw“, ohne Zahl; Ermessen der Spielleitung). SR nennt beim Anführer nur „getötet“ und den DM −2
 „für mindestens zwei Runden und bis ein neuer Anführer übernimmt“; als Verluste zählen Bewusstlose
 und Tote.
+
+> App: Gewürfelt wird **zu Beginn der neuen Runde**, je Partei 2W6 gegen 7+ – die erste Runde beginnt
+> mit der Überraschung, dort würfelt noch keiner. Ab 25 % Verlusten, je Runde einmal, die Würfel
+> bleiben an der Begegnung. Eine durchgefallene **NSC-Partei flieht**: Sie kämpft nicht mehr, ihr Zug
+> entfällt, und sie rückt je neue Runde 2 Bands weg; über 20 Bands ist sie entkommen (SR 21, siehe
+> [Entkommen und Ausweichen](#entkommen-und-ausweichen)). Bei den **SC** bleibt die Entscheidung beim
+> Spieler: Die verlorene Probe zeigt die Empfehlung „Rückzug empfohlen“ (`/retreat`), gewürfelt wird
+> auch hier. Für **Tiere** gilt die Moral nicht, sie fliehen nach ihrem Verhalten
+> ([Tierverhalten](#tierverhalten)). Die DMs der NSC-Partei sind die militärische Art (+1), ihr
+> Anführer (+1), Tactics des Anführers (+1), über 50 % Verluste (−2) und der ausgefallene Anführer
+> (−2, Fallrunde und die nächste; die Fallrunde notiert die App an der Begegnung). Bei den SC zählt
+> ihre Laufbahn Army oder Marines (+1), die Fertigkeiten Leader und Tactics (je +1) und über 50 %
+> Verluste (−2).
 
 ---
 
