@@ -1,3 +1,4 @@
+import { credits } from '../format';
 import type { JourneyView } from '../../controller';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -34,6 +35,25 @@ export function JourneySheet({ journey }: { journey: JourneyView }) {
         {result ? (
           <>
             <JourneyBody item={result} />
+            {journey.income && (
+              <section className="trade-income" aria-label="Einnahmen am Ziel">
+                <h3 className="section-title">Einnahmen am Ziel</h3>
+                <ul className="trade-list">
+                  {journey.income.lines.map((l, i) => (
+                    <li key={i} className="trade-row">
+                      <span className="trade-row-main">{l.text}</span>
+                      <span className={`mono${l.amount < 0 ? ' negative' : ''}`}>{l.amount === 0 ? '–' : credits(l.amount)}</span>
+                    </li>
+                  ))}
+                  <li className="trade-row trade-income-total">
+                    <span className="trade-row-main">
+                      <b>Zusammen</b>
+                    </span>
+                    <b className="mono">{credits(journey.income.total)}</b>
+                  </li>
+                </ul>
+              </section>
+            )}
             <button type="button" className="primary" onClick={() => game.closeJourney()}>
               Weiter
             </button>

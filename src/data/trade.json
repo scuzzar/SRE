@@ -1,0 +1,1621 @@
+{
+  "goods": [
+    {
+      "roll": 11,
+      "name": "Textiles",
+      "basePrice": 3000,
+      "purchase": [
+        {
+          "code": "Ag",
+          "dm": -7
+        },
+        {
+          "code": "Na",
+          "dm": -5
+        },
+        {
+          "code": "Ni",
+          "dm": -3
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ag",
+          "dm": -6
+        },
+        {
+          "code": "Na",
+          "dm": 1
+        },
+        {
+          "code": "Ri",
+          "dm": 3
+        }
+      ],
+      "quantity": {
+        "dice": 3,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 12,
+      "name": "Polymers",
+      "basePrice": 7000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": -3
+        },
+        {
+          "code": "Po",
+          "dm": 2
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": 3
+        }
+      ],
+      "quantity": {
+        "dice": 4,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 13,
+      "name": "Liquor",
+      "basePrice": 10000,
+      "purchase": [
+        {
+          "code": "Ag",
+          "dm": -4
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ag",
+          "dm": -3
+        },
+        {
+          "code": "In",
+          "dm": 1
+        },
+        {
+          "code": "Ri",
+          "dm": 2
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 14,
+      "name": "Wood",
+      "basePrice": 1000,
+      "purchase": [
+        {
+          "code": "Ag",
+          "dm": -6
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ag",
+          "dm": -6
+        },
+        {
+          "code": "In",
+          "dm": 1
+        },
+        {
+          "code": "Ri",
+          "dm": 2
+        }
+      ],
+      "quantity": {
+        "dice": 2,
+        "dm": 0,
+        "times": 10
+      }
+    },
+    {
+      "roll": 15,
+      "name": "Crystals",
+      "basePrice": 20000,
+      "purchase": [
+        {
+          "code": "Na",
+          "dm": -3
+        },
+        {
+          "code": "In",
+          "dm": 4
+        }
+      ],
+      "resale": [
+        {
+          "code": "Na",
+          "dm": -3
+        },
+        {
+          "code": "In",
+          "dm": 3
+        },
+        {
+          "code": "Ri",
+          "dm": 3
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 16,
+      "name": "Radioactives",
+      "basePrice": 1000000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": 7
+        },
+        {
+          "code": "Ni",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": 5
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": 6
+        },
+        {
+          "code": "Ni",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -4
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 21,
+      "name": "Steel",
+      "basePrice": 500,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "quantity": {
+        "dice": 4,
+        "dm": 0,
+        "times": 10
+      }
+    },
+    {
+      "roll": 22,
+      "name": "Copper",
+      "basePrice": 2000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        }
+      ],
+      "quantity": {
+        "dice": 2,
+        "dm": 0,
+        "times": 10
+      }
+    },
+    {
+      "roll": 23,
+      "name": "Aluminum",
+      "basePrice": 1000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ni",
+          "dm": 4
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        }
+      ],
+      "quantity": {
+        "dice": 5,
+        "dm": 0,
+        "times": 10
+      }
+    },
+    {
+      "roll": 24,
+      "name": "Tin",
+      "basePrice": 9000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        }
+      ],
+      "quantity": {
+        "dice": 3,
+        "dm": 0,
+        "times": 10
+      }
+    },
+    {
+      "roll": 25,
+      "name": "Silver",
+      "basePrice": 70000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": 5
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        },
+        {
+          "code": "Po",
+          "dm": 2
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": 5
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 26,
+      "name": "Special Alloys",
+      "basePrice": 200000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ni",
+          "dm": 5
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ni",
+          "dm": 4
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 31,
+      "name": "Petrochemicals",
+      "basePrice": 10000,
+      "purchase": [
+        {
+          "code": "Na",
+          "dm": -4
+        },
+        {
+          "code": "In",
+          "dm": 1
+        },
+        {
+          "code": "Ni",
+          "dm": -5
+        }
+      ],
+      "resale": [
+        {
+          "code": "Na",
+          "dm": -4
+        },
+        {
+          "code": "In",
+          "dm": 3
+        },
+        {
+          "code": "Ni",
+          "dm": -5
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 32,
+      "name": "Grain",
+      "basePrice": 300,
+      "purchase": [
+        {
+          "code": "Ag",
+          "dm": -2
+        },
+        {
+          "code": "Na",
+          "dm": 1
+        },
+        {
+          "code": "In",
+          "dm": 2
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ag",
+          "dm": -2
+        }
+      ],
+      "quantity": {
+        "dice": 8,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 33,
+      "name": "Meat",
+      "basePrice": 1500,
+      "purchase": [
+        {
+          "code": "Ag",
+          "dm": -2
+        },
+        {
+          "code": "Na",
+          "dm": 2
+        },
+        {
+          "code": "In",
+          "dm": 3
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ag",
+          "dm": -2
+        },
+        {
+          "code": "In",
+          "dm": 2
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        }
+      ],
+      "quantity": {
+        "dice": 4,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 34,
+      "name": "Spices",
+      "basePrice": 6000,
+      "purchase": [
+        {
+          "code": "Ag",
+          "dm": -2
+        },
+        {
+          "code": "Na",
+          "dm": 3
+        },
+        {
+          "code": "In",
+          "dm": 2
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ag",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": 2
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 35,
+      "name": "Fruit",
+      "basePrice": 1000,
+      "purchase": [
+        {
+          "code": "Ag",
+          "dm": -3
+        },
+        {
+          "code": "Na",
+          "dm": 1
+        },
+        {
+          "code": "In",
+          "dm": 2
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ag",
+          "dm": -2
+        },
+        {
+          "code": "In",
+          "dm": 3
+        },
+        {
+          "code": "Po",
+          "dm": 2
+        }
+      ],
+      "quantity": {
+        "dice": 2,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 36,
+      "name": "Pharmaceuticals",
+      "basePrice": 100000,
+      "purchase": [
+        {
+          "code": "Na",
+          "dm": -3
+        },
+        {
+          "code": "In",
+          "dm": 4
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "resale": [
+        {
+          "code": "Na",
+          "dm": -3
+        },
+        {
+          "code": "In",
+          "dm": 5
+        },
+        {
+          "code": "Ri",
+          "dm": 4
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 41,
+      "name": "Gems",
+      "basePrice": 1000000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": 4
+        },
+        {
+          "code": "Ni",
+          "dm": -8
+        },
+        {
+          "code": "Po",
+          "dm": -3
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": 4
+        },
+        {
+          "code": "Ni",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": 8
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 42,
+      "name": "Firearms",
+      "basePrice": 30000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "quantity": {
+        "dice": 2,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 43,
+      "name": "Ammunition",
+      "basePrice": 30000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "quantity": {
+        "dice": 2,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 44,
+      "name": "Blades",
+      "basePrice": 10000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "quantity": {
+        "dice": 2,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 45,
+      "name": "Tools",
+      "basePrice": 10000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "quantity": {
+        "dice": 2,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 46,
+      "name": "Body Armor",
+      "basePrice": 50000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -1
+        },
+        {
+          "code": "Ri",
+          "dm": -3
+        },
+        {
+          "code": "Po",
+          "dm": 3
+        }
+      ],
+      "resale": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": 1
+        },
+        {
+          "code": "Po",
+          "dm": 4
+        }
+      ],
+      "quantity": {
+        "dice": 2,
+        "dm": 0
+      }
+    },
+    {
+      "roll": 51,
+      "name": "Aircraft",
+      "basePrice": 1000000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -4
+        },
+        {
+          "code": "Ri",
+          "dm": -3
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ni",
+          "dm": 2
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      },
+      "tonsPerItem": 5
+    },
+    {
+      "roll": 52,
+      "name": "Air/raft",
+      "basePrice": 600000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ni",
+          "dm": 2
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      },
+      "tonsPerItem": 4
+    },
+    {
+      "roll": 53,
+      "name": "Computers",
+      "basePrice": 10000000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ni",
+          "dm": 2
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        },
+        {
+          "code": "Ag",
+          "dm": -3
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      },
+      "tonsPerItem": 1
+    },
+    {
+      "roll": 54,
+      "name": "All Terrain Vehicles",
+      "basePrice": 30000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -2
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ni",
+          "dm": 2
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        },
+        {
+          "code": "Ag",
+          "dm": 1
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      },
+      "tonsPerItem": 10
+    },
+    {
+      "roll": 55,
+      "name": "Armored Vehicles",
+      "basePrice": 70000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -5
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        },
+        {
+          "code": "Po",
+          "dm": 4
+        }
+      ],
+      "resale": [
+        {
+          "code": "Na",
+          "dm": -2
+        },
+        {
+          "code": "Ag",
+          "dm": 2
+        },
+        {
+          "code": "Ri",
+          "dm": 1
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      },
+      "tonsPerItem": 1
+    },
+    {
+      "roll": 56,
+      "name": "Farm Machinery",
+      "basePrice": 150000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -5
+        },
+        {
+          "code": "Ri",
+          "dm": -2
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ag",
+          "dm": 5
+        },
+        {
+          "code": "Na",
+          "dm": -8
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0
+      },
+      "tonsPerItem": 1
+    },
+    {
+      "roll": 61,
+      "name": "Electronics Parts",
+      "basePrice": 100000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -4
+        },
+        {
+          "code": "Ri",
+          "dm": -3
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ni",
+          "dm": 2
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 62,
+      "name": "Mechanical Parts",
+      "basePrice": 70000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -5
+        },
+        {
+          "code": "Ri",
+          "dm": -3
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ni",
+          "dm": 3
+        },
+        {
+          "code": "Ag",
+          "dm": 2
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 63,
+      "name": "Cybernetic Parts",
+      "basePrice": 250000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -4
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ni",
+          "dm": 4
+        },
+        {
+          "code": "Ag",
+          "dm": 1
+        },
+        {
+          "code": "Na",
+          "dm": 2
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 64,
+      "name": "Computer Parts",
+      "basePrice": 150000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -5
+        },
+        {
+          "code": "Ri",
+          "dm": -3
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ni",
+          "dm": 3
+        },
+        {
+          "code": "Ag",
+          "dm": 1
+        },
+        {
+          "code": "Na",
+          "dm": 2
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 65,
+      "name": "Machine Tools",
+      "basePrice": 750000,
+      "purchase": [
+        {
+          "code": "In",
+          "dm": -5
+        },
+        {
+          "code": "Ri",
+          "dm": -4
+        }
+      ],
+      "resale": [
+        {
+          "code": "Ni",
+          "dm": 3
+        },
+        {
+          "code": "Ag",
+          "dm": 1
+        },
+        {
+          "code": "Na",
+          "dm": 2
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0,
+        "times": 5
+      }
+    },
+    {
+      "roll": 66,
+      "name": "Vacc Suits",
+      "basePrice": 400000,
+      "purchase": [
+        {
+          "code": "Na",
+          "dm": -5
+        },
+        {
+          "code": "In",
+          "dm": -3
+        },
+        {
+          "code": "Ri",
+          "dm": -1
+        }
+      ],
+      "resale": [
+        {
+          "code": "Na",
+          "dm": -1
+        },
+        {
+          "code": "Ni",
+          "dm": 2
+        },
+        {
+          "code": "Po",
+          "dm": 1
+        }
+      ],
+      "quantity": {
+        "dice": 1,
+        "dm": 0,
+        "times": 5
+      }
+    }
+  ],
+  "actualValue": [
+    {
+      "roll": 2,
+      "percent": 40
+    },
+    {
+      "roll": 3,
+      "percent": 50
+    },
+    {
+      "roll": 4,
+      "percent": 70
+    },
+    {
+      "roll": 5,
+      "percent": 80
+    },
+    {
+      "roll": 6,
+      "percent": 90
+    },
+    {
+      "roll": 7,
+      "percent": 100
+    },
+    {
+      "roll": 8,
+      "percent": 110
+    },
+    {
+      "roll": 9,
+      "percent": 120
+    },
+    {
+      "roll": 10,
+      "percent": 130
+    },
+    {
+      "roll": 11,
+      "percent": 150
+    },
+    {
+      "roll": 12,
+      "percent": 170
+    },
+    {
+      "roll": 13,
+      "percent": 200
+    },
+    {
+      "roll": 14,
+      "percent": 300
+    },
+    {
+      "roll": 15,
+      "percent": 400
+    }
+  ],
+  "passengers": [
+    {
+      "population": 0
+    },
+    {
+      "population": 1,
+      "middle": {
+        "dice": 1,
+        "dm": -2
+      },
+      "low": {
+        "dice": 2,
+        "dm": -6
+      }
+    },
+    {
+      "population": 2,
+      "high": {
+        "dice": 1,
+        "dm": 0,
+        "less": 1
+      },
+      "middle": {
+        "dice": 1,
+        "dm": 0
+      },
+      "low": {
+        "dice": 2,
+        "dm": 0
+      }
+    },
+    {
+      "population": 3,
+      "high": {
+        "dice": 2,
+        "dm": 0,
+        "less": 2
+      },
+      "middle": {
+        "dice": 2,
+        "dm": 0,
+        "less": 1
+      },
+      "low": {
+        "dice": 2,
+        "dm": 0
+      }
+    },
+    {
+      "population": 4,
+      "high": {
+        "dice": 2,
+        "dm": 0,
+        "less": 1
+      },
+      "middle": {
+        "dice": 2,
+        "dm": 0,
+        "less": 1
+      },
+      "low": {
+        "dice": 3,
+        "dm": 0,
+        "less": 1
+      }
+    },
+    {
+      "population": 5,
+      "high": {
+        "dice": 2,
+        "dm": 0,
+        "less": 1
+      },
+      "middle": {
+        "dice": 3,
+        "dm": 0,
+        "less": 2
+      },
+      "low": {
+        "dice": 3,
+        "dm": 0,
+        "less": 1
+      }
+    },
+    {
+      "population": 6,
+      "high": {
+        "dice": 3,
+        "dm": 0,
+        "less": 2
+      },
+      "middle": {
+        "dice": 3,
+        "dm": 0,
+        "less": 2
+      },
+      "low": {
+        "dice": 3,
+        "dm": 0
+      }
+    },
+    {
+      "population": 7,
+      "high": {
+        "dice": 3,
+        "dm": 0,
+        "less": 2
+      },
+      "middle": {
+        "dice": 3,
+        "dm": 0,
+        "less": 1
+      },
+      "low": {
+        "dice": 3,
+        "dm": 0
+      }
+    },
+    {
+      "population": 8,
+      "high": {
+        "dice": 3,
+        "dm": 0,
+        "less": 1
+      },
+      "middle": {
+        "dice": 3,
+        "dm": 0,
+        "less": 1
+      },
+      "low": {
+        "dice": 4,
+        "dm": 0
+      }
+    },
+    {
+      "population": 9,
+      "high": {
+        "dice": 3,
+        "dm": 0,
+        "less": 1
+      },
+      "middle": {
+        "dice": 3,
+        "dm": 0
+      },
+      "low": {
+        "dice": 5,
+        "dm": 0
+      }
+    },
+    {
+      "population": 10,
+      "high": {
+        "dice": 3,
+        "dm": 0
+      },
+      "middle": {
+        "dice": 4,
+        "dm": 0
+      },
+      "low": {
+        "dice": 6,
+        "dm": 0
+      }
+    }
+  ],
+  "cargo": [
+    {
+      "population": 0
+    },
+    {
+      "population": 1,
+      "major": {
+        "dice": 1,
+        "dm": -4
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -4
+      }
+    },
+    {
+      "population": 2,
+      "major": {
+        "dice": 1,
+        "dm": -2
+      },
+      "minor": {
+        "dice": 1,
+        "dm": -1
+      }
+    },
+    {
+      "population": 3,
+      "major": {
+        "dice": 1,
+        "dm": -1
+      },
+      "minor": {
+        "dice": 1,
+        "dm": 0
+      }
+    },
+    {
+      "population": 4,
+      "major": {
+        "dice": 1,
+        "dm": 0
+      },
+      "minor": {
+        "dice": 1,
+        "dm": 1
+      }
+    },
+    {
+      "population": 5,
+      "major": {
+        "dice": 1,
+        "dm": 1
+      },
+      "minor": {
+        "dice": 1,
+        "dm": 2
+      }
+    },
+    {
+      "population": 6,
+      "major": {
+        "dice": 1,
+        "dm": 2
+      },
+      "minor": {
+        "dice": 1,
+        "dm": 3
+      },
+      "incidental": {
+        "dice": 1,
+        "dm": -3
+      }
+    },
+    {
+      "population": 7,
+      "major": {
+        "dice": 1,
+        "dm": 3
+      },
+      "minor": {
+        "dice": 1,
+        "dm": 4
+      },
+      "incidental": {
+        "dice": 1,
+        "dm": -3
+      }
+    },
+    {
+      "population": 8,
+      "major": {
+        "dice": 1,
+        "dm": 4
+      },
+      "minor": {
+        "dice": 1,
+        "dm": 5
+      },
+      "incidental": {
+        "dice": 1,
+        "dm": -2
+      }
+    },
+    {
+      "population": 9,
+      "major": {
+        "dice": 1,
+        "dm": 5
+      },
+      "minor": {
+        "dice": 1,
+        "dm": 6
+      },
+      "incidental": {
+        "dice": 1,
+        "dm": -2
+      }
+    },
+    {
+      "population": 10,
+      "major": {
+        "dice": 1,
+        "dm": 6
+      },
+      "minor": {
+        "dice": 1,
+        "dm": 7
+      },
+      "incidental": {
+        "dice": 1,
+        "dm": 0
+      }
+    }
+  ]
+}

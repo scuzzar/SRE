@@ -83,6 +83,8 @@ hide <<browser>> stereotype
 ' Schiffe
   class Ship $schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
 ' Charaktererschaffung und Lebenslauf
@@ -123,6 +125,10 @@ hide <<browser>> stereotype
   }
   class Journey $reise {
     days: number
+    high: number
+    middle: number
+    low: number
+    mail: boolean
     npcDie: number [0..1]
     lot: number [0..1]
     /pot: number
@@ -162,6 +168,8 @@ hide <<browser>> stereotype
 ' Kampagne
 
 ' Schiffe
+
+' Handel
 
 ' Raumkarte und Systemflug
 

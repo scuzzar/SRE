@@ -72,10 +72,15 @@ export const TradeCodeSchema = z.object({
   if: z.array(TradeConditionSchema).min(1),
 });
 
-/** Wie viele W6 plus welcher DM, z. B. 2W6 + 1; ohne Würfel ein fester Wert. */
+/**
+ * Wie viele W6 plus welcher DM, z. B. 2W6 + 1; ohne Würfel ein fester Wert. `less`: so viele W6
+ * werden abgezogen (3D−1D), `times`: Faktor auf das Ganze (3D×5) (2026-11-27).
+ */
 export const DiceExprSchema = z.object({
-  dice: z.number().int().min(0).max(3),
+  dice: z.number().int().min(0).max(8),
   dm: z.number().int(),
+  less: z.number().int().min(1).max(3).optional(),
+  times: z.number().int().min(2).optional(),
 });
 
 export const surfaceTables = ['continents', 'oceans'] as const;

@@ -5,7 +5,6 @@ import {
   buyShip,
   craftOf,
   freeCargoOf,
-  updateShip,
   book,
   createDemoCampaign,
   dockBlocker,
@@ -230,7 +229,6 @@ describe('Small Craft (2026-11-21b)', () => {
     const fighter = craftOf(bought, shipOf(bought)!.id).find((s) => s.design === 'fighter')!;
     expect(fighter).toMatchObject({ name: 'Beiboot 2', mother: shipOf(c)!.id, aboard: true, inHold: true, price: 18_000_000, initialLoan: 36_000_000 });
     expect(freeCargoOf(bought, shipOf(bought)!)).toBe(1);
-    expect(() => updateShip(bought, shipOf(bought)!.id, { name: 'Kestrel', fuel: 50, cargo: 2 })).toThrow(/neben den Beibooten noch 1 t/);
     expect(() => buyShip(bought, 'fighter', 'cash', clock)).toThrow(/frei sind 1 t/);
     expect(roundTrip(bought).ships).toEqual(bought.ships);
   });

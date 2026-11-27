@@ -40,6 +40,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Schiffe | [views/schiffe.png](views/schiffe.png) | [modell/schiffe.md](modell/schiffe.md) |
 | Missionen | [views/mission.png](views/mission.png) | [modell/mission.md](modell/mission.md) |
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) | [modell/raum.md](modell/raum.md) |
+| Handel | [views/handel.png](views/handel.png) | [modell/handel.md](modell/handel.md) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
 keine.
@@ -339,7 +340,22 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Kleine Meere, verstreute Seen | `Surface.smallSeas`, `Surface.scatteredLakes` | Gewässer von etwa einem Hex bzw. einem halben |
 | Einheimisches Leben | `Surface.life` | Ob auf der Welt eigenes Leben entstanden ist; ohne Leben ist das Land später Wüste |
 | Kontinente- und Ozeane-Tabelle | `SurfaceRow`, `SurfaceTable` | Die beiden Tabellen des *World Builder's Handbook* (S. 70), aus denen die Land- bzw. Wassermassen kommen |
-| Würfelausdruck | `DiceExpr` | Wie viele W6 plus welcher DM, z. B. 2W6 + 1 oder 3W6 − 3 |
+| Würfelausdruck | `DiceExpr` | Wie viele W6 plus welcher DM, z. B. 2W6 + 1 oder 3W6 − 3; mit `less` abgezogene W6 (3D−1D) und mit `times` ein Faktor (3D×5) (2026-11-27) |
+| Reisezone | `Hex.travelZone`, `TravelZone` | Amber oder Red, von Hand gesetzt; ohne Zone ist das System grün (2026-11-27) |
+| Ware | `TradeGood` | Eine Zeile der Trade and Speculation Table (SE 22): Wurf, Name, Grundpreis, Menge, Purchase und Resale DMs je Handelscode (`TradeDm`); Stückwaren mit Tonnen je Stück (2026-11-27) |
+| Grundpreis | `TradeGood.basePrice` | Der feste Wert einer Ware je Tonne bzw. Stück; Kauf- und Verkaufspreis sind Prozente davon (2026-11-27) |
+| Actual Value Table | `ActualValue` | Prozent des Grundpreises nach dem modifizierten 2W6-Wurf (SE 22) (2026-11-27) |
+| Markt | `Market` | Was eine Welt in einer Woche bietet: Ware, Fracht- und Passagierangebote; verfällt am Wochenende (2026-11-27) |
+| Warenwurf | `GoodsRoll` | Logeintrag: welche Ware in welcher Menge an einer Welt zu haben ist (2026-11-27) |
+| Preiswurf | `PriceRoll` | Logeintrag: Kauf- oder Verkaufspreis mit Würfeln und DMs (Handelscodes, Fertigkeit, Makler) (2026-11-27) |
+| Makler | `PriceRoll.brokerDm` | Hilft beim Verkauf mit DM +1 bis +4 gegen 5 % je +1 vom gewürfelten Erlös (2026-11-27) |
+| Ladung | `Cargo`, `Ship.hold` | Was im Laderaum liegt: eigene Ware oder fremde Fracht mit Ziel (2026-11-27) |
+| Frachtangebot | `FreightOffer`, `FreightLot` | Die Haupt-, Neben- und Gelegenheitsladungen, die an einer Welt auf ein Ziel warten (2026-11-27) |
+| Passagierangebot | `PassengerOffer` | Wie viele Passagiere je Klasse an einer Welt zu einem Ziel reisen wollen und wie viele davon mitfliegen (2026-11-27, 2026-11-27c) |
+| Fahrgast | `Fare`, `Ship.fares` | Zahlende Passagiere an Bord, je Herkunft und Ziel mit der Zahl je Klasse; sie zahlen bei Ankunft am Ziel (2026-11-27c) |
+| Postvertrag | `Ship.mailContract`, `Journey.mail` | Das Schiff führt Post: 5 t Laderaum reserviert, Cr25.000 je Sprung, wenn es bewaffnet ist und ein Gunner auf Posten steht (2026-11-27) |
+| Private Botschaft | `MessageOffer`, `Cargo` mit `kind` message | Eine Nachricht an eine Stelle im Zielsystem, 0 t, Honorar bei Lieferung (2026-11-27) |
+| Ziel eines Auftrags | `Cargo.to`, `Fare.to`, `FreightOffer.to`, `PassengerOffer.to`, `MessageOffer.to` | Das System, in das Fracht, Fahrgäste oder eine Botschaft sollen; das Schiff kann Aufträge zu mehreren Zielen zugleich haben (2026-11-27c; vorher ein angekündigtes Ziel `Ship.destination`) |
 | Schiff | `Ship`, `Campaign.ships`, `Campaign./ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld. Die Kampagne hält alle ihre Schiffe (auch die ausgeblendeten, 2026-11-16c); `/ship` ist das nicht ausgeblendete, wie `focus` beim Charakter; die Schiffs-Id (s1, s2, …) ist wie bei Charakteren nicht gezeichnet |
 | Schiffsentwurf | `ShipDesign` | Referenzdaten eines Standardentwurfs (Scout/Courier, Free Trader, …): Rumpf, Antriebe, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf, Bauzeit; siehe [`regeln-schiffe.md`](regeln-schiffe.md) unter *Standardentwürfe* |
 | Art des Entwurfs | `ShipDesign.kind`, `ShipKind` | Ob ein Entwurf ein Schiff (`starship`, 100 t und mehr) oder ein Small Craft (`smallCraft`, unter 100 t, ohne Sprungantrieb, SR 33) ist (2026-11-21b) |
@@ -500,6 +516,22 @@ des Bereichs (siehe die Tabelle oben). Hier stehen nur die, die für alle Bereic
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
+- **Handel** (2026-11-27, 2026-11-27b, 2026-11-27c, [`modell/handel.md`](modell/handel.md)) ist
+  gebaut (`model/trade.ts`, Tabellen in `src/data/trade.json`, Markt und Aufträge in
+  `view/trade/TradeScreen.tsx`, Laderaum in `view/ship/HoldTab.tsx`). Abweichungen:
+  - Der Markt verweist auf Waren- und Preiswürfe mit ihren **Stellen im Log** (wie der
+    Lotteriegewinn); darum lassen sich diese Einträge nicht löschen. Er hält zusätzlich, welche
+    Ladungen an ihm aus welchem Warenwurf gekauft wurden (`Market.bought`, nur im Code), für die
+    Restmenge einer Partie und die Sperre „Verkauf am Kaufort“.
+  - Die Würfel der **Menge** würfelt die App gleich mit dem Warenwurf und zeigt sie erst beim
+    Antippen der Ware (wie beim Kälteschlaf: gewürfelt früher, bekannt später); so bleibt der Log
+    nur angehängt.
+  - Frachtlose und `FreightOffer.dice` (je Größe die Würfel, `null`, wenn es die Größe nicht gibt)
+    sind im Code ohne eigene Id: Abgewählte Fracht geht als gleich große Fracht von hier dorthin
+    von Bord (gleiche Lose sind gleichwertig).
+  - Waren-, Preis- und Auftragswürfe laufen **nicht über die Würfelbühne**; die Ergebnisse stehen
+    sofort in der Liste und im Log.
+  - Treffer im Laderaum ziehen die Tonnen von der zuletzt geladenen Ladung ab (⚑, siehe `TODO.md`).
 - **Small Craft** (2026-11-21b) sind gebaut (`model/ship.ts`, `model/flight.ts`, `model/landing.ts`,
   `model/system-journey.ts`, Entwürfe in `src/data/ships.json`). Abweichungen: `Ship.aboard` und
   `Ship.inOrbit` stehen nur im Spielstand, wenn sie wahr sind (fehlt heißt falsch), ebenso

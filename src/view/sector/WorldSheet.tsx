@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { WorldDmPart } from '../../model';
 import type { LogItem, SystemBodyView, SystemView, WorldAction, WorldLine, WorldView } from '../../controller';
 import { HappenedList } from './HappenedList';
@@ -8,7 +8,7 @@ import { useGame } from '../game-context';
 import { WorldIcon } from './WorldIcon';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { HoldButton } from '../HoldButton';
-import { CloseIcon, DiceIcon, GlobeIcon, PinIcon, RouteIcon, ShipIcon } from '../icons';
+import { BriefcaseIcon, CloseIcon, DiceIcon, FlagIcon, GlobeIcon, PeopleIcon, PinIcon, RouteIcon, ShipIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { Form } from '../Form';
 import { withLoading } from '../loading';
@@ -51,6 +51,8 @@ export function useWorldDock(
   logDays: readonly (string | undefined)[],
   /** Auf dem Globus: ✕ schließt nur das Blatt, und „Öffnen“ fehlt, weil der Globus schon offen ist. */
   onGlobe = false,
+  /** Aufträge zu dieser Welt (2026-11-27); fehlt ohne Schiff. */
+  orders: { readonly blocker: string | undefined } | undefined = undefined,
 ): { field: ReactNode; foot: ReactNode; title: string | undefined } {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -149,7 +151,7 @@ export function useWorldDock(
   const actionsDock =
     world.canGlobe || world.canNote ? (
       <section className="dock" aria-label="An der Welt">
-        <WorldActions world={view} here={here} travel={travel} onGlobe={onGlobe} />
+        <WorldActions world={view} here={here} travel={travel} onGlobe={onGlobe} orders={orders} />
       </section>
     ) : undefined;
   const foot = rollDock || actionsDock ? (
@@ -160,6 +162,31 @@ export function useWorldDock(
   ) : undefined;
 
   return { field, foot, title };
+}
+
+/**
+ * Die Reisezone des Systems (2026-11-27), von Hand gesetzt wie von der Spielleitung: Grün, Amber oder
+ * Red; eine Wahl, ein Bedienelement (drei Knöpfe als `segmented`).
+ */
+function TravelZonePicker({ zone }: { zone: 'amber' | 'red' | undefined }) {
+  const game = useGame();
+  const options = [
+    [undefined, 'Grün'],
+    ['amber', 'Amber'],
+    ['red', 'Red'],
+  ] as const;
+  return (
+    <div className="trade-zone" role="group" aria-label="Reisezone">
+      <span className="muted">Reisezone</span>
+      <div className="segmented" style={{ '--seg-cols': 3 } as CSSProperties}>
+        {options.map(([value, label]) => (
+          <button key={label} type="button" className={`zone-${value ?? 'green'}`} aria-pressed={zone === value} onClick={() => game.setTravelZone(value)}>
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -193,6 +220,7 @@ export function WorldCard({ world, plain = false, here = false }: { world: World
           ))}
         </ul>
       )}
+      {world.canNote && <TravelZonePicker zone={world.travelZone} />}
     </>
   );
   const profile = (
@@ -390,7 +418,7 @@ export function SystemSection({ system }: { system: SystemView }) {
  * setzen“ am Feld; ist die Gruppe schon hier, ausgegraut) und Öffnen (die Hexkarte der Welt, nicht
  * auf dem Globus selbst).
  */
-export function WorldActions({ world, here, travel, onGlobe = false }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined; readonly inSystem?: boolean } | undefined; onGlobe?: boolean }) {
+export function WorldActions({ world, here, travel, onGlobe = false, orders }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined; readonly inSystem?: boolean } | undefined; onGlobe?: boolean; /** Aufträge zu dieser Welt (2026-11-27); fehlt ohne Schiff. */ orders?: { readonly blocker: string | undefined } | undefined }) {
   const game = useGame();
   // Den Globus gibt es erst auf ausdrücklichen Knopfdruck (2026-11-20d): „Globus erzeugen“, danach „Öffnen“.
   const showGlobe = !onGlobe && world.canGlobe;
@@ -399,6 +427,23 @@ export function WorldActions({ world, here, travel, onGlobe = false }: { world: 
   return (
     <>
       {world.canNote && !here && travel?.blocker && <p className="combat-hint">{travel.blocker}</p>}
+      {world.canNote && !onGlobe && orders && (
+        // Aufträge zu dieser Welt: eine zweite Aktionsleiste darüber (GUI-Handbuch, *Handel*).
+        <div className="actions oracle-actions world-actions trade-orders">
+          <button type="button" className="action note" title={orders.blocker ?? 'Fracht zu dieser Welt'} disabled={orders.blocker !== undefined} onClick={() => game.openOrders('freight')}>
+            <BriefcaseIcon />
+            Fracht
+          </button>
+          <button type="button" className="action note" title={orders.blocker ?? 'Passagiere zu dieser Welt'} disabled={orders.blocker !== undefined} onClick={() => game.openOrders('passengers')}>
+            <PeopleIcon />
+            Passagiere
+          </button>
+          <button type="button" className="action note" title={orders.blocker ?? 'Private Botschaften zu dieser Welt'} disabled={orders.blocker !== undefined} onClick={() => game.openOrders('message')}>
+            <FlagIcon />
+            Post
+          </button>
+        </div>
+      )}
       <div className="actions oracle-actions world-actions">
         {world.canNote && travel && (
           <button type="button" className="action draw" title={travelBlocker ?? (travel.inSystem ? 'Reise im System, mit Ticket oder eigenem Schiff' : 'Eine Woche im Sprung')} disabled={travelBlocker !== undefined} onClick={() => game.openJourney()}>

@@ -1,5 +1,5 @@
 import type { AttackItem, CardItem, CardView, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, MonthEndItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem, SpaceAttackItem } from '../controller';
-import type { Answer, ArmorClass, AttackKind, BookingKind, ShipCost, MissionState, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
+import type { Answer, ArmorClass, AttackKind, BookingKind, ShipCost, ShipIncome, MissionState, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
 
@@ -95,6 +95,19 @@ export const shipCostText: Record<ShipCost, string> = {
   armament: 'Schiff · Bewaffnung',
   software: 'Schiff · Software',
   repair: 'Schiff · Reparatur',
+  goods: 'Schiff · Wareneinkauf',
+  handling: 'Schiff · Teilkaufgebühr',
+  broker: 'Schiff · Makler',
+  lottery: 'Schiff · Low Lottery',
+};
+
+/** Wofür eine Einnahme des Schiffs ist, wie das Kassenbuch es schreibt (2026-11-27). */
+export const shipIncomeText: Record<ShipIncome, string> = {
+  freight: 'Schiff · Fracht',
+  passage: 'Schiff · Passage',
+  goods: 'Schiff · Warenverkauf',
+  mail: 'Schiff · Postvertrag',
+  message: 'Schiff · Botschaft',
 };
 
 /** Die Rüstungsklassen, wie die Matrix sie schreibt. */
@@ -389,6 +402,8 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: `Reise im System nach ${item.to}`, rest: `${item.fromDate} → ${item.toDate} · ${item.flight} · ${item.how}` };
     case 'skimming':
       return { head: `Treibstoff geschöpft: ${item.tons} t`, rest: `${item.ship} am Gasriesen ${item.giant}, unraffiniert` };
+    case 'trade':
+      return { head: item.head, rest: item.detail };
     case 'spaceBattle':
       return { head: `Fremdes Schiff: ${item.foe}`, rest: `${item.design}, ${item.intent}` };
     case 'spaceAttack':

@@ -9,6 +9,7 @@ import type { Place } from './place';
 import type { ShipDamage } from './space-combat';
 import type { CrewPost } from './crew';
 import { packageOf, type SoftwareSlot } from './software';
+import type { Cargo, Fare } from './trade';
 
 /** Ein Turret auf einem Hardpoint (Domänenmodell: `Turret`, 2026-11-21g): Turmart und Waffen, höchstens so viele wie Plätze. */
 export interface Turret {
@@ -41,8 +42,6 @@ export interface Ship {
   readonly fuel: number;
   /** Davon unraffiniert, aus einem Gasriesen geschöpft (2026-11-21f); höchstens `fuel`. */
   readonly unrefined: number;
-  /** Fracht im Laderaum, in Tonnen. */
-  readonly cargo: number;
   readonly price: number;
   readonly initialLoan?: number;
   readonly loanBalance?: number;
@@ -69,6 +68,12 @@ export interface Ship {
   readonly inOrbit?: boolean;
   /** Ein zugekauftes Beiboot liegt im Laderaum seines Mutterschiffs statt im Hangar (2026-11-21c); gespeichert nur, wenn wahr. */
   readonly inHold?: boolean;
+  /** Die Ladungen im Laderaum (2026-11-27), auch die ausgeblendeten; fehlt ohne Ladung. */
+  readonly hold?: readonly Cargo[];
+  /** Die zahlenden Fahrgäste an Bord (2026-11-27c), auch die ausgeblendeten; fehlt ohne. */
+  readonly fares?: readonly Fare[];
+  /** Der Postvertrag (2026-11-27): 5 t Laderaum reserviert; gespeichert nur, wenn wahr. */
+  readonly mailContract?: boolean;
 }
 
 /**
@@ -187,9 +192,17 @@ export function holdTonsOf(campaign: Campaign, ship: Ship): number {
     .reduce((sum, c) => sum + shipDesignOf(c.design).hull, 0);
 }
 
-/** Der freie Laderaum: Laderaum des Entwurfs minus Fracht minus die Rümpfe der Beiboote im Laderaum. */
+/** Tonnen Laderaum, die der Postvertrag reserviert (SR 30). */
+export const MAIL_TONS = 5;
+
+/** `/cargo`: die Tonnen aller nicht ausgeblendeten Ladungen, dazu 5 t bei einem Postvertrag (2026-11-27). */
+export function cargoOf(ship: Ship): number {
+  return (ship.hold ?? []).filter((c) => !c.retired).reduce((sum, c) => sum + c.tons, 0) + (ship.mailContract ? MAIL_TONS : 0);
+}
+
+/** Der freie Laderaum: Laderaum des Entwurfs minus Ladungen minus die Rümpfe der Beiboote im Laderaum. */
 export function freeCargoOf(campaign: Campaign, ship: Ship): number {
-  return shipDesignOf(ship.design).cargo - ship.cargo - holdTonsOf(campaign, ship);
+  return shipDesignOf(ship.design).cargo - cargoOf(ship) - holdTonsOf(campaign, ship);
 }
 
 /** Der Name des nächsten Beiboots eines Schiffs: „Beiboot n“ mit der nächsten freien Nummer. */
@@ -245,7 +258,7 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
   if (small && active !== undefined && !isSmallCraft(active)) {
     const blocker = craftPurchaseBlocker(campaign, design);
     if (blocker) throw new DomainError(blocker);
-    const boat: Ship = { id: nextShipId(campaign.ships), design: plan.id, name: nextCraftName(campaign.ships, active.id), fuel: plan.fuel, unrefined: 0, cargo: 0, price: plan.basePrice, ...loan, retired: false, software: [], turrets: designTurrets(plan.id), mother: active.id, aboard: true, inHold: true };
+    const boat: Ship = { id: nextShipId(campaign.ships), design: plan.id, name: nextCraftName(campaign.ships, active.id), fuel: plan.fuel, unrefined: 0, price: plan.basePrice, ...loan, retired: false, software: [], turrets: designTurrets(plan.id), mother: active.id, aboard: true, inHold: true };
     return { campaign: { ...campaign, ships: [...campaign.ships, boat] }, ship: boat };
   }
   const ship: Ship = {
@@ -254,7 +267,6 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
     name: plan.name,
     fuel: plan.fuel,
     unrefined: 0,
-    cargo: 0,
     price: plan.basePrice,
     ...loan,
     berthedSince: campaign.day,
@@ -274,7 +286,7 @@ export function addShip(campaign: Campaign, design: string, initialLoan: number 
   ];
   plan.craft.forEach((craft) => {
     const boat = shipDesignOf(craft);
-    ships.push({ id: nextShipId(ships), design: boat.id, name: nextCraftName(ships, ship.id), fuel: boat.fuel, unrefined: 0, cargo: 0, price: 0, retired: false, software: [], turrets: designTurrets(boat.id), mother: ship.id, aboard: true });
+    ships.push({ id: nextShipId(ships), design: boat.id, name: nextCraftName(ships, ship.id), fuel: boat.fuel, unrefined: 0, price: 0, retired: false, software: [], turrets: designTurrets(boat.id), mother: ship.id, aboard: true });
   });
   return { campaign: { ...campaign, ships }, ship };
 }
@@ -318,35 +330,27 @@ export function buyFuel(campaign: Campaign, tons: number, clock: Clock): Campaig
   return { ...booked, ships: booked.ships.map((s) => (s.id === ship.id ? { ...s, fuel: s.fuel + tons } : s)) };
 }
 
-/** Was auf dem Schiffsbogen steht: Name, Treibstoff und Fracht in Tonnen. */
+/** Was auf dem Schiffsbogen steht: Name und Treibstoff in Tonnen; die Fracht sind seit 2026-11-27 Ladungen. */
 export interface ShipInput {
   readonly name: string;
   readonly fuel: number;
-  readonly cargo: number;
 }
 
-export function validShipInput(design: string, input: ShipInput, holdTons = 0): ShipInput {
+export function validShipInput(design: string, input: ShipInput): ShipInput {
   const name = input.name.trim();
   if (name === '') throw new DomainError('Ein Schiff braucht einen Namen.');
   const plan = shipDesignOf(design);
   // Small Craft haben Tanks und Exzess-Tonnage mit Bruchteilen (Ship's Boat 1,8 t), Schiffe ganze Tonnen.
   const small = plan.kind === 'smallCraft';
-  for (const [value, what] of [
-    [input.fuel, 'Der Treibstoff'],
-    [input.cargo, 'Die Fracht'],
-  ] as const) {
-    if (!Number.isFinite(value) || value < 0 || (!small && !Number.isInteger(value))) throw new DomainError(small ? `${what} ist eine Zahl ab 0.` : `${what} ist eine Zahl ganzer Tonnen ab 0.`);
-  }
+  if (!Number.isFinite(input.fuel) || input.fuel < 0 || (!small && !Number.isInteger(input.fuel))) throw new DomainError(small ? 'Der Treibstoff ist eine Zahl ab 0.' : 'Der Treibstoff ist eine Zahl ganzer Tonnen ab 0.');
   if (input.fuel > plan.fuel) throw new DomainError(`Der Tank fasst ${plan.fuel} t.`);
-  // Zugekaufte Beiboote belegen einen Teil des Laderaums (2026-11-21c).
-  if (input.cargo > plan.cargo - holdTons) throw new DomainError(holdTons > 0 ? `Der Laderaum fasst neben den Beibooten noch ${(plan.cargo - holdTons).toLocaleString('de-DE')} t.` : `Der Laderaum fasst ${plan.cargo} t.`);
-  return { name, fuel: input.fuel, cargo: input.cargo };
+  return { name, fuel: input.fuel };
 }
 
 /** Bearbeiten des Schiffsbogens: Name, Treibstoff und Fracht von Hand korrigieren. */
 export function updateShip(campaign: Campaign, id: string, input: ShipInput): Campaign {
   const ship = shipById(campaign, id);
-  const valid = validShipInput(ship.design, input, holdTonsOf(campaign, ship));
+  const valid = validShipInput(ship.design, input);
   // Unraffinierter Treibstoff ist ein Teil des Tankinhalts (2026-11-21f).
   return { ...campaign, ships: campaign.ships.map((s) => (s.id === id ? { ...s, ...valid, unrefined: Math.min(s.unrefined, valid.fuel) } : s)) };
 }
@@ -354,7 +358,7 @@ export function updateShip(campaign: Campaign, id: string, input: ShipInput): Ca
 /** Umbenennen über das Stift-Symbol am Namen. */
 export function renameShip(campaign: Campaign, id: string, name: string): Campaign {
   const ship = shipById(campaign, id);
-  return updateShip(campaign, id, { name, fuel: ship.fuel, cargo: ship.cargo });
+  return updateShip(campaign, id, { name, fuel: ship.fuel });
 }
 
 /** Warum das aktive Schiff jetzt nicht ausgeblendet werden kann; `undefined`, wenn es geht. */

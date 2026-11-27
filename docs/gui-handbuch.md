@@ -37,6 +37,10 @@ Umschalter, Reihe, großes und kleines Blatt, Würfelfenster und Hinweis).
 | Kurzdialog | `Sheet` ohne ✕ (`overlay`) | Klein, für eine kurze Eingabe oder Entscheidung: unten „Abbrechen“ und die Hauptaktion. Notiz, Beute, Wahl der Begegnungsart … |
 | Würfelbühne | `DiceRoll`, `encounterRoll` | Jeder Wurf groß und kurz animiert: Zielwert, Würfel, DMs, Urteil. Nach einem Begegnungswurf zeigt sie den Würfel des Tests, was herauskam und was danach geht („Als NSC“, Rettungswürfe); kam es zur Begegnung, folgt ihre Übersicht. Ohne Würfel nur ein Satz, etwa dass der Test schon gemacht ist |
 | Meldung | `NoticeToast` (`notice-toast`) | Oben, wenn nach einem Tipp etwas nicht ging, mit dem Grund; ✕ nimmt sie weg |
+| Markt | (View, Detailseite) | (2026-11-27) die Detailseite für den spekulativen Handel, geöffnet mit „Markt“ am Feld einer Stadt auf dem Globus; oben der Kapazitätskopf, darunter *Zu kaufen* und *Zu verkaufen* |
+| Aufträge | (View, Detailseite) | (2026-11-27) die Detailseiten **Fracht**, **Passagiere** und **Post** zu einer Zielwelt, geöffnet an der Welt im Subsektor; oben der Kapazitätskopf, darunter die Ankreuzliste der Lose |
+| Kapazitätskopf | (View) | (2026-11-27) die Kacheln oben auf Markt und Aufträgen mit dem, was noch frei ist (Kasse, Laderaum, Kabinen, Niedrigbetten); sie rechnen sofort mit, was gerade angekreuzt oder als Menge eingestellt ist |
+| Ankreuzliste | (View) | (2026-11-27) eine scrollende, gruppierte Liste mit einem Kästchen je Zeile, um mehrere Dinge auf einmal zu wählen; übernommen wird mit dem Knopf in der Aktionsleiste |
 | Wartenscheibe | `NpcRunDisc` | Die kleine Scheibe in der Mitte, solange die App ohne Animation rechnet |
 | Weltsymbol | (View, aus `Hex`) | Das kleine 3D-Bild einer fertigen Welt aus Größe, Atmosphäre, Wasser, Bevölkerung, TL, Temperatur und Leben; auf der Sektorkarte, im Feldkopf und oben auf dem Globus; auf der Weltkarte nicht, dort steht es schon auf der Karte daneben. Nur Darstellung, nichts davon wird gespeichert |
 | Globus | (View, aus `SurfaceMap`) | Die drehbare Kugel mit der Oberflächenkarte; nur Darstellung |
@@ -247,6 +251,104 @@ Dialog                               Kurzdialog
 - **Anlegen am Ende der Liste**: Neues legt ein breiter Knopf unter der Liste an (`add-character`):
   „+ Neuer Charakter“, „+ Nach Regeln erschaffen“, „+ Neuer NSC“, „+ Neue Mission“. Er gehört zur
   Liste, nicht in die Aktionsleiste.
+
+### Handel: Markt und Aufträge
+
+*Vorschlag des Owners, freigegeben am 27. November 2026.* Regeln in
+[`modell/handel.md`](modell/handel.md). Zwei getrennte Oberflächen: der **spekulative Handel** am
+Ort (Stadt auf dem Globus) und die **Aufträge zu einem Ziel** (Welt im Subsektor).
+
+**Kapazitätskopf** (neu): oben auf beiden Detailseiten, unter Titel und ✕, eine Reihe Kacheln mit
+dem, was noch frei ist – auf dem Markt *Kasse* und *Laderaum*, bei den Aufträgen *Laderaum*,
+*Kabinen*, *Niedrigbetten*. Die Kacheln rechnen sofort mit, was gerade angekreuzt oder als Menge
+eingestellt ist (vorher → nachher, wird es knapp, steht die Zahl rot). Reicht etwas nicht, ist der
+Knopf zum Übernehmen ausgegraut und sagt, was fehlt.
+
+**Ankreuzliste** (neu): eine gruppierte Liste mit einem Kästchen vorne in jeder Zeile; ein Tipp auf
+die Zeile setzt oder löscht das Häkchen. Angenommenes steht schon angekreuzt da; solange das Schiff
+die Welt nicht verlassen hat, lässt es sich wieder abwählen. Übernommen wird erst mit dem Knopf
+rechts in der Aktionsleiste.
+
+**Markt** (Detailseite): „Markt“ in der Aktionsleiste am Feld einer Stadt mit Raumhafen A–E, wenn die
+Gruppe mit ihrem Schiff dort ist (sonst ausgegraut mit Grund).
+
+```
+┌──────────────────────────────┐
+│ Markt · Startown           ✕ │
+│ [Kasse Cr412k] [Laderaum 41 t]│  ← Kapazitätskopf
+│ Zu kaufen                    │
+│ ▸ Steel · Kira    Cr500  4D×10│  Grundpreis, Menge als Ausdruck
+│     Kauf DM −1 · Verkauf In −2, P +3
+│ ▸ Spices · Jon   Cr6.000 1D×5 │
+│   ✓ 15 t · 80 % = Cr4.800/t  │  ← nach Menge und Preis
+│ Zu verkaufen                 │
+│ ▸ Textiles 30 t (Kauf 90 %)  │
+│     Verkauf DM +1 (R +3, A −6 …)
+├──────────────────────────────┤
+│ [−]  [ 15 t ]  [+]  [Kaufen] │  ← Aktionsleiste
+└──────────────────────────────┘
+```
+
+- **Warenkarten** (Owner, 27. November 2026): je Ware eine Karte mit Name und Grundpreis oben, darunter
+  wer sie fand und die Menge, dann die DMs je Handelscode als **Chips**: Die Codes, die an dieser
+  Welt gelten, sind gold gefüllt, dahinter die Summe (beim Kauf ist ein Minus gut, beim Verkauf ein
+  Plus). Oben auf dem Markt stehen die Handelscodes der Welt als gefüllte Chips. Nach dem Preiswurf
+  ein Preisfeld: das Prozent groß, der Preis je Tonne bzw. Stück, die Restmenge, klein der Wurf; beim
+  Verkauf der Erlös für alles und Gewinn oder Verlust gegenüber dem Einkauf.
+- Beim ersten Öffnen in der Woche würfelt die App alle Warenwürfe der Gruppe (⚑ im Code noch ohne
+  Würfelbühne: die Ergebnisse stehen gleich in der Liste und im Log). Jede Zeile *Zu kaufen*: Ware, wer sie gefunden hat,
+  Grundpreis, Menge als Würfelausdruck und die DMs für Kauf an dieser Welt und für Verkauf (je
+  Handelscode).
+- **Antippen einer Ware** würfelt erst die Menge, dann den Kaufpreis, beides auf der Würfelbühne;
+  wer in der Charakterleiste oben steht, hilft mit Admin oder Bribery. Danach zeigt die Zeile Menge,
+  Prozent und Preis je Tonne bzw. Stück, und die Aktionsleiste wird **[−] Menge [+] · Kaufen**
+  (Menge vorbelegt mit dem, was Kasse und Laderaum erlauben).
+- *Zu verkaufen* zeigt die eigene Ware an Bord mit den Verkaufs-DMs dieser Welt. Antippen würfelt
+  den Verkaufspreis; der **Makler** (kein, +1 … +4) wird vorher in einem Kurzdialog gewählt (mit
+  Provision), der Helfer ist der Charakter oben. Dann **[−] Menge [+] · Verkaufen**.
+- Gesperrt steht da, was nicht geht („Diese Woche schon gewürfelt“, „Hier gekauft – erst nächste
+  Woche“).
+
+**Aufträge** (Detailseiten Fracht, Passagiere, Post): an der Welt im Subsektor, wenn sie in
+Sprungweite des Schiffs liegt und die Gruppe mit dem Schiff an einer Welt mit Raumhafen ist; drei
+Knöpfe **Fracht · Passagiere · Post** in der Aktionsleiste der Welt (sind es mit den vorhandenen mehr
+als fünf, als zweite Aktionsleiste darüber).
+
+```
+┌──────────────────────────────┐
+│ Fracht nach Regina         ✕ │
+│ [Laderaum 41 → 21 t]         │  ← rechnet mit
+│ Hauptladungen                │
+│ ☑ 20 t           Cr20.000    │
+│ ☐ 40 t           Cr40.000    │
+│ Nebenladungen                │
+│ ☐ 15 t           Cr15.000    │
+│ Gelegenheitsladungen         │
+│ ☐ 3 t            Cr3.000     │
+├──────────────────────────────┤
+│                  [Annehmen 1]│
+└──────────────────────────────┘
+```
+
+- Beim ersten Öffnen für dieses Ziel in der Woche würfelt die App alle Lose (Würfelbühne mit den
+  DMs der Zielwelt); danach stehen sie fest bis zum Wochenende.
+- **Passagiere**: gruppiert nach High, Middle, Low, eine Zeile je Passagier mit Preis;
+  Kapazitätskopf *Kabinen* und *Niedrigbetten*.
+- **Post**: die private Botschaft dorthin, wenn es eine gibt (Honorar), sonst „Keine Botschaft
+  diese Woche“; darunter ein Hinweis auf den **Postvertrag**, den man im Bereich Schiff schließt.
+- Bezahlt wird bei Ankunft am Ziel; jede Zeile sagt den Betrag.
+- **Rückmeldung** (Owner, 27. November 2026): Was nicht geht, steht als Meldung oben; der
+  Kapazitätskopf bleibt beim Scrollen stehen; „Annehmen“ ist gesperrt, solange etwas nicht passt,
+  und führt danach zurück zur Welt. Angenommenes verschwindet aus der Auswahl, die Häkchen beginnen
+  leer. Auf dem Markt steht nach dem Preiswurf links **Abbrechen** (kein Zwang zu kaufen oder zu
+  verkaufen); der Makler ist eine Wahl mit − und +.
+- **Bereich Schiff** (Owner, 27. November 2026): Ein Tipp auf die Kachel *Kabinen* öffnet die
+  Detailseite **Kabinen** (Gruppe, Fahrgäste je Ziel und Klasse), ein Tipp auf *Fracht* die Detailseite
+  **Laderaum** (Ladungen mit Herkunft und Ziel, „Über Bord“, Postvertrag).
+- **Abrechnung** (Owner, 27. November 2026): Nach der **Landung** im Zielsystem erscheint der Dialog
+  „Abrechnung in …“ mit Fracht, Passagen, Botschaften, Postvertrag des Sprungs, ausgezahltem Topf der
+  Low Lottery und nicht aufgewachten Low-Fahrgästen, darunter die Summe, und „Weiter“. Braucht die Welt
+  keinen Landeplatz, steht derselbe Abschnitt im Ergebnis der Reise.
 
 ### Meldung und Hinweis
 

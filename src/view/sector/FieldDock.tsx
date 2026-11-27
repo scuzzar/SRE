@@ -3,7 +3,7 @@ import type { GlobeView, NpcScreenView, TripPlanView, TripView } from '../../con
 import { NewNpcSheet } from '../characters/NpcScreen';
 import { HoldButton } from '../HoldButton';
 import { useGame } from '../game-context';
-import { CheckIcon, CloseIcon, FlagIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
+import { BriefcaseIcon, CheckIcon, CloseIcon, FlagIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIcon } from '../icons';
 
 /**
  * Die Aktionsleiste unten beim angetippten Feld des Globus, an der Stelle der Aktionsleiste Notiz, Tag, 2W6,
@@ -16,7 +16,7 @@ import { CheckIcon, CloseIcon, FlagIcon, NpcPinIcon, PinIcon, RouteIcon, ShopIco
  * stattdessen „Abbrechen“ und „Losfahren“ da; beim Ort wählen einer Mission (`missionPicking`)
  * „Abbrechen“ und „OK“.
  */
-export function FieldDock({ globe, trip, tripPlan, npcs, missionPicking }: { globe: GlobeView; trip: TripView | undefined; tripPlan: TripPlanView | undefined; npcs: NpcScreenView; missionPicking?: { readonly title: string } | undefined }) {
+export function FieldDock({ globe, trip, tripPlan, npcs, missionPicking, marketBlocker }: { globe: GlobeView; trip: TripView | undefined; tripPlan: TripPlanView | undefined; npcs: NpcScreenView; missionPicking?: { readonly title: string } | undefined; /** Warum hier kein Markt geht (2026-11-27). */ marketBlocker?: string | undefined }) {
   const game = useGame();
   // Ob das Fenster „Neuer NSC“ (langes Drücken auf „NSC platzieren“) offen ist, ist reine Darstellung.
   const [creating, setCreating] = useState(false);
@@ -110,6 +110,10 @@ export function FieldDock({ globe, trip, tripPlan, npcs, missionPicking }: { glo
         <button type="button" className="action note" title={shopBlocker ?? 'Im Shop der Stadt kaufen und verkaufen'} disabled={shopBlocker !== undefined} onClick={() => game.openShop()}>
           <ShopIcon />
           Einkaufen
+        </button>
+        <button type="button" className="action note" title={shopBlocker ?? marketBlocker ?? 'Spekulativer Handel: Ware kaufen und verkaufen'} disabled={(shopBlocker ?? marketBlocker) !== undefined} onClick={() => game.openMarket()}>
+          <BriefcaseIcon />
+          Markt
         </button>
       </div>
       {creating && <NewNpcSheet npcs={npcs} here={placeName} onClose={() => setCreating(false)} />}

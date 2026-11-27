@@ -126,6 +126,7 @@ function HexCell({ hex, selected, disabled, detail, here = false, opens = false 
       }}
     >
       <polygon points={corners(x, middle)} />
+      {hex.travelZone && <circle className={`hex-zone hex-zone-${hex.travelZone}`} cx={x} cy={middle} r={S * 0.78} />}
       <text className="hex-id" x={x} y={detailed ? middle - 27 : y - S * 0.58}>
         {hex.id}
       </text>

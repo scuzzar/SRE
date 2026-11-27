@@ -8,5 +8,7 @@ export type * from './globe-view';
 export type * from './trip-view';
 export type * from './space-view';
 export type * from './ship-check-view';
+export type * from './trade-view';
+export type * from './trade-log';
 export { LANDFORM_NAMES } from './globe-view';
 export { landformAt, nearestCell, TRAY_STOPS } from '../model';

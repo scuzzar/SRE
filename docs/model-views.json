@@ -59,6 +59,10 @@
     {
       "id": "raum",
       "title": "Raumkarte und Systemflug"
+    },
+    {
+      "id": "handel",
+      "title": "Handel"
     }
   ],
   "changes": [
@@ -731,6 +735,42 @@
         "Odds",
         "TaskResult",
         "Character"
+      ]
+    },
+    {
+      "id": "2026-11-27",
+      "file": "2026-11-27-handel",
+      "title": "Handel, Schritt 1: Spekulation mit Markt je Welt und Woche (Warenwurf, Preiswürfe), Ladungen im Laderaum, Fracht- und Passagierangebote je Ziel, angekündigtes Ziel, zahlende Passagiere an der Reise, Postvertrag und private Botschaften, Reisezonen",
+      "approved": true,
+      "show": [
+        "TradeCode"
+      ]
+    },
+    {
+      "id": "2026-11-27b",
+      "file": "2026-11-27b-mehrere-warenwuerfe",
+      "title": "Mehrere Warenwürfe je Markt (Hausregel): jeder Charakter 1 + Stufe in Admin oder Streetwise; ein Markt hat beliebig viele Warenwürfe mit je eigenem Kaufpreis, der Warenwurf weiß, wer gewürfelt hat",
+      "approved": true,
+      "show": [
+        "Market",
+        "GoodsRoll",
+        "PriceRoll",
+        "Character"
+      ]
+    },
+    {
+      "id": "2026-11-27c",
+      "file": "2026-11-27c-auftraege-zu-mehreren-zielen",
+      "title": "Aufträge zu mehreren Zielen: das angekündigte Ziel entfällt; Fracht, Passagiere und Botschaften zu verschiedenen Welten zugleich an Bord, bezahlt bei Ankunft am Ziel; Fahrgäste an Bord (Fare); private Botschaften je Ziel",
+      "approved": true,
+      "show": [
+        "Ship",
+        "Journey",
+        "MessageOffer",
+        "Market",
+        "Cargo",
+        "Booking",
+        "LowBerth"
       ]
     }
   ]

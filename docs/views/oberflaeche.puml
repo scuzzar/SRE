@@ -83,6 +83,8 @@ hide <<browser>> stereotype
 ' Schiffe
   class Ship $schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
 ' Charaktererschaffung und Lebenslauf
@@ -164,6 +166,8 @@ Campaign "1" *-- "0..1" Place : location
 
 ' Schiffe
 Ship "1" *-- "0..1" Place : place
+
+' Handel
 
 ' Raumkarte und Systemflug
 

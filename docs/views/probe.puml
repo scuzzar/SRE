@@ -82,6 +82,10 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+  class GoodsRoll $handel
+  class PriceRoll $handel
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class Skimming $raum
   class SpaceBattle $raum
@@ -156,6 +160,10 @@ hide <<browser>> stereotype
 Campaign "1" *-- "*" LogEntry : log {ordered}
 
 ' Schiffe
+
+' Handel
+LogEntry <|-- GoodsRoll
+LogEntry <|-- PriceRoll
 
 ' Raumkarte und Systemflug
 LogEntry <|-- SpaceBattle

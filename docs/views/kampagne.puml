@@ -97,6 +97,9 @@ hide <<browser>> stereotype
 ' Schiffe
   class Ship $schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+  class Market $handel
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SystemFlight $raum
 
@@ -145,6 +148,9 @@ Conflict "*" --> "0..1" Campaign : remote
 
 ' Schiffe
 Campaign "1" *-- "0..*" Ship : ships
+
+' Handel
+Campaign "1" *-- "0..*" Market : markets
 
 ' Raumkarte und Systemflug
 Campaign "1" *-- "0..1" SystemFlight : flight

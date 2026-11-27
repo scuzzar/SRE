@@ -9,6 +9,7 @@ import { DetailPage } from '../DetailPage';
 import { CrewPersonSheet, CrewPostSheet, CrewTab } from './CrewTab';
 import { ComputerTab, ProgramSheet, SoftwareYard } from './ComputerTab';
 import { deckImage } from './deck-image';
+import { CabinsList, HoldTab } from './HoldTab';
 
 /** Die Ansicht unter den Kacheln: eigene Deckpläne, die Crew und der Rechner. */
 type Tab = 'deck' | 'crew' | 'computer';
@@ -19,6 +20,8 @@ type Sheet =
   | { readonly kind: 'buy'; readonly design: string; readonly method: 'cash' | 'bank' }
   | { readonly kind: 'edit' }
   | { readonly kind: 'fuel' }
+  | { readonly kind: 'hold' }
+  | { readonly kind: 'cabins' }
   | { readonly kind: 'rename' }
   | { readonly kind: 'deck'; readonly name: string }
   | { readonly kind: 'post'; readonly shipId: string; readonly at: number }
@@ -72,6 +75,14 @@ export function ShipScreen({ view }: { view: Snapshot }) {
       />
     ) : sheet?.kind === 'edit' && boat !== undefined ? (
       <EditSheet boat={boat} onClose={close} />
+    ) : sheet?.kind === 'hold' && boat !== undefined ? (
+      <DetailPage title="Laderaum" aside={boat.name} onClose={close}>
+        <HoldTab hold={view.hold} error={ship.error} />
+      </DetailPage>
+    ) : sheet?.kind === 'cabins' && boat !== undefined ? (
+      <DetailPage title="Kabinen" aside={boat.name} onClose={close}>
+        <CabinsList hold={view.hold} />
+      </DetailPage>
     ) : sheet?.kind === 'fuel' && boat !== undefined ? (
       <FuelSheet boat={boat} ship={ship} onClose={close} />
     ) : sheet?.kind === 'rename' && boat !== undefined ? (
@@ -147,17 +158,17 @@ export function ShipScreen({ view }: { view: Snapshot }) {
                     {boat.fuel} / {boat.fuelMax} t
                   </span>
                 </span>
-                <span className="duo-col">
-                  <span className="tile-label">Fracht</span>
+                <button type="button" className="duo-col tile-open" aria-label="Laderaum: was an Bord ist und wohin es soll" onClick={() => setSheet({ kind: 'hold' })}>
+                  <span className="tile-label">Fracht ›</span>
                   <span className="tile-text">
                     {boat.cargo} / {boat.cargoMax} t
                   </span>
-                </span>
+                </button>
                 {boat.unrefined > 0 && <span className="tile-sub">davon {boat.unrefined} t unraffiniert (Sprung DM +1)</span>}
               </div>
-              <div className="tile duo">
+              <button type="button" className="tile duo tile-open" aria-label="Kabinen und Niedrigbetten: wer an Bord ist und wohin" onClick={() => setSheet({ kind: 'cabins' })}>
                 <span className="duo-col">
-                  <span className="tile-label">Kabinen</span>
+                  <span className="tile-label">Kabinen ›</span>
                   <span className="tile-text">
                     {boat.cabins} / {boat.cabinsMax}
                   </span>
@@ -168,7 +179,7 @@ export function ShipScreen({ view }: { view: Snapshot }) {
                     {boat.lowBerthsUsed} / {boat.lowBerthsMax}
                   </span>
                 </span>
-              </div>
+              </button>
               <div className="tile">
                 <span className="tile-label">Antrieb</span>
                 <span className="tile-text">{boat.thruster}</span>
@@ -606,9 +617,8 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
   const game = useGame();
   const [name, setName] = useState(boat.name);
   const [fuel, setFuel] = useState(String(boat.fuel));
-  const [cargo, setCargo] = useState(String(boat.cargo));
   const tons = (value: string, max: number) => /^\d+$/.test(value.trim()) && Number(value) <= max;
-  const valid = name.trim() !== '' && tons(fuel, boat.fuelMax) && tons(cargo, boat.cargoMax);
+  const valid = name.trim() !== '' && tons(fuel, boat.fuelMax);
   // Ausblenden erst beim zweiten Tippen, wie Löschen sonst auch (Owner, 22. November 2026).
   const [retiring, setRetiring] = useState(false);
   return (
@@ -638,7 +648,7 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
             disabled={!valid}
             onClick={() => {
               haptic('pick');
-              game.editShip({ name: name.trim(), fuel: Number(fuel), cargo: Number(cargo) });
+              game.editShip({ name: name.trim(), fuel: Number(fuel) });
               onClose();
             }}
           >
@@ -655,11 +665,7 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
         <span>Treibstoff (von {boat.fuelMax} t)</span>
         <input type="number" inputMode="numeric" min={0} max={boat.fuelMax} value={fuel} onChange={(e) => setFuel(e.target.value)} />
       </label>
-      <label className="field">
-        <span>Fracht (von {boat.cargoMax} t)</span>
-        <input type="number" inputMode="numeric" min={0} max={boat.cargoMax} value={cargo} onChange={(e) => setCargo(e.target.value)} />
-      </label>
-      <p className="shop-hint muted">Die Belegung der Kabinen ergibt sich aus der Gruppe; zahlende Passagiere kommen mit dem Handel.</p>
+      <p className="shop-hint muted">Fracht und Fahrgäste kommen über den Handel an Bord: Markt in einer Stadt, Fracht, Passagiere und Post an einer Welt im Subsektor.</p>
       <dl className="profile">
         {boat.initialLoan !== undefined && (
           <div>

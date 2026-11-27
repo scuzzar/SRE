@@ -84,6 +84,7 @@ hide <<browser>> stereotype
     count: number [0..1]
     text: string [0..1]
     shipCost: ShipCost [0..1]
+    shipIncome: ShipIncome [0..1]
   }
   enum BookingKind <<value>> $shop {
     income
@@ -107,6 +108,11 @@ hide <<browser>> stereotype
 ' Schiffe
   class Ship $schiffe
   enum ShipCost <<value>> $schiffe
+
+' Handel (Regeln: docs/regeln-handel.md)
+  class Cargo $handel
+  class Fare $handel
+  enum ShipIncome <<value>> $handel
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
@@ -168,6 +174,11 @@ Booking --> BookingKind
 
 ' Schiffe
 Booking "*" --> "0..1" Ship : forShip
+
+' Handel
+Booking "*" --> "0..1" Fare : forFare
+Booking "*" --> "0..1" Cargo : forCargo
+Booking --> ShipIncome
 
 ' Raumkarte und Systemflug
 

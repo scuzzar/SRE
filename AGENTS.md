@@ -17,7 +17,8 @@
   markiert und Ausschnitte anlegt, steht im Skill unter „Ausschnitte und Markierungen“.
 - **Regeln nachschlagen in den Regeldokus**, nicht in den PDFs: `docs/regeln-kampf.md` (Kampf und
   Begegnungen), `docs/regeln-laufbahnen.md` (Laufbahnen der Erschaffung), `docs/regeln-schiffe.md`
-  (Schiffe, Raumkampf, Vektorbewegung) und `docs/regeln-sternsystem.md` (Sternsysteme nach Book 6),
+  (Schiffe, Raumkampf, Vektorbewegung), `docs/regeln-handel.md` (Fracht, Passagiere, Post,
+  Spekulation) und `docs/regeln-sternsystem.md` (Sternsysteme nach Book 6),
   je mit Seitenangabe und Stand in der App. Setzt die App eine Regel um, dort den Stand nachziehen;
   fehlt etwas, erst das PDF lesen und es im passenden Regeldoku ergänzen.
 - **Oberfläche nach dem GUI-Handbuch** (`docs/gui-handbuch.md`): Ziehblatt, Navigationsleiste unten,

@@ -446,6 +446,8 @@ function kicker(item: LogItem, volley = false): string {
       return 'Reise im System';
     case 'skimming':
       return 'Schiff · Schöpfen';
+    case 'trade':
+      return 'Handel';
     case 'spaceBattle':
     case 'spaceAttack':
     case 'spaceBattleEnd':
@@ -459,7 +461,7 @@ function kicker(item: LogItem, volley = false): string {
 
 /** Zeit und Reisen haben den Stand geändert; sie lassen sich nicht löschen. */
 function deletable(item: LogItem | undefined): boolean {
-  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey' && item.kind !== 'monthEnd' && item.kind !== 'skimming' && item.kind !== 'spaceBattle' && item.kind !== 'spaceAttack' && item.kind !== 'spaceBattleEnd';
+  return item !== undefined && item.kind !== 'time' && item.kind !== 'journey' && item.kind !== 'monthEnd' && item.kind !== 'skimming' && item.kind !== 'trade' && item.kind !== 'spaceBattle' && item.kind !== 'spaceAttack' && item.kind !== 'spaceBattleEnd';
 }
 
 function EntryBody({ item }: { item: LogItem }) {
@@ -701,6 +703,13 @@ function EntryBody({ item }: { item: LogItem }) {
           </span>
         </>
       );
+    case 'trade':
+      return (
+        <>
+          <span className="verdict small">{item.head}</span>
+          <span className="entry-detail">{item.detail}</span>
+        </>
+      );
     case 'note':
       return <p className="note-text">{item.text}</p>;
   }
@@ -716,6 +725,7 @@ export function JourneyBody({ item }: { item: JourneyItem }) {
       <span className="entry-detail">
         {item.fromDate} → {item.toDate}
       </span>
+      {item.trade && <span className="entry-detail">{item.trade}</span>}
       {item.ship !== undefined ? (
         <span className={`entry-question small${item.misjump ? ' negative' : ''}`}>
           mit {item.ship} · Sprungwurf {item.jump?.[0]} + {item.jump?.[1]}

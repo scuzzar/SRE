@@ -146,13 +146,13 @@ dabei.
 Schiffe verdienen an **Fracht**, **Passagieren** und **Post**.
 
 - **Fracht**: Die Spielleitung würfelt an jedem erreichbaren Zielort Haupt-, Neben- und
-  Gelegenheitsfracht (Tabelle fehlt, siehe [Lücken](#lücken-fehlende-tabellen-aus-se)); Fracht wird
+  Gelegenheitsfracht (Cargo-Tabelle SE 9, siehe [`regeln-handel.md`](regeln-handel.md)); Fracht wird
   fest zu **Cr1.000 pro Tonne** befördert (unabhängig von der Distanz, pro Sprung). Der
   Schiffseigner kann Fracht auch selbst kaufen und spekulativ weiterverkaufen (siehe
   [Handel und Gewerbe](#handel-und-gewerbe)).
 - **Passagiere**: Zahl und Klasse ergeben sich aus einer Passagiertabelle nach Bevölkerung und
-  Zielzone (fehlt). Preise: High Cr10.000, Middle Cr8.000, Low Cr1.000 (wie beim eigenen Reisen als
-  Passagier). Jump-Nummer beeinflusst den Preis nicht, nur wie viele Tickets für dieselbe Strecke
+  Zielzone (Passagiertabelle SE 9, siehe [`regeln-handel.md`](regeln-handel.md)). Preise: High
+  Cr10.000, Middle Cr8.000, Low Cr1.000 (wie beim eigenen Reisen als Passagier). Jump-Nummer beeinflusst den Preis nicht, nur wie viele Tickets für dieselbe Strecke
   nötig sind.
 - **Post**: nur für subventionierte Schiffe, gegen feste Vergütung (Cr25.000, mindestens Cr5.000 je
   Tonne Postfracht, höchstens 5 t je Reise); das Schiff muss bewaffnet sein und einen Gunner in der
@@ -648,29 +648,10 @@ Reaktionstabelle gewürfelt werden (siehe `regeln-kampf.md`, *Reaktion*).
 
 ## Handel und Gewerbe
 
-*SR 52, „Trade and Commerce“.*
-
-- Fracht wird meist pauschal zu **Cr1.000 pro Tonne** befördert. Spekulativer Handel: ein Schiff
-  kauft Waren günstig und verkauft sie anderswo teurer, auf eigenes Risiko und eigene Rechnung.
-- **Procedure**:
-  1. Mit freiem Kapital und Laderaum: 2W würfeln, DM **+1**, wenn das Ursprungsvolk 9+ ist, DM
-     **−1**, wenn 5− ist. Das modifizierte Ergebnis (unter 1 → 1, über 6 → 6) zeigt in der **Trade
-     and Speculation Table** (fehlt) die beste verfügbare Warenart.
-  2. **Menge**: 3W × 5 Tonnen (bei den Posten 51–56 der Tabelle: in Einzelstücken statt Tonnen,
-     Menge und Grundpreis nach Ermessen der Spielleitung/Tabelle).
-  3. **Einkaufspreis**: Grundpreis aus der Tabelle (konstant) nach einem DM-Wurf auf die **Actual
-     Value Table** (fehlt), als Prozentsatz des Grundpreises.
-  4. **Verkaufspreis**: am Zielort erneuter Wurf auf die Actual Value Table (andere DMs möglich),
-     wieder als Prozentsatz des Grundpreises; Teilverkäufe sind mit 1 % Bearbeitungsgebühr auf die
-     verkaufte Menge möglich.
-- **Broker's Services**: ein Makler verlangt 5 % des Verkaufspreises (2 Makler: 20 %) und gibt dafür
-  DM +1 bis +4 auf den Verkaufswurf; auch wenn der Verkäufer selbst nicht verkaufen will, muss der
-  Makler bezahlt werden. Nur **ein** Makler darf je Verkauf helfen.
-- **Character Skills**: Bribery- oder Admin-Fertigkeit gibt denselben DM wie ein Makler, nur **ein**
-  Charakter darf je Verkauf mitwirken, auch nicht zusätzlich zu einem Makler.
-- **Trade Classifications** (Handelscodes, siehe auch `modell/sektor.md` unter *Handelscodes*):
-  Agricultural, Non-Agricultural, Industrial, Non-Industrial, Rich, Poor; sie geben DMs auf Ein- und
-  Verkaufswürfe nach der Trade and Speculation Table.
+*SR 52, „Trade and Commerce“; SE 9 und SE 22.* Fracht, Passagiere, Post, Handelsbräuche und der
+spekulative Handel mit allen Tabellen (Cargo, Passengers, Trade and Speculation, Actual Value,
+Makler, Handelscodes) stehen seit 27. November 2026 in einer eigenen Regeldoku:
+[`regeln-handel.md`](regeln-handel.md).
 
 ---
 
@@ -986,11 +967,10 @@ Szenario es will.
 ## Lücken (fehlende Tabellen aus SE)
 
 Die Tabellen aus SE 10–13 (Schiffsbau, Crew, Raumkampf, Schiffsbegegnungen) sind seit
-18. November 2026 vollständig oben übertragen. Noch nicht übertragen:
+18. November 2026 vollständig oben übertragen, die Handelstabellen (SE 9, SE 22) seit
+27. November 2026 in [`regeln-handel.md`](regeln-handel.md). Noch nicht übertragen:
 
 - **Technological Levels** (SE 16)
-- **Trade and Speculation** (SE 22; die *Actual Value Table* und die *Cargo-* und
-  *Passagiertabellen* sind noch zu suchen, vermutlich SE 9/22–23)
 
 Wird eines dieser Themen für die App gebraucht, die Tabelle aus dem PDF vollständig hier
 eintragen, erst danach ins Domänenmodell übernehmen.

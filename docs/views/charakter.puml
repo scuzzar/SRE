@@ -125,6 +125,10 @@ hide <<browser>> stereotype
 ' Schiffe
   class CrewPost $schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+  class GoodsRoll $handel
+  class PriceRoll $handel
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SpaceAttack $raum
   class DamageControl $raum
@@ -192,6 +196,10 @@ Booking "*" --> "0..1" Character : for
 
 ' Schiffe
 CrewPost "*" --> "1" Character : who
+
+' Handel
+GoodsRoll "*" --> "1" Character : by
+PriceRoll "*" --> "0..1" Character : helper
 
 ' Raumkarte und Systemflug
 SpaceAttack "*" --> "0..1" Character : gunner

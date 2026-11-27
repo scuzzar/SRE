@@ -113,6 +113,8 @@ export interface Hex {
   readonly navalBase?: boolean;
   readonly scoutBase?: boolean;
   readonly gasGiant?: boolean;
+  /** Die Reisezone (2026-11-27), von Hand gesetzt; fehlt sie, ist das System grün. */
+  readonly travelZone?: TravelZone;
   /** Alle Welten des Systems, die Hauptwelt zuerst. Ein leeres Feld hat keine. */
   readonly worlds: readonly World[];
   /** Die Id der Hauptwelt; fehlt bei einem leeren Feld. */
@@ -120,6 +122,10 @@ export interface Hex {
   /** Das Sternsystem (Domänenmodell 2026-11-18d); fehlt, bis es gewürfelt ist (siehe `star-system.ts`). */
   readonly system?: StarSystem;
 }
+
+/** Die Reisezonen (2026-11-27): Amber und Red; ohne Zone ist ein System grün. */
+export const travelZones = ['amber', 'red'] as const;
+export type TravelZone = (typeof travelZones)[number];
 
 /** Das Sternsystem eines Hexfeldes; der Typ steht in `star-system.ts`. */
 export interface StarSystem {
@@ -447,7 +453,18 @@ function rollDice(count: number, random: Random): number {
 }
 
 function rollExpr(expr: DiceExpr, random: Random): number {
-  return Math.max(0, rollDice(expr.dice, random) + expr.dm);
+  return Math.max(0, diceExprValue(expr, Array.from({ length: expr.dice + (expr.less ?? 0) }, () => random.int(1, 6))));
+}
+
+/**
+ * Der Wert eines Würfelausdrucks aus seinen Würfeln: die ersten `dice` addiert, die übrigen
+ * (`less`) abgezogen, plus DM, mal `times`. Kann unter 0 liegen; wer nur 0 und mehr braucht,
+ * begrenzt selbst.
+ */
+export function diceExprValue(expr: DiceExpr, dice: readonly number[]): number {
+  const plus = dice.slice(0, expr.dice).reduce((a, b) => a + b, 0);
+  const minus = dice.slice(expr.dice).reduce((a, b) => a + b, 0);
+  return (plus - minus + expr.dm) * (expr.times ?? 1);
 }
 
 /** Die Zeile der Kontinente- bzw. Ozeane-Tabelle für einen Wurf. */

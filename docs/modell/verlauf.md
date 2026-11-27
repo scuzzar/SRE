@@ -710,3 +710,26 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > bisher fest. Alte Kampagnen und Dateien mit gewählter Stufe laden weiter; die Stufe wird
 > übergangen. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-27-die-stufe-beim-wuerfeln.png`](../changes/2026-11-27-die-stufe-beim-wuerfeln.png).
+
+> Am 27. November 2026 freigegeben (Kennzeichen **2026-11-27**): **Handel, Schritt 1.** Spekulation mit einem
+> Markt je Welt und Woche (Warenwurf und Preiswürfe als Logeinträge, Makler und Fertigkeit),
+> Ladungen im Laderaum statt einer freien Tonnenzahl, Fracht- und Passagierangebote je Ziel, das
+> angekündigte Ziel am Schiff, zahlende Passagiere an der Reise, Postvertrag und private Botschaften, Reisezonen am Hex, die Tabellen
+> aus SE 9 und SE 22 als Referenzdaten. Regeln in [`handel.md`](handel.md). Der Ausschnitt dazu
+> liegt unter [`changes/2026-11-27-handel.png`](../changes/2026-11-27-handel.png).
+
+> Am 27. November 2026 freigegeben (Kennzeichen **2026-11-27b**): **Mehrere Warenwürfe je Markt** (Hausregel).
+> Statt eines Warenwurfs je Woche (SR 52) darf jeder Charakter der Gruppe je Markt 1 + seine Stufe
+> in Admin oder Streetwise würfeln. `Market.goods` wird eine Liste, `Market.purchase` wird
+> `purchases` (je Warenwurf ein Kaufpreis), und der Warenwurf verweist auf den Charakter, der
+> gewürfelt hat (`by`). Regeln in [`handel.md`](handel.md). Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-27b-mehrere-warenwuerfe.png`](../changes/2026-11-27b-mehrere-warenwuerfe.png).
+
+> Am 27. November 2026 freigegeben (Kennzeichen **2026-11-27c**): **Aufträge zu mehreren Zielen.** Mit dem
+> UI-Vorschlag des Owners: Das angekündigte Ziel entfällt (`Ship.destination`). Fracht, Fahrgäste
+> und private Botschaften zu verschiedenen Welten dürfen zugleich an Bord sein, Umwege sind
+> erlaubt, bezahlt wird bei Ankunft am Ziel. Neu sind die Fahrgäste an Bord (`Fare`, `Ship.fares`)
+> und `Journey.low`; private Botschaften gibt es je Ziel statt je Markt. Alle Lose eines Ziels und
+> alle Warenwürfe eines Markts würfelt die App beim ersten Blick auf einmal. Regeln in
+> [`handel.md`](handel.md). Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-27c-auftraege-zu-mehreren-zielen.png`](../changes/2026-11-27c-auftraege-zu-mehreren-zielen.png).

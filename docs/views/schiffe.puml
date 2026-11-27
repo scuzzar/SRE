@@ -85,7 +85,7 @@ hide <<browser>> stereotype
     name: string
     fuel: number
     unrefined: number
-    cargo: number
+    /cargo: number
     price: number
     initialLoan: number [0..1]
     loanBalance: number [0..1]
@@ -96,6 +96,7 @@ hide <<browser>> stereotype
     aboard: boolean
     inOrbit: boolean
     inHold: boolean
+    mailContract: boolean
   }
   enum ShipCost <<value>> $schiffe {
     price
@@ -106,6 +107,10 @@ hide <<browser>> stereotype
     armament
     repair
     software
+    goods
+    handling
+    broker
+    lottery
   }
   class ShipSoftware $schiffe {
     slot: SoftwareSlot
@@ -202,6 +207,10 @@ hide <<browser>> stereotype
     image: string
   }
 
+' Handel (Regeln: docs/regeln-handel.md)
+  class Cargo $handel
+  class Fare $handel
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class Skimming $raum
   class ShipDamage <<value>> $raum
@@ -253,6 +262,10 @@ ShipDesign --> ShipKind
 ShipDesign "*" --> "*" ShipDesign : craft {ordered}
 Ship "*" --> "0..1" Ship : mother
 Booking "*" --> "0..1" Ship : forShip
+
+' Handel
+Ship "1" *-- "*" Cargo : hold {ordered}
+Ship "1" *-- "*" Fare : fares {ordered}
 
 ' Raumkarte und Systemflug
 SpaceUnit "*" --> "0..1" Ship : ship

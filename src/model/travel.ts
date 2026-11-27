@@ -5,7 +5,7 @@ import type { Clock, Random } from './ports';
 import { itemOf, shipDesignOf } from './reference';
 import { sum, type Dice } from './rules';
 import { hexById, hexId, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
-import { bookShip, fundsOf, locationOf, type Booking } from './shop';
+import { bookShip, bookShipIncome, fundsOf, locationOf, type Booking } from './shop';
 import { craftOf, jumpFuelOf, shipOf, without, type Ship } from './ship';
 import { portDepartureBlocker, shipDepartureBlocker, leaveShipBehind } from './landing';
 import { LIFE_SUPPORT, PER_STATEROOM } from './upkeep';
@@ -14,6 +14,7 @@ import { parkVehicles } from './trip';
 import { jumpAfter } from './space-combat';
 import { dayOf, JOURNEY_DAYS } from './time';
 import { woundedUpp, woundsOf } from './wounds';
+import { fareLifeSupport, journeyTrade, MAIL_PAY } from './trade';
 
 /** Wie weit eine Passage zurzeit reicht: Sprung 2 (Entscheidung des Owners). */
 export const MAX_JUMP = 2;
@@ -211,9 +212,10 @@ export function shipJourneyBlocker(campaign: Campaign, to: string): string | und
   return undefined;
 }
 
-/** Die Lebenserhaltung einer Reise mit dem eigenen Schiff: Cr2.000 je Reisendem (SR 30; Doppelbelegung kostet doppelt). */
+/** Die Lebenserhaltung einer Reise mit dem eigenen Schiff: Cr2.000 je Reisendem (SR 30; Doppelbelegung kostet doppelt), dazu die Fahrgäste (2026-11-27c). */
 export function lifeSupportOf(campaign: Campaign): number {
-  return travellersOf(campaign).length * LIFE_SUPPORT;
+  const ship = shipOf(campaign);
+  return travellersOf(campaign).length * LIFE_SUPPORT + (ship === undefined ? 0 : fareLifeSupport(ship));
 }
 
 /**
@@ -236,8 +238,12 @@ export function travelShip(campaign: Campaign, to: string, random: Random, clock
   const today = dayOf(campaign);
   // Beim Sprung aus dem Systemflug kommt der DM der Nähe zu einem Körper dazu (SR 28, 2026-11-22b).
   const jumpDm = jumpDmOf(ship) + (options.extraDm ?? 0);
-  const journey: Journey = { kind: 'journey', at: clock.now(), day: today, from, to, days: JOURNEY_DAYS, passengers: [], berths: [], ship: ship.id, jump, jumpDm, ...(options.departureRoll ? { departureRoll: options.departureRoll } : {}) };
-  const supplied = bookShip(campaign, -lifeSupportOf(campaign), ship.id, 'lifeSupport', clock, `Lebenserhaltung, ${travellersOf(campaign).length} Reisende`);
+  // Handel (2026-11-27c): Fahrgäste an Bord, Kojen der Low-Fahrgäste, die hier aussteigen, Postvertrag.
+  const trade = journeyTrade(campaign, ship, to, random, closest);
+  const journey: Journey = { kind: 'journey', at: clock.now(), day: today, from, to, days: JOURNEY_DAYS, passengers: [], ship: ship.id, jump, jumpDm, ...(options.departureRoll ? { departureRoll: options.departureRoll } : {}), ...trade };
+  const fares = (journey.high ?? 0) + (journey.middle ?? 0) + (journey.low ?? 0);
+  let supplied = bookShip(campaign, -lifeSupportOf(campaign), ship.id, 'lifeSupport', clock, `Lebenserhaltung, ${travellersOf(campaign).length} Reisende${fares > 0 ? `, ${fares} Fahrgäste` : ''}`);
+  if (journey.mail) supplied = bookShipIncome(supplied, MAIL_PAY, ship.id, 'mail', clock, 'Postvertrag');
   const after: Campaign = {
     ...supplied,
     // Unterwegs ist das Schiff bei der Gruppe, an keinem Ort und in keinem Hafen (2026-11-22c); die Liegezeit beginnt erst am Ziel.
@@ -327,7 +333,11 @@ export function checkJourney(campaign: Campaign, journey: Journey): void {
   if (journey.ship !== undefined) {
     if (!campaign.ships.some((s) => s.id === journey.ship)) throw new DomainError('Eine Reise verweist auf ein Schiff, das es nicht gibt.');
     if (journey.jump === undefined || journey.jump.length !== 2 || journey.jump.some((d) => !Number.isInteger(d) || d < 1 || d > 6)) throw new DomainError('Eine Reise mit eigenem Schiff hat den Sprungwurf auf 2W6.');
-    if (journey.passengers.length > 0 || journey.berths.length > 0 || journey.npcDie !== undefined || journey.lot !== undefined) throw new DomainError('Mit eigenem Schiff reist niemand als Passagier.');
+    if (journey.passengers.length > 0 || journey.npcDie !== undefined || journey.berths.some((b) => b.for !== undefined)) throw new DomainError('Mit eigenem Schiff reist niemand der Gruppe als Passagier.');
+    for (const n of [journey.high, journey.middle, journey.low]) if (n !== undefined && (!Number.isInteger(n) || n < 0)) throw new DomainError('Die Fahrgäste einer Reise sind eine ganze Zahl ab 0.');
+    if (journey.berths.length > (journey.low ?? 0)) throw new DomainError('Mehr Kojen als Low-Fahrgäste an Bord.');
+    const shipTies = journey.berths.length === 0 ? [] : closest(journey.berths);
+    if (shipTies.length > 1 ? journey.lot === undefined || !shipTies.includes(journey.lot) : journey.lot !== undefined) throw new DomainError('Das Los der Lotterie passt nicht zum Gleichstand.');
     return;
   }
   if (journey.jump !== undefined) throw new DomainError('Nur eine Reise mit eigenem Schiff hat einen Sprungwurf.');

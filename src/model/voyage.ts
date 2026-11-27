@@ -83,7 +83,9 @@ function arriveVoyage(campaign: Campaign, voyage: Voyage, clock: Clock): Campaig
   void _v;
   let after: Campaign = { ...rest, location: worldPlace(entry.to) };
   if (entry.ship !== undefined) after = arrive(shipArrives(after, entry.to, entry.ship), clock, entry.ship);
-  if (entry.kind === 'journey' && entry.berths.length > 0) {
+  // Handel: Abgerechnet wird bei der Landung (Owner, 27. November 2026, `landAt`); braucht die Welt
+  // keinen Landeplatz, rechnet der Controller gleich nach der Ankunft ab (`settleOnLanding`).
+  if (entry.kind === 'journey' && entry.ship === undefined && entry.berths.length > 0) {
     const dead = new Set(entry.berths.filter((b) => b.for !== undefined && !survived(b)).map((b) => b.for!));
     const winner = winnerOf(entry);
     const pc = winner === undefined ? undefined : entry.berths[winner]!.for;

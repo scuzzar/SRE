@@ -1,0 +1,296 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Handel
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Booking $shop
+  class Character $charakter
+
+' Schiffe
+  class Ship $schiffe
+
+' Handel (Regeln: docs/regeln-handel.md)
+  class Market $handel {
+    week: number
+    /current: boolean
+  }
+  class GoodsRoll $handel {
+    dice: number[2]
+    dm: number
+    quantityDice: number[*]
+    /quantity: number
+  }
+  class PriceRoll $handel {
+    sale: boolean
+    dice: number[2]
+    tradeDm: number
+    skillDm: number
+    brokerDm: number
+    /percent: number
+    /price: number
+  }
+  class Cargo $handel {
+    kind: CargoKind
+    tons: number
+    count: number [0..1]
+    paid: number [0..1]
+    fee: number [0..1]
+    retired: boolean
+  }
+  enum CargoKind <<value>> $handel {
+    goods
+    freight
+    message
+  }
+  class Fare $handel {
+    high: number
+    middle: number
+    low: number
+    retired: boolean
+  }
+  class MessageOffer <<value>> $handel {
+    dice: number[2]
+    /available: boolean
+    die: number
+    /fee: number
+    taken: boolean
+  }
+  class FreightOffer <<value>> $handel {
+    dice: number[3]
+    dm: number
+  }
+  class FreightLot <<value>> $handel {
+    size: FreightSize
+    die: number
+    /tons: number
+    taken: boolean
+  }
+  enum FreightSize <<value>> $handel {
+    major
+    minor
+    incidental
+  }
+  class PassengerOffer <<value>> $handel {
+    highDice: number[*]
+    middleDice: number[*]
+    lowDice: number[*]
+    dm: number
+    /high: number
+    /middle: number
+    /low: number
+    high: number
+    middle: number
+    low: number
+  }
+  enum ShipIncome <<value>> $handel {
+    freight
+    passage
+    goods
+    mail
+    message
+  }
+  enum TravelZone <<value>> $handel {
+    amber
+    red
+  }
+  class TradeGood <<reference>> $handel {
+    roll: number
+    name: string
+    basePrice: number
+    quantity: DiceExpr
+    perItem: boolean
+    tonsPerItem: number [0..1]
+  }
+  class TradeDm <<value>> $handel {
+    dm: number
+  }
+  class ActualValue <<reference>> $handel {
+    roll: number
+    percent: number
+  }
+  class CargoRow <<reference>> $handel {
+    population: number
+    major: DiceExpr [0..1]
+    minor: DiceExpr [0..1]
+    incidental: DiceExpr [0..1]
+  }
+  class PassengerRow <<reference>> $handel {
+    population: number
+    high: DiceExpr [0..1]
+    middle: DiceExpr [0..1]
+    low: DiceExpr [0..1]
+  }
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor
+  class World $sektor
+
+' Missionen
+
+' Verlauf
+  abstract class LogEntry $probe
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+' Fahrzeuge und Wege auf der Oberfläche
+  class TradeCode <<reference>> $sektor
+  ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
+
+' Kampagne
+
+' Schiffe
+
+' Handel
+Campaign "1" *-- "0..*" Market : markets
+Market "*" --> "1" World : at
+Market "*" --> "*" GoodsRoll : goods {ordered}
+Market "*" --> "*" PriceRoll : purchases
+Market "*" --> "*" PriceRoll : sales
+Market "1" *-- "*" FreightOffer : freight
+Market "1" *-- "*" PassengerOffer : passengers
+FreightOffer "*" --> "1" Hex : to
+FreightOffer "1" *-- "*" FreightLot : lots {ordered}
+FreightLot --> FreightSize
+PassengerOffer "*" --> "1" Hex : to
+Market "1" *-- "*" MessageOffer : messages
+MessageOffer "*" --> "1" Hex : to
+LogEntry <|-- GoodsRoll
+LogEntry <|-- PriceRoll
+GoodsRoll "*" --> "1" World : at
+GoodsRoll "*" --> "1" TradeGood : /goods
+GoodsRoll "*" --> "1" Character : by
+PriceRoll "*" --> "1" World : at
+PriceRoll "*" --> "0..1" GoodsRoll : offer
+PriceRoll "*" --> "0..1" Cargo : lot
+PriceRoll "*" --> "0..1" Character : helper
+PriceRoll "*" --> "1" ActualValue : /value
+Ship "1" *-- "*" Cargo : hold {ordered}
+Ship "1" *-- "*" Fare : fares {ordered}
+Fare "*" --> "1" World : from
+Fare "*" --> "1" Hex : to
+Booking "*" --> "0..1" Fare : forFare
+Cargo --> CargoKind
+Cargo "*" --> "0..1" TradeGood : goods
+Cargo "*" --> "1" World : from
+Cargo "*" --> "0..1" Hex : to
+Booking "*" --> "0..1" Cargo : forCargo
+Booking --> ShipIncome
+Hex --> TravelZone
+TradeGood "1" *-- "*" TradeDm : purchase
+TradeGood "1" *-- "*" TradeDm : resale
+TradeDm "*" --> "1" TradeCode : code
+
+' Raumkarte und Systemflug
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+@enduml

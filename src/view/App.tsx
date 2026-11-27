@@ -7,6 +7,8 @@ import { CombatScreen, type Patient } from './combat/CombatScreen';
 import { EncounterScreen, type EncounterOptions } from './combat/EncounterScreen';
 import { EncounterChoiceDialog, EncounterRollDialog } from './combat/EncounterRollDialog';
 import { EncounterDock } from './combat/EncounterDock';
+import { TradeScreen } from './trade/TradeScreen';
+import { SettlementDialog } from './trade/SettlementDialog';
 import { ShopScreen } from './shop/ShopScreen';
 import { ShipScreen } from './ship/ShipScreen';
 import { CharactersScreen } from './characters/CharactersScreen';
@@ -84,7 +86,7 @@ export function App() {
   // Die Weltkarte eines gewählten Feldes, als Feld und als Aktionsleiste unten, wie beim Globus; ohne Globus,
   // sonst zeigt der seine eigene (`panel === 'world'`).
   // Auf dem Globus steht dieselbe Weltkarte im Blatt, wenn man oben auf den Namen tippt (Owner, 21. November 2026).
-  const worldDock = useWorldDock(view.world && (!view.globe || view.worldCard) ? view.world : undefined, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays, view.globe !== undefined);
+  const worldDock = useWorldDock(view.world && (!view.globe || view.worldCard) ? view.world : undefined, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays, view.globe !== undefined, view.orders);
 
   // Der Schuss, dessen Würfe gerade liegen: Die Raumkarte zeigt dazu Laserstrahl und Trefferzonen (2026-11-21i).
   const [shot, setShot] = useState<ShotEffect | undefined>(undefined);
@@ -107,6 +109,7 @@ export function App() {
       {screen === 'encounter' && <EncounterScreen view={view} options={encounterOptions} onOptions={setEncounterOptions} />}
       {screen === 'combat' && <CombatScreen view={view} patient={patient} onPatient={setPatient} />}
       {screen === 'shop' && <ShopScreen view={view} onClose={desktop ? undefined : () => game.closeShop()} />}
+      {screen === 'trade' && <TradeScreen view={view} />}
       {screen === 'ship' && <ShipScreen view={view} />}
       {screen === 'characters' && <CharactersScreen view={view} />}
       {screen === 'npcs' && <NpcScreen view={view} />}
@@ -174,7 +177,7 @@ export function App() {
   // eigene Aktionsleiste hat, und unter Schiff (1 Tag und 2W6 auch dort, 2026-11-22c), nur unter dem
   // Kampf nicht (Owner, 26. November 2026). Beim angetippten Feld des Globus steht dort stattdessen die Aktionsleiste des Felds.
   const dock = <OracleDock view={view} shortcuts />;
-  const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcs={view.npcs} missionPicking={view.missions.picking} /> : undefined;
+  const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcs={view.npcs} missionPicking={view.missions.picking} marketBlocker={view.marketBlocker} /> : undefined;
   // Im Bereich Begegnung: die Würfe der Begegnungen und die Zeit bzw. Weiterfahren.
   const encounterDock = screen === 'encounter' && field === undefined ? <EncounterDock view={view} options={encounterOptions} /> : undefined;
   // Beim Landeplatz auf dem Globus steht unten „Hier landen“ (2026-11-21).
@@ -209,7 +212,9 @@ export function App() {
   // Der Charakter-Editor ist eine Detailseite (2026-11-26): Er tritt an die Stelle dessen, was gerade offen ist.
   const editorPage = view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />;
   // Eine Detailseite bringt Kopf und Aktionsleiste selbst mit: kein Kopf des Bereichs, keine Leiste des Logs.
-  const detail = view.editor !== undefined || (screen === 'missions' && view.missions.editor !== undefined && !view.missions.picking);
+  // Steht ein angetipptes Feld oder eine Welt vor einer offenen Detailseite (Missions-Editor, Markt,
+  // Aufträge), zeigt die App das Feld mit seiner Aktionsleiste; nur der Charakter-Editor geht immer vor.
+  const detail = view.editor !== undefined || (field === undefined && ((screen === 'missions' && view.missions.editor !== undefined && !view.missions.picking) || screen === 'trade'));
   const body = <div className="screen-host">{editorPage ?? (taskPage ? <TaskPage view={view} /> : undefined) ?? field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>;
   const areaTitle = screen === 'shop' ? 'Shop' : screen === 'about' ? 'Über die App' : (areaOf(screen)?.label ?? '');
 
@@ -264,6 +269,7 @@ export function App() {
         </div>
       )}
       {view.journey && <JourneySheet journey={view.journey} />}
+      {view.settlement && !view.journey && !view.landing && <SettlementDialog settlement={view.settlement} />}
       {view.systemJourney && <SystemJourneySheet journey={view.systemJourney} />}
       {view.landing && !view.landing.picking && !view.systemJourney && !view.journey && !view.shipCheck && <LandingSheet landing={view.landing} />}
       {view.card && !view.card.forNote && <CardSheet card={view.card} />}

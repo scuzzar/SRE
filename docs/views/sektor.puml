@@ -82,6 +82,18 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+  class Market $handel
+  class GoodsRoll $handel
+  class PriceRoll $handel
+  class Cargo $handel
+  class Fare $handel
+  class MessageOffer <<value>> $handel
+  class FreightOffer <<value>> $handel
+  class PassengerOffer <<value>> $handel
+  enum TravelZone <<value>> $handel
+  class TradeDm <<value>> $handel
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SystemFlight $raum
   class StarSystem $raum
@@ -100,6 +112,7 @@ hide <<browser>> stereotype
     navalBase: boolean [0..1]
     scoutBase: boolean [0..1]
     gasGiant: boolean [0..1]
+    travelZone: TravelZone [0..1]
     /step: WorldStep
   }
   class World $sektor {
@@ -222,6 +235,8 @@ hide <<browser>> stereotype
   class DiceExpr <<value>> $sektor {
     dice: number
     dm: number
+    less: number [0..1]
+    times: number [0..1]
   }
   class Temperature <<reference>> $sektor {
     from: number [0..1]
@@ -266,6 +281,20 @@ hide <<browser>> stereotype
 Booking "*" --> "0..1" World : in
 
 ' Schiffe
+
+' Handel
+Market "*" --> "1" World : at
+FreightOffer "*" --> "1" Hex : to
+PassengerOffer "*" --> "1" Hex : to
+MessageOffer "*" --> "1" Hex : to
+GoodsRoll "*" --> "1" World : at
+PriceRoll "*" --> "1" World : at
+Fare "*" --> "1" World : from
+Fare "*" --> "1" Hex : to
+Cargo "*" --> "1" World : from
+Cargo "*" --> "0..1" Hex : to
+Hex --> TravelZone
+TradeDm "*" --> "1" TradeCode : code
 
 ' Raumkarte und Systemflug
 SystemFlight "*" --> "1" World : world

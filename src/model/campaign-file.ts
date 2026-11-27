@@ -14,7 +14,7 @@ import { checkJourney } from './travel';
 import { checkSystemJourney } from './system-journey';
 import { START_DAY } from './time';
 import { checkOf, encounterChecks } from './encounter-check';
-import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type Journey, type SystemJourney, type SpaceBattle, type SpaceAttack, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
+import { checkInterprets, checkKinds, isRandomEvent, physical, recoveryKinds, strikes, withQuestion, type AttackResult, type Butchering, type CardPick, type CheckRoll, type GoodsRoll, type PriceRoll, type Journey, type SystemJourney, type SpaceBattle, type SpaceAttack, type DamageRoll, type LogEntry, type Note, type Recovery, type TripDay } from './log';
 import { checkRecovery } from './wounds';
 import { missionStates, validateMissions, type Mission, type MissionPlace } from './mission';
 import { armorClasses, computerModelOf, encounterTypeOf, entryOf, eventFocusOf, itemOf, oddsOf, patronOf, ranges, ref, shipDesignOf, slotOfEntry, softwareOf, weaponOf } from './reference';
@@ -23,7 +23,8 @@ import { checkCrew, CrewRoleSchema, type CrewPost } from './crew';
 import { SoftwareSlotSchema, slotsFit, withSlots, TARGET_PROGRAM, type SoftwareSlot } from './software';
 import { battleOutcomes, checkDamage, hitZones, intents } from './space-combat';
 import { characteristics } from './rules';
-import { bookingKinds, shipCosts, validateBookings, type Booking } from './shop';
+import { bookingKinds, shipCosts, shipIncomes, validateBookings, type Booking } from './shop';
+import { cargoKinds, checkTrade, firstWorldOf, freightSizes, legacyHold, type Cargo, type Market } from './trade';
 import type { Ship } from './ship';
 import { storedTurrets } from './ship';
 import { checkTrip } from './trip';
@@ -33,7 +34,7 @@ import { vehicleOfItem } from './vehicle';
 import { settleStash } from './stash';
 import type { City, SurfaceMap } from './surface-map';
 import { checkPlace, type Place } from './place';
-import { hexFromFlat, hexFromRolls, temperatureIds, uwpKinds, validateHexes, worldById, worldOf, type Hex, type LegacyWorldRoll, type World } from './sector';
+import { hexFromFlat, hexFromRolls, temperatureIds, travelZones, uwpKinds, validateHexes, worldById, worldOf, type Hex, type LegacyWorldRoll, type World } from './sector';
 import { checkStarSystems } from './star-system';
 
 /**
@@ -153,7 +154,13 @@ const LogEntrySchema = z.discriminatedUnion('kind', [
     jumpDm: z.number().int().optional(),
     departureRoll: dice.optional(),
     arrivalRoll: dice.optional(),
+    high: z.number().int().min(0).optional(),
+    middle: z.number().int().min(0).optional(),
+    low: z.number().int().min(0).optional(),
+    mail: z.boolean().optional(),
   }),
+  z.object({ kind: z.literal('goodsRoll'), at, day, place, world: z.string().min(1), by: z.string().min(1), dice, dm: z.number().int(), quantityDice: z.array(die).max(12) }),
+  z.object({ kind: z.literal('priceRoll'), at, day, place, world: z.string().min(1), sale: z.boolean(), dice, tradeDm: z.number().int(), skillDm: z.number().int(), brokerDm: z.number().int().min(0).max(4), offer: z.number().int().min(0).optional(), lot: z.string().min(1).optional(), helper: z.string().min(1).optional(), good: z.number().int() }),
   z.object({ kind: z.literal('skimming'), at, day, place, giant: z.string().min(1), ship: z.string().min(1), tons: z.number().positive() }),
   z.object({ kind: z.literal('spaceBattle'), at, day, place, foe: z.string().min(1), design: z.string().min(1), intent: z.enum(intents), encounter: dice.optional(), reaction: dice.optional(), attack: dice.optional(), occasion: z.enum(['departure', 'arrival']).optional(), jumpTo: z.string().min(1).optional(), travelTo: z.string().min(1).optional() }),
   z.object({ kind: z.literal('spaceAttack'), at, day, place, round: z.number().int().min(1), attacker: z.string().min(1), target: z.string().min(1), turret: z.number().int().min(0), weapon: z.string().min(1), dice, dm: z.number().int(), bands: z.number().int().min(1).optional(), computerHits: z.number().int().min(0).optional(), noComputer: z.boolean().optional(), predict: z.number().int().optional(), gunnery: z.number().int().optional(), evade: z.number().int().optional(), returnFire: z.boolean().optional(), hits: z.array(z.enum(hitZones)).max(4) }),
@@ -285,6 +292,7 @@ const HexSchema = z.union([
     navalBase: z.boolean().optional(),
     scoutBase: z.boolean().optional(),
     gasGiant: z.boolean().optional(),
+    travelZone: z.enum(travelZones).optional(),
     main: z.string().optional(),
     worlds: z.array(WorldSchema),
     system: z.object({ stars: z.array(StarSchema).min(1).max(3), maxOrbits: z.number().int(), emptyOrbits: z.array(z.number()) }).optional(),
@@ -368,7 +376,8 @@ const ShipSchema = z.object({
   fuel: z.number().min(0),
   /** Davon unraffiniert (2026-11-21f); fehlt in Dateien von vorher. */
   unrefined: z.number().min(0).default(0),
-  cargo: z.number().min(0),
+  /** Die frei eingetragene Fracht von vor den Ladungen (2026-11-27); wird beim Lesen eine Ladung ohne Ziel. */
+  cargo: z.number().min(0).optional(),
   price: z.number().int().min(0),
   initialLoan: z.number().int().min(0).optional(),
   loanBalance: z.number().int().min(0).optional(),
@@ -386,6 +395,10 @@ const ShipSchema = z.object({
   aboard: z.boolean().optional(),
   inOrbit: z.boolean().optional(),
   inHold: z.boolean().optional(),
+  /** Ladungen, Fahrgäste und Postvertrag (2026-11-27, 2026-11-27c); fehlen in Dateien von vorher. */
+  hold: z.array(z.object({ id: z.string().min(1), kind: z.enum(cargoKinds), tons: z.number().min(0), count: z.number().int().min(1).optional(), paid: z.number().int().min(0).optional(), fee: z.number().int().min(0).optional(), goods: z.number().int().optional(), from: z.string().min(1), to: z.string().min(1).optional(), retired: z.boolean() })).optional(),
+  fares: z.array(z.object({ id: z.string().min(1), high: z.number().int().min(0), middle: z.number().int().min(0), low: z.number().int().min(0), from: z.string().min(1), to: z.string().min(1), retired: z.boolean() })).optional(),
+  mailContract: z.boolean().optional(),
 });
 const CharacterSchema = z.object({
   id: z.string().min(1),
@@ -538,9 +551,28 @@ const CampaignFileSchema = z.object({
           ticketFor: z.number().int().optional(),
           forShip: z.string().min(1).optional(),
           shipCost: z.enum(shipCosts).optional(),
+          shipIncome: z.enum(shipIncomes).optional(),
+          forCargo: z.string().min(1).optional(),
+          forFare: z.string().min(1).optional(),
         }),
       )
       .default([]),
+    /** Die Märkte dieser Woche (2026-11-27); fehlen in Dateien von vorher. */
+    markets: z
+      .array(
+        z.object({
+          world: z.string().min(1),
+          week: z.number().int().min(0),
+          goods: z.array(z.number().int().min(0)),
+          purchases: z.array(z.number().int().min(0)),
+          sales: z.array(z.number().int().min(0)),
+          bought: z.array(z.object({ lot: z.string().min(1), goods: z.number().int().min(0) })),
+          freight: z.array(z.object({ to: z.string().min(1), dice: z.array(z.array(die).nullable()).length(3), dm: z.number().int(), lots: z.array(z.object({ size: z.enum(freightSizes), die, taken: z.boolean() })) })),
+          passengers: z.array(z.object({ to: z.string().min(1), highDice: z.array(die), middleDice: z.array(die), lowDice: z.array(die), dm: z.number().int(), high: z.number().int().min(0), middle: z.number().int().min(0), low: z.number().int().min(0) })),
+          messages: z.array(z.object({ to: z.string().min(1), dice, die, taken: z.boolean() })),
+        }),
+      )
+      .optional(),
     /** Alle Schiffe, auch die ausgeblendeten; fehlt in Dateien von vor den Schiffen: keins. */
     ships: z.array(ShipSchema).default([]),
     /** Die Missionen, auch die ausgeblendeten; fehlt in Dateien von vor den Missionen (2026-11-18): keine. */
@@ -564,8 +596,8 @@ const CampaignFileSchema = z.object({
 
 /** Die Kampagne als Inhalt einer Kampagnendatei. */
 export function toCampaignFile(campaign: Campaign): string {
-  const { key, changedAt, name, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight, voyage } = campaign;
-  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight, voyage } }, null, 2);
+  const { key, changedAt, name, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight, voyage, markets } = campaign;
+  return JSON.stringify({ format: campaignFileFormat, version: campaignFileVersion, campaign: { key, changedAt, name, characters, log, generation, hexes, focus, location, bookings, ships, stash, encounters, quantityDie, terrain, day, trip, missions, flight, voyage, markets } }, null, 2);
 }
 
 /** Ein Dateiname aus dem Namen der Kampagne und dem Tag, z. B. „Spinward-Run-2026-10-25.json“. */
@@ -621,7 +653,13 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
       bookings: file.bookings.map((b) => stripped(b) as Booking),
       // Gespeichert werden `aboard` und `inOrbit` nur, wenn sie wahr sind (2026-11-21b).
-      ships: file.ships.map((s) => stripped({ ...s, turrets: turretsFromFile(s), software: softwareFromFile(s), crew: crewFromFile(s, characters), aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, inHold: s.inHold === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship),
+      ships: file.ships.map((s) => {
+        const { cargo, ...ship } = s;
+        // Fracht von vor den Ladungen (2026-11-27): eine Ladung ohne Ziel, die nie Geld bringt.
+        const hold = s.hold?.map((c) => stripped(c) as Cargo) ?? legacyHold(cargo, (s.place === undefined ? undefined : placeFromFile(s.place).world) ?? (file.location === undefined ? undefined : placeFromFile(file.location).world) ?? firstWorldOf(file.hexes.map(hexOf)));
+        return stripped({ ...ship, hold: hold.length === 0 ? undefined : hold, fares: s.fares?.length ? s.fares.map((f) => ({ ...f })) : undefined, mailContract: s.mailContract === true ? true : undefined, turrets: turretsFromFile(s), software: softwareFromFile(s), crew: crewFromFile(s, characters), aboard: s.aboard === true ? true : undefined, inOrbit: s.inOrbit === true ? true : undefined, inHold: s.inHold === true ? true : undefined, ...(s.place === undefined ? {} : { place: placeFromFile(s.place) }) }) as Ship;
+      }),
+      ...(file.markets === undefined || file.markets.length === 0 ? {} : { markets: file.markets.map((m) => ({ ...m, goods: [...m.goods], purchases: [...m.purchases], sales: [...m.sales], bought: m.bought.map((b) => ({ ...b })), freight: m.freight.map((f) => ({ to: f.to, dice: f.dice.map((d) => (d === null ? null : [...d])), dm: f.dm, lots: f.lots.map((l) => ({ ...l })) })), passengers: m.passengers.map((p) => ({ ...p, highDice: [...p.highDice], middleDice: [...p.middleDice], lowDice: [...p.lowDice] })), messages: m.messages.map((x) => ({ to: x.to, dice: [x.dice[0], x.dice[1]] as const, die: x.die, taken: x.taken })) })) as Market[] }),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
       ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
@@ -866,6 +904,10 @@ function fileEntryOf(entry: WithoutDay<FileEntry>): LogEntry {
       return stripped({ ...entry, travellers: [...entry.travellers] }) as SystemJourney;
     case 'journey':
       return stripped({ ...entry, passengers: entry.passengers.map((p) => ({ ...p })), berths: entry.berths.map((b) => stripped(b)) }) as Journey;
+    case 'goodsRoll':
+      return stripped({ ...entry, quantityDice: [...entry.quantityDice] }) as GoodsRoll;
+    case 'priceRoll':
+      return stripped(entry) as PriceRoll;
     case 'butchering':
       // Wer die Beute bekam, steht in Dateien von vor dem Gruppengepäck; die Beute liegt heute im Gepäck.
       return stripped(Object.fromEntries(Object.entries(entry).filter(([key]) => key !== 'for'))) as unknown as Butchering;
@@ -943,6 +985,7 @@ function validate(campaign: Campaign): void {
   if (campaign.trip !== undefined) checkTrip(campaign, campaign.trip);
   if (campaign.flight !== undefined) checkFlight(campaign, campaign.flight);
   if (campaign.voyage !== undefined) checkVoyage(campaign, campaign.voyage);
+  checkTrade(campaign);
   validateEncounters(campaign);
   if (campaign.terrain !== undefined) terrainOf(campaign.terrain);
   for (const hex of campaign.hexes) for (const world of hex.worlds) for (const table of world.animals ?? []) checkAnimalTable(table);
