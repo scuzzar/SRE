@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { schwererLauf, openOracle, openSector, oracle, openPeople, openHomeGlobe, land } from './layout';
+import { schwererLauf, openOracle, openSector, openPeople, openHomeGlobe, land, rollDice } from './layout';
 
 test.use({ reducedMotion: 'reduce' });
 
@@ -251,7 +251,7 @@ test('Globus: aus dem Subsektor öffnen, Feld antippen, zurück zum Subsektor', 
   await expect(actions.getByRole('button', { name: 'Gruppe in diese Stadt setzen' })).toBeDisabled();
   // Gewürfelt wird mit der Aktionsleiste im Log; der Wurf steht dann am Feld der Gruppe unter dem, was dort geschah.
   await openOracle(page);
-  await oracle(page).getByRole('button', { name: '2W6', exact: true }).click();
+  await rollDice(page);
   await expect(page.locator('.dice-roll')).toBeHidden();
   await globe.getByRole('button', { name: /^Orte/ }).click();
   await globe.getByRole('region', { name: 'Orte' }).getByRole('button', { name: /Die Gruppe/ }).click();

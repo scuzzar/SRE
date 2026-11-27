@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { rollDice } from './layout';
 
 // Installieren: Manifest mit PNG-Icons, und der Service Worker lässt die App ohne Netz starten.
 
@@ -21,7 +22,7 @@ test('Manifest und Icons: alle Icons sind da, eines davon maskierbar', async ({ 
 
 test('Offline: nach dem ersten Start lädt die App ohne Netz, mit ihrem Spielstand', async ({ page, context }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: '2W6' }).click();
+  await rollDice(page);
   await expect(page.locator('.log ol > li:not(.log-day)')).toHaveCount(1);
   // Warten, bis der Service Worker die App abgelegt hat und die Seite steuert.
   await page.evaluate(async () => {
@@ -35,6 +36,6 @@ test('Offline: nach dem ersten Start lädt die App ohne Netz, mit ihrem Spielsta
   await page.reload();
   await expect(page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true })).toBeVisible();
   await expect(page.locator('.log ol > li:not(.log-day)')).toHaveCount(1);
-  await page.getByRole('button', { name: '2W6' }).click();
+  await rollDice(page);
   await expect(page.locator('.log ol > li:not(.log-day)')).toHaveCount(2);
 });

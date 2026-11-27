@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { characters, entries, openCombat, openPeople, oracle, revealed } from './layout';
+import { entries, openCombat, openPeople, openTaskPage, oracle, revealed, rollDice, taskCard } from './layout';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('Log: leer, vier gleich breite Knöpfe unten (Notiz, Tag, 2W6, Karte), keine Stufe ohne Probe', async ({ page }) => {
+test('Log: leer, vier gleich breite Knöpfe unten (Notiz, Tag, 2W6, Karte), keine Charakterleiste', async ({ page }) => {
   await expect(page.getByText('Noch nichts im Log.')).toBeVisible();
-  await expect(page.getByRole('radio')).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Spielercharaktere' })).toHaveCount(0);
   const viewport = page.viewportSize()!;
   const widths: number[] = [];
   await expect(oracle(page).getByRole('button', { name: '1 Tag vergehen lassen' })).toBeEnabled();
@@ -147,18 +147,16 @@ test('Inspirationskarte: verwerfen schreibt nichts in den Log, neu ziehen behäl
   await expect(entries(page)).toHaveCount(0);
 });
 
-test('Spielstand und die Stufe der Proben überstehen einen Neustart; die Stufe steht erst mit der Probe da', async ({ page }) => {
-  const kira = characters(page).getByRole('region', { name: 'Spielercharaktere' }).getByRole('article', { name: 'Kira Vant' });
-  await kira.getByRole('button', { name: 'Pilot-2' }).click();
-  await page.getByRole('radio', { name: /Hoch/ }).click();
-  await page.getByRole('button', { name: 'Probe abbrechen' }).click();
-  await expect(page.getByRole('radio')).toHaveCount(0);
-  await page.getByRole('button', { name: '2W6' }).click();
+test('Der Spielstand übersteht einen Neustart; eine Probe beginnt danach ohne gewählte Fertigkeit', async ({ page }) => {
+  await openTaskPage(page);
+  await taskCard(page, 'Kira Vant').getByRole('button', { name: 'Pilot-2' }).click();
+  await oracle(page).getByRole('button', { name: '2W6', exact: true }).click();
   await expect(entries(page)).toHaveCount(1);
   await page.reload();
   await expect(entries(page)).toHaveCount(1);
-  await kira.getByRole('button', { name: 'Pilot-2' }).click();
-  await expect(page.getByRole('radio', { name: /Hoch/ })).toHaveAttribute('aria-checked', 'true');
+  await openTaskPage(page);
+  await expect(taskCard(page, 'Kira Vant').getByRole('button', { name: 'Pilot-2' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(oracle(page).getByRole('button', { name: 'Probe Leicht 6+' })).toBeDisabled();
 });
 
 test('Über: Quellenangaben und Links zum Projekt', async ({ page }) => {
@@ -215,7 +213,7 @@ test('Notiz und Deutung im eigenen Blatt; Deuten am Ergebnis, ältere klappt man
   await card.getByPlaceholder(/Frage an die Karte/).fill('Ist Halvek ehrlich?');
   await card.getByRole('button', { name: /^Mittel, 50 %/ }).click();
   await card.getByRole('button', { name: /in den Log übernehmen/ }).click();
-  await page.getByRole('button', { name: '2W6' }).click();
+  await rollDice(page);
   await expect(page.locator('.dice-roll')).toBeHidden();
 
   const sheet = page.getByRole('dialog', { name: 'Notiz' });
@@ -286,7 +284,7 @@ test('Zufallsereignis: bei einem Pasch bis 55 erst nach der Wahl der Stufe ein B
 
 test('Gleiche Würfe in Folge stehen als eine Zeile; antippen faltet sie auf', async ({ page }) => {
   for (let i = 0; i < 3; i++) {
-    await page.getByRole('button', { name: '2W6', exact: true }).click();
+    await rollDice(page);
     await expect(page.locator('.dice-roll')).toBeHidden();
   }
   // Die zwei älteren Würfe als eine Zeile, der neueste groß.
@@ -306,7 +304,7 @@ test('Eine ältere Karte ohne Frage zeigt ihre Felder in der Zeile nur einmal', 
   await card.getByRole('button', { name: /2 Einträge in den Log übernehmen/ }).click();
   await expect(card).toBeHidden();
   // Ein Wurf danach, dann steht die Karte als Zeile da.
-  await oracle(page).getByRole('button', { name: '2W6', exact: true }).click();
+  await rollDice(page);
   const row = entries(page).first();
   await expect(row.locator('.row-result')).toHaveText('Karte');
   await expect(row.locator('.row-picks span')).toHaveCount(2);

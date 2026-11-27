@@ -1,25 +1,26 @@
 import { expect, test, type Page } from '@playwright/test';
-import { characters, entries, host, openOracle, oracle } from './layout';
+import { dock, entries, host, openOracle, openTaskPage, rollDice, rollTask, taskCard, taskPage } from './layout';
 
 async function openCharacters(page: Page) {
   await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
 }
 
-/** Die Charakterleiste im Orakel-Screen; nur der Charakter oben ist für Screenreader und Tests sichtbar. */
-const strip = (page: Page) => characters(page).getByRole('region', { name: 'Spielercharaktere' });
-const top = (page: Page, name: string) => strip(page).getByRole('article', { name });
-const dock = (page: Page) => oracle(page).getByRole('region', { name: 'Orakel und Proben' });
 const card = (page: Page, name: string) => host(page).getByRole('article', { name });
 
-test('Probe oben im Orakel: Fertigkeit, dann Attribute, Stufe unten, Ergebnis als Popup, danach im Log', async ({ page }) => {
+test('Probe auf der Detailseite: Fertigkeit, dann Attribute, die Schwierigkeit würfelt; Ergebnis auf der Würfelbühne, danach im Log', async ({ page }) => {
   await page.goto('/');
-  const kira = top(page, 'Kira Vant');
+  // Im Log steht keine Charakterleiste mehr (2026-11-27).
+  await expect(host(page).getByRole('region', { name: 'Spielercharaktere' })).toHaveCount(0);
+  await openTaskPage(page);
+  const kira = taskCard(page, 'Kira Vant');
+  await expect(taskCard(page, 'Jonas Reyl')).toBeVisible();
   await expect(kira.getByRole('button', { name: 'Pilot-2' })).toHaveText('Pil-2');
   // Ohne Fertigkeit stehen die Attribute als Zeile da; Knöpfe werden sie erst mit der Fertigkeit (2026-11-26).
   await expect(kira.getByRole('button', { name: /^DEX A/ })).toHaveCount(0);
   await expect(kira.getByLabel('Attribute')).toContainText('DEX A');
-  await expect(dock(page).getByRole('button', { name: 'Probe würfeln' })).toBeHidden();
+  await expect(dock(page)).toContainText('Erst eine Fertigkeit wählen');
+  await expect(dock(page).getByRole('button', { name: 'Probe Schwer 10+' })).toBeDisabled();
   await kira.getByRole('button', { name: 'Pilot-2' }).click();
 
   await expect(kira.getByRole('button', { name: /^DEX A: würde DM \+1/ })).toBeEnabled();
@@ -28,13 +29,11 @@ test('Probe oben im Orakel: Fertigkeit, dann Attribute, Stufe unten, Ergebnis al
   await kira.getByRole('button', { name: /^DEX A/ }).click();
   await expect(kira.getByRole('button', { name: /^DEX A: gewählt/ })).toHaveAttribute('aria-pressed', 'true');
 
-  // Dieselbe Stufe gilt für Orakel und Probe: Gering heißt 25 % und 10+.
-  await dock(page).getByRole('radio', { name: /Gering/ }).click();
-  await expect(dock(page)).toContainText('Pilot-2 · 10+');
-  await expect(dock(page)).toContainText('2W6 +3 (DEX +1) · Braucht 7+');
-  await expect(dock(page).getByRole('button', { name: '2W6' })).toBeHidden();
-
-  await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
+  // Über den Knöpfen: die Probe mit nötigem Wurf und Chance je Schwierigkeit.
+  await expect(dock(page)).toContainText('Kira Vant · Pilot-2');
+  await expect(dock(page)).toContainText('2W6 +3 (DEX +1) · Leicht 3+ 97 % · Mittel 5+ 83 % · Schwer 7+ 58 %');
+  await dock(page).getByRole('button', { name: 'Probe Schwer 10+' }).click();
+  await expect(taskPage(page)).toBeHidden();
   const result = page.getByRole('alertdialog');
   await expect(result).toContainText('Kira Vant · Pilot-2 · 10+');
   await expect(result.getByRole('heading')).toHaveText(/ERFOLG|FEHLSCHLAG/);
@@ -46,47 +45,42 @@ test('Probe oben im Orakel: Fertigkeit, dann Attribute, Stufe unten, Ergebnis al
   const entry = page.locator('.entry').last();
   await expect(entry).toContainText('Probe');
   await expect(entry).toContainText('Kira Vant · Pilot-2 · 10+');
-  // Die Probe bleibt vorbereitet, bis man sie abbricht.
-  await expect(dock(page)).toContainText('Pilot-2 · 10+');
-  await dock(page).getByRole('button', { name: 'Probe abbrechen' }).click();
-  await expect(dock(page).getByRole('button', { name: '2W6' })).toBeVisible();
+  // Gewürfelt ist die Probe zu Ende; im Log steht wieder „2W6“.
+  await expect(dock(page).getByRole('button', { name: '2W6', exact: true })).toBeVisible();
+  await expect(dock(page).getByRole('button', { name: /^Probe Schwer/ })).toHaveCount(0);
 });
 
-test('Wischen stellt den nächsten Charakter nach oben; eine Probe ohne Fertigkeit ist unmöglich, aber würfelbar', async ({ page }) => {
+test('Eine Fertigkeit eines anderen Charakters holt ihn nach oben; ohne Fertigkeit unmöglich, aber würfelbar; ✕ würfelt nicht', async ({ page }) => {
   await page.goto('/');
-  await top(page, 'Kira Vant').getByRole('button', { name: 'Pilot-2' }).click();
-  await strip(page).locator('.strip-track').evaluate((el) => el.scrollTo({ left: el.scrollWidth }));
-  const jonas = top(page, 'Jonas Reyl');
-  await expect(jonas).toBeVisible();
-  await expect(top(page, 'Kira Vant')).toHaveCount(0);
-  // Mit dem Wechsel endet die Probe für Kira.
-  await expect(dock(page).getByRole('button', { name: '2W6' })).toBeVisible();
-
-  await jonas.getByRole('button', { name: 'Ohne −3' }).click();
-  await dock(page).getByRole('radio', { name: /Gering/ }).click();
-  await expect(dock(page)).toContainText('Ohne Fertigkeit · 10+');
-  await expect(dock(page)).toContainText('2W6 −3 · Unmöglich');
-  await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
+  await openTaskPage(page);
+  await taskCard(page, 'Kira Vant').getByRole('button', { name: 'Pilot-2' }).click();
+  await taskCard(page, 'Jonas Reyl').getByRole('button', { name: 'Ohne −3' }).click();
+  // Die Wahl wechselt zu Jonas: Kiras Attribute sind wieder eine Zeile.
+  await expect(taskCard(page, 'Kira Vant').getByRole('button', { name: /^DEX A/ })).toHaveCount(0);
+  await expect(dock(page)).toContainText('Jonas Reyl · Ohne Fertigkeit');
+  await expect(dock(page)).toContainText('2W6 −3 · Leicht 9+ 28 % · Mittel 11+ 8 % · Schwer unmöglich');
+  await dock(page).getByRole('button', { name: 'Probe Schwer 10+' }).click();
   await expect(page.getByRole('alertdialog').getByRole('heading')).toHaveText('FEHLSCHLAG');
   await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
   await expect(page.locator('.entry').last()).toContainText('Jonas Reyl');
 
-  // Der Charakter oben übersteht einen Neustart; die Punkte holen Kira zurück.
-  await page.reload();
-  await expect(top(page, 'Jonas Reyl')).toBeVisible();
-  await strip(page).getByRole('button', { name: 'Kira Vant nach oben' }).click();
-  await expect(top(page, 'Kira Vant')).toBeVisible();
+  // ✕ schließt die Detailseite, ohne zu würfeln.
+  await openTaskPage(page);
+  await taskCard(page, 'Kira Vant').getByRole('button', { name: 'Pilot-2' }).click();
+  await taskPage(page).getByRole('button', { name: 'Probe schließen' }).click();
+  await expect(taskPage(page)).toBeHidden();
+  await expect(entries(page)).toHaveCount(1);
 });
 
-test('Leiste einklappen: nur noch der Name; bleibt nach dem Neustart zu', async ({ page }) => {
+test('2W6 lange drücken würfelt gleich, ohne die Detailseite', async ({ page }) => {
   await page.goto('/');
-  const kira = top(page, 'Kira Vant');
-  await kira.getByRole('button', { name: 'Leiste einklappen' }).click();
-  await expect(kira.getByRole('button', { name: 'Pilot-2' })).toHaveCount(0);
-  await page.reload();
-  await expect(kira.getByRole('button', { name: 'Leiste aufklappen' })).toBeVisible();
-  await kira.getByRole('button', { name: /Kira Vant/ }).first().click();
-  await expect(kira.getByRole('button', { name: 'Pilot-2' })).toBeVisible();
+  const button = dock(page).getByRole('button', { name: '2W6', exact: true });
+  await button.hover();
+  await page.mouse.down();
+  await expect(entries(page)).toHaveCount(1, { timeout: 3000 });
+  await page.mouse.up();
+  await expect(taskPage(page)).toHaveCount(0);
+  await expect(entries(page)).toContainText('2W6');
 });
 
 test('Charakter-Screen zum Verwalten: Details aufklappen, keine Proben', async ({ page }) => {
@@ -121,14 +115,13 @@ test('Charakter anlegen: Fehler im Editor, dann gespeichert; der Neue steht oben
   await expect(mara).toContainText('Cr 800');
 
   await openOracle(page);
-  await expect(top(page, 'Mara Quell').getByRole('button', { name: 'Medical-2' })).toBeVisible();
+  await openTaskPage(page);
+  await expect(taskCard(page, 'Mara Quell').getByRole('button', { name: 'Medical-2' })).toBeVisible();
 });
 
 test('Wer im Log vorkommt, wird ausgeblendet statt gelöscht und lässt sich wieder einblenden', async ({ page }) => {
   await page.goto('/');
-  await strip(page).getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
-  await top(page, 'Jonas Reyl').getByRole('button', { name: 'Steward-1' }).click();
-  await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
+  await rollTask(page, 'Jonas Reyl', 'Steward-1');
   await expect(page.getByRole('alertdialog').getByRole('heading')).toHaveText(/ERFOLG|FEHLSCHLAG/);
   await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
   await expect(page.getByRole('alertdialog')).toBeHidden();
@@ -159,16 +152,13 @@ test('Wer nicht im Log vorkommt, wird gelöscht', async ({ page }) => {
 
 test('Logeintrag löschen: lange drücken, dann bestätigen; danach lässt sich der Charakter löschen', async ({ page }) => {
   await page.goto('/');
-  await strip(page).getByRole('button', { name: 'Jonas Reyl nach oben' }).click();
-  await top(page, 'Jonas Reyl').getByRole('button', { name: 'Steward-1' }).click();
-  await dock(page).getByRole('button', { name: 'Probe würfeln' }).click();
+  await rollTask(page, 'Jonas Reyl', 'Steward-1');
   // Erst das Urteil abwarten: Solange die Würfel rollen, überspringt ein Tippen nur die Animation.
   const result = page.getByRole('alertdialog');
   await expect(result.getByRole('heading')).toHaveText(/ERFOLG|FEHLSCHLAG/);
   await result.getByRole('button', { name: 'Weiter' }).click();
   await expect(result).toBeHidden();
-  await dock(page).getByRole('button', { name: 'Probe abbrechen' }).click();
-  await page.getByRole('button', { name: '2W6' }).click();
+  await rollDice(page);
   await expect(entries(page)).toHaveCount(2);
   await expect(page.locator('.dice-roll')).toBeHidden();
 
@@ -206,7 +196,9 @@ test('Tot: im Editor markieren, steht unter „Verstorben“, rückt oben weiter
   await expect(fallen).toContainText('† Kira Vant');
 
   await openOracle(page);
-  await expect(top(page, 'Jonas Reyl')).toBeVisible();
+  await openTaskPage(page);
+  await expect(taskCard(page, 'Kira Vant')).toHaveCount(0);
+  await expect(taskCard(page, 'Jonas Reyl')).toBeVisible();
   await page.getByRole('navigation').getByRole('button', { name: 'Charaktere' }).click();
 
   await fallen.getByRole('button', { name: 'Bearbeiten' }).click();
@@ -216,7 +208,7 @@ test('Tot: im Editor markieren, steht unter „Verstorben“, rückt oben weiter
   await expect(page.getByText('Verstorben')).toBeHidden();
 });
 
-test('Ohne lebenden Charakter bietet die Charakterleiste an, einen anzulegen', async ({ page }) => {
+test('Ohne lebenden Charakter bietet die Detailseite Probe an, einen anzulegen', async ({ page }) => {
   await openCharacters(page);
   for (const name of ['Kira Vant', 'Jonas Reyl']) {
     await card(page, name).getByRole('button', { name: 'Bearbeiten' }).click();
@@ -225,6 +217,7 @@ test('Ohne lebenden Charakter bietet die Charakterleiste an, einen anzulegen', a
     await editor.getByRole('button', { name: 'Wirklich löschen?' }).click();
   }
   await openOracle(page);
-  await strip(page).getByRole('button', { name: '+ Charakter anlegen' }).click();
+  await openTaskPage(page);
+  await taskPage(page).getByRole('button', { name: '+ Charakter anlegen' }).click();
   await expect(page.getByRole('region', { name: 'Neuer Charakter' })).toBeVisible();
 });

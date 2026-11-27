@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { rollDice } from './layout';
 
 // Der Abgleich gegen die Probe-Wolke im Browser: Zwei Seiten desselben Browsers mit eigenem Speicher
 // (`geraet`) sind zwei Geräte an derselben Wolke. Die Anmeldung bei Microsoft prüft das nicht.
@@ -27,7 +28,7 @@ const writes = (page: Page) => page.evaluate(() => (JSON.parse(localStorage.getI
 
 async function rollAndWaitForSync(page: Page) {
   const before = await writes(page);
-  await page.getByRole('button', { name: '2W6' }).click();
+  await rollDice(page);
   await expect.poll(() => writes(page)).toBeGreaterThan(before);
 }
 
@@ -66,7 +67,7 @@ test('Abgleich: anmelden, zweites Gerät bekommt die Kampagne, Konflikt mit „B
 
   // Beide ändern: Das Tablet gleicht zuletzt ab und fragt.
   await rollAndWaitForSync(page);
-  await tablet.getByRole('button', { name: '2W6' }).click();
+  await rollDice(tablet);
   const conflict = sheet(tablet).getByRole('group', { name: 'Konflikt: Spinward Run' });
   await expect(conflict).toBeVisible();
   await expect(conflict).toContainText('2 Logeinträge');

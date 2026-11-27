@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { characters, entries, openOracle, oracle } from './layout';
+import { dock, entries, openOracle, openTaskPage, oracle, taskCard, taskPage } from './layout';
 
 // Tastatur: K zieht eine Karte, W würfelt 2W6, N öffnet die Notiz; Esc schließt das oberste Popup.
 // Gilt in beiden Layouts, auf dem Smartphone im Orakel-Screen.
@@ -39,16 +39,21 @@ test('K zieht eine Karte, Esc verwirft sie; Esc schließt auch den Editor', asyn
   }).toPass();
   await expect(entries(page)).toHaveCount(0);
 
-  await characters(page).getByRole('button', { name: 'Kira Vant bearbeiten' }).click();
+  await openTaskPage(page);
+  await taskPage(page).getByRole('button', { name: 'Kira Vant bearbeiten' }).click();
   const editor = page.getByRole('region', { name: 'Charakter bearbeiten' });
   await expect(editor).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(editor).toBeHidden();
 });
 
-test('Esc schließt das Ergebnis einer Probe wie „Weiter“', async ({ page }) => {
-  await characters(page).getByRole('region', { name: 'Spielercharaktere' }).getByRole('article', { name: 'Kira Vant' }).getByRole('button', { name: 'Pilot-2' }).click();
-  await page.keyboard.press('w');
+test('Esc schließt das Ergebnis einer Probe wie „Weiter“; Esc schließt auch die Detailseite Probe', async ({ page }) => {
+  await openTaskPage(page);
+  await page.keyboard.press('Escape');
+  await expect(taskPage(page)).toBeHidden();
+  await openTaskPage(page);
+  await taskCard(page, 'Kira Vant').getByRole('button', { name: 'Pilot-2' }).click();
+  await dock(page).getByRole('button', { name: 'Probe Mittel 8+' }).click();
   const result = page.getByRole('alertdialog');
   await expect(result.getByRole('button', { name: 'Weiter' })).toBeVisible();
   await page.keyboard.press('Escape');

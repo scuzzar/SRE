@@ -700,7 +700,7 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > Ist die zweihändige Waffe leer und kein Magazin mehr da, greift er wieder mit Sekundärwaffe bzw.
 > Händen an (Owner).
 
-> Wartet auf Freigabe (Kennzeichen **2026-11-27**): **Die Stufe beim Würfeln.** Die Kampagne merkt
+> Am 27. November 2026 freigegeben (Kennzeichen **2026-11-27**): **Die Stufe beim Würfeln.** Die Kampagne merkt
 > sich keine gewählte Stufe mehr (`Campaign → Odds : odds` entfällt). Das Orakel braucht sie seit
 > 2026-11-14d nicht mehr, die Karte zeigt alle drei Antworten; die Probe wählt sie erst beim
 > Würfeln: Auf der Detailseite *Probe* stehen in der Aktionsleiste Leicht 6+, Mittel 8+ und Schwer 10+, jeder

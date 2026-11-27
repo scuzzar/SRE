@@ -160,7 +160,7 @@ hide <<browser>> stereotype
 ' Referenzdaten
   class Odds <<reference>> $karte {
     name: string
-    $new("2026-11-27", "difficulty: string")
+    difficulty: string
     chance: number
     target: number
   }
@@ -191,7 +191,6 @@ hide <<browser>> stereotype
   }
 
 ' Kampagne
-Campaign "*" -$goneArrow("2026-11-27")-> "1" Odds : odds
 
 ' Schiffe
 
@@ -248,5 +247,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Odds #line:d0021b;line.bold
 @enduml

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { host } from './layout';
+import { host, rollDice } from './layout';
 
 const header = (page: Page) => page.getByRole('banner');
 const sheet = (page: Page) => page.getByRole('dialog', { name: 'Kampagnen' });
@@ -24,7 +24,7 @@ test.beforeEach(async ({ page }) => {
 
 test('Kampagnen: anlegen, wechseln, umbenennen, löschen; jede hat ihren eigenen Log', async ({ page }) => {
   await expectCampaign(page, 'Kampagne');
-  await page.getByRole('button', { name: '2W6' }).click();
+  await rollDice(page);
   await expect(page.locator('.entry')).toHaveCount(1);
 
   await openCampaigns(page);
@@ -59,7 +59,7 @@ test('Kampagnen: anlegen, wechseln, umbenennen, löschen; jede hat ihren eigenen
 });
 
 test('Kampagne exportieren kommt als Download, Import legt sie neu an', async ({ page }) => {
-  await page.getByRole('button', { name: '2W6' }).click();
+  await rollDice(page);
   await openCampaigns(page);
   const downloading = page.waitForEvent('download');
   await sheet(page).getByRole('button', { name: 'Kampagne exportieren' }).click();

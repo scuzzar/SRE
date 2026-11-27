@@ -731,10 +731,8 @@ hide <<browser>> stereotype
   class Task <<transient>> $probe {
     unskilled: boolean
     /dm: number
-    $gone("2026-11-27", "/need: number")
-    $new("2026-11-27", "/need: number[3]")
-    $gone("2026-11-27", "/chance: number")
-    $new("2026-11-27", "/chance: number[3]")
+    /need: number[3]
+    /chance: number[3]
   }
   class TaskResult $probe {
     dice: number[2]
@@ -972,7 +970,7 @@ hide <<browser>> stereotype
 ' Referenzdaten
   class Odds <<reference>> $karte {
     name: string
-    $new("2026-11-27", "difficulty: string")
+    difficulty: string
     chance: number
     target: number
   }
@@ -1335,7 +1333,6 @@ hide <<browser>> stereotype
 
 ' Kampagne
 Campaign "1" *-- "*" Character : characters
-Campaign "*" -$goneArrow("2026-11-27")-> "1" Odds : odds
 Campaign "0..1" --> "0..1" Character : focus
 Campaign "1" *-- "*" LogEntry : log {ordered}
 Campaign "1" *-- "0..1" Place : location

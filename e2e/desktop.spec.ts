@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { schwererLauf, openPeople, openShop, openCombat, pickCapital, openHomeGlobe } from './layout';
+import { schwererLauf, openPeople, openShop, openCombat, pickCapital, openHomeGlobe, rollDice, rollTask, taskPage } from './layout';
 
 // Der Desktop-Modus (ab 1024 px): links eine Spalte mit der Navigationsleiste, darunter das Log mit dem Charakter
 // oben oder an seiner Stelle der gewählte Bereich bzw. das angetippte Feld; unten die Aktionsleiste Notiz,
@@ -11,7 +11,8 @@ const areas = ['Charaktere', 'Schiff'];
 const panel = (page: Page) => page.getByRole('complementary', { name: 'Seitenspalte' });
 const head = (page: Page) => panel(page).locator('.area-head');
 const nav = (page: Page) => page.getByRole('navigation', { name: 'Bereiche' });
-const strip = (page: Page) => panel(page).getByRole('region', { name: 'Spielercharaktere' });
+/** Das Log in der Seitenspalte. */
+const log = (page: Page) => panel(page).locator('.log');
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -19,10 +20,10 @@ test.beforeEach(async ({ page }) => {
 
 test('Links eine Spalte: das Log, an seiner Stelle der Bereich; rechts die Grundkarte', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  // Beim Start: das Log mit dem Charakter oben, der Subsektor füllt den Rest (die Demo-Welt hat noch keinen Globus).
+  // Beim Start: das Log, der Subsektor füllt den Rest (die Demo-Welt hat noch keinen Globus).
   await expect(nav(page).getByRole('button', { name: 'Log', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(nav(page).getByRole('button', { name: 'Sektor', exact: true })).toHaveCount(0);
-  await expect(strip(page)).toBeVisible();
+  await expect(log(page)).toBeVisible();
   await expect(head(page)).toHaveCount(0);
   const side = (await panel(page).boundingBox())!;
   const map = (await page.locator('.base').boundingBox())!;
@@ -36,26 +37,26 @@ test('Links eine Spalte: das Log, an seiner Stelle der Bereich; rechts die Grund
     expect((await panel(page).boundingBox())!.width).toBe(side.width);
     expect((await page.locator('.base').boundingBox())!.x).toBe(map.x);
     await expect(panel(page).getByRole('button', { name: 'Karte ziehen' })).toBeVisible();
-    await expect(panel(page).getByRole('button', { name: '2W6' })).toBeVisible();
+    await expect(panel(page).getByRole('button', { name: '2W6', exact: true })).toBeVisible();
   }
   // Ein zweiter Klick auf den offenen Bereich führt zurück zum Log, auch unter NSC; ebenso ✕ und der Bereich Log.
   await openPeople(page, 'NSC');
   await expect(head(page)).toContainText('Charaktere');
   await nav(page).getByRole('button', { name: 'Charaktere', exact: true }).click();
-  await expect(strip(page)).toBeVisible();
+  await expect(log(page)).toBeVisible();
   await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
   await page.getByRole('button', { name: 'Schiff schließen' }).click();
-  await expect(strip(page)).toBeVisible();
+  await expect(log(page)).toBeVisible();
   await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
   await nav(page).getByRole('button', { name: 'Log', exact: true }).click();
-  await expect(strip(page)).toBeVisible();
+  await expect(log(page)).toBeVisible();
   await expect(head(page)).toHaveCount(0);
 });
 
 test('Ein Wurf in einem Bereich landet im Log', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
   await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
-  await panel(page).getByRole('button', { name: '2W6' }).click();
+  await rollDice(page);
   await expect(page.locator('.dice-roll')).toBeHidden();
   await expect(nav(page).getByRole('button', { name: 'Schiff', exact: true })).toHaveAttribute('aria-current', 'page');
   await nav(page).getByRole('button', { name: 'Log', exact: true }).click();
@@ -72,11 +73,12 @@ test('Ein Tag geht auch in einem Bereich: der Knopf in der Aktionsleiste unten (
   await expect(panel(page).locator('.entry').last()).toContainText('Zeit');
 });
 
-test('Eine Probe aus dem Charakter oben lässt sich auch in einem Bereich würfeln', async ({ page }, testInfo) => {
+test('Die Detailseite Probe geht auch über einem Bereich auf; danach steht der Bereich wieder da', async ({ page }, testInfo) => {
   onlyDesktop(testInfo);
-  await strip(page).getByRole('article', { name: 'Kira Vant' }).getByRole('button', { name: 'Pilot-2' }).click();
   await nav(page).getByRole('button', { name: 'Schiff', exact: true }).click();
-  await panel(page).getByRole('button', { name: 'Probe würfeln' }).click();
+  await rollTask(page, 'Kira Vant', 'Pilot-2');
+  await expect(taskPage(page)).toBeHidden();
+  await expect(nav(page).getByRole('button', { name: 'Schiff', exact: true })).toHaveAttribute('aria-current', 'page');
   await page.getByRole('alertdialog').getByRole('button', { name: 'Weiter' }).click();
   await nav(page).getByRole('button', { name: 'Log', exact: true }).click();
   await expect(panel(page).locator('.entry').last()).toContainText('Kira Vant · Pilot-2');
