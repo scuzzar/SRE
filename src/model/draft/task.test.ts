@@ -113,7 +113,7 @@ describe('Probe würfeln', () => {
 });
 
 describe('Die Stufe beim Würfeln (2026-11-27)', () => {
-  it('rechnet nötigen Wurf und Chance für alle drei Stufen, in der Reihenfolge Hoch, Mittel, Gering', () => {
+  it('rechnet nötigen Wurf und Chance für alle drei Stufen, in der Reihenfolge Leicht (Hoch), Mittel, Schwer (Gering)', () => {
     const task = toggleCharacteristic(chooseSkill(startTask(hard), hard, 'pilot'), hard, 'DEX');
     expect(evaluateTask(task, hard).steps.map((s) => [s.odds, s.target, s.need])).toEqual([
       ['high', 6, 3],

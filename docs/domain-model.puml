@@ -972,6 +972,7 @@ hide <<browser>> stereotype
 ' Referenzdaten
   class Odds <<reference>> $karte {
     name: string
+    $new("2026-11-27", "difficulty: string")
     chance: number
     target: number
   }

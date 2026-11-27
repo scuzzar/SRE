@@ -177,7 +177,7 @@ describe('Orakel-Screen', () => {
     game.openTaskPage();
     expect(game.snapshot().taskPage).toBe(true);
     game.chooseSkill('pilot');
-    expect(game.snapshot().task?.steps.map((s) => s.name)).toEqual(['Hoch', 'Mittel', 'Gering']);
+    expect(game.snapshot().task?.steps.map((s) => s.name)).toEqual(['Leicht', 'Mittel', 'Schwer']);
     game.rollTask('low');
     await game.whenSaved();
     expect(repository.saved?.log.at(-1)).toMatchObject({ kind: 'task', odds: 'low', target: 10 });
@@ -291,7 +291,7 @@ describe('Charakter oben: Probe im Orakel-Screen', () => {
     game.toggleCharacteristic('DEX');
     const task = game.snapshot().task!;
     expect(task).toMatchObject({ character: 'Kira Vant', ready: true, dm: 3 });
-    expect(task.steps[2]).toMatchObject({ odds: 'low', name: 'Gering', target: 10, need: 7 });
+    expect(task.steps[2]).toMatchObject({ odds: 'low', name: 'Schwer', target: 10, need: 7 });
     expect(Math.round(task.steps[2]!.chance)).toBe(58);
     expect(task.parts).toEqual([
       { kind: 'skill', name: 'Pilot', level: 2, dm: 2 },

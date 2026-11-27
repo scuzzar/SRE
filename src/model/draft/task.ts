@@ -48,7 +48,7 @@ export interface TaskStep {
 
 /**
  * Die abgeleiteten Werte einer Probe: `/dm` und je Stufe `/need` und `/chance`, in der Reihenfolge
- * der Stufen (Hoch, Mittel, Gering). Die Stufe wählt man erst beim Würfeln (2026-11-27).
+ * der Stufen (Hoch, Mittel, Gering; bei Proben Leicht, Mittel, Schwer). Die Stufe wählt man erst beim Würfeln (2026-11-27).
  */
 export interface TaskOdds {
   readonly dm: number;

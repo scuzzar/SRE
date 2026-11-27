@@ -29,7 +29,7 @@ Umschalter, Reihe, großes und kleines Blatt, Würfelfenster und Hinweis).
 | Navigationsleiste | (View, `nav` „Bereiche“) | Die Leiste mit den fünf Bereichen, ganz unten im Ziehblatt bzw. oben in der Seitenspalte. Ein Tipp darauf öffnet den Bereich und bricht einen laufenden Ablauf ab (NSC platzieren, Ort wählen) |
 | Bereich | `Screen` | Einer der fünf Teile der App: **Log, Begegnung, Charaktere, Schiff, Missionen** (Missionen seit 2026-11-18). Begegnung und Charaktere haben Unterreiter |
 | Unterreiter | `SubTabs` | Die Wahl oben in einem Bereich, welcher Teil zu sehen ist: im Bereich Begegnung *Begegnung · Kampf*, im Bereich Charaktere *SC · Kasse · NSC*, im Bereich Schiff *Deckplan · Crew · Computer*, an der Weltkarte *Welt · System* |
-| Aktionsleiste | `…Dock` (`OracleDock`, `EncounterDock`, `FieldDock`) | Die drei bis fünf gleich breiten Knöpfe zum Handeln über der Navigationsleiste, im Daumenbereich. Im Log *Notiz, Tag, 2W6, Karte*, auf der Detailseite Probe *2W6, Hoch, Mittel, Gering*, am angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen* |
+| Aktionsleiste | `…Dock` (`OracleDock`, `EncounterDock`, `FieldDock`) | Die drei bis fünf gleich breiten Knöpfe zum Handeln über der Navigationsleiste, im Daumenbereich. Im Log *Notiz, Tag, 2W6, Karte*, auf der Detailseite Probe *2W6, Leicht, Mittel, Schwer*, am angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen* |
 | Charakterleiste | `CharacterStrip` | Oben im Kampf ohne Begegnung und im Shop (im Log nicht mehr, 2026-11-27): die Karte des Charakters oben (Name, Credits und UPP bzw. Waffen), Wischen wechselt ihn, ein Tipp auf den Namen klappt sie ein |
 | Detailseite | (View; `DetailPage`, `FieldDock`, `WorldSheet`) | Ein Inhalt, der an die Stelle des Bereichs tritt, ohne die App abzudunkeln: oben Titel und ✕, unten seine Aktionsleiste. Das Feld ist eine, ebenso Charakter- und Missions-Editor, die Probe (2026-11-27) und im Bereich Schiff Treibstoff, Bearbeiten, Werft, Posten und Programm (2026-11-26) |
 | Feld | (View; `FieldDock`, `WorldSheet`) | Die Detailseite des angetippten Felds des Globus bzw. des gewählten Felds im Subsektor; oben sein **Feldkopf** (Name und Werte), der auch eingeklappt stehen bleibt |
@@ -139,9 +139,9 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 - Hat ein Bereich zwei Arten von Handlungen, bekommt er **zwei Aktionsleisten** übereinander, nie eine mit
   mehr als fünf Knöpfen: im Bereich Begegnung oben die Würfe *Zufall, Tiere, Patron, Gerücht,
   Polizei*, darunter die Zeit *Tage vergehen, Woche beenden* (auf einer Fahrt *Weiterfahren*).
-- Auf der **Detailseite Probe** (2026-11-27) links **2W6**, daneben die drei Stufen **Hoch, Mittel,
-  Gering**; jeder Knopf würfelt und schließt die Seite. Darüber steht die Probe (Charakter, Fertigkeit,
-  DM) mit nötigem Wurf und Chance je Stufe; die Knöpfe selbst zeigen nur den Namen. Solange keine
+- Auf der **Detailseite Probe** (2026-11-27) links **2W6**, daneben die drei Schwierigkeiten **Leicht,
+  Mittel, Schwer**, je mit Zielwert darunter (6+, 8+, 10+); jeder Knopf würfelt und schließt die Seite.
+  Darüber steht die Probe (Charakter, Fertigkeit, DM) mit nötigem Wurf und Chance je Schwierigkeit. Solange keine
   Fertigkeit gewählt ist, sind die Stufen ausgegraut, und die Zeile darüber sagt es.
 - In der **Kampfsimulation** ist die Aktionsleiste der Zug (2026-11-26): links **Beenden** und
   **Ausweichen** im Stil der Knöpfe des Logs, rechts im Daumenbereich die Angriffe (je Waffe ein Knopf

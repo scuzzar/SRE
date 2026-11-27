@@ -6,6 +6,8 @@ import { StarTablesSchema } from './stars';
 export const OddsSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  /** Der Name als Schwierigkeit einer Probe (Leicht, Mittel, Schwer); `name` sagt es fürs Orakel (2026-11-27). */
+  difficulty: z.string().min(1),
   chance: z.number().int().min(0).max(100),
   target: z.number().int(),
 });

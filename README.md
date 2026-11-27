@@ -51,7 +51,7 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 - **Ja/Nein-Orakel** auf der Karte: ein Wurf, die Antwort für drei Stufen (Hoch 75 %, Mittel 50 %, Gering 25 %), sechs Antworten von **Ja!** bis **Nein!** nach Mythic.
 - **Zufallsereignis** wie bei Mythic bei einem Pasch bis 55, mit Ereignisfokus; ein Handlungsfaden lost eine offene Mission aus.
 - **Inspirationskarte** nach dem GMA2e: Man tippt an, was man nutzen will; nur das kommt in den Log (siehe [Das Orakel](#das-orakel)).
-- **2W6** und **Proben**: „2W6“ im Log öffnet die Detailseite Probe mit allen Charakteren; Fertigkeit und passende Attribute antippen, dann würfelt einer der Knöpfe Hoch, Mittel oder Gering. Lange gedrückt würfelt „2W6“ gleich (siehe [Proben](#proben-hausregel-nach-rule-68a)).
+- **2W6** und **Proben**: „2W6“ im Log öffnet die Detailseite Probe mit allen Charakteren; Fertigkeit und passende Attribute antippen, dann würfelt einer der Knöpfe Leicht, Mittel oder Schwer. Lange gedrückt würfelt „2W6“ gleich (siehe [Proben](#proben-hausregel-nach-rule-68a)).
 - Würfel und Karte sind kurz animiert, ein Tippen zeigt sofort das Ergebnis, dazu Vibration, wo das Gerät es kann.
 
 ### Charaktere und NSC
@@ -122,11 +122,11 @@ Classic Traveller kennt keine feste Skala; die Standardprobe ist 2W6 + DMs, Erfo
 
 > **2W6 + Fertigkeit + gewählte Attribute + sonstige DMs ≥ Zielwert**
 
-| Stufe | Zielwert | Orakel (Chance auf Ja) |
-|---|---|---|
-| Hoch | 6+ (Einfach) | 75 % |
-| Mittel | 8+ (Durchschnittlich) | 50 % |
-| Gering | 10+ (Schwierig) | 25 % |
+| Stufe (Orakel) | Probe | Zielwert | Orakel (Chance auf Ja) |
+|---|---|---|---|
+| Hoch | Leicht | 6+ | 75 % |
+| Mittel | Mittel | 8+ | 50 % |
+| Gering | Schwer | 10+ | 25 % |
 
 - **Fertigkeit:** + Stufe; Stufe 0 (Waffen, Jack-of-all-Trades) ±0; ohne Fertigkeit −3.
 - **Attribute** wählt man je Probe dazu: 9+ → +1, 6–8 → ±0, 5− → −1; mehr als ±1 je Attribut gibt es nicht.
@@ -157,7 +157,6 @@ Von **Mythic** übernommen: Ja/Nein-Fragen in drei Stufen, Zufallsereignisse mit
 - Wie gibt man physische Würfe am schnellsten ein (Augen antippen, Summe eintippen)?
 - Wie wächst die App über Version 1 hinaus, ohne den Hauptscreen zu überladen?
 - Wohin wandern die Themen-Tafeln (NSC, NSC-Aktionen, Welt, Wesen, Handlung), die vorläufig unter der Karte stehen?
-- Soll die Stufe (`Odds`) ein zweites Namensfeld für Proben bekommen (*Einfach / Durchschnittlich / Schwierig*)?
 
 **Entschieden:** mobil zuerst als PWA (eine native App ist später über Capacitor möglich); domänengetrieben; klassisches MVC mit Regel-Engine und Orakel im Model; Regeln und Tabellen als Daten (JSON); Speicherung lokal (IndexedDB) mit Export, Import und OneDrive-Abgleich; TypeScript mit Vite, React und Dexie.
 

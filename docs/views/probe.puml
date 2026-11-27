@@ -226,4 +226,5 @@ legend right
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
 class Task #line:d0021b;line.bold
+class Odds #line:d0021b;line.bold
 @enduml

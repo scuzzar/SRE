@@ -4598,6 +4598,14 @@ button:disabled {
   color: var(--ink);
 }
 
+/* Der Zielwert über dem Namen der Schwierigkeit, so groß wie sonst das Symbol. */
+.action .difficulty-target {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .action.task-roll:disabled {
   background: transparent;
   color: var(--dim);

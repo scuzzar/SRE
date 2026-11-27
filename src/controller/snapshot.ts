@@ -312,8 +312,8 @@ export interface Snapshot {
   readonly screen: Screen;
   /** Ob die Detailseite Probe offen ist (2026-11-27): alle Charaktere, darunter 2W6 und die drei Stufen. */
   readonly taskPage: boolean;
-  /** Die Namen der drei Stufen (Hoch, Mittel, Gering) für die Knöpfe der Detailseite Probe, auch bevor eine Probe beginnt. */
-  readonly oddsNames: readonly string[];
+  /** Die drei Schwierigkeiten (Leicht, Mittel, Schwer) mit Zielwert für die Knöpfe der Detailseite Probe, auch bevor eine Probe beginnt. */
+  readonly difficulties: readonly DifficultyView[];
   /** In der Reihenfolge der Ereignisse; dass das Neueste unten steht, ist Sache der Anzeige. */
   readonly log: readonly LogItem[];
   /** Je Logeintrag das Datum seines Spieltags („Montag, 002-1105“); fehlt bei Einträgen von vor der Spielzeit. */
@@ -1393,9 +1393,17 @@ export interface TaskView {
   /** Ist eine Fertigkeit gewählt, gibt es etwas zu würfeln. */
   readonly ready: boolean;
   readonly dm: number;
-  /** Je Stufe (Hoch, Mittel, Gering) Zielwert, nötiger Wurf und Chance; gewählt wird beim Würfeln. */
+  /** Je Schwierigkeit (Leicht, Mittel, Schwer) Zielwert, nötiger Wurf und Chance; gewählt wird beim Würfeln. */
   readonly steps: readonly TaskStepView[];
   readonly parts: readonly DmPart[];
+}
+
+export interface DifficultyView {
+  /** Die Stufe (`Odds.id`), mit der der Knopf würfelt. */
+  readonly odds: string;
+  /** Leicht, Mittel, Schwer (`Odds.difficulty`). */
+  readonly name: string;
+  readonly target: number;
 }
 
 export interface TaskStepView {
@@ -2834,10 +2842,10 @@ function characterView(campaign: Campaign, character: Character, state: Controll
 function taskView(campaign: Campaign, task: Task): TaskView {
   const character = focusOf(campaign)!;
   const { dm, steps } = evaluateTask(task, campaign);
-  return { character: character.name, ready: hasSkill(task), dm, steps: steps.map((s) => ({ ...s, name: oddsOf(s.odds).name })), parts: dmParts(campaign, character, task.uses, task.unskilled, task.counts) };
+  return { character: character.name, ready: hasSkill(task), dm, steps: steps.map((s) => ({ ...s, name: oddsOf(s.odds).difficulty })), parts: dmParts(campaign, character, task.uses, task.unskilled, task.counts) };
 }
 
-const oddsNames: readonly string[] = ref.odds.map((o) => o.name);
+const difficulties: readonly DifficultyView[] = ref.odds.map((o) => ({ odds: o.id, name: o.difficulty, target: o.target }));
 const skills: readonly SkillChoice[] = ref.skills.map((s) => ({ ...s, leveled: shownLevel({ of: s.id, level: 0 }) !== undefined }));
 const items: readonly ItemChoice[] = ref.items.map((i) => ({ id: i.id, label: itemLabel(i), kind: i.kind, once: i.once, weapon: i.weapon, armor: i.armor !== undefined }));
 
@@ -2860,7 +2868,7 @@ function pickingView(state: ControllerState, campaign: Campaign): { readonly tit
 
 export function buildSnapshot(state: ControllerState): Snapshot {
   const { campaign } = state;
-  const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, oddsNames, skills, items };
+  const base = { sync: state.sync, conflicts: state.conflicts.map((c) => conflictView(c, state.campaigns)), persistent: state.persistent, durable: state.durable, storageError: state.storageError, elsewhere: state.elsewhere, notice: state.notice, screen: state.screen, stripCollapsed: state.stripCollapsed, shopHintHidden: state.shopHintHidden, trayStop: state.trayStop, difficulties, skills, items };
   if (!campaign) {
     return { ...base, ready: false, campaign: { id: '', name: '' }, campaigns: [], campaignSheet: undefined, taskPage: false, log: [], logDays: [], time: undefined, checks: undefined, legal: undefined, journey: undefined, systemJourney: undefined, trip: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, travel: undefined, card: undefined, names: undefined, characters: [], focus: undefined, dead: [], npcRun: undefined,
     npcs: { all: false, here: undefined, worlds: [], dead: [], total: 0, roles: [], services: [], generateBlocker: undefined, termsGoal: [], placing: undefined }, missions: { open: [], done: [], failed: [], retired: [], editor: undefined, picking: undefined, here: undefined, hereBlocker: undefined, persons: [], clients: [] }, retired: [], task: undefined, combat: undefined, patron: undefined, rumor: undefined, shop: undefined, ship: undefined, stash: { items: [], members: [], load: 0, capacity: 0, burden: 0, error: undefined }, location: undefined, result: undefined, editor: undefined, generation: undefined, generationRunning: false, sector: [], worlds: [], world: undefined, globe: undefined, worldCard: false, landing: undefined, shipCheck: undefined, shipEncounter: undefined, space: undefined, spaceVolley: undefined, globeFocus: undefined, selected: undefined, picking: undefined };

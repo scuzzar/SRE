@@ -13,7 +13,7 @@ import { NoteSheet } from './NoteSheet';
 /**
  * Die Aktionsleiste unter dem Log: Notiz, Tag, 2W6, Karte. „2W6“ öffnet die Detailseite Probe, lange
  * gedrückt würfelt es gleich 2W6 (2026-11-27). Ist die Detailseite offen, steht hier ihre Aktionsleiste:
- * links 2W6, daneben die drei Stufen, darüber die Probe mit nötigem Wurf und Chance je Stufe; jeder Knopf
+ * links 2W6, daneben die drei Schwierigkeiten Leicht, Mittel, Schwer mit Zielwert, darüber die Probe mit nötigem Wurf und Chance je Stufe; jeder Knopf
  * würfelt und schließt die Seite. Der Tag (2026-11-22c, statt „Deuten“, das am
  * Ergebnis selbst sitzt) lässt einen Tag vergehen: während einer Fahrt „Weiterfahren“, unterwegs
  * „Weiterreisen“, sonst „1 Tag“; was er tut, entscheidet der Controller. Steht im Orakel und im Feld des Globus, damit man dort
@@ -85,7 +85,7 @@ export function OracleDock({
                 </span>
               </div>
             ) : (
-              <p className="task-hint">Erst eine Fertigkeit wählen, dann die Stufe.</p>
+              <p className="task-hint">Erst eine Fertigkeit wählen, dann die Schwierigkeit.</p>
             )}
           </div>
           <div className="actions oracle-actions">
@@ -93,28 +93,23 @@ export function OracleDock({
               <DiceIcon />
               2W6
             </button>
-            {(task?.steps ?? []).length > 0
-              ? task!.steps.map((s) => (
-                  <button
-                    key={s.odds}
-                    type="button"
-                    className="action task-roll"
-                    disabled={!task!.ready}
-                    title={task!.ready ? `Probe mit ${s.name} würfeln (${s.target}+)` : 'Erst eine Fertigkeit wählen'}
-                    aria-label={`Probe ${s.name}`}
-                    onClick={() => {
-                      haptic('land');
-                      game.rollTask(s.odds);
-                    }}
-                  >
-                    {s.name}
-                  </button>
-                ))
-              : view.oddsNames.map((name) => (
-                  <button key={name} type="button" className="action task-roll" disabled title="Erst eine Fertigkeit wählen" aria-label={`Probe ${name}`}>
-                    {name}
-                  </button>
-                ))}
+            {view.difficulties.map((d) => (
+              <button
+                key={d.odds}
+                type="button"
+                className="action task-roll"
+                disabled={!task?.ready}
+                title={task?.ready ? `Probe ${d.name} würfeln (${d.target}+)` : 'Erst eine Fertigkeit wählen'}
+                aria-label={`Probe ${d.name} ${d.target}+`}
+                onClick={() => {
+                  haptic('land');
+                  game.rollTask(d.odds);
+                }}
+              >
+                <span className="difficulty-target">{d.target}+</span>
+                {d.name}
+              </button>
+            ))}
           </div>
         </>
       ) : (

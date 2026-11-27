@@ -7,9 +7,10 @@ Das Diagramm führt; die Begriffe stehen im Domänenmodell unter *Begriffe*.
 
 ## Die Stufe der Proben
 
-Die drei Stufen sind Referenzdaten: Hoch (75 %, 6+), Mittel (50 %, 8+), Gering (25 %, 10+).
+Die drei Stufen sind Referenzdaten: Hoch (75 %, 6+), Mittel (50 %, 8+), Gering (25 %, 10+). Bei
+Proben heißen sie nach ihrer **Schwierigkeit** (`difficulty`): Leicht, Mittel, Schwer.
 *2026-11-27.* Die Kampagne merkt sich **keine Stufe** mehr: Bei der Probe wählt man sie erst
-**beim Würfeln**, mit einem der drei Knöpfe Hoch, Mittel, Gering; jeder würfelt sofort. Das
+**beim Würfeln**, mit einem der drei Knöpfe Leicht, Mittel, Schwer (je mit Zielwert); jeder würfelt sofort. Das
 Orakel wählt sie je Frage auf der Karte (siehe [Orakel auf der Karte](karte.md#orakel-auf-der-karte)).
 Kampagnen und Kampagnendateien von vorher tragen noch eine gewählte Stufe; sie wird beim Laden und
 beim Import übergangen.
@@ -28,7 +29,7 @@ Es gilt: 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert.
   −1 bis `malusUpTo` (5), sonst ±0. Attribute mit ±0 sind nicht wählbar.
 - Der Zielwert kommt aus der Stufe, mit der man würfelt. Solange die Probe vorbereitet wird, rechnet
   sie den nötigen Wurf und die Chance **für alle drei Stufen** (`/need`, `/chance`, je in der
-  Reihenfolge Hoch, Mittel, Gering). Der nötige Wurf ist Zielwert minus DM, die
+  Reihenfolge Leicht, Mittel, Schwer). Der nötige Wurf ist Zielwert minus DM, die
   Wahrscheinlichkeit wird exakt aus den 36 Kombinationen von 2W6 gezählt: Bis 2 ist sie sicher,
   über 12 unmöglich. Auch eine unmögliche Probe darf man würfeln; sie misslingt immer und steht
   trotzdem im Log.

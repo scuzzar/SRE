@@ -703,8 +703,9 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > Wartet auf Freigabe (Kennzeichen **2026-11-27**): **Die Stufe beim Würfeln.** Die Kampagne merkt
 > sich keine gewählte Stufe mehr (`Campaign → Odds : odds` entfällt). Das Orakel braucht sie seit
 > 2026-11-14d nicht mehr, die Karte zeigt alle drei Antworten; die Probe wählt sie erst beim
-> Würfeln: Auf der Detailseite *Probe* stehen in der Aktionsleiste Hoch, Mittel und Gering, jeder
-> Knopf würfelt sofort (Owner, 27. November 2026). Darum rechnet die Probe in Vorbereitung `/need`
+> Würfeln: Auf der Detailseite *Probe* stehen in der Aktionsleiste Leicht 6+, Mittel 8+ und Schwer 10+, jeder
+> Knopf würfelt sofort (Owner, 27. November 2026). Dafür bekommt die Stufe ihren Namen als
+> Schwierigkeit (`difficulty`: Leicht, Mittel, Schwer); fürs Orakel heißt sie weiter Hoch, Mittel, Gering. Darum rechnet die Probe in Vorbereitung `/need`
 > und `/chance` für alle drei Stufen. Das Ergebnis im Log (`TaskResult → Odds`) hält seine Stufe wie
 > bisher fest. Alte Kampagnen und Dateien mit gewählter Stufe laden weiter; die Stufe wird
 > übergangen. Der Ausschnitt dazu liegt unter
