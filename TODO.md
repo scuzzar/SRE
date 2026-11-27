@@ -7,9 +7,48 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 
 ## Handel
 
+### 1. Handel, Schritt 1
+
 - [ ] **Handel umsetzen** nach [`docs/regeln-handel.md`](docs/regeln-handel.md): die
-  Auslegungsfragen sind entschieden (E1–E11), Modell-Entwurf
-  2026-11-27 (`docs/modell/handel.md`) wartet auf Freigabe, danach in den Code. Später: Charter, Shuttle, subventionierte Schiffe, Bumping, Blinde Passagiere.
+  Auslegungsfragen sind entschieden (E1–E13), der Modell-Entwurf 2026-11-27
+  ([`docs/modell/handel.md`](docs/modell/handel.md)) wartet auf Freigabe, danach in den Code.
+  Umfang: Spekulation, Fracht, zahlende Passagiere, Postvertrag und private Botschaften,
+  Reisezonen.
+
+### 2. Handel, was danach kommt
+
+Bewusst nicht im ersten Schritt; jeweils erst ins Modell, dann in den Code.
+
+- [ ] **Charter** ([Handelsbräuche](docs/regeln-handel.md#handelsbräuche), SR 30): Das Schiff wird
+  vermietet statt selbst zu handeln – Sprungschiffe in 2-Wochen-Blöcken für Cr900 je Tonne
+  Laderaum + Cr9.000 je Kabine + Cr900 je Niedrigbett, Small Craft für Cr1 je Tonne und Stunde
+  (mindestens 12 Stunden). Der Eigner trägt die laufenden Kosten und stellt die Crew. Braucht einen
+  Charterer (NSC/Patron) und eine Laufzeit am Schiff.
+- [ ] **Shuttle-Gebühren** ([Handelsbräuche](docs/regeln-handel.md#handelsbräuche), SR 30): An
+  Häfen A–C pendeln Shuttles zwischen Orbit und Oberfläche, Cr10 je Tonne Fracht, Cr20–120 je
+  Passagier. Wird erst wichtig, wenn ein Schiff ohne Stromlinienform im Orbit bleibt und Fracht
+  oder Passagiere hinunter müssen (Lieferung im Orbit oder am Boden).
+- [ ] **Subventionierte Handelsschiffe** ([Rechnung einer Handelsfahrt](docs/regeln-handel.md#rechnung-einer-handelsfahrt),
+  SR 29): ab 600-t-Rumpf; die Regierung zahlt die Raten und erhält 50 % der Bruttoeinnahmen, das
+  Schiff bedient eine feste Route über 2–12 Welten und kann eingezogen werden. Braucht Route und
+  Einnahmenteilung am Schiff.
+- [ ] **Bumping der Middle Passage** ([Preise und Bedingungen](docs/regeln-handel.md#preise-und-bedingungen-sr-2829-se-9),
+  SR 28): Ein spät kommender Hochpassagier verdrängt einen Mittelpassagier, der sein Geld
+  zurückbekommt. Gilt für zahlende Passagiere an Bord und für die Gruppe als Middle-Passagiere auf
+  fremden Schiffen.
+- [ ] **Blinde Passagiere** ([Preise und Bedingungen](docs/regeln-handel.md#preise-und-bedingungen-sr-2829-se-9),
+  SR 28): Entdeckung 4+ je Tag; Reaktionswurf des Kapitäns, bei 6− durch die Schleuse.
+- [ ] **Entführung** ([Preise und Bedingungen](docs/regeln-handel.md#preise-und-bedingungen-sr-2829-se-9),
+  SR 28–29): 18+ auf 3D je Reise mit fremden Passagieren; mit Anti-Hijack-Programm kommen die
+  Entführer nur auf 5− auf die Brücke. Braucht eine Begegnung an Bord.
+- [ ] **Steward- und Medic-Pflicht** ([Preise und Bedingungen](docs/regeln-handel.md#preise-und-bedingungen-sr-2829-se-9);
+  Crew in [`regeln-schiffe.md`](docs/regeln-schiffe.md#crew)): ein Steward je 8 Hochpassagiere,
+  ein Medic je 120 Passagiere; im ersten Schritt prüft die App das nicht.
+- [ ] **Working Passage** ([Preise und Bedingungen](docs/regeln-handel.md#preise-und-bedingungen-sr-2829-se-9),
+  SR 28): NSC fliegt ohne Geld gegen Arbeit, höchstens drei Sprünge, sonst gilt er als angeheuert.
+  Kommt mit den Hirelings.
+- [ ] **Ladungsverlust im Raumkampf**: Treffer auf den Laderaum ziehen heute Tonnen ab; mit den
+  Ladungen muss festgelegt werden, welche Ladung es trifft.
 
 ## Kampf
 
