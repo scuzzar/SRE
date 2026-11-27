@@ -43,7 +43,7 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Handel | [views/handel.png](views/handel.png) | [modell/handel.md](modell/handel.md) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
-**2026-11-27** (Handel, Schritt 1, [`changes/2026-11-27-handel.png`](changes/2026-11-27-handel.png)).
+keine.
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -514,6 +514,10 @@ des Bereichs (siehe die Tabelle oben). Hier stehen nur die, die für alle Bereic
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
+- **Handel, Schritt 1** (2026-11-27, [`modell/handel.md`](modell/handel.md)) ist freigegeben, aber
+  noch nicht gebaut: Markt, Warenwurf, Preiswurf, Ladungen, Fracht- und Passagierangebote,
+  Postvertrag, private Botschaften, Reisezonen und die Tabellen aus SE 9 und SE 22 fehlen im Code;
+  `Ship.cargo` ist dort noch eine frei eingetragene Zahl.
 - **Small Craft** (2026-11-21b) sind gebaut (`model/ship.ts`, `model/flight.ts`, `model/landing.ts`,
   `model/system-journey.ts`, Entwürfe in `src/data/ships.json`). Abweichungen: `Ship.aboard` und
   `Ship.inOrbit` stehen nur im Spielstand, wenn sie wahr sind (fehlt heißt falsch), ebenso

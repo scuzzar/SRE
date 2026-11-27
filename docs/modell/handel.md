@@ -9,7 +9,7 @@ Büchern mit allen Tabellen und die Entscheidungen zur Auslegung (E1–E11) steh
 
 ## Handel, Schritt 1
 
-*Entwurf, wartet auf Freigabe, Kennzeichen 2026-11-27.* Zweiter Schritt der Schiffe (nach Basis
+*freigegeben am 27. November 2026, Kennzeichen 2026-11-27.* Zweiter Schritt der Schiffe (nach Basis
 und Raumkampf, siehe [Schiffe](schiffe.md)). Er bringt **spekulativen Handel**, **Fracht**,
 **zahlende Passagiere** und **Post** mit dem eigenen Schiff, dazu die **Reisezonen**. Gehandelt wird nur mit
 dem aktiven Schiff (`Campaign./ship`), nur an einer Welt mit Raumhafen A bis E, nur wenn die Gruppe

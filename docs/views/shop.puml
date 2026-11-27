@@ -84,7 +84,7 @@ hide <<browser>> stereotype
     count: number [0..1]
     text: string [0..1]
     shipCost: ShipCost [0..1]
-    $new("2026-11-27", "shipIncome: ShipIncome [0..1]")
+    shipIncome: ShipIncome [0..1]
   }
   enum BookingKind <<value>> $shop {
     income
@@ -110,8 +110,8 @@ hide <<browser>> stereotype
   enum ShipCost <<value>> $schiffe
 
 ' Handel (Regeln: docs/regeln-handel.md)
-  class Cargo $handel $newClass("2026-11-27")
-  enum ShipIncome <<value>> $handel $newClass("2026-11-27")
+  class Cargo $handel
+  enum ShipIncome <<value>> $handel
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
@@ -175,8 +175,8 @@ Booking --> BookingKind
 Booking "*" --> "0..1" Ship : forShip
 
 ' Handel
-Booking "*" -$newArrow("2026-11-27")-> "0..1" Cargo : forCargo
-Booking -$newArrow("2026-11-27")-> ShipIncome
+Booking "*" --> "0..1" Cargo : forCargo
+Booking --> ShipIncome
 
 ' Raumkarte und Systemflug
 
@@ -229,8 +229,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Booking #line:d0021b;line.bold
-class Ship #line:d0021b;line.bold
-class ShipCost #line:d0021b;line.bold
-class Journey #line:d0021b;line.bold
 @enduml

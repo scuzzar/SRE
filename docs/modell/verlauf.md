@@ -700,7 +700,7 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > Ist die zweihändige Waffe leer und kein Magazin mehr da, greift er wieder mit Sekundärwaffe bzw.
 > Händen an (Owner).
 
-> Wartet auf Freigabe (Kennzeichen **2026-11-27**): **Handel, Schritt 1.** Spekulation mit einem
+> Am 27. November 2026 freigegeben (Kennzeichen **2026-11-27**): **Handel, Schritt 1.** Spekulation mit einem
 > Markt je Welt und Woche (Warenwurf und Preiswürfe als Logeinträge, Makler und Fertigkeit),
 > Ladungen im Laderaum statt einer freien Tonnenzahl, Fracht- und Passagierangebote je Ziel, das
 > angekündigte Ziel am Schiff, zahlende Passagiere an der Reise, Postvertrag und private Botschaften, Reisezonen am Hex, die Tabellen

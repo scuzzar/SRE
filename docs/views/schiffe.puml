@@ -85,8 +85,7 @@ hide <<browser>> stereotype
     name: string
     fuel: number
     unrefined: number
-$gone("2026-11-27", "cargo: number")
-    $new("2026-11-27", "/cargo: number")
+    /cargo: number
     price: number
     initialLoan: number [0..1]
     loanBalance: number [0..1]
@@ -97,7 +96,7 @@ $gone("2026-11-27", "cargo: number")
     aboard: boolean
     inOrbit: boolean
     inHold: boolean
-    $new("2026-11-27", "mailContract: boolean")
+    mailContract: boolean
   }
   enum ShipCost <<value>> $schiffe {
     price
@@ -108,10 +107,10 @@ $gone("2026-11-27", "cargo: number")
     armament
     repair
     software
-    $new("2026-11-27", "goods")
-    $new("2026-11-27", "handling")
-    $new("2026-11-27", "broker")
-    $new("2026-11-27", "lottery")
+    goods
+    handling
+    broker
+    lottery
   }
   class ShipSoftware $schiffe {
     slot: SoftwareSlot
@@ -209,7 +208,7 @@ $gone("2026-11-27", "cargo: number")
   }
 
 ' Handel (Regeln: docs/regeln-handel.md)
-  class Cargo $handel $newClass("2026-11-27")
+  class Cargo $handel
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class Skimming $raum
@@ -265,8 +264,8 @@ Ship "*" --> "0..1" Ship : mother
 Booking "*" --> "0..1" Ship : forShip
 
 ' Handel
-Ship "1" *-$newArrow("2026-11-27")- "*" Cargo : hold {ordered}
-Ship "*" -$newArrow("2026-11-27")-> "0..1" Hex : destination
+Ship "1" *-- "*" Cargo : hold {ordered}
+Ship "*" --> "0..1" Hex : destination
 
 ' Raumkarte und Systemflug
 SpaceUnit "*" --> "0..1" Ship : ship
@@ -311,9 +310,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Booking #line:d0021b;line.bold
-class Ship #line:d0021b;line.bold
-class ShipCost #line:d0021b;line.bold
-class Hex #line:d0021b;line.bold
-class Journey #line:d0021b;line.bold
 @enduml

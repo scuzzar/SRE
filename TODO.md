@@ -10,8 +10,9 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 ### 1. Handel, Schritt 1
 
 - [ ] **Handel umsetzen** nach [`docs/regeln-handel.md`](docs/regeln-handel.md): die
-  Auslegungsfragen sind entschieden (E1–E13), der Modell-Entwurf 2026-11-27
-  ([`docs/modell/handel.md`](docs/modell/handel.md)) wartet auf Freigabe, danach in den Code.
+  Auslegungsfragen sind entschieden (E1–E13), das Modell 2026-11-27
+  ([`docs/modell/handel.md`](docs/modell/handel.md)) ist freigegeben; als Nächstes die Oberfläche
+  abstimmen (UI-Vorschlag des Owners), dann in den Code.
   Umfang: Spekulation, Fracht, zahlende Passagiere, Postvertrag und private Botschaften,
   Reisezonen.
 

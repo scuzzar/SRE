@@ -98,7 +98,7 @@ hide <<browser>> stereotype
   class Ship $schiffe
 
 ' Handel (Regeln: docs/regeln-handel.md)
-  class Market $handel $newClass("2026-11-27")
+  class Market $handel
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SystemFlight $raum
@@ -152,7 +152,7 @@ Conflict "*" --> "0..1" Campaign : remote
 Campaign "1" *-- "0..*" Ship : ships
 
 ' Handel
-Campaign "1" *-$newArrow("2026-11-27")- "0..*" Market : markets
+Campaign "1" *-- "0..*" Market : markets
 
 ' Raumkarte und Systemflug
 Campaign "1" *-- "0..1" SystemFlight : flight
@@ -198,7 +198,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Booking #line:d0021b;line.bold
-class Ship #line:d0021b;line.bold
-class Hex #line:d0021b;line.bold
 @enduml
