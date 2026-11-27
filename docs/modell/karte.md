@@ -34,8 +34,9 @@ Das Diagramm führt; die Begriffe stehen im Domänenmodell unter *Begriffe*.
 - **Eine eigene Ja/Nein-Frage gibt es nicht mehr**, auch nicht in der Charaktererschaffung: Wer
   das Orakel fragt, zieht eine Karte. Die Frage gehört zur offenen Karte (`Card.question`,
   freiwillig, wie bisher).
-- **Die gewählte Stufe der Kampagne (`Campaign.odds`) gilt nur noch für Proben.** Sie bleibt
-  stehen wie bisher.
+- **Die gewählte Stufe der Kampagne (`Campaign.odds`) gilt nur noch für Proben.** Seit
+  2026-11-27 gibt es sie nicht mehr; die Probe wählt die Stufe beim Würfeln (siehe
+  [Die Stufe der Proben](probe.md#die-stufe-der-proben)).
 - **Alte Antworten** (die frühere `OracleAnswer`, vor 2026-11-14d) werden beim Laden und beim
   Import zu Kartenauswahlen ohne Felder: Frage, Wurf, Stufe und Chance bleiben, ihre Stelle im Log
   auch, also auch ihre Deutungen. Ja bleibt Ja, Nein bleibt Nein; weil `/answer` aus Wurf und

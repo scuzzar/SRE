@@ -25,13 +25,13 @@ Umschalter, Reihe, großes und kleines Blatt, Würfelfenster und Hinweis).
 |---|---|---|
 | Grundkarte | (View) | Was auf dem Handy wie im Desktop-Modus unter allem liegt: der Globus der offenen Welt, beim Start der des Aufenthaltsorts (sobald seine Oberflächenkarte entstanden ist); mit ✕ oder ganz herausgezoomt der Subsektor, in dem ein Tippen auf eine Welt deren Globus öffnet |
 | Ziehblatt | `Tray` (Smartphone; Stufe `TrayStop`) | Das Blatt unten über der Grundkarte, wie in einer Karten-App. Es rastet beim Loslassen immer auf einer von vier **Stufen** ein: versteckt (nur der Griff, mit Abstand zum Rand; Aktionsleiste und Navigationsleiste rutschen hinaus), eingeklappt (Kopf, Aktionsleiste und Navigationsleiste, bei einem offenen Feld auch dessen Feldkopf), halb und voll; nach einem Wisch eine Stufe weiter in seine Richtung. Ziehen lässt es sich am Griff, an Aktions- und Navigationsleiste und im Inhalt nach unten, wenn der ganz oben steht. Das Gerät merkt sich die Stufe, nicht die Höhe. Von oben nach unten: Griff, der gewählte Bereich oder das angetippte Feld (dafür fährt es mindestens auf halbe Höhe, und die Karte holt das Feld über das Blatt), die Aktionsleiste, ganz unten die Navigationsleiste |
-| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links die **Seitenspalte** mit der Navigationsleiste oben, darunter das Log mit der Charakterleiste; ein Bereich (oder ein angetipptes Feld) steht an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Aktionsleiste des Logs, auch unter Bereichen mit eigener (Schiff), nur unter dem Kampf nicht; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
+| Desktop-Modus | (View, media query) | Das Layout ab 1024 px Bildschirmbreite: links die **Seitenspalte** mit der Navigationsleiste oben, darunter das Log; ein Bereich (oder ein angetipptes Feld) steht an der Stelle des Logs in derselben Spalte, ✕ führt zurück; unten die Aktionsleiste des Logs, auch unter Bereichen mit eigener (Schiff), nur unter dem Kampf nicht; den Rest füllt die Grundkarte. Gleiche Screens, gleiche Komponenten wie auf dem Smartphone |
 | Navigationsleiste | (View, `nav` „Bereiche“) | Die Leiste mit den fünf Bereichen, ganz unten im Ziehblatt bzw. oben in der Seitenspalte. Ein Tipp darauf öffnet den Bereich und bricht einen laufenden Ablauf ab (NSC platzieren, Ort wählen) |
 | Bereich | `Screen` | Einer der fünf Teile der App: **Log, Begegnung, Charaktere, Schiff, Missionen** (Missionen seit 2026-11-18). Begegnung und Charaktere haben Unterreiter |
 | Unterreiter | `SubTabs` | Die Wahl oben in einem Bereich, welcher Teil zu sehen ist: im Bereich Begegnung *Begegnung · Kampf*, im Bereich Charaktere *SC · Kasse · NSC*, im Bereich Schiff *Deckplan · Crew · Computer*, an der Weltkarte *Welt · System* |
-| Aktionsleiste | `…Dock` (`OracleDock`, `EncounterDock`, `FieldDock`) | Die drei bis fünf gleich breiten Knöpfe zum Handeln über der Navigationsleiste, im Daumenbereich. Im Log *Notiz, Tag, 2W6, Karte*, am angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen* |
-| Charakterleiste | `CharacterStrip` | Oben im Log, im Kampf ohne Begegnung und im Shop: die Karte des Charakters oben (Name, UPP, Fertigkeiten bzw. Waffen), Wischen wechselt ihn, ein Tipp auf den Namen klappt sie ein |
-| Detailseite | (View; `DetailPage`, `FieldDock`, `WorldSheet`) | Ein Inhalt, der an die Stelle des Bereichs tritt, ohne die App abzudunkeln: oben Titel und ✕, unten seine Aktionsleiste. Das Feld ist eine, ebenso Charakter- und Missions-Editor und im Bereich Schiff Treibstoff, Bearbeiten, Werft, Posten und Programm (2026-11-26) |
+| Aktionsleiste | `…Dock` (`OracleDock`, `EncounterDock`, `FieldDock`) | Die drei bis fünf gleich breiten Knöpfe zum Handeln über der Navigationsleiste, im Daumenbereich. Im Log *Notiz, Tag, 2W6, Karte*, auf der Detailseite Probe *2W6, Hoch, Mittel, Gering*, am angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen* |
+| Charakterleiste | `CharacterStrip` | Oben im Kampf ohne Begegnung und im Shop (im Log nicht mehr, 2026-11-27): die Karte des Charakters oben (Name, Credits und UPP bzw. Waffen), Wischen wechselt ihn, ein Tipp auf den Namen klappt sie ein |
+| Detailseite | (View; `DetailPage`, `FieldDock`, `WorldSheet`) | Ein Inhalt, der an die Stelle des Bereichs tritt, ohne die App abzudunkeln: oben Titel und ✕, unten seine Aktionsleiste. Das Feld ist eine, ebenso Charakter- und Missions-Editor, die Probe (2026-11-27) und im Bereich Schiff Treibstoff, Bearbeiten, Werft, Posten und Programm (2026-11-26) |
 | Feld | (View; `FieldDock`, `WorldSheet`) | Die Detailseite des angetippten Felds des Globus bzw. des gewählten Felds im Subsektor; oben sein **Feldkopf** (Name und Werte), der auch eingeklappt stehen bleibt |
 | Dialog | `Sheet` mit ✕ (`overlay`) | Groß, für vieles zum Ausfüllen: oben Titel und ✕, unten die Hauptaktion. Charakter-Editor, Erschaffung, Kauf … |
 | Kurzdialog | `Sheet` ohne ✕ (`overlay`) | Klein, für eine kurze Eingabe oder Entscheidung: unten „Abbrechen“ und die Hauptaktion. Notiz, Beute, Wahl der Begegnungsart … |
@@ -133,11 +133,16 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 ### Aktionsleiste (unten, zum Handeln)
 
 - Über der Navigationsleiste, im Daumenbereich: **drei bis fünf gleich breite Knöpfe mit Symbol und kurzem
-  Wort**. Im Log *Notiz, Tag, 2W6, Karte* (aus „2W6“ wird mit vorbereiteter Probe „Probe“); am
+  Wort**. Im Log *Notiz, Tag, 2W6, Karte*: „2W6“ öffnet die Detailseite Probe, lange gedrückt würfelt
+  es gleich 2W6 (2026-11-27); am
   angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen*.
 - Hat ein Bereich zwei Arten von Handlungen, bekommt er **zwei Aktionsleisten** übereinander, nie eine mit
   mehr als fünf Knöpfen: im Bereich Begegnung oben die Würfe *Zufall, Tiere, Patron, Gerücht,
   Polizei*, darunter die Zeit *Tage vergehen, Woche beenden* (auf einer Fahrt *Weiterfahren*).
+- Auf der **Detailseite Probe** (2026-11-27) links **2W6**, daneben die drei Stufen **Hoch, Mittel,
+  Gering**; jeder Knopf würfelt und schließt die Seite. Darüber steht die Probe (Charakter, Fertigkeit,
+  DM) mit nötigem Wurf und Chance je Stufe; die Knöpfe selbst zeigen nur den Namen. Solange keine
+  Fertigkeit gewählt ist, sind die Stufen ausgegraut, und die Zeile darüber sagt es.
 - In der **Kampfsimulation** ist die Aktionsleiste der Zug (2026-11-26): links **Beenden** und
   **Ausweichen** im Stil der Knöpfe des Logs, rechts im Daumenbereich die Angriffe (je Waffe ein Knopf
   mit nötigem Wurf; Primär gefüllt, Sekundär umrandet, oben die Munition bzw. die übrigen
@@ -150,7 +155,7 @@ Smartphone                          Desktop-Modus (ab 1024 px)
   klappt man auf).
 - Jeder Bereich mit eigenen Handlungen bringt seine eigene Aktionsleiste mit; wo er keine hat,
   bleibt die des Logs. Im Desktop-Modus steht die des Logs zusätzlich darunter (etwa unter Schiff:
-  1 Tag und Probe auch dort), nur unter dem Kampf nicht; dort wird nicht nebenbei gewürfelt
+  1 Tag und 2W6 auch dort), nur unter dem Kampf nicht; dort wird nicht nebenbei gewürfelt
   (Owner, 26. November 2026).
 - **Während eines Ablaufs** (Route planen, NSC wählen, Ort wählen) ersetzt die Aktionsleiste ihre Knöpfe durch
   **„Abbrechen“** links und die Bestätigung rechts (**„OK“**, „Losfahren“).
@@ -161,7 +166,7 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 ### Detailseite
 
 - Was zu einem Bereich gehört und mehr Platz braucht (ein angetipptes Feld, der Charakter- oder
-  Missions-Editor, Treibstoff, die Werft, ein Posten der Crew), tritt als **Detailseite** an die Stelle des Bereichs –
+  Missions-Editor, die Probe, Treibstoff, die Werft, ein Posten der Crew), tritt als **Detailseite** an die Stelle des Bereichs –
   an die Stelle dessen, was gerade offen ist, auch wenn sie aus einem anderen Bereich kommt (der
   Editor etwa vom Stift in der Charakterleiste oder von einer Mission): im Ziehblatt bzw. in der
   Seitenspalte, ohne die App abzudunkeln; die Karte bleibt sichtbar.
@@ -171,7 +176,12 @@ Smartphone                          Desktop-Modus (ab 1024 px)
 - Ein Tipp in die Navigationsleiste verlässt sie, wie ✕.
 - Ein **Editor** (Charakter, Mission) als Detailseite zieht das Ziehblatt beim Öffnen ganz hoch und
   beim Schließen zurück auf die Stufe von vorher, ebenso, solange man für ihn einen Ort auf dem
-  Globus wählt; ein Feld zieht es nur auf halbe Höhe, damit die Karte daneben sichtbar bleibt.
+  Globus wählt; ein Feld und die Probe ziehen es nur auf halbe Höhe, damit die Karte daneben sichtbar bleibt.
+- Die **Probe** (2026-11-27, hinter „2W6“ im Log): alle lebenden Charaktere untereinander, kompakt wie die
+  Karte der Charakterleiste (Name, UPP als Zeile, Fertigkeiten). Eine Fertigkeit antippen beginnt die
+  Probe, bei einem anderen Charakter holt es ihn zugleich nach oben; danach werden seine Attribute
+  Kästchen zum Dazuwählen, und seine Karte ist golden gerahmt. Ohne Charaktere stehen dort
+  „+ Charakter anlegen“ und „+ Nach Regeln erschaffen“.
 
 ### Dialog und Kurzdialog
 
@@ -219,12 +229,12 @@ Dialog                               Kurzdialog
 
 ### Charakterleiste
 
-- Oben im Bereich die Karte eines SC, des **Charakters oben**: Name, das UPP als eine Zeile und die
-  Fertigkeiten; ist für eine Probe eine Fertigkeit gewählt, werden die Attribute Kästchen zum
-  Dazuwählen. Im Kampf nur die Waffen (ohne UPP; verwundet steht der Zustand mit STR, DEX und END da)
+- Oben im Kampf und im Shop die Karte eines SC, des **Charakters oben**: Name, das UPP als eine Zeile und
+  die Waffen bzw. Credits; im Log gibt es sie nicht mehr, Proben würfelt man auf der Detailseite Probe
+  (2026-11-27). Im Kampf nur die Waffen (ohne UPP; verwundet steht der Zustand mit STR, DEX und END da)
   (2026-11-26).
   **Wischen** wechselt den Charakter, ein Tippen auf den Namen klappt sie ein.
-- Wer oben steht, gilt für alles darunter (Probe, Kauf, Waffentabelle).
+- Wer oben steht, gilt für alles darunter (Kauf, Waffentabelle).
 
 ### Karten, Kacheln und Listen
 
@@ -252,12 +262,12 @@ Dialog                               Kurzdialog
 | Geste | Bedeutung |
 |---|---|
 | **Tippen** | Das Übliche: wählen, auslösen, öffnen |
-| **Lange drücken** | Die zweite Absicht (`HoldButton`, 0,9 s): Der Knopf füllt sich von links, erst wenn er voll ist, löst es aus. Beispiele: trotzdem würfeln, obwohl der Test schon gemacht ist; die Erschaffung durchlaufen lassen; ohne Begegnung weiter; NSC hier platzieren; eine ganze Garbe löschen; aussetzen statt ausweichen; die Begegnung beenden. Ein kurzes Tippen sagt, dass es einen langen Druck gibt |
+| **Lange drücken** | Die zweite Absicht (`HoldButton`, 0,9 s): Der Knopf füllt sich von links, erst wenn er voll ist, löst es aus. Beispiele: 2W6 im Log gleich würfeln statt die Probe zu öffnen (das Tippen öffnet sie hier, statt den langen Druck zu erklären); trotzdem würfeln, obwohl der Test schon gemacht ist; die Erschaffung durchlaufen lassen; ohne Begegnung weiter; NSC hier platzieren; eine ganze Garbe löschen; aussetzen statt ausweichen; die Begegnung beenden. Ein kurzes Tippen sagt, dass es einen langen Druck gibt |
 | **Wischen** | In der Charakterleiste zum nächsten Charakter; das Ziehblatt eine Stufe weiter |
 | **Ziehen** | Das Ziehblatt; Gegenstände im Gepäck und Personen auf Posten (kurz halten, dann ziehen; gleich wischen scrollt) |
 | **Zwei Finger / Mausrad** | Zoomen auf der Karte |
 
-**Tastatur** (Desktop): K Karte, W Würfeln (2W6 oder die vorbereitete Probe), N Notiz, T ein Tag,
+**Tastatur** (Desktop): K Karte, W 2W6 würfeln, N Notiz, T ein Tag,
 Ziffern für die Bereiche, Esc schließt den obersten Dialog bzw. die Würfelbühne (der Knopf mit `data-escape`). Ein Kürzel steht
 im Titel des Knopfs („Notiz (N)“). Solange man in ein Feld tippt, gehören die Tasten dem
 Feld.

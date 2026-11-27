@@ -176,9 +176,12 @@ export class DexieCampaignRepository implements CampaignRepository {
  * „nicht ausgeblendet“ (2026-11-22d).
  * Vor den Orten (2026-11-14j) waren Aufenthaltsort und Ort eines NSC nur die Welt als Text (0304);
  * heute sind sie ein Ort. Vor den Städtenamen (2026-11-14k) hatten Städte keinen Namen; sie heißen
- * „Stadt 1“, „Stadt 2“ usw.
+ * „Stadt 1“, „Stadt 2“ usw. Vor 2026-11-27 merkte sich eine Kampagne die gewählte Stufe (`odds`);
+ * die fällt weg.
  */
-export function upgraded(campaign: Campaign): Campaign {
+export function upgraded(stored: Campaign): Campaign {
+  const campaign = { ...stored } as Campaign & { odds?: string };
+  delete campaign.odds;
   const log = campaign.log.map((entry) => {
     if (entry.kind !== 'card') return entry;
     const items = entry.items.map((item) => {

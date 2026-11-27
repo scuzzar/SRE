@@ -202,7 +202,6 @@ import {
   setGeneration,
   setHexes,
   setFocus,
-  setOdds,
   startGeneration,
   toCampaignFile,
   updateCharacter,
@@ -324,7 +323,7 @@ const NPC_REPAINT_EVERY = 10;
 /** Der Schlüssel eines Deckplan-Platzes in den Marken: „Entwurf/Platz“. */
 const slotKey = (slot: { readonly design: string; readonly name: string }): string => `${slot.design}/${slot.name}`;
 
-const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, systemJourney: undefined, shipCheck: undefined, nextShipCheck: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
+const closedDrafts = { card: undefined, cardFor: undefined, names: undefined, task: undefined, taskPage: false, attack: undefined, wounding: undefined, combatNote: undefined, joining: [], lootOpen: undefined, butchered: undefined, patronNote: undefined, rumorNote: undefined, animalNote: undefined, legalNote: undefined, timeNote: undefined, journey: undefined, systemJourney: undefined, shipCheck: undefined, nextShipCheck: undefined, tripPlan: undefined, tripNote: undefined, tripRoll: undefined, encounterRoll: undefined, encounterChoice: undefined, npcJoining: undefined, npcPlacing: undefined, shopFrom: undefined, simTarget: undefined, encounterIntro: false, surpriseShown: false, shopError: undefined, shipError: undefined, deckPlans: [], opened: undefined, result: undefined, editor: undefined, missionEditor: undefined, generating: false, generationError: undefined, world: undefined, worldError: undefined, globe: undefined, globeFocus: undefined, space: undefined, selected: undefined, picking: false } as const;
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -409,6 +408,7 @@ export class GameController {
       cardFor: undefined,
       names: undefined,
       task: undefined,
+      taskPage: false,
       attack: undefined,
       wounding: undefined,
       combatNote: undefined,
@@ -994,12 +994,22 @@ export class GameController {
 
   // --- Orakel-Screen ---------------------------------------------------------------------------
 
-  setOdds(odds: string): void {
-    this.change(setOdds(this.campaign, odds));
+  /** 2W6 in den Log; aus der Detailseite Probe heraus schließt sie sich danach. */
+  rollDice(): void {
+    this.change(appendLog(this.campaign, rollDice(this.deps.random, this.deps.clock)), { taskPage: false, task: undefined });
   }
 
-  rollDice(): void {
-    this.change(appendLog(this.campaign, rollDice(this.deps.random, this.deps.clock)));
+  /**
+   * Öffnet die Detailseite Probe (2026-11-27): alle Charaktere untereinander, darunter 2W6 und die
+   * drei Stufen. Eine Probe beginnt erst, wenn man eine Fertigkeit antippt.
+   */
+  openTaskPage(): void {
+    this.update({ taskPage: true, task: undefined });
+  }
+
+  /** ✕ an der Detailseite Probe: Sie schließt sich, eine vorbereitete Probe endet, ohne zu würfeln. */
+  closeTaskPage(): void {
+    this.update({ taskPage: false, task: undefined });
   }
 
   /**
@@ -1465,7 +1475,7 @@ export class GameController {
     // Ein angetipptes Feld des Globus oder ein gewähltes Feld des Subsektors steht an der Stelle des
     // Bereichs; ein Tipp in die Navigationsleiste lässt es los.
     // Ebenso der Charakter-Editor, eine Detailseite (2026-11-26): wie ✕, ohne zu speichern.
-    const released = { globe: this.state.globe && { picked: undefined }, selected: undefined, worldError: this.state.globe ? this.state.worldError : undefined, editor: undefined };
+    const released = { globe: this.state.globe && { picked: undefined }, selected: undefined, worldError: this.state.globe ? this.state.worldError : undefined, editor: undefined, taskPage: false, task: undefined };
     // Die NSC-Liste zeigt beim Öffnen wieder nur die NSC des Aufenthaltsorts.
     // Ein Tipp in die Navigationsleiste bricht auch NSC platzieren ab und verlässt den Shop.
     // Ein Tipp in die Navigationsleiste bricht auch das Ort wählen einer Mission ab; der Editor bleibt mit seiner Eingabe.
@@ -1587,7 +1597,7 @@ export class GameController {
   }
 
   /**
-   * In der Charakterspalte: Eine Fertigkeit auf der Karte eines anderen Charakters antippen holt ihn
+   * Auf der Detailseite Probe: Eine Fertigkeit auf der Karte eines anderen Charakters antippen holt ihn
    * nach oben und beginnt die Probe mit dieser Fertigkeit, mit einem Klick. Steht er schon oben, ist
    * es dasselbe wie `chooseSkill`.
    */
@@ -1610,11 +1620,14 @@ export class GameController {
     this.update({ task: toggleCharacteristic(this.openTask, this.campaign, characteristic) });
   }
 
-  /** Würfelt die Probe, schreibt sie in den Log und zeigt das Ergebnis als Popup. */
-  rollTask(): void {
-    const result = rollTask(this.openTask, this.campaign, this.deps.random, this.deps.clock);
+  /**
+   * Würfelt die Probe mit der Stufe `odds` (einer der drei Knöpfe der Detailseite Probe), schreibt sie
+   * in den Log und zeigt das Ergebnis auf der Würfelbühne; die Detailseite schließt sich, die Probe endet.
+   */
+  rollTask(odds: string): void {
+    const result = rollTask(this.openTask, this.campaign, odds, this.deps.random, this.deps.clock);
     const campaign = appendLog(this.campaign, result);
-    this.change(campaign, { result: campaign.log.length - 1 });
+    this.change(campaign, { result: campaign.log.length - 1, task: undefined, taskPage: false });
   }
 
   // --- Kampf ------------------------------------------------------------------------------------

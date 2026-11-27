@@ -137,7 +137,7 @@ hide <<browser>> stereotype
 
 ' Kampagne
 Campaign "1" *-- "*" Character : characters
-Campaign "*" --> "1" Odds : odds
+Campaign "*" -$goneArrow("2026-11-27")-> "1" Odds : odds
 Campaign "0..1" --> "0..1" Character : focus
 Campaign "1" *-- "*" LogEntry : log {ordered}
 Campaign "1" *-- "0..1" Place : location
@@ -192,4 +192,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Task #line:d0021b;line.bold
 @enduml

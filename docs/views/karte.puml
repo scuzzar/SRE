@@ -190,7 +190,7 @@ hide <<browser>> stereotype
   }
 
 ' Kampagne
-Campaign "*" --> "1" Odds : odds
+Campaign "*" -$goneArrow("2026-11-27")-> "1" Odds : odds
 
 ' Schiffe
 

@@ -699,3 +699,13 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > [`changes/2026-11-26-beide-haende-keine-wahl.png`](../changes/2026-11-26-beide-haende-keine-wahl.png).
 > Ist die zweihändige Waffe leer und kein Magazin mehr da, greift er wieder mit Sekundärwaffe bzw.
 > Händen an (Owner).
+
+> Wartet auf Freigabe (Kennzeichen **2026-11-27**): **Die Stufe beim Würfeln.** Die Kampagne merkt
+> sich keine gewählte Stufe mehr (`Campaign → Odds : odds` entfällt). Das Orakel braucht sie seit
+> 2026-11-14d nicht mehr, die Karte zeigt alle drei Antworten; die Probe wählt sie erst beim
+> Würfeln: Auf der Detailseite *Probe* stehen in der Aktionsleiste Hoch, Mittel und Gering, jeder
+> Knopf würfelt sofort (Owner, 27. November 2026). Darum rechnet die Probe in Vorbereitung `/need`
+> und `/chance` für alle drei Stufen. Das Ergebnis im Log (`TaskResult → Odds`) hält seine Stufe wie
+> bisher fest. Alte Kampagnen und Dateien mit gewählter Stufe laden weiter; die Stufe wird
+> übergangen. Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-27-die-stufe-beim-wuerfeln.png`](../changes/2026-11-27-die-stufe-beim-wuerfeln.png).

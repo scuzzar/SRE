@@ -25,6 +25,7 @@ import { CardSheet } from './oracle/CardSheet';
 import { DiceRoll } from './oracle/DiceRoll';
 import { OracleScreen } from './oracle/OracleScreen';
 import { OracleDock } from './oracle/OracleDock';
+import { TaskPage } from './oracle/TaskPage';
 import { SectorPicker, SectorScreen } from './sector/SectorScreen';
 import { useWorldDock } from './sector/WorldSheet';
 import { JourneySheet } from './sector/JourneySheet';
@@ -170,7 +171,7 @@ export function App() {
 
   // Die Aktionsleiste Notiz, Tag, Würfeln, Karte: im Ziehblatt nur im Log, die übrigen Bereiche haben unten
   // Platz für ihre eigenen Knöpfe; in der Seitenspalte des Desktops unter jedem Bereich, der keine
-  // eigene Aktionsleiste hat, und unter Schiff (1 Tag und Probe auch dort, 2026-11-22c), nur unter dem
+  // eigene Aktionsleiste hat, und unter Schiff (1 Tag und 2W6 auch dort, 2026-11-22c), nur unter dem
   // Kampf nicht (Owner, 26. November 2026). Beim angetippten Feld des Globus steht dort stattdessen die Aktionsleiste des Felds.
   const dock = <OracleDock view={view} shortcuts />;
   const fieldDock = view.globe?.picked ? <FieldDock globe={view.globe} trip={view.trip} tripPlan={view.tripPlan} npcs={view.npcs} missionPicking={view.missions.picking} /> : undefined;
@@ -179,7 +180,10 @@ export function App() {
   // Beim Landeplatz auf dem Globus steht unten „Hier landen“ (2026-11-21).
   const landingDock = view.landing?.picking && view.globe ? <LandingDock globe={view.globe} /> : undefined;
   const own = landingDock ?? fieldDock ?? (view.picking ? undefined : worldDock.foot) ?? encounterDock;
-  const foot = own ?? ((desktop || screen === 'oracle') && field === undefined && screen !== 'combat' ? dock : undefined);
+  // Die Detailseite Probe (2026-11-27) tritt an die Stelle dessen, was offen ist; ihre Aktionsleiste (2W6 und
+  // die drei Stufen) bringt die des Logs mit, damit der Wurf dort weiterrollt, wo er begonnen hat.
+  const taskPage = view.taskPage && view.editor === undefined;
+  const foot = taskPage ? dock : (own ?? ((desktop || screen === 'oracle') && field === undefined && screen !== 'combat' ? dock : undefined));
 
   // Die Grundkarte: der Globus der offenen Welt, sonst der Subsektor. Oben rechts das Menü.
   const base = (
@@ -206,7 +210,7 @@ export function App() {
   const editorPage = view.editor && <CharacterEditor key={view.editor.id ?? 'new'} editor={view.editor} skills={view.skills} items={view.items} />;
   // Eine Detailseite bringt Kopf und Aktionsleiste selbst mit: kein Kopf des Bereichs, keine Leiste des Logs.
   const detail = view.editor !== undefined || (screen === 'missions' && view.missions.editor !== undefined && !view.missions.picking);
-  const body = <div className="screen-host">{editorPage ?? field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>;
+  const body = <div className="screen-host">{editorPage ?? (taskPage ? <TaskPage view={view} /> : undefined) ?? field ?? (screen === 'oracle' ? <OracleScreen view={view} dock={false} /> : area)}</div>;
   const areaTitle = screen === 'shop' ? 'Shop' : screen === 'about' ? 'Über die App' : (areaOf(screen)?.label ?? '');
 
   return (
@@ -218,7 +222,7 @@ export function App() {
           <aside className="side-panel" aria-label="Seitenspalte">
             {banners}
             {nav}
-            {!field && !detail && screen !== 'oracle' && (
+            {!field && !detail && !taskPage && screen !== 'oracle' && (
               <div className="area-head">
                 <h2 className="section-title">{areaTitle}</h2>
                 <button type="button" className="icon-button" aria-label={`${areaTitle} schließen`} onClick={() => (screen === 'shop' ? game.closeShop() : game.showScreen('oracle'))}>
@@ -237,7 +241,7 @@ export function App() {
           <Tray
             stop={view.trayStop}
             expand={view.editor ? `editor-${view.editor.id ?? 'new'}` : detail && view.missions.editor ? `mission-${view.missions.editor.id ?? 'new'}` : undefined}
-            raise={view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && (!view.globe || view.worldCard) ? view.world.id : undefined)}
+            raise={taskPage ? 'task-page' : view.space ? `space-${view.space.world.id}` : view.globe?.picked?.cell ?? view.selected?.id ?? (view.world && (!view.globe || view.worldCard) ? view.world.id : undefined)}
             head={banners}
             body={body}
             foot={detail ? undefined : foot}

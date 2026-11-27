@@ -720,6 +720,18 @@
         "Strike",
         "AttackResult"
       ]
+    },
+    {
+      "id": "2026-11-27",
+      "file": "2026-11-27-die-stufe-beim-wuerfeln",
+      "title": "Die Stufe beim Würfeln: Die Kampagne merkt sich **keine Stufe** mehr (`Campaign → Odds : odds` entfällt) – das Orakel wählt sie je Frage auf der Karte, die Probe erst beim Würfeln, mit einem der drei Knöpfe Hoch, Mittel, Gering. Die Probe in Vorbereitung rechnet `/need` und `/chance` darum **für alle drei Stufen**; das Ergebnis im Log hält seine Stufe wie bisher fest",
+      "approved": false,
+      "show": [
+        "Campaign",
+        "Odds",
+        "TaskResult",
+        "Character"
+      ]
     }
   ]
 }

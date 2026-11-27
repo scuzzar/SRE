@@ -35,14 +35,24 @@ export interface Task {
   readonly counts: readonly Characteristic[];
 }
 
-/** Die abgeleiteten Werte einer Probe: `/dm`, `/need`, `/chance` und der Zielwert der gewählten Stufe. */
-export interface TaskOdds {
-  readonly dm: number;
+/** Was die Probe mit einer Stufe bräuchte: Zielwert, nötiger Wurf und Chance. */
+export interface TaskStep {
+  /** Die Stufe (`Odds.id`). */
+  readonly odds: string;
   readonly target: number;
   /** Was auf 2W6 nötig ist: Zielwert minus DM. */
   readonly need: number;
   /** In Prozent, exakt aus den 36 Kombinationen. */
   readonly chance: number;
+}
+
+/**
+ * Die abgeleiteten Werte einer Probe: `/dm` und je Stufe `/need` und `/chance`, in der Reihenfolge
+ * der Stufen (Hoch, Mittel, Gering). Die Stufe wählt man erst beim Würfeln (2026-11-27).
+ */
+export interface TaskOdds {
+  readonly dm: number;
+  readonly steps: readonly TaskStep[];
 }
 
 /** Wie ein Attribut in der Probe wirken würde. */
@@ -122,30 +132,29 @@ export function toggleCharacteristic(task: Task, campaign: Campaign, characteris
   return { ...task, counts };
 }
 
-/** 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert der gewählten Stufe; Jack-of-all-Trades zählt als Stufe 0. */
+/** 2W6 + Fertigkeit + gewählte Attribute ≥ Zielwert der Stufe, für jede der drei Stufen; Jack-of-all-Trades zählt als Stufe 0. */
 export function evaluateTask(task: Task, campaign: Campaign): TaskOdds {
   const character = taskCharacter(campaign);
   const skill = usedSkill(task, character);
   let dm = skill ? skillDm(skill) : task.unskilled ? ref.houseRules.unskilledDm : 0;
   const upp = woundedUpp(character.upp, woundsOf(campaign, character.id));
   for (const c of task.counts) dm += characteristicDm(valueOf(upp, c), ref.houseRules);
-  const target = oddsOf(campaign.odds).target;
-  const need = target - dm;
-  return { dm, target, need, chance: chance2d6(need) };
+  return { dm, steps: ref.odds.map((o) => ({ odds: o.id, target: o.target, need: o.target - dm, chance: chance2d6(o.target - dm) })) };
 }
 
-/** Würfelt die Probe. Auch eine unmögliche Probe darf man würfeln; sie misslingt und steht trotzdem im Log. */
-export function rollTask(task: Task, campaign: Campaign, random: Random, clock: Clock): TaskResult {
+/** Würfelt die Probe mit der Stufe `odds`. Auch eine unmögliche Probe darf man würfeln; sie misslingt und steht trotzdem im Log. */
+export function rollTask(task: Task, campaign: Campaign, odds: string, random: Random, clock: Clock): TaskResult {
   if (!hasSkill(task)) throw new DomainError('Erst eine Fertigkeit wählen.');
   const character = taskCharacter(campaign);
   if (task.unskilled) checkUnskilled(character);
-  const { dm, target } = evaluateTask(task, campaign);
+  const { dm } = evaluateTask(task, campaign);
+  const { target } = oddsOf(odds);
   const result: TaskResult = {
     kind: 'task',
     at: clock.now(),
     for: character.id,
     counts: task.counts,
-    odds: campaign.odds,
+    odds,
     dice: roll2d6(random),
     dm,
     target,

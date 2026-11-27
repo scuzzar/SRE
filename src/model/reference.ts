@@ -117,7 +117,6 @@ export function sectionOfSlot(slotId: string): Section {
 }
 
 /** Mit dieser Stufe beginnt eine neue Kampagne: Mittel, der Standard des GMA. */
-export const defaultOdds: Odds = oddsById.get('medium') ?? ref.odds[0]!;
 
 export function itemOf(id: string): Item {
   return found(itemById.get(id), 'Den Gegenstand', id);
