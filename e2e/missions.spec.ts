@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { openTab, revealed, openHomeGlobe, schwererLauf } from './layout';
 
-// Missionen (2026-11-18): der Bereich Missionen mit Editor, Orte immer als Feld auf dem Globus, „Missionen
+// Missionen (2026-11-18): der Bereich Missionen mit Editor, Orte als Feld auf dem Globus (seit 2026-11-27 auch ganze Welten), „Missionen
 // hier“ am Feld.
 test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Feld wiederfinden', async ({ page }) => {
   // Globus, Editor und Globus-Auswahl: auf dem Desktop über 40 s, also schwer.
@@ -62,4 +62,36 @@ test('Missionen: anlegen mit dem Feld der Gruppe und einem Ort vom Globus, am Fe
   await edit.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByText('Offene Missionen (0)')).toBeVisible();
   await expect(page.getByText('Erledigt (1)')).toBeVisible();
+});
+
+// Ganze Welten als Missionsort (2026-11-27): nötig für Welten ohne Oberfläche. Die Demo-Gruppe steht auf
+// Kessra ohne Feld und ohne Globus.
+test('Missionen: die ganze Welt als Ort, an der Weltkarte gewählt und dort wiedergefunden', async ({ page }) => {
+  await page.goto('/');
+  await openTab(page, 'Missionen');
+  await page.getByRole('button', { name: '+ Neue Mission' }).click();
+  const editor = page.getByRole('region', { name: 'Neue Mission' });
+  await editor.getByLabel('Titel').fill('Treffen im Orbit');
+  // Der Aufenthaltsort ist der erste Ort, auch ohne Feld.
+  await expect(editor.getByLabel(/^Etikett für /)).toHaveCount(1);
+  await editor.getByRole('button', { name: '+ Auf dem Globus' }).click();
+  await expect(editor).toHaveCount(0);
+  // Kessra hat keinen Globus: Die Weltkarte öffnen, „OK“ nimmt die ganze Welt.
+  await page.getByRole('button', { name: /^Aufenthaltsort .*Globus öffnen/ }).click();
+  const dock = page.getByRole('region', { name: 'An der Welt' });
+  await expect(dock).toContainText('Missionsort für „Treffen im Orbit“: ganz Kessra?');
+  await dock.getByRole('button', { name: 'OK, ganz Kessra als Missionsort' }).click();
+  const again = page.getByRole('region', { name: 'Neue Mission' });
+  await expect(again.getByLabel(/^Etikett für /)).toHaveCount(2);
+  await again.getByLabel(/^Etikett für /).nth(1).fill('Ziel');
+  await again.getByRole('button', { name: 'Speichern' }).click();
+
+  // Der Chip einer ganzen Welt öffnet ihre Weltkarte; dort steht die Mission unter „Missionen hier“.
+  const mission = page.getByRole('listitem', { name: 'Treffen im Orbit' });
+  await mission.getByRole('button', { name: 'Ziel: Kessra als Weltkarte öffnen' }).click();
+  const world = page.getByRole('region', { name: /^Kessra · / });
+  await expect(world).toContainText('Missionen hier (1)');
+  await expect(world).toContainText('Ziel');
+  // NSC platzieren auf die ganze Welt steht in der Aktionsleiste; ohne NSC ausgegraut.
+  await expect(page.getByRole('region', { name: 'An der Welt' }).getByRole('button', { name: 'NSC platzieren' })).toBeDisabled();
 });

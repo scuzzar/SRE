@@ -86,7 +86,9 @@ export function App() {
   // Die Weltkarte eines gewählten Feldes, als Feld und als Aktionsleiste unten, wie beim Globus; ohne Globus,
   // sonst zeigt der seine eigene (`panel === 'world'`).
   // Auf dem Globus steht dieselbe Weltkarte im Blatt, wenn man oben auf den Namen tippt (Owner, 21. November 2026).
-  const worldDock = useWorldDock(view.world && (!view.globe || view.worldCard) ? view.world : undefined, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays, view.globe !== undefined, view.orders);
+  // Beim NSC wählen (auch an der Weltkarte, 2026-11-27) tritt die Weltkarte zurück, damit die NSC-Liste zu sehen ist.
+  const worldShown = view.world && (!view.globe || view.worldCard) && !view.npcs.placing ? view.world : undefined;
+  const worldDock = useWorldDock(worldShown, view.world !== undefined && view.location === view.world.id, view.travel, view.log, view.logDays, view.globe !== undefined, view.orders, { npcTotal: view.npcs.total, missionPicking: view.missions.picking });
 
   // Der Schuss, dessen Würfe gerade liegen: Die Raumkarte zeigt dazu Laserstrahl und Trefferzonen (2026-11-21i).
   const [shot, setShot] = useState<ShotEffect | undefined>(undefined);

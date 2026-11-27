@@ -10,6 +10,7 @@ import {
   mapLocked,
   missionCells,
   missionPlaceBlocker,
+  missionsOnWorld,
   missionsAt,
   missionsIn,
   missionWorlds,
@@ -94,12 +95,14 @@ describe('Missionen', () => {
     expect(() => addMission(withPc, input({ client: pc }))).toThrow(/kein NSC/);
   });
 
-  it('ein Missionsort ist ein Feld oder eine Stadt auf einem Feld, nie eine ganze Welt oder eine Orbitalstadt', () => {
+  it('ein Missionsort darf auch eine ganze Welt oder eine Orbitalstadt sein (2026-11-27)', () => {
     const { c } = campaign();
-    expect(() => addMission(c, input({ places: [{ place: { world: '0101' } }] }))).toThrow(/keine ganze Welt/);
-    expect(() => addMission(c, input({ places: [{ place: { world: '0101', city: 1 } }] }))).toThrow(/Orbitalstadt/);
-    expect(missionPlaceBlocker(c, { world: '0101' })).toMatch(/keine ganze Welt/);
-    expect(missionPlaceBlocker(c, c.location)).toBeUndefined();
+    const { campaign: a, id } = addMission(c, input({ places: [{ place: { world: '0101' }, label: 'Ziel' }, { place: { world: '0101', city: 1 } }] }));
+    expect(a.missions.find((m) => m.id === id)?.places.map((p) => p.place)).toEqual([{ world: '0101' }, { world: '0101', city: 1 }]);
+    expect(missionsOnWorld(a, '0101').map(({ places }) => places.length)).toEqual([2]);
+    expect(missionPlaceBlocker({ world: '0101' })).toBeUndefined();
+    expect(missionPlaceBlocker(undefined)).toMatch(/keinen Aufenthaltsort/);
+    expect(() => addMission(c, input({ places: [{ place: { world: '0909' } }] }))).toThrow();
   });
 
   it('wechselt den Zustand im Editor frei, auch zurück auf offen', () => {

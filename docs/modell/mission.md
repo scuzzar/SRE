@@ -25,11 +25,13 @@ Kampagne (`missions`, in der Reihenfolge, in der sie angelegt wurden).
   Ausblenden*).
 - *Orte* (`places`, je ein `MissionPlace`): beliebig viele, in der Reihenfolge, in der man sie
   hinzufügt. Jeder ist ein Ort (`Place`, siehe [Orte](oberflaeche.md#orte)) mit einem kurzen freien **Etikett**
-  (`label`, z. B. „Treffpunkt“, „Ziel“; darf fehlen). Ein Missionsort ist **immer ein Feld der
-  Oberfläche** (`cell`) oder eine Stadt auf einem Feld (`city`), nie eine ganze Welt und keine
-  Orbitalstadt (Entscheidung des Owners): Eine Mission spielt an einer Stelle, die man auf dem
-  Globus findet. Die Welt braucht dafür ihre Oberflächenkarte. Derselbe Ort darf mehrmals vorkommen, mit verschiedenen Etiketten. Wie ein Logeintrag
-  sperrt ein Missionsort mit Feld oder Stadt die Oberflächenkarte (siehe [Orte](oberflaeche.md#orte), *Karte gesperrt*).
+  (`label`, z. B. „Treffpunkt“, „Ziel“; darf fehlen). Ein Missionsort ist ein Feld der Oberfläche
+  (`cell`), eine Stadt (`city`, auch eine Orbitalstadt) oder eine **ganze Welt** (nur `world`).
+  Geändert am 27. November 2026 (Owner): Bis dahin war ein Missionsort immer ein Feld oder eine Stadt
+  auf einem Feld; eine Welt ohne Oberfläche (Gasriesenmond, Asteroidengürtel, eine Welt ohne
+  Globus) konnte so keinen Missionsort haben. Derselbe Ort darf mehrmals vorkommen, mit
+  verschiedenen Etiketten. Wie ein Logeintrag sperrt ein Missionsort mit Feld oder Stadt die
+  Oberflächenkarte (siehe [Orte](oberflaeche.md#orte), *Karte gesperrt*); eine ganze Welt sperrt nichts.
 - *Beteiligte* (`people`, je ein `MissionPerson`; freigegeben am 18. November 2026, 2026-11-18b): beliebig viele
   Charaktere der Kampagne, **NSC oder SC**, in der Reihenfolge, in der man sie hinzufügt, je mit einem
   freien **Etikett** (`label`, z. B. „Opfer“, „Fahrer“, „Informant“; darf fehlen). Ein Charakter kommt
@@ -43,15 +45,16 @@ Kampagne (`missions`, in der Reihenfolge, in der sie angelegt wurden).
   (`CardPick.thread`), wird wirklich gelöscht. Sonst wird sie ausgeblendet (`retired`): Sie
   zählt nicht mehr zu den Missionen und wird nicht mehr ausgelost, der Log zeigt sie
   weiter; einblenden lässt sie sich wieder.
-- *Neue Mission*: Sie ist offen, mit dem Aufenthaltsort als erstem Ort, wenn er ein Feld oder eine
-  Stadt auf einem Feld ist. Ein Ort kommt hinzu als Aufenthaltsort (ebenso nur mit Feld) oder als
-  beliebiges Feld eines Globus; liegt dort eine Stadt, wird der Ort die Stadt.
+- *Neue Mission*: Sie ist offen, mit dem Aufenthaltsort als erstem Ort, wenn die Gruppe einen hat.
+  Ein Ort kommt hinzu als Aufenthaltsort, als beliebiges Feld eines Globus (liegt dort eine Stadt,
+  wird der Ort die Stadt) oder als ganze Welt an ihrer Weltkarte, auch einer Welt ohne Globus.
 - *Auf der Karte*: Zu jedem Feld lässt sich ablesen, welche offenen Missionen dort einen Ort haben
-  (auch in einer Stadt darauf), mit Etikett; zu einem NSC, welche Missionen er vergibt.
+  (auch in einer Stadt darauf), mit Etikett; ebenso zu jeder Welt, welche offenen Missionen dort
+  einen Ort haben, auf der ganzen Welt oder genauer; zu einem NSC, welche Missionen er vergibt.
 - *Vom Patron zur Mission*: Aus einem Patron-Wurf lässt sich neben dem Patron-NSC auch gleich eine
   **Mission** machen: der Patron-NSC wie bei „Als NSC“ und dazu eine offene Mission mit ihm als
   Auftraggeber, dem Beruf des Patrons als Titel (z. B. „Smuggler“) und dem Aufenthaltsort als
-  erstem Ort, wenn er ein Feld hat. Bei einer Rumor-Zeile geht das nicht.
+  erstem Ort, wenn die Gruppe einen hat. Bei einer Rumor-Zeile geht das nicht.
 - *Handlungsfäden*: Die offenen, nicht ausgeblendeten Missionen sind die **Handlungsfäden** des
   Orakels, wie die Thread-Liste in Mythic. Drei Einträge des Ereignisfokus sind **Fadenfokusse**
   (`EventFocus.thread`): Auf einen Handlungsfaden zu, Von einem Handlungsfaden weg, Ein

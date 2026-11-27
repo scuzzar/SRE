@@ -2144,6 +2144,31 @@ describe('Orte (2026-11-14j)', () => {
     expect([...game.snapshot().npcs.placing!.here].sort()).toEqual([mara, tenzin].sort());
   });
 
+  it('NSC platzieren an der Weltkarte (2026-11-27): die gewählten NSC kommen auf die ganze Welt, ohne Feld', async () => {
+    const { game } = await started();
+    const add = (name: string, place: string | undefined) => {
+      game.newCharacter(true, 'contact');
+      const input = { ...game.snapshot().editor!.input, name };
+      if (place === undefined) delete input.place;
+      else input.place = place;
+      game.saveCharacter(input);
+      return game['campaign'].characters.find((c) => c.name === name)!.id;
+    };
+    const mara = add('Mara', '0405');
+    const tenzin = add('Tenzin', undefined);
+    game.openWorld('0405');
+    game.startNpcPlacingOnWorld();
+    expect(game.snapshot()).toMatchObject({ screen: 'npcs', world: { id: '0405' }, npcs: { placing: { question: 'Welche NSC kommen nach Kessra (ganze Welt)?', here: [mara] } } });
+    game.cancelNpcPlacing();
+    expect(game.snapshot()).toMatchObject({ screen: 'oracle', world: { id: '0405' }, npcs: { placing: undefined } });
+    game.startNpcPlacingOnWorld();
+    game.showAllNpcs(true);
+    game.placeNpcs([tenzin]);
+    expect(game.snapshot()).toMatchObject({ screen: 'oracle', world: { id: '0405' }, npcs: { placing: undefined } });
+    expect(game['campaign'].characters.find((c) => c.id === tenzin)!.place).toEqual({ world: '0405' });
+    expect(game.snapshot().world!.npcs.map((n) => [n.name, n.where])).toEqual([['Mara', undefined], ['Tenzin', undefined]]);
+  });
+
   it('Ein mitkämpfender dauerhafter NSC (auch am Feld erzeugt) hat eine Reichweite zu den SC: beide Seiten können angreifen', async () => {
     let seed = 11;
     const { game } = await started({ int: (min, max) => min + ((seed = (seed * 16807) % 2147483647) % (max - min + 1)) });

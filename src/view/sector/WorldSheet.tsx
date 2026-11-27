@@ -3,12 +3,12 @@ import type { WorldDmPart } from '../../model';
 import type { LogItem, SystemBodyView, SystemView, WorldAction, WorldLine, WorldView } from '../../controller';
 import { HappenedList } from './HappenedList';
 import { DiceView, THROW_MS, useTimeline } from '../Dice';
-import { signed } from '../format';
+import { roleText, signed } from '../format';
 import { useGame } from '../game-context';
 import { WorldIcon } from './WorldIcon';
 import { animated, haptic, stopHaptics } from '../haptics';
 import { HoldButton } from '../HoldButton';
-import { BriefcaseIcon, CloseIcon, DiceIcon, FlagIcon, GlobeIcon, PeopleIcon, PinIcon, RouteIcon, ShipIcon } from '../icons';
+import { BriefcaseIcon, CheckIcon, CloseIcon, DiceIcon, FlagIcon, GlobeIcon, NpcPinIcon, PeopleIcon, PinIcon, RouteIcon, ShipIcon } from '../icons';
 import { NameFromCard } from '../NameFromCard';
 import { Form } from '../Form';
 import { withLoading } from '../loading';
@@ -53,6 +53,8 @@ export function useWorldDock(
   onGlobe = false,
   /** Aufträge zu dieser Welt (2026-11-27); fehlt ohne Schiff. */
   orders: { readonly blocker: string | undefined } | undefined = undefined,
+  /** Wie viele lebende NSC es gibt, und ob gerade ein Ort für eine Mission gewählt wird (2026-11-27). */
+  extra: { readonly npcTotal: number; readonly missionPicking: { readonly title: string } | undefined } = { npcTotal: 0, missionPicking: undefined },
 ): { field: ReactNode; foot: ReactNode; title: string | undefined } {
   const game = useGame();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -118,6 +120,7 @@ export function useWorldDock(
         {view.surface && <SurfaceSection lines={view.surface} />}
         {world.subordinate && <RenameSection key={world.id} name={world.name} />}
         {world.canNote && <NoteSection key={`note-${world.id}`} note={world.note} />}
+        <WorldPeople world={world} />
         {world.happened.length > 0 && <HappenedList title="Was hier geschah" indices={world.happened} log={log} logDays={logDays} />}
       </WorldTabs>
     </section>
@@ -148,12 +151,13 @@ export function useWorldDock(
       />
     </section>
   ) : undefined;
-  const actionsDock =
-    world.canGlobe || world.canNote ? (
-      <section className="dock" aria-label="An der Welt">
-        <WorldActions world={view} here={here} travel={travel} onGlobe={onGlobe} orders={orders} />
-      </section>
-    ) : undefined;
+  const actionsDock = extra.missionPicking && world.canNote ? (
+    <MissionWorldDock world={view} title={extra.missionPicking.title} onGlobe={onGlobe} />
+  ) : world.canGlobe || world.canNote ? (
+    <section className="dock" aria-label="An der Welt">
+      <WorldActions world={view} here={here} travel={travel} onGlobe={onGlobe} orders={orders} npcTotal={extra.npcTotal} />
+    </section>
+  ) : undefined;
   const foot = rollDock || actionsDock ? (
     <>
       {rollDock}
@@ -162,6 +166,86 @@ export function useWorldDock(
   ) : undefined;
 
   return { field, foot, title };
+}
+
+/**
+ * Beim Ort wählen einer Mission an der Weltkarte (2026-11-27): „OK“ nimmt die ganze Welt als Ort, nötig auf Welten
+ * ohne Oberfläche; „Öffnen“ führt auf den Globus, um dort ein Feld zu wählen. Wie die Aktionsleiste am Feld beim
+ * Ort wählen (`FieldDock`): links „Abbrechen“, rechts die Bestätigung.
+ */
+function MissionWorldDock({ world, title, onGlobe }: { world: WorldView; title: string; onGlobe: boolean }) {
+  const game = useGame();
+  const name = world.name ?? world.id;
+  return (
+    <section className="dock" aria-label="An der Welt">
+      <p className="npc-placing">
+        <FlagIcon /> Missionsort für „{title}“: ganz {name}?
+      </p>
+      <div className="actions oracle-actions world-actions trip-plan-actions">
+        <button type="button" className="action note" onClick={() => game.cancelMissionPicking()}>
+          <CloseIcon />
+          Abbrechen
+        </button>
+        {!onGlobe && world.hasMap && (
+          <button type="button" className="action note" title="Auf dem Globus ein Feld wählen" onClick={() => withLoading('Welt wird aufgebaut …', () => game.openGlobe())}>
+            <GlobeIcon />
+            Öffnen
+          </button>
+        )}
+        <button type="button" className="action draw" aria-label={`OK, ganz ${name} als Missionsort`} onClick={() => game.confirmMissionWorld()}>
+          <CheckIcon />
+          OK
+        </button>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * NSC und offene Missionen an der Weltkarte (2026-11-27), wie am angetippten Feld des Globus: alle auf dieser Welt,
+ * auf der ganzen Welt oder genauer (dann steht dabei, wo). Ein Tipp öffnet den NSC bzw. die Mission.
+ */
+function WorldPeople({ world }: { world: WorldView }) {
+  const game = useGame();
+  if (world.npcs.length === 0 && world.missions.length === 0) return null;
+  return (
+    <>
+      {world.npcs.length > 0 && (
+        <div className="field-missions">
+          <h4 className="section-title">NSC hier ({world.npcs.length})</h4>
+          <ul className="globe-facts">
+            {world.npcs.map((n) => (
+              <li key={n.id}>
+                <button type="button" className="link-button" aria-label={`NSC ${n.name} (${roleText[n.role]}) öffnen`} onClick={() => game.editCharacter(n.id)}>
+                  {n.name}
+                </button>{' '}
+                · {roleText[n.role]}
+                {n.where ? ` · ${n.where}` : ''}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {world.missions.length > 0 && (
+        <div className="field-missions">
+          <h4 className="section-title">Missionen hier ({world.missions.length})</h4>
+          <ul className="here-missions">
+            {world.missions.map((m) => (
+              <li key={m.id}>
+                <button type="button" aria-label={`Mission ${m.title} öffnen`} onClick={() => game.editMission(m.id)}>
+                  <FlagIcon />
+                  <span>
+                    {m.title}
+                    {m.labels.length > 0 && <small>{m.labels.join(' · ')}</small>}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  );
 }
 
 /**
@@ -418,12 +502,14 @@ export function SystemSection({ system }: { system: SystemView }) {
  * setzen“ am Feld; ist die Gruppe schon hier, ausgegraut) und Öffnen (die Hexkarte der Welt, nicht
  * auf dem Globus selbst).
  */
-export function WorldActions({ world, here, travel, onGlobe = false, orders }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined; readonly inSystem?: boolean } | undefined; onGlobe?: boolean; /** Aufträge zu dieser Welt (2026-11-27); fehlt ohne Schiff. */ orders?: { readonly blocker: string | undefined } | undefined }) {
+export function WorldActions({ world, here, travel, onGlobe = false, orders, npcTotal = 0 }: { world: WorldView; here: boolean; travel: { readonly blocker: string | undefined; readonly inSystem?: boolean } | undefined; onGlobe?: boolean; /** Aufträge zu dieser Welt (2026-11-27); fehlt ohne Schiff. */ orders?: { readonly blocker: string | undefined } | undefined; /** Wie viele lebende NSC es gibt (2026-11-27). */ npcTotal?: number }) {
   const game = useGame();
   // Den Globus gibt es erst auf ausdrücklichen Knopfdruck (2026-11-20d): „Globus erzeugen“, danach „Öffnen“.
   const showGlobe = !onGlobe && world.canGlobe;
   if (!showGlobe && !world.canNote) return null;
   const travelBlocker = here ? 'Die Gruppe ist schon hier' : travel?.blocker;
+  // NSC platzieren auf die ganze Welt (2026-11-27); geholt wird von jeder Welt.
+  const npcBlocker = npcTotal === 0 ? 'Noch keine NSC' : undefined;
   return (
     <>
       {world.canNote && !here && travel?.blocker && <p className="combat-hint">{travel.blocker}</p>}
@@ -455,6 +541,12 @@ export function WorldActions({ world, here, travel, onGlobe = false, orders }: {
           <button type="button" className="action note" title={here ? 'Die Gruppe ist schon hier' : 'Gruppe hierher setzen, ohne Reise und ohne Zeit'} disabled={here} onClick={() => game.stayHere()}>
             <PinIcon />
             Gruppe platzieren
+          </button>
+        )}
+        {world.canNote && (
+          <button type="button" className="action note" title={npcBlocker ?? 'Unter Charaktere › NSC auswählen, wer auf diese Welt kommt (ganze Welt, ohne Feld)'} disabled={npcBlocker !== undefined} onClick={() => game.startNpcPlacingOnWorld()}>
+            <NpcPinIcon />
+            NSC platzieren
           </button>
         )}
         {showGlobe && world.hasMap && (
