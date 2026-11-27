@@ -98,12 +98,12 @@ describe('Bereich Schiff', () => {
     fund(game, 45_000_000);
     const before = game.snapshot().ship!.funds;
     game.buyShipDesign('A', 'cash');
-    game.editShip({ name: 'Eiserne Meridian', fuel: 18, cargo: 5 });
+    game.editShip({ name: 'Eiserne Meridian', fuel: 18 });
     game.buyFuelTons(10);
     game.renameShip('Eiserne Meridian II');
     await game.whenSaved();
     const ship = game.snapshot().ship!.ship!;
-    expect(ship).toMatchObject({ name: 'Eiserne Meridian II', fuel: 28, fuelMax: 30, cargo: 5 });
+    expect(ship).toMatchObject({ name: 'Eiserne Meridian II', fuel: 28, fuelMax: 30 });
     expect(game.snapshot().ship!.funds).toBe(before - 37_080_000 - 5_000);
     // Was die Regeln nicht zulassen, steht im Bereich statt im Spielstand.
     game.buyFuelTons(20);

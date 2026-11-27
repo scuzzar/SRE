@@ -515,10 +515,22 @@ des Bereichs (siehe die Tabelle oben). Hier stehen nur die, die für alle Bereic
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
-- **Handel, Schritt 1** (2026-11-27, [`modell/handel.md`](modell/handel.md)) ist freigegeben, aber
-  noch nicht gebaut: Markt, Warenwurf, Preiswurf, Ladungen, Fracht- und Passagierangebote,
-  Postvertrag, private Botschaften, Reisezonen und die Tabellen aus SE 9 und SE 22 fehlen im Code;
-  `Ship.cargo` ist dort noch eine frei eingetragene Zahl.
+- **Handel** (2026-11-27, 2026-11-27b, 2026-11-27c, [`modell/handel.md`](modell/handel.md)) ist
+  gebaut (`model/trade.ts`, Tabellen in `src/data/trade.json`, Markt und Aufträge in
+  `view/trade/TradeScreen.tsx`, Laderaum in `view/ship/HoldTab.tsx`). Abweichungen:
+  - Der Markt verweist auf Waren- und Preiswürfe mit ihren **Stellen im Log** (wie der
+    Lotteriegewinn); darum lassen sich diese Einträge nicht löschen. Er hält zusätzlich, welche
+    Ladungen an ihm aus welchem Warenwurf gekauft wurden (`Market.bought`, nur im Code), für die
+    Restmenge einer Partie und die Sperre „Verkauf am Kaufort“.
+  - Die Würfel der **Menge** würfelt die App gleich mit dem Warenwurf und zeigt sie erst beim
+    Antippen der Ware (wie beim Kälteschlaf: gewürfelt früher, bekannt später); so bleibt der Log
+    nur angehängt.
+  - Frachtlose und `FreightOffer.dice` (je Größe die Würfel, `null`, wenn es die Größe nicht gibt)
+    sind im Code ohne eigene Id: Abgewählte Fracht geht als gleich große Fracht von hier dorthin
+    von Bord (gleiche Lose sind gleichwertig).
+  - Waren-, Preis- und Auftragswürfe laufen **nicht über die Würfelbühne**; die Ergebnisse stehen
+    sofort in der Liste und im Log.
+  - Treffer im Laderaum ziehen die Tonnen von der zuletzt geladenen Ladung ab (⚑, siehe `TODO.md`).
 - **Small Craft** (2026-11-21b) sind gebaut (`model/ship.ts`, `model/flight.ts`, `model/landing.ts`,
   `model/system-journey.ts`, Entwürfe in `src/data/ships.json`). Abweichungen: `Ship.aboard` und
   `Ship.inOrbit` stehen nur im Spielstand, wenn sie wahr sind (fehlt heißt falsch), ebenso

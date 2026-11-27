@@ -12,7 +12,7 @@ import { roll2d6, sum, type Characteristic, type Dice } from './rules';
  * Text einer Notiz oder Deutung, Zeitpunkt und Würfel, bei der Antwort des Orakels dazu die Chance, bei Probe und Angriff DM und Zielwert.
  * Einträge werden nur angehängt, nie geändert; löschen lässt sich ein Eintrag nur ganz.
  */
-export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | Skimming | SpaceBattle | SpaceAttack | SpaceBattleEnd | TripDay | Note;
+export type LogEntry = DiceRoll | CardPick | TaskResult | AttackResult | DamageRoll | Recovery | PatronRoll | RumorRoll | EventResult | SaveRoll | Butchering | TimePassed | MonthEnd | CheckRoll | Journey | SystemJourney | Skimming | SpaceBattle | SpaceAttack | SpaceBattleEnd | TripDay | GoodsRoll | PriceRoll | Note;
 
 /** Ein Ergebnis: was Orakel, Würfel oder Karte liefern. Nur ein Ergebnis lässt sich deuten. */
 export type LogResult = Exclude<LogEntry, Note>;
@@ -115,6 +115,47 @@ export interface Journey extends LogEntryBase {
   /** Der Begegnungswurf beim Start bzw. bei der Ankunft (2W6, SE 13), wenn kein Schiff kam (2026-11-22b). */
   readonly departureRoll?: Dice;
   readonly arrivalRoll?: Dice;
+  /** Mit eigenem Schiff (2026-11-27c): zahlende Fahrgäste je Klasse an Bord während des Sprungs; fehlen: 0. */
+  readonly high?: number;
+  readonly middle?: number;
+  readonly low?: number;
+  /** Der Postvertrag wurde für diesen Sprung bezahlt (2026-11-27); gespeichert nur, wenn wahr. */
+  readonly mail?: boolean;
+}
+
+/**
+ * Ein Warenwurf (2026-11-27, `GoodsRoll`): an der Welt `world` (im Domänenmodell der Pfeil `at`),
+ * vom Charakter `by`; zwei W6 nacheinander mit DM auf den ersten (`dm`, nach der Bevölkerung),
+ * daraus die Ware. Die Würfel der Menge (`quantityDice`) würfelt die App gleich mit, gezeigt werden
+ * sie erst, wenn der Spieler die Ware antippt (wie beim Kälteschlaf: gewürfelt früher, bekannt später).
+ */
+export interface GoodsRoll extends LogEntryBase {
+  readonly kind: 'goodsRoll';
+  readonly world: string;
+  readonly by: CharacterId;
+  readonly dice: Dice;
+  readonly dm: number;
+  readonly quantityDice: readonly number[];
+}
+
+/**
+ * Ein Preiswurf (2026-11-27, `PriceRoll`): Kauf (`sale` = false, `offer`: Stelle des Warenwurfs im
+ * Log) oder Verkauf (`sale` = true, `lot`: Id der Ladung) an der Welt `world`, 2W6 mit den DMs, die
+ * damals galten: Handelscodes, Fertigkeit des Helfers (beim Kauf abgezogen), Makler.
+ */
+export interface PriceRoll extends LogEntryBase {
+  readonly kind: 'priceRoll';
+  readonly world: string;
+  readonly sale: boolean;
+  readonly dice: Dice;
+  readonly tradeDm: number;
+  readonly skillDm: number;
+  readonly brokerDm: number;
+  readonly offer?: number;
+  readonly lot?: string;
+  readonly helper?: CharacterId;
+  /** Die Ware (Wurf 11–66), damit der Eintrag allein lesbar bleibt. */
+  readonly good: number;
 }
 
 /**

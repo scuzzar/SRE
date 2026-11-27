@@ -10,13 +10,21 @@ import { worldById, worldOf, type NamedWorld, type World } from './sector';
 export const bookingKinds = ['income', 'expense', 'deposit', 'payout', 'purchase', 'sale', 'lottery', 'rent', 'fare', 'ship', 'ticket'] as const;
 export type BookingKind = (typeof bookingKinds)[number];
 
-/** Wofür eine Buchung der Art `ship` ist (2026-11-17b): Kauf oder Anzahlung, Monatsrate, Treibstoff, Liegegebühr, Lebenserhaltung, Bewaffnung (2026-11-21g). */
-export const shipCosts = ['price', 'rate', 'fuel', 'berthing', 'lifeSupport', 'armament', 'repair', 'software'] as const;
+/**
+ * Wofür eine Buchung der Art `ship` ist (2026-11-17b): Kauf oder Anzahlung, Monatsrate, Treibstoff,
+ * Liegegebühr, Lebenserhaltung, Bewaffnung (2026-11-21g); seit dem Handel (2026-11-27) Wareneinkauf,
+ * Teilkaufgebühr, Makler und ausgezahlter Topf der Low Lottery.
+ */
+export const shipCosts = ['price', 'rate', 'fuel', 'berthing', 'lifeSupport', 'armament', 'repair', 'software', 'goods', 'handling', 'broker', 'lottery'] as const;
 export type ShipCost = (typeof shipCosts)[number];
 
-/** Die laufenden Kosten: alles außer Kauf, Anzahlung, Bewaffnung und Software (2026-11-21g, 2026-11-22d). Sie stehen in der Monatsabrechnung. */
+/** Wofür eine Einnahme des Schiffs ist (2026-11-27): Fracht, Passage, Ware, Postvertrag, private Botschaft. */
+export const shipIncomes = ['freight', 'passage', 'goods', 'mail', 'message'] as const;
+export type ShipIncome = (typeof shipIncomes)[number];
+
+/** Die laufenden Kosten: alles außer Kauf, Anzahlung, Bewaffnung, Software und Wareneinkauf (2026-11-21g, 2026-11-22d, 2026-11-27). Sie stehen in der Monatsabrechnung. */
 export function isRunningCost(booking: Booking): boolean {
-  return booking.kind === 'ship' && booking.shipCost !== undefined && booking.shipCost !== 'price' && booking.shipCost !== 'armament' && booking.shipCost !== 'repair' && booking.shipCost !== 'software';
+  return booking.kind === 'ship' && booking.shipCost !== undefined && booking.shipCost !== 'price' && booking.shipCost !== 'armament' && booking.shipCost !== 'repair' && booking.shipCost !== 'software' && booking.shipCost !== 'goods';
 }
 
 /**
@@ -46,6 +54,12 @@ export interface Booking {
   readonly forShip?: string;
   /** Bei einer Schiffs-Buchung: wofür sie ist; fehlt bei Buchungen von vor 2026-11-17b. */
   readonly shipCost?: ShipCost;
+  /** Bei einer Einnahme des Schiffs (positiver Betrag): wofür sie ist (2026-11-27). */
+  readonly shipIncome?: ShipIncome;
+  /** Die Ladung, auf die sie sich bezieht (Id), bei Ware, Fracht und Botschaft (2026-11-27). */
+  readonly forCargo?: string;
+  /** Die Fahrgäste, die bezahlt haben (Id), bei einer Passage (2026-11-27c). */
+  readonly forFare?: string;
 }
 
 /** `/funds`: der Stand der Gruppenkasse, die Summe aller Buchungen. */
@@ -146,6 +160,13 @@ export function bookShip(campaign: Campaign, amount: number, forShip: string, co
   return withBooking(campaign, withText({ at: clock.now(), kind: 'ship' as BookingKind, amount, forShip, shipCost: cost }, text));
 }
 
+/** Eine Einnahme des Schiffs (2026-11-27): positiver Betrag mit `shipIncome`, wahlweise mit Ladung oder Fahrgästen. */
+export function bookShipIncome(campaign: Campaign, amount: number, forShip: string, income: ShipIncome, clock: Clock, text?: string, refs: { readonly forCargo?: string; readonly forFare?: string } = {}): Campaign {
+  if (!Number.isInteger(amount) || amount <= 0) throw new DomainError('Eine Einnahme des Schiffs geht in die Kasse hinein.');
+  if (!campaign.ships.some((s) => s.id === forShip)) throw new DomainError(`Das Schiff ${forShip} gibt es nicht.`);
+  return withBooking(campaign, withText({ at: clock.now(), kind: 'ship' as BookingKind, amount, forShip, shipIncome: income, ...refs }, text));
+}
+
 /** Wohin ein gekaufter Gegenstand am SC kommt: eine Waffe wird Primärwaffe, eine Rüstung getragen; sonst ins Gepäck. */
 export function equipSlotOf(itemId: string): EquipSlot | undefined {
   const item = itemOf(itemId);
@@ -239,7 +260,10 @@ export function validateBookings(campaign: Campaign): void {
   for (const b of campaign.bookings) {
     // Die unbezahlte Rate ist die einzige Buchung mit 0 Cr – sie hat ihren Hinweistext.
     if (!Number.isInteger(b.amount) || (b.amount === 0 && !(b.kind === 'ship' && b.text !== undefined))) throw new DomainError('Eine Buchung hat einen Betrag in ganzen Cr.');
-    const inward = b.kind === 'income' || b.kind === 'deposit' || b.kind === 'sale' || b.kind === 'lottery';
+    const inward = b.kind === 'income' || b.kind === 'deposit' || b.kind === 'sale' || b.kind === 'lottery' || (b.kind === 'ship' && b.shipIncome !== undefined);
+    if (b.shipIncome !== undefined && (b.kind !== 'ship' || b.shipCost !== undefined)) throw new DomainError('Eine Einnahme des Schiffs ist eine Schiffs-Buchung ohne Schiffskosten.');
+    if (b.forFare !== undefined && b.shipIncome !== 'passage') throw new DomainError('Nur eine Passage verweist auf Fahrgäste.');
+    if (b.forCargo !== undefined && b.kind !== 'ship') throw new DomainError('Nur eine Schiffs-Buchung verweist auf eine Ladung.');
     if (inward !== b.amount > 0) throw new DomainError(`Eine Buchung der Art ${b.kind} geht in die falsche Richtung.`);
     // Kauf und Verkauf haben einen Charakter, wenn es um Ausgerüstetes geht; sonst das Gruppengepäck.
     const needs = b.kind === 'deposit' || b.kind === 'payout' || b.kind === 'lottery';

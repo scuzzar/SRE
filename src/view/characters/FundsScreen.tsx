@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ShopView, Snapshot } from '../../controller';
-import { bookingText, clockTime, credits, shipCostText } from '../format';
+import { bookingText, clockTime, credits, shipCostText, shipIncomeText } from '../format';
 import { Form } from '../Form';
 import { useGame } from '../game-context';
 import { haptic } from '../haptics';
@@ -106,7 +106,7 @@ function Ledger({ shop }: { shop: ShopView }) {
       <ol>
         {shop.bookings.map((b, i) => (
           <li key={i} className={b.amount === 0 ? 'shop-booking unpaid' : 'shop-booking'}>
-            <span className="kicker">{b.shipCost === undefined ? bookingText[b.kind] : shipCostText[b.shipCost]}</span>
+            <span className="kicker">{b.shipIncome !== undefined ? shipIncomeText[b.shipIncome] : b.shipCost === undefined ? bookingText[b.kind] : shipCostText[b.shipCost]}</span>
             <span className="shop-booking-text">
               {b.kind === 'purchase'
                 ? `${b.count} × ${b.item} für ${b.character} auf ${b.world}`

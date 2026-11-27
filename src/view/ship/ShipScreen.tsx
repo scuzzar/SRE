@@ -9,9 +9,10 @@ import { DetailPage } from '../DetailPage';
 import { CrewPersonSheet, CrewPostSheet, CrewTab } from './CrewTab';
 import { ComputerTab, ProgramSheet, SoftwareYard } from './ComputerTab';
 import { deckImage } from './deck-image';
+import { HoldTab } from './HoldTab';
 
 /** Die Ansicht unter den Kacheln: eigene Deckpläne, die Crew und der Rechner. */
-type Tab = 'deck' | 'crew' | 'computer';
+type Tab = 'deck' | 'crew' | 'computer' | 'hold';
 
 /** Die Detailseite, die an der Stelle des Bereichs steht; die Werft ist eine, kein eigener Unterreiter. */
 type Sheet =
@@ -213,10 +214,15 @@ export function ShipScreen({ view }: { view: Snapshot }) {
               <button type="button" role="tab" aria-selected={tab === 'computer'} onClick={() => setTab('computer')}>
                 Computer
               </button>
+              <button type="button" role="tab" aria-selected={tab === 'hold'} onClick={() => setTab('hold')}>
+                Laderaum
+              </button>
             </div>
-            <div className="ship-panel" role="tabpanel" aria-label={tab === 'deck' ? 'Deckplan' : tab === 'crew' ? 'Crew' : 'Computer'}>
+            <div className="ship-panel" role="tabpanel" aria-label={tab === 'deck' ? 'Deckplan' : tab === 'crew' ? 'Crew' : tab === 'hold' ? 'Laderaum' : 'Computer'}>
               {tab === 'deck' ? (
               <DeckPlans ship={ship} onView={(name) => setSheet({ kind: 'deck', name })} />
+            ) : tab === 'hold' ? (
+              <HoldTab hold={view.hold} error={ship.error} />
             ) : tab === 'crew' ? (
               <CrewTab crews={boat?.crews ?? []} onOpenPost={(shipId, at) => setSheet({ kind: 'post', shipId, at })} onOpenPerson={(shipId, who) => setSheet({ kind: 'person', shipId, who })} />
             ) : (
@@ -606,9 +612,8 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
   const game = useGame();
   const [name, setName] = useState(boat.name);
   const [fuel, setFuel] = useState(String(boat.fuel));
-  const [cargo, setCargo] = useState(String(boat.cargo));
   const tons = (value: string, max: number) => /^\d+$/.test(value.trim()) && Number(value) <= max;
-  const valid = name.trim() !== '' && tons(fuel, boat.fuelMax) && tons(cargo, boat.cargoMax);
+  const valid = name.trim() !== '' && tons(fuel, boat.fuelMax);
   // Ausblenden erst beim zweiten Tippen, wie Löschen sonst auch (Owner, 22. November 2026).
   const [retiring, setRetiring] = useState(false);
   return (
@@ -638,7 +643,7 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
             disabled={!valid}
             onClick={() => {
               haptic('pick');
-              game.editShip({ name: name.trim(), fuel: Number(fuel), cargo: Number(cargo) });
+              game.editShip({ name: name.trim(), fuel: Number(fuel) });
               onClose();
             }}
           >
@@ -655,11 +660,7 @@ function EditSheet({ boat, onClose }: { boat: Boat; onClose: () => void }) {
         <span>Treibstoff (von {boat.fuelMax} t)</span>
         <input type="number" inputMode="numeric" min={0} max={boat.fuelMax} value={fuel} onChange={(e) => setFuel(e.target.value)} />
       </label>
-      <label className="field">
-        <span>Fracht (von {boat.cargoMax} t)</span>
-        <input type="number" inputMode="numeric" min={0} max={boat.cargoMax} value={cargo} onChange={(e) => setCargo(e.target.value)} />
-      </label>
-      <p className="shop-hint muted">Die Belegung der Kabinen ergibt sich aus der Gruppe; zahlende Passagiere kommen mit dem Handel.</p>
+      <p className="shop-hint muted">Fracht und Fahrgäste kommen über den Handel an Bord: Markt in einer Stadt, Fracht, Passagiere und Post an einer Welt im Subsektor.</p>
       <dl className="profile">
         {boat.initialLoan !== undefined && (
           <div>

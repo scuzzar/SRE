@@ -711,11 +711,31 @@ function applyHits(campaign: Campaign, index: number, zones: readonly HitZone[],
       ships: campaign.ships.map((s) => {
         if (s.id !== id) return s;
         const fuel = Math.max(0, s.fuel - fuelLost);
-        return { ...s, damage, fuel, unrefined: Math.min(s.unrefined, fuel), cargo: Math.max(0, s.cargo - cargoLost) };
+        return { ...s, damage, fuel, unrefined: Math.min(s.unrefined, fuel), ...loseCargo(s, cargoLost) };
       }),
     };
   }
   return { ...campaign, flight: { ...flight, units: flight.units.map((u, i) => (i === index ? { ...u, damage } : u)) } };
+}
+
+/**
+ * Treffer im Laderaum (10 t je Treffer): Seit den Ladungen (2026-11-27) geht die Tonnage von den
+ * Ladungen ab, von der zuletzt geladenen an; eine Ladung ohne Tonnen ist verloren (ausgeblendet).
+ * ⚑ Welche Ladung es trifft, ist eine offene Frage (TODO); Stückwaren verlieren ganze Stücke.
+ */
+function loseCargo(ship: Ship, tons: number): Pick<Ship, 'hold'> | Record<string, never> {
+  if (tons <= 0 || ship.hold === undefined) return {};
+  let left = tons;
+  const hold = [...ship.hold].reverse().map((c) => {
+    if (left <= 0 || c.retired || c.tons === 0) return c;
+    const lost = Math.min(left, c.tons);
+    left -= lost;
+    const rest = c.tons - lost;
+    if (rest <= 0) return { ...c, retired: true };
+    const perItem = c.count === undefined ? undefined : c.tons / c.count;
+    return { ...c, tons: perItem ? Math.floor(rest / perItem) * perItem : rest, ...(perItem ? { count: Math.floor(rest / perItem) } : {}) };
+  });
+  return { hold: hold.reverse() };
 }
 
 /** Würfelt Schüsse und hängt sie ans Log; gibt die Treffer je Ziel zurück. `returnFire`: der Schuss ist ein Rückfeuer (2026-11-23). */

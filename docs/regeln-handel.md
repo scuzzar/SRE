@@ -43,15 +43,15 @@ geht es um Passagiere, die das **eigene Schiff** befördert.
 
 | Regel | Quelle | App |
 |---|---|---|
-| [Ablauf eines Hafenbesuchs](#ablauf-eines-hafenbesuchs) | SE 9 | ○ |
-| [Fracht](#fracht) | SR 29, SE 9 | ○ |
-| [Passagiere](#passagiere) | SR 28–29, SE 9 | ○ |
-| [Post und Botengänge](#post-und-botengänge) | SR 30, SE 9 | ○ |
+| [Ablauf eines Hafenbesuchs](#ablauf-eines-hafenbesuchs) | SE 9 | ◐ (Bezahlung von Fracht und Fahrgästen bei Ankunft statt Abflug, E15; die Reihenfolge des Aus- und Einladens bildet die App nicht ab) |
+| [Fracht](#fracht) | SR 29, SE 9 | ✔✱ (2026-11-27, zu mehreren Zielen, E15) |
+| [Passagiere](#passagiere) | SR 28–29, SE 9 | ◐✱ (Angebot, Fahrgäste an Bord, Lebenserhaltung, Low-Fahrgäste mit Aufwachwurf und Lotterie; Bumping, Working Passage, Steward- und Medic-Pflicht, blinde Passagiere, Entführung ○) |
+| [Post und Botengänge](#post-und-botengänge) | SR 30, SE 9 | ✔✱ (Postvertrag für jedes Schiff, E12; private Botschaften je Ziel, E13) |
 | [Handelsbräuche](#handelsbräuche) | SR 30 | ◐ (Berthing Costs ✔✱, siehe `regeln-schiffe.md`) |
-| [Spekulativer Handel](#spekulativer-handel) | SR 52, SE 22 | ○ |
-| [Trade and Speculation Table](#trade-and-speculation-table-se-22) | SE 22 | ○ |
-| [Actual Value Table](#actual-value-table-se-22) | SE 22 | ○ |
-| [DMs beim Handel](#dms-beim-handel) | SR 52, SE 22 | ○ |
+| [Spekulativer Handel](#spekulativer-handel) | SR 52, SE 22 | ✔✱ (mehrere Warenwürfe, E14) |
+| [Trade and Speculation Table](#trade-and-speculation-table-se-22) | SE 22 | ✔ (`src/data/trade.json`) |
+| [Actual Value Table](#actual-value-table-se-22) | SE 22 | ✔ |
+| [DMs beim Handel](#dms-beim-handel) | SR 52, SE 22 | ✔ (E1, E2, E4) |
 | [Handelscodes](#handelscodes) | SR 45, SE 22 | ✔ (aus dem UWP, `/trade`; siehe `modell/sektor.md`) |
 | [Rechnung einer Handelsfahrt](#rechnung-einer-handelsfahrt) | SR 28–29, SE 9 | ◐ (laufende Kosten teils, siehe `regeln-schiffe.md`) |
 
@@ -562,18 +562,11 @@ Spieler den Spaß verlieren.
 
 ## Was die App dafür noch braucht
 
-Stand 27. November 2026, als Grundlage für das Modell:
-
-- **Reisezonen** (Amber, Red): Die Cargo- und Passagiertabellen hängen davon ab; die App kennt
-  noch keine Zonen (`modell/sektor.md`, *Später*). Bis dahin zählt jede Welt als grün.
-- **Laderaum mit Inhalt:** Das Schiff kennt bisher nur die Tonnage seines Laderaums (und Beiboote
-  darin); Fracht, Post und spekulative Ware brauchen Ladungen mit Tonnage, Ziel und Eigentümer
-  (`modell/schiffe.md`: „was wirklich im Laderaum liegt, kommt erst mit dem Handel“).
-- **Passagiere an Bord**, die nicht zur Gruppe gehören: Kabinen, Kojen, Lebenserhaltung je Kopf,
-  Steward-Pflicht, Low Lottery.
-- **Ein angekündigtes Ziel** vor der Abreise (Fracht und Passagiere richten sich danach).
-- **Wochentakt** für den Warenwurf („einmal je Woche“).
-- **Makler** als käufliche Dienstleistung am Hafen.
+Seit 27. November 2026 gebaut (`model/trade.ts`, Markt und Aufträge in `view/trade/`): Reisezonen,
+Ladungen im Laderaum, Fahrgäste an Bord, Markt je Welt und Woche, Makler. Offen ist, was in
+`TODO.md` unter *Handel, was danach kommt* steht (Charter, Shuttle, subventionierte Schiffe,
+Bumping, blinde Passagiere, Entführung, Steward- und Medic-Pflicht, Working Passage, Ladungsverlust
+im Raumkampf).
 
 ## Entscheidungen zur Auslegung
 

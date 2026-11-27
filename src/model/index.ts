@@ -47,3 +47,4 @@ export * from './vehicle';
 export * from './landing';
 export * from './ship-encounter';
 export * from './voyage';
+export * from './trade';

@@ -9,13 +9,12 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 
 ### 1. Handel, Schritt 1
 
-- [ ] **Handel umsetzen** nach [`docs/regeln-handel.md`](docs/regeln-handel.md): die
-  Auslegungsfragen sind entschieden (E1–E13), das Modell 2026-11-27
-  ([`docs/modell/handel.md`](docs/modell/handel.md)) ist freigegeben; offen sind die Änderungen
-  2026-11-27b (mehrere Warenwürfe) und 2026-11-27c (Aufträge zu mehreren Zielen) und der
-  UI-Vorschlag im GUI-Handbuch unter *Handel: Markt und Aufträge*; dann in den Code.
-  Umfang: Spekulation, Fracht, zahlende Passagiere, Postvertrag und private Botschaften,
-  Reisezonen.
+- [ ] **Handel, Schritt 1 abnehmen**: gebaut am 27. November 2026 nach
+  [`docs/modell/handel.md`](docs/modell/handel.md); wartet auf die Freigabe des Owners. Danach
+  Unit- und GUI-Tests für Markt, Aufträge, Ankunft und Laden alter Stände schreiben und die ganze
+  Regression laufen lassen (Owner: Tests und Regression erst nach seiner Freigabe).
+- [ ] **Würfelbühne für den Handel**: Waren-, Preis- und Auftragswürfe laufen noch ohne Würfelbühne
+  (GUI-Handbuch, *Handel*).
 
 ### 2. Handel, was danach kommt
 

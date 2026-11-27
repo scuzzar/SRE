@@ -1,5 +1,23 @@
 import {
   HANDS,
+  openMarket as openTradeMarket,
+  rollPurchase,
+  buyGoods,
+  rollSale,
+  sellGoods,
+  jettison,
+  openOrders as openTradeOrders,
+  acceptOrders,
+  setMailContract,
+  setTravelZone,
+  marketOf,
+  maxPurchase,
+  purchaseOf,
+  saleOf,
+  amountOfLot,
+  tradeGoodOf,
+  tradeBlocker,
+  type OrderKind,
   attackWeaponsOf,
   weaponOf,
   addCharacter,
@@ -402,6 +420,7 @@ export class GameController {
       missionEditor: undefined,
       globeFocus: undefined,
       shopFrom: undefined,
+      trade: undefined,
       npcJoining: undefined,
       encounterRoll: undefined,
       encounterChoice: undefined,
@@ -1471,7 +1490,7 @@ export class GameController {
     // Ein Tipp in die Navigationsleiste bricht auch das Ort wählen einer Mission ab; der Editor bleibt mit seiner Eingabe.
     const editor = this.state.missionEditor;
     const mission = editor?.picking ? { missionEditor: { ...editor, picking: false, rev: editor.rev + 1 } } : {};
-    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released, ...mission } : { screen, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, ...released, ...mission });
+    this.update(screen === 'npcs' && this.state.screen !== 'npcs' ? { screen, npcAll: false, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, trade: undefined, ...released, ...mission } : { screen, npcPlacing: undefined, npcJoining: undefined, shopFrom: undefined, trade: undefined, ...released, ...mission });
   }
 
   /**
@@ -2020,6 +2039,199 @@ export class GameController {
     const character = focusOf(this.campaign);
     if (!character) throw new DomainError('Es gibt keinen lebenden Charakter.');
     this.change(reload(this.campaign, character.id));
+  }
+
+  // --- Handel (2026-11-27) ------------------------------------------------------------------------
+
+  /** Wohin ✕ von Markt und Aufträgen zurückführt: wie beim Shop. */
+  private tradeOrigin(): ControllerState['shopFrom'] {
+    const { screen, globe, world, selected } = this.state;
+    return this.state.shopFrom ?? { screen: screen === 'shop' || screen === 'trade' ? 'oracle' : screen, picked: globe?.picked, world: globe ? undefined : world, selected };
+  }
+
+  /**
+   * „Markt“ am Feld einer Stadt: öffnet die Markt-Detailseite; beim ersten Öffnen in der Woche würfelt
+   * die App alle Warenwürfe der Gruppe (`openMarket`).
+   */
+  openMarket(): void {
+    const blocker = this.shopBlocker() ?? tradeBlocker(this.campaign);
+    if (blocker !== undefined) return this.showError(new DomainError(blocker));
+    const from = this.tradeOrigin();
+    const globe = this.state.globe;
+    try {
+      const campaign = openTradeMarket(this.campaign, this.deps.random, this.deps.clock);
+      this.change(campaign, { shopFrom: from, screen: 'trade', trade: { page: 'market', selected: undefined, amount: 0, broker: 0, error: undefined }, npcPlacing: undefined, npcJoining: undefined, selected: undefined, ...(globe ? { globe: { picked: undefined } } : { world: undefined }), worldError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.showError(error);
+    }
+  }
+
+  /** Ändert die flüchtige Seite des Handels, wenn sie eine Marktseite ist. */
+  private marketPage(change: (page: Extract<NonNullable<ControllerState['trade']>, { page: 'market' }>) => Partial<Extract<NonNullable<ControllerState['trade']>, { page: 'market' }>>): void {
+    const page = this.state.trade;
+    if (page?.page !== 'market') return;
+    this.update({ trade: { ...page, ...change(page) } });
+  }
+
+  private inTrade(step: () => Campaign, rest: Partial<ControllerState> = {}): void {
+    try {
+      this.change(step(), rest);
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      const page = this.state.trade;
+      if (page) this.update({ trade: { ...page, error: error.message } });
+      else this.showError(error);
+    }
+  }
+
+  /**
+   * Antippen einer Ware: Ist ihr Preis noch nicht gewürfelt, zeigt sich die Menge und der Kaufpreis
+   * wird gewürfelt (Helfer: der Charakter oben); dann ist sie gewählt, die Menge vorbelegt mit dem,
+   * was Kasse und Laderaum hergeben.
+   */
+  tapGoods(index: number): void {
+    const page = this.state.trade;
+    if (page?.page !== 'market') return;
+    const world = this.campaign.location?.world;
+    const market = world === undefined ? undefined : marketOf(this.campaign, world);
+    let campaign = this.campaign;
+    if (market !== undefined && purchaseOf(campaign, market, index) === undefined) {
+      try {
+        campaign = rollPurchase(campaign, index, focusOf(campaign)?.id, this.deps.random, this.deps.clock);
+      } catch (error) {
+        if (!(error instanceof DomainError)) throw error;
+        return this.update({ trade: { ...page, error: error.message } });
+      }
+    }
+    const trade = { ...page, selected: { buy: index }, amount: maxPurchase(campaign, index), error: undefined };
+    if (campaign === this.campaign) this.update({ trade });
+    else this.change(campaign, { trade });
+  }
+
+  /** Antippen eigener Ware: gewählt; ist ihr Verkaufspreis hier schon gewürfelt, ist die Menge alles. */
+  tapLot(id: string): void {
+    const page = this.state.trade;
+    if (page?.page !== 'market') return;
+    const world = this.campaign.location?.world;
+    const market = world === undefined ? undefined : marketOf(this.campaign, world);
+    const lot = shipOf(this.campaign)?.hold?.find((c) => c.id === id);
+    const amount = lot === undefined || lot.goods === undefined ? 0 : amountOfLot(tradeGoodOf(lot.goods), lot);
+    this.update({ trade: { ...page, selected: { sell: id }, amount: market !== undefined && saleOf(this.campaign, market, id) !== undefined ? amount : 0, broker: 0, error: undefined } });
+  }
+
+  /** Der Makler vor dem Verkaufswurf: kein (0) bis +4. */
+  setBroker(broker: number): void {
+    this.marketPage(() => ({ broker: Math.max(0, Math.min(4, Math.round(broker))) }));
+  }
+
+  /** Würfelt den Verkaufspreis der gewählten Ladung mit dem gewählten Makler; Helfer ist der Charakter oben. */
+  rollSalePrice(): void {
+    const page = this.state.trade;
+    if (page?.page !== 'market' || page.selected === undefined || !('sell' in page.selected)) return;
+    const id = page.selected.sell;
+    const lot = shipOf(this.campaign)?.hold?.find((c) => c.id === id);
+    const amount = lot === undefined || lot.goods === undefined ? 0 : amountOfLot(tradeGoodOf(lot.goods), lot);
+    this.inTrade(() => rollSale(this.campaign, id, focusOf(this.campaign)?.id, page.broker, this.deps.random, this.deps.clock), { trade: { ...page, amount, error: undefined } });
+  }
+
+  /** Die Menge in der Aktionsleiste (− und +). */
+  setTradeAmount(amount: number): void {
+    this.marketPage(() => ({ amount: Math.max(0, Math.round(amount)) }));
+  }
+
+  /** Kauft bzw. verkauft die gewählte Menge der gewählten Zeile. */
+  confirmTrade(): void {
+    const page = this.state.trade;
+    if (page?.page !== 'market' || page.selected === undefined) return;
+    const sel = page.selected;
+    if ('buy' in sel) this.inTrade(() => buyGoods(this.campaign, sel.buy, page.amount, this.deps.clock), { trade: { ...page, selected: undefined, amount: 0, error: undefined } });
+    else this.inTrade(() => sellGoods(this.campaign, sel.sell, page.amount, this.deps.clock), { trade: { ...page, selected: undefined, amount: 0, error: undefined } });
+  }
+
+  /**
+   * Fracht, Passagiere oder Post an der Welt im Subsektor: öffnet die Auftragsseite zu diesem Ziel;
+   * beim ersten Blick in der Woche würfelt die App alle Lose dieses Ziels (`openOrders`).
+   */
+  openOrders(kind: OrderKind): void {
+    const at = this.state.world;
+    if (!at) return;
+    const to = hexIdOfWorld(openWorldId(at));
+    const from = this.tradeOrigin();
+    try {
+      const campaign = openTradeOrders(this.campaign, to, kind, this.deps.random);
+      const world = campaign.location!.world;
+      const market = marketOf(campaign, world);
+      const freight = market?.freight.find((f) => f.to === to);
+      const passengers = market?.passengers.find((p) => p.to === to);
+      const message = market?.messages.find((x) => x.to === to);
+      const trade = {
+        page: 'orders' as const,
+        to,
+        kind,
+        lots: (freight?.lots ?? []).flatMap((l, i) => (l.taken ? [i] : [])),
+        high: passengers?.high ?? 0,
+        middle: passengers?.middle ?? 0,
+        low: passengers?.low ?? 0,
+        take: message?.taken ?? false,
+        error: undefined,
+      };
+      this.change(campaign, { shopFrom: from, screen: 'trade', trade, world: undefined, selected: undefined, worldError: undefined });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.showError(error);
+    }
+  }
+
+  /** Ein Häkchen auf der Auftragsseite setzen oder löschen (nur Anzeige bis „Annehmen“). */
+  toggleOrder(key: string): void {
+    const page = this.state.trade;
+    if (page?.page !== 'orders') return;
+    if (page.kind === 'freight') {
+      const i = Number(key);
+      const lots = page.lots.includes(i) ? page.lots.filter((x) => x !== i) : [...page.lots, i].sort((a, b) => a - b);
+      return this.update({ trade: { ...page, lots, error: undefined } });
+    }
+    if (page.kind === 'message') return this.update({ trade: { ...page, take: !page.take, error: undefined } });
+    // Passagiere: je Klasse zählt, wie viele angekreuzt sind; ein Tipp auf Passagier n setzt die Zahl auf n bzw. n − 1.
+    const [cls, at] = key.split('-') as ['high' | 'middle' | 'low', string];
+    const index = Number(at);
+    const count = page[cls] > index ? index : index + 1;
+    this.update({ trade: { ...page, [cls]: count, error: undefined } });
+  }
+
+  /** „Annehmen“ auf der Auftragsseite: übernimmt die Häkchen. */
+  acceptTrade(): void {
+    const page = this.state.trade;
+    if (page?.page !== 'orders') return;
+    const choice = page.kind === 'freight' ? { kind: 'freight' as const, lots: page.lots } : page.kind === 'passengers' ? { kind: 'passengers' as const, high: page.high, middle: page.middle, low: page.low } : { kind: 'message' as const, take: page.take };
+    this.inTrade(() => acceptOrders(this.campaign, page.to, choice), { trade: { ...page, error: undefined } });
+  }
+
+  /** ✕ auf Markt oder Auftragsseite: zurück dorthin, woher sie kam. */
+  closeTrade(): void {
+    const from = this.state.shopFrom;
+    if (!from) return this.update({ trade: undefined, screen: 'oracle' });
+    const back = this.state.globe ? { globe: { picked: from.picked } } : { world: this.state.world ?? from.world, selected: from.selected };
+    this.update({ shopFrom: undefined, trade: undefined, screen: from.screen, ...back });
+  }
+
+  /** Postvertrag schließen oder kündigen (Bereich Schiff). */
+  toggleMailContract(): void {
+    const ship = shipOf(this.campaign);
+    this.inShip(() => setMailContract(this.campaign, !(ship?.mailContract ?? false)));
+  }
+
+  /** Eine Ladung über Bord geben (Bereich Schiff). */
+  jettisonCargo(id: string): void {
+    this.inShip(() => jettison(this.campaign, id));
+  }
+
+  /** Die Reisezone der offenen Welt setzen: grün, Amber oder Red. */
+  setTravelZone(zone: 'amber' | 'red' | undefined): void {
+    const at = this.state.world;
+    if (!at) return;
+    this.change(setTravelZone(this.campaign, hexIdOfWorld(openWorldId(at)), zone));
   }
 
   // --- Shop und Gruppenkasse ---------------------------------------------------------------------

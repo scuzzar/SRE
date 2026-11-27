@@ -83,7 +83,7 @@ describe('Werft', () => {
 describe('Treibstoff', () => {
   const trader = buyShip(withFunds(45_000_000), 'A', 'cash', clock);
   const id = activeShip(trader).id;
-  const partly = updateShip(trader, id, { name: activeShip(trader).name, fuel: 18, cargo: 0 });
+  const partly = updateShip(trader, id, { name: activeShip(trader).name, fuel: 18 });
 
   it('Cr 500 je Tonne aus der Kasse', () => {
     const filled = buyFuel(partly, 10, clock);
@@ -99,7 +99,7 @@ describe('Treibstoff', () => {
 
   it('ohne Geld in der Kasse gibt es keinen Treibstoff', () => {
     const poor = buyShip(withFunds(37_081_000), 'A', 'cash', clock);
-    const low = updateShip(poor, activeShip(poor).id, { name: activeShip(poor).name, fuel: 10, cargo: 0 });
+    const low = updateShip(poor, activeShip(poor).id, { name: activeShip(poor).name, fuel: 10 });
     expect(() => buyFuel(low, 3, clock)).toThrow(/Gruppenkasse/);
   });
 });
@@ -109,16 +109,15 @@ describe('Schiffsbogen', () => {
   const id = activeShip(scout).id;
 
   it('hält Name, Treibstoff und Fracht in ganzen Tonnen', () => {
-    const edited = updateShip(scout, id, { name: 'Keterzelle', fuel: 12, cargo: 0 });
+    const edited = updateShip(scout, id, { name: 'Keterzelle', fuel: 12 });
     expect(activeShip(edited)).toMatchObject({ name: 'Keterzelle', fuel: 12 });
-    expect(() => updateShip(scout, id, { name: '  ', fuel: 12, cargo: 0 })).toThrow(/Namen/);
-    expect(() => updateShip(scout, id, { name: 'x', fuel: 41, cargo: 0 })).toThrow(/fasst 40/);
-    expect(() => updateShip(scout, id, { name: 'x', fuel: 12, cargo: 4 })).toThrow(/Laderaum fasst 3/);
+    expect(() => updateShip(scout, id, { name: '  ', fuel: 12 })).toThrow(/Namen/);
+    expect(() => updateShip(scout, id, { name: 'x', fuel: 41 })).toThrow(/fasst 40/);
   });
 
   it('der Stift benennt um, ohne Tank und Laderaum anzufassen', () => {
     const named = renameShip(scout, id, 'Eiserne Meridian');
-    expect(activeShip(named)).toMatchObject({ name: 'Eiserne Meridian', fuel: 40, cargo: 0 });
+    expect(activeShip(named)).toMatchObject({ name: 'Eiserne Meridian', fuel: 40 });
   });
 });
 

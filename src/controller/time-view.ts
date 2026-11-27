@@ -155,6 +155,8 @@ export interface JourneyItem {
   readonly jumpDmText: string;
   /** Die Begegnungswürfe ohne Schiff (2026-11-22b), z. B. „Begegnung beim Start 3 + 2, bei der Ankunft 1 + 4: kein Schiff“. */
   readonly encounterRolls: string | undefined;
+  /** Mit eigenem Schiff (2026-11-27): Fahrgäste an Bord und Postvertrag, z. B. „Fahrgäste 2 High, 4 Low · Postvertrag bezahlt“. */
+  readonly trade: string | undefined;
 }
 
 /** Treibstoff am Gasriesen geschöpft, im Log (2026-11-21f). */
@@ -511,7 +513,7 @@ export interface MonthEndItem {
   readonly total: number;
 }
 
-const costNames: Record<Exclude<ShipCost, 'price' | 'armament' | 'repair' | 'software'>, string> = { rate: 'Rate', fuel: 'Treibstoff', berthing: 'Liegegebühren', lifeSupport: 'Lebenserhaltung' };
+const costNames: Record<Exclude<ShipCost, 'price' | 'armament' | 'repair' | 'software' | 'goods'>, string> = { rate: 'Rate', fuel: 'Treibstoff', berthing: 'Liegegebühren', lifeSupport: 'Lebenserhaltung', handling: 'Teilkaufgebühren', broker: 'Makler', lottery: 'Low Lottery' };
 
 export function monthEndItem(campaign: Campaign, entry: MonthEnd): MonthEndItem {
   const costs = costsOf(campaign, entry).map((c) => c.booking);
@@ -571,7 +573,14 @@ export function journeyItem(campaign: Campaign, entry: Journey, index: number): 
     misjump: misjumpOf(entry),
     jumpDmText: jumpDmText(entry.jumpDm ?? 0),
     encounterRolls: encounterRollsText(entry),
+    trade: journeyTradeText(entry),
   };
+}
+
+function journeyTradeText(entry: Journey): string | undefined {
+  const fares = [entry.high ? `${entry.high} High` : '', entry.middle ? `${entry.middle} Middle` : '', entry.low ? `${entry.low} Low` : ''].filter(Boolean);
+  const parts = [fares.length ? `Fahrgäste ${fares.join(', ')}` : '', entry.mail ? 'Postvertrag bezahlt' : ''].filter(Boolean);
+  return parts.length ? parts.join(' · ') : undefined;
 }
 
 export function systemJourneyView(campaign: Campaign, draft: SystemJourneyDraft): SystemJourneyView | undefined {

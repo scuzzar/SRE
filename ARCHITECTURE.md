@@ -113,6 +113,7 @@ den `controller/*-view.ts`.
 | Globus und Orte | `surface-grid.ts`, `surface-map.ts`, `place.ts` | `globe-view.ts` | `sector/GlobeScreen.tsx`, `FieldDock.tsx`; gezeichnet mit WebGL 2 in `globe-gl.ts`, ohne auf dem Prozessor in `globe-render.ts` |
 | Reisen (Sprung, im System, Fahrten über Land) | `travel.ts`, `system-journey.ts`, `voyage.ts`, `trip.ts`, `trip-encounter.ts`, `vehicle.ts`; `data/vehicles.json` | `trip-view.ts` | `sector/JourneySheet.tsx`, `SystemJourneySheet.tsx`, `TripPanels.tsx` |
 | Schiff (Werft, Bewaffnung, Crew, Rechner, Kosten, Landung) | `ship.ts`, `armament.ts`, `crew.ts`, `software.ts`, `upkeep.ts`, `landing.ts`; `data/ships.json` | `ship-view.ts` | `ship/`, `sector/LandingSheet.tsx` |
+| Handel (Markt, Fracht, Passagiere, Post) | `trade.ts`; `data/trade.json` | `trade-view.ts`, `trade-log.ts` | `trade/TradeScreen.tsx`, `ship/HoldTab.tsx` |
 | Raumflug und Raumkampf | `flight.ts`, `space-combat.ts`, `ship-encounter.ts`, `draft/ship-check.ts` | `space-view.ts`, `ship-check-view.ts` | `space/` (Raumkarte mit Canvas 2D in `SpaceScreen.tsx`) |
 | Kampagnen, Datei, Abgleich | `campaign-file.ts`, `sync.ts`, `draft/conflict.ts`, `demo.ts`, `ports.ts` | `game.ts` | `CampaignSheet.tsx`, `Menu.tsx` |
 

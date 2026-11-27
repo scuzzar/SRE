@@ -126,6 +126,8 @@ export interface HexView {
   readonly navalBase: boolean;
   readonly scoutBase: boolean;
   readonly gasGiant: boolean;
+  /** Die Reisezone (2026-11-27): Amber oder Red; grün fehlt sie. */
+  readonly travelZone: 'amber' | 'red' | undefined;
   readonly size: number | undefined;
   readonly hydrographics: number | undefined;
   readonly population: number | undefined;
@@ -249,6 +251,8 @@ export interface WorldView {
   readonly system: SystemView | undefined;
   /** Eine Nebenwelt (2026-11-20d): Sie lässt sich jederzeit benennen; ihr Raumhafen ist ein Spaceport. */
   readonly subordinate: boolean;
+  /** Die Reisezone des Systems (2026-11-27): Amber, Red oder grün (`undefined`). */
+  readonly travelZone: 'amber' | 'red' | undefined;
 }
 
 /** Das Sternsystem in der Übersicht der Weltkarte (2026-11-20b): Sterne und was auf jeder Bahn liegt. */
@@ -347,6 +351,7 @@ export function sectorView(hexes: readonly Hex[], marked: ReadonlySet<string> = 
         navalBase: hex?.navalBase ?? false,
         scoutBase: hex?.scoutBase ?? false,
         gasGiant: hex?.gasGiant ?? false,
+        travelZone: hex?.travelZone,
         size: world?.uwp.size,
         hydrographics: world?.uwp.hydrographics,
         population: world?.uwp.population,
@@ -526,6 +531,7 @@ export function worldView(hexes: readonly Hex[], column: number, row: number, ro
     error,
     system: systemView(hex),
     subordinate: false,
+    travelZone: hex.travelZone,
   };
 }
 
@@ -570,6 +576,7 @@ function subordinateView(hex: Hex, id: string, error: string | undefined, happen
     error,
     system: systemView(hex),
     subordinate: true,
+    travelZone: hex.travelZone,
   };
 }
 

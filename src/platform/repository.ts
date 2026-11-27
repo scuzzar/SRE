@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Table } from 'dexie';
 import { cryptoKeys } from './keys';
-import { hexFromFlat, hexFromRolls, keepFocus, type FlatHex, START_DAY, settleStash, storedTurrets, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckMark, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type Ship, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
+import { hexFromFlat, hexFromRolls, keepFocus, type FlatHex, START_DAY, settleStash, storedTurrets, legacyHold, firstWorldOf, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckMark, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type Ship, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -213,7 +213,10 @@ export function upgraded(campaign: Campaign): Campaign {
   // Schiffe von vor den Turrets am Schiff (2026-11-21g), dem unraffinierten Treibstoff (2026-11-21f) und der Software: die Turrets des Entwurfs, kein unraffinierter Treibstoff, keine Software; ausgeblendet war keins.
   const ships = (campaign.ships ?? []).map((s) => {
     const old = s as Partial<Ship>;
-    return { ...s, unrefined: old.unrefined ?? 0, retired: old.retired ?? false, software: old.software ?? [], turrets: storedTurrets(s.design, old.turrets) };
+    // Fracht von vor den Ladungen (2026-11-27): eine Ladung ohne Ziel (legacyHold).
+    const { cargo, ...rest } = s as Ship & { readonly cargo?: number };
+    const hold = rest.hold ?? legacyHold(cargo, (typeof (rest.place as unknown) === 'string' ? (rest.place as unknown as string) : rest.place?.world) ?? (typeof (campaign.location as unknown) === 'string' ? (campaign.location as unknown as string) : campaign.location?.world) ?? firstWorldOf(hexes));
+    return { ...rest, ...(hold.length > 0 ? { hold } : {}), unrefined: old.unrefined ?? 0, retired: old.retired ?? false, software: old.software ?? [], turrets: storedTurrets(s.design, old.turrets) };
   });
   // Begegnungen von vor den Range Bands bzw. von vor 2026-11-08d macht upgradeDistances zu solchen mit Startband.
   const encounters = (campaign.encounters ?? []).map((e): Encounter => ({ ...e, round: e.round ?? 1, acted: e.acted ?? [] }));

@@ -16,6 +16,7 @@ import { unseat, type Ship } from './ship';
 import type { SystemFlight } from './flight';
 import type { Mission } from './mission';
 import { defaultOdds, HANDS, itemOf, itemOfWeapon, oddsOf, ref, skillOf, weaponOf, type ExampleCharacter } from './reference';
+import type { Market } from './trade';
 
 /** Die sechs Attributwerte, je 0 bis 15. */
 export interface Upp {
@@ -151,6 +152,8 @@ export interface Campaign {
   readonly voyage?: Voyage;
   /** Die Missionen, in der Reihenfolge, in der sie angelegt wurden, auch die ausgeblendeten (siehe `mission.ts`). */
   readonly missions: readonly Mission[];
+  /** Die Märkte dieser Woche (siehe `trade.ts`, 2026-11-27); vergangene Wochen fallen weg. Fehlt ohne Markt. */
+  readonly markets?: readonly Market[];
 }
 
 /** Was man beim Anlegen und Bearbeiten eines Charakters eingibt. */
@@ -278,6 +281,8 @@ export function removeLogEntry(campaign: Campaign, index: number): Campaign {
   if (kind === 'time' || kind === 'journey' || kind === 'systemJourney' || kind === 'tripDay' || kind === 'skimming')
     throw new DomainError(kind === 'time' ? 'Vergangene Zeit lässt sich nicht löschen.' : kind === 'tripDay' ? 'Ein Reisetag lässt sich nicht löschen.' : kind === 'skimming' ? 'Geschöpfter Treibstoff lässt sich nicht löschen.' : 'Eine Reise lässt sich nicht löschen.');
   if (kind === 'monthEnd') throw new DomainError('Eine Monatsabrechnung lässt sich nicht löschen.');
+  // Waren- und Preiswürfe haben den Markt bestimmt; auf sie verweisen Markt und Ladungen (2026-11-27).
+  if (kind === 'goodsRoll' || kind === 'priceRoll') throw new DomainError('Ein Waren- oder Preiswurf lässt sich nicht löschen.');
   // Ein Wurf einer Garbe geht nur mit der ganzen Garbe.
   const roots = campaign.log[index]!.kind === 'attack' ? volleyOf(campaign.log, index) : [index];
   // Ein Ereignis geht mit seinen Rettungswürfen, ein Rettungswurf mit seinem Schaden.
@@ -291,13 +296,16 @@ export function removeLogEntry(campaign: Campaign, index: number): Campaign {
     if (entry.kind === 'attack' && entry.volley !== undefined) return [{ ...entry, volley: shift(entry.volley) }];
     if (entry.kind === 'save') return [{ ...entry, of: shift(entry.of) }];
     if (entry.kind === 'damage') return [entry.of === undefined ? { ...entry, after: shift(entry.after!) } : { ...entry, of: shift(entry.of) }];
+    if (entry.kind === 'priceRoll' && entry.offer !== undefined) return [{ ...entry, offer: shift(entry.offer) }];
     return [entry];
   });
   // Ein Lotteriegewinn verweist auf seine Reise; sie bleibt, aber ihre Stelle rückt nach.
   const bookings = campaign.bookings.map((b) => (b.won !== undefined ? { ...b, won: shift(b.won) } : b.rentFor !== undefined ? { ...b, rentFor: shift(b.rentFor) } : b.ticketFor !== undefined ? { ...b, ticketFor: shift(b.ticketFor) } : b));
   // Die Reise unterwegs verweist auf ihren Logeintrag; auch ihre Stelle rückt nach (2026-11-22c).
   const voyage = campaign.voyage === undefined ? {} : { voyage: { ...campaign.voyage, entry: shift(campaign.voyage.entry) } };
-  return { ...campaign, log, bookings, ...voyage };
+  // Die Märkte verweisen auf ihre Waren- und Preiswürfe; deren Stellen rücken nach.
+  const markets = campaign.markets === undefined ? {} : { markets: campaign.markets.map((m) => ({ ...m, goods: m.goods.map(shift), purchases: m.purchases.map(shift), sales: m.sales.map(shift), bought: m.bought.map((b) => ({ ...b, goods: shift(b.goods) })) })) };
+  return { ...campaign, log, bookings, ...voyage, ...markets };
 }
 
 export function characterOf(campaign: Campaign, id: CharacterId): Character {
