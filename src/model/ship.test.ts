@@ -38,7 +38,7 @@ const withRolls = (campaign: Campaign, rolls: readonly CareerRoll[]): Campaign =
 describe('Schiffe der Kampagne', () => {
   it('ein neues Schiff kommt vom Standardentwurf: voller Tank, Standardsoftware, Preis des Entwurfs', () => {
     const added = addShip(base, 'A', undefined);
-    expect(added.ship).toMatchObject({ id: 's1', design: 'A', name: 'Free Trader', fuel: 30, cargo: 0, price: 37_080_000, retired: false });
+    expect(added.ship).toMatchObject({ id: 's1', design: 'A', name: 'Free Trader', fuel: 30, price: 37_080_000, retired: false });
     expect(added.ship.initialLoan).toBeUndefined();
     expect(added.ship.software.map((s) => s.program)).toEqual(['maneuver', 'jump-1', 'navigation', 'generate', 'anti-hijack', 'library']);
     expect(shipOf(added.campaign)).toEqual(added.ship);

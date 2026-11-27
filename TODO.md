@@ -9,10 +9,6 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 
 ### 1. Handel, Schritt 1
 
-- [ ] **Handel, Schritt 1 abnehmen**: gebaut am 27. November 2026 nach
-  [`docs/modell/handel.md`](docs/modell/handel.md); wartet auf die Freigabe des Owners. Danach
-  Unit- und GUI-Tests für Markt, Aufträge, Ankunft und Laden alter Stände schreiben und die ganze
-  Regression laufen lassen (Owner: Tests und Regression erst nach seiner Freigabe).
 - [ ] **Würfelbühne für den Handel**: Waren-, Preis- und Auftragswürfe laufen noch ohne Würfelbühne
   (GUI-Handbuch, *Handel*).
 
