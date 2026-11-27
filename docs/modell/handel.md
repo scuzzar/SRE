@@ -83,7 +83,7 @@ neu gewürfelt.
 ### Ladung
 
 `Ship.hold` sind die Ladungen im Laderaum (`Cargo`): Art (`goods` eigene Ware, `freight` fremde
-Fracht, `message` private Botschaft mit 0 t und Honorar `fee`), Tonnen, bei Stückwaren die Stückzahl (`count`, Tonnen = Stück × `tonsPerItem`), bei Ware
+Fracht, `mail` private Post mit 0 t und Honorar `fee`), Tonnen, bei Stückwaren die Stückzahl (`count`, Tonnen = Stück × `tonsPerItem`), bei Ware
 der bezahlte Preis (`paid`), woher (`from`), bei Fracht das Ziel (`to`). `Ship./cargo` ist jetzt
 die **Summe der Tonnen** aller nicht ausgeblendeten Ladungen; das bisher frei einzugebende Feld
 `cargo` entfällt (was aus alten Ständen wird: siehe offene Fragen). Freier Laderaum ist Entwurf minus Beiboote im Laderaum minus
@@ -139,17 +139,17 @@ die **Summe der Tonnen** aller nicht ausgeblendeten Ladungen; das bisher frei ei
   Postmenge und vom Ziel (`Journey.mail`, Buchung `shipIncome` mail) – aber nur, wenn das Schiff
   beim Abflug **bewaffnet** ist (mindestens eine Turret mit Waffe) und ein **Gunner auf Posten**
   steht (`CrewPost` gunner). Fehlt eins, fliegt die Post ohne Geld mit, und der Log sagt warum.
-- **Private Botschaft** (`MessageOffer`, je Markt eine, E13): Beim ersten Blick auf den Markt
+- **Private Post** (`MailOffer`, je Markt eine, E13; SR: „private mail“): Beim ersten Blick auf den Markt
   würfelt die App 2W6 (`dice`), `/available` bei **9+**. Dann auch das Ziel (`to`: ein
   zufälliges System mit Welt in Sprungweite) und das Honorar (`die`, `/fee` = Würfel × Cr20, E11).
-  Angenommen (`taken`) wird sie eine Ladung `message` mit Ziel und Honorar; bezahlt wird erst bei
-  der **Ankunft am Ziel** (Buchung `shipIncome` message), dann ist sie geliefert. Dass der Bote
+  Angenommen (`taken`) wird sie eine Ladung `mail` mit Ziel und Honorar; bezahlt wird erst bei
+  der **Ankunft am Ziel** (Buchung `shipIncome` privateMail), dann ist sie geliefert. Dass der Bote
   beim Empfänger als verlässlich gilt, steht als Text im Log; einen Patron legt die App nicht an.
 
 ### Buchungen
 
 - `Booking.shipIncome` sagt, wofür eine Einnahme des Schiffs ist (freight, passage, goods, mail,
-  message);
+  privateMail);
   `ShipCost` bekommt goods (Wareneinkauf), handling (Teilkaufgebühr) und broker (Makler).
 - **Monatsabrechnung**: Wareneinkauf (goods) zählt wie der Kaufpreis des Schiffs **nicht** zu den laufenden
   Kosten und steht nicht in `MonthEnd.costs`; handling und broker schon. Einnahmen stehen nicht in

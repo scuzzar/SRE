@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-27: Handel, Schritt 1: Spekulation mit Markt je Welt und Woche (Warenwurf, Preiswürfe), Ladungen im Laderaum, Fracht- und Passagierangebote je Ziel, angekündigtes Ziel, zahlende Passagiere an der Reise, Postvertrag und private Botschaften, Reisezonen
+title Änderung 2026-11-27: Handel, Schritt 1: Spekulation mit Markt je Welt und Woche (Warenwurf, Preiswürfe), Ladungen im Laderaum, Fracht- und Passagierangebote je Ziel, angekündigtes Ziel, zahlende Passagiere an der Reise, Postvertrag und private Post, Reisezonen
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -193,9 +193,9 @@ $gone("2026-11-27", "cargo: number")
   enum CargoKind <<value>> $handel $newClass("2026-11-27") {
     goods
     freight
-    message
+    mail
   }
-  class MessageOffer <<value>> $handel $newClass("2026-11-27") {
+  class MailOffer <<value>> $handel $newClass("2026-11-27") {
     dice: number[2]
     /available: boolean
     die: number
@@ -234,7 +234,7 @@ $gone("2026-11-27", "cargo: number")
     passage
     goods
     mail
-    message
+    privateMail
   }
   enum TravelZone <<value>> $handel $newClass("2026-11-27") {
     amber
@@ -395,8 +395,8 @@ FreightOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
 FreightOffer "1" *-$newArrow("2026-11-27")- "*" FreightLot : lots {ordered}
 FreightLot -$newArrow("2026-11-27")-> FreightSize
 PassengerOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
-Market "1" *-$newArrow("2026-11-27")- "0..1" MessageOffer : message
-MessageOffer "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
+Market "1" *-$newArrow("2026-11-27")- "0..1" MailOffer : mail
+MailOffer "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
 LogEntry <|-$newArrow("2026-11-27")- GoodsRoll
 LogEntry <|-$newArrow("2026-11-27")- PriceRoll
 GoodsRoll "*" -$newArrow("2026-11-27")-> "1" World : at

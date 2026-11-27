@@ -352,7 +352,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Frachtangebot | `FreightOffer`, `FreightLot` | Die Haupt-, Neben- und Gelegenheitsladungen, die an einer Welt auf ein Ziel warten (2026-11-27) |
 | Passagierangebot | `PassengerOffer` | Wie viele Passagiere je Klasse zum angekündigten Ziel reisen wollen und wie viele mitfliegen (2026-11-27) |
 | Postvertrag | `Ship.mailContract`, `Journey.mail` | Das Schiff führt Post: 5 t Laderaum reserviert, Cr25.000 je Sprung, wenn es bewaffnet ist und ein Gunner auf Posten steht (2026-11-27) |
-| Private Botschaft | `MessageOffer`, `Cargo` mit `kind` message | Eine Nachricht an eine Stelle im Zielsystem, 0 t, Honorar bei Lieferung (2026-11-27) |
+| Private Post | `MailOffer`, `Cargo` mit `kind` mail | Ein Brief oder eine Nachricht an eine Stelle im Zielsystem, 0 t, Honorar bei Lieferung (2026-11-27) |
 | Angekündigtes Ziel | `Ship.destination` | Das System, für das das Schiff Fracht und Passagiere aufnimmt (2026-11-27) |
 | Schiff | `Ship`, `Campaign.ships`, `Campaign./ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld. Die Kampagne hält alle ihre Schiffe (auch die ausgeblendeten, 2026-11-16c); `/ship` ist das nicht ausgeblendete, wie `focus` beim Charakter; die Schiffs-Id (s1, s2, …) ist wie bei Charakteren nicht gezeichnet |
 | Schiffsentwurf | `ShipDesign` | Referenzdaten eines Standardentwurfs (Scout/Courier, Free Trader, …): Rumpf, Antriebe, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf, Bauzeit; siehe [`regeln-schiffe.md`](regeln-schiffe.md) unter *Standardentwürfe* |

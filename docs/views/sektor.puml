@@ -88,7 +88,7 @@ hide <<browser>> stereotype
   class GoodsRoll $handel $newClass("2026-11-27")
   class PriceRoll $handel $newClass("2026-11-27")
   class Cargo $handel $newClass("2026-11-27")
-  class MessageOffer <<value>> $handel $newClass("2026-11-27")
+  class MailOffer <<value>> $handel $newClass("2026-11-27")
   class FreightOffer <<value>> $handel $newClass("2026-11-27")
   class PassengerOffer <<value>> $handel $newClass("2026-11-27")
   enum TravelZone <<value>> $handel $newClass("2026-11-27")
@@ -286,7 +286,7 @@ Booking "*" --> "0..1" World : in
 Market "*" -$newArrow("2026-11-27")-> "1" World : at
 FreightOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
 PassengerOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
-MessageOffer "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
+MailOffer "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
 GoodsRoll "*" -$newArrow("2026-11-27")-> "1" World : at
 PriceRoll "*" -$newArrow("2026-11-27")-> "1" World : at
 Ship "*" -$newArrow("2026-11-27")-> "0..1" Hex : destination

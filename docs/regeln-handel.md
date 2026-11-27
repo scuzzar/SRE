@@ -593,4 +593,4 @@ weil die Quelle nichts dazu sagt; die übrigen sind die Wahl zwischen zwei Lesar
 | E10 | Low Lottery bei mehreren oder keinen Richtigen | ✱ Mehrere überlebende Richtige teilen den Topf; sonst bekommt ihn der Kapitän. |
 | E11 | Honorar für private Post | ✱ 1D × Cr20. |
 | E12 | Wer darf einen Postvertrag schließen? | ✱ Jedes Schiff, nicht nur subventionierte; bezahlt wird nur, wenn es beim Abflug bewaffnet ist und ein Gunner auf Posten steht. |
-| E13 | Private Botschaften in der App | 9+ je Woche und Welt; Ziel ein System in Sprungweite, Honorar 1D × Cr20, bezahlt bei Lieferung am Ziel. Welches Crewmitglied angesprochen wird, würfelt die App nicht; die Einführung beim Empfänger bleibt Text. |
+| E13 | Private Post (Botschaften) in der App | 9+ je Woche und Welt; Ziel ein System in Sprungweite, Honorar 1D × Cr20, bezahlt bei Lieferung am Ziel. Welches Crewmitglied angesprochen wird, würfelt die App nicht; die Einführung beim Empfänger bleibt Text. |
