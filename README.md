@@ -5,7 +5,7 @@ Eine App für **Solo-Rollenspiel mit Classic Traveller**. Sie vereint zwei Dinge
 1. **Die Regeln von Classic Traveller**, damit Würfe, Tabellen und Abläufe nicht mehr von Hand nachgeschlagen werden müssen.
 2. **Ein Orakel**, das die Spielleitung ersetzt, angelehnt an **Mythic** (Mythic Game Master Emulator) und den **Game Master's Apprentice (GMA)**.
 
-> Status: **Version 1 in Arbeit.** Gebaut für das Smartphone (nur Hochformat), ab 1024 px Breite mit einem **Desktop-Modus**. Umgesetzt sind Orakel und Proben, Charaktere mit Erschaffung nach den Regeln (18 Laufbahnen), NSC, Begegnungen, Kampf, Spielzeit, Reisen und Fahrten über die Oberfläche, Shop und Gruppenkasse, Subsektor mit Welten und Globus, Missionen sowie das Schiff mit Systemflug und Raumkampf.
+> Status: **Version 1 in Arbeit.** Gebaut für das Smartphone (nur Hochformat), ab 1024 px Breite mit einem **Desktop-Modus**. Umgesetzt sind Orakel und Proben, Charaktere mit Erschaffung nach den Regeln (18 Laufbahnen), NSC, Begegnungen, Kampf, Spielzeit, Reisen und Fahrten über die Oberfläche, Shop und Gruppenkasse, Subsektor mit Welten und Globus, Missionen sowie das Schiff mit Systemflug, Raumkampf und Handel.
 
 ## Wo was steht
 
@@ -95,7 +95,12 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 - Die **Werft** verkauft die neun Standardentwürfe bar oder mit Bankkredit; die Monatsrate geht von selbst von der Kasse ab.
 - Das Schiff zeigt Treibstoff, Fracht, Kabinen, Antrieb, Hardpoints, Computer und Restschuld, dazu **Deckpläne** (eigene Bilder je Entwurf), **Crew** mit Posten und **Computer** mit Programmen.
 - **Systemflug** auf der Raumkarte mit Vektorbewegung nach Mayday, Treibstoff schöpfen am Gasriesen, Landen.
-- **Raumkampf** gegen ein fremdes Schiff mit Lasern, Trefferzonen und Schaden; Beiboote mit Launch und Andocken. Regeln und Stand: [docs/regeln-schiffe.md](docs/regeln-schiffe.md).
+- **Raumkampf** gegen ein fremdes Schiff mit Lasern, Trefferzonen und Schaden, Crew und Programmen, Antriebsschaden nach Buchstaben und Schadenskontrolle; Reparatur auf der Detailseite Schaden (unterwegs flicken, in der Werft auswählen oder selbst reparieren); Beiboote mit Launch und Andocken. Regeln und Stand: [docs/regeln-schiffe.md](docs/regeln-schiffe.md).
+
+### Handel
+
+- Mit dem eigenen Schiff an einem Raumhafen A–E: **spekulativer Handel** mit Waren- und Preiswürfen, **Fracht** zu mehreren Zielen, **zahlende Passagiere** (auch im Kälteschlaf mit Lotterie) und **Post**; Ladungen und Fahrgäste stehen im Laderaum des Schiffes.
+- **Reisezonen** (Amber, Red) setzt man von Hand an der Welt. Regeln und Stand: [docs/regeln-handel.md](docs/regeln-handel.md).
 
 ### Missionen
 
@@ -103,7 +108,7 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 
 ### Bewusst noch nicht in Version 1
 
-Physisches Würfeln, Deckung, Moral und Drogen im Kampf, Handel und Spekulation, Sprungrouten, ganze Sektoren, Raketen, Sand, Ortung und Entern im Raumkampf, eigene Schiffsentwürfe, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen. Was im Einzelnen fehlt, steht im Domänenmodell unter „Wo der Code noch nicht folgt“ und in den Regeldokus.
+Physisches Würfeln, Deckung, Moral und Drogen im Kampf, Psionik, Charter und Shuttles im Handel, Sprungrouten, ganze Sektoren, Raketen, Sand, Ortung und Entern im Raumkampf, eigene Schiffsentwürfe, Chaosfaktor, Szenen, Feinjustierung ±1, eigene Fertigkeiten, Hausregeln in der App einstellen. Was im Einzelnen fehlt, steht im Domänenmodell unter „Wo der Code noch nicht folgt“ und in den Regeldokus.
 
 ---
 

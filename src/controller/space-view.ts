@@ -48,6 +48,10 @@ import {
   fireBlocker,
   firePreview,
   hardpointBlocker,
+  damageControlBlocker,
+  DAMAGE_CONTROL_TARGET,
+  engineerOf,
+  patchableHits,
   hardpointsOf,
   phaseOf,
   partyIndexOf,
@@ -98,6 +102,15 @@ export interface SpaceHardpointView {
 }
 
 /** Eine Einheit auf der Raumkarte, wie die View sie zeichnet. */
+/** Die Schadenskontrolle eines eigenen Schiffs im Blatt (2026-11-22d). */
+export interface SpaceRepairView {
+  readonly engineer: string | undefined;
+  readonly skill: number;
+  readonly need: number;
+  readonly blocker: string | undefined;
+  readonly hits: readonly { readonly at: number; readonly label: string }[];
+}
+
 export interface SpaceUnitView {
   readonly index: number;
   /** In dieser Einheit sitzt die Gruppe (2026-11-21b); nur sie landet. */
@@ -131,6 +144,12 @@ export interface SpaceUnitView {
   readonly intent: string | undefined;
   readonly wreck: boolean;
   readonly damage: readonly string[];
+  /**
+   * Schadenskontrolle eines eigenen Schiffs (SR 42, 2026-11-22d): der Engineer mit Fertigkeit, was auf
+   * 2W6 nötig ist, warum es gerade nicht geht, und die Treffer, die sich flicken lassen. Fehlt bei
+   * fremden Schiffen und ohne Treffer, die sich flicken lassen.
+   */
+  readonly repair: SpaceRepairView | undefined;
   /** Laser, die noch feuern können; welche Hardpoints in dieser Raumrunde schon gefeuert haben (2026-11-21i, 2026-11-23). */
   readonly lasers: number;
   readonly firedTurrets: readonly number[];
@@ -430,7 +449,18 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
           foe: unit.ship === undefined,
           intent: unit.intent === undefined ? undefined : intentNames[unit.intent],
           wreck: unit.ship === undefined && unit.intent === undefined,
-          damage: (damage?.hits ?? []).map((h) => hitZoneNames[h]),
+          damage: (damage?.hits ?? []).map((h, at) => (damage?.patched?.includes(at) ? `${hitZoneNames[h]} (geflickt)` : hitZoneNames[h])),
+          repair: (() => {
+            if (ship === undefined || patchableHits(damage).length === 0) return undefined;
+            const engineer = engineerOf(campaign, ship);
+            return {
+              engineer: engineer?.who.name,
+              skill: engineer?.skill ?? 0,
+              need: DAMAGE_CONTROL_TARGET - (engineer?.skill ?? 0),
+              blocker: damageControlBlocker(campaign, index),
+              hits: patchableHits(damage).map((at) => ({ at, label: hitZoneNames[damage!.hits[at]!] })),
+            };
+          })(),
           lasers: laserCountOf(campaign, unit),
           firedTurrets: unit.firedTurrets ?? [],
           hardpoints:

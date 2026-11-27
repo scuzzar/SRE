@@ -51,13 +51,63 @@ import {
   repairCostOf,
   maneuverAfter,
   jumpAfter,
+  turretsDown,
   craftOf,
   craftPurchaseBlocker,
   holdTonsOf,
   isSmallCraft,
   type Ship,
+  atShipyard,
+  damagedHitsOf,
+  engineeringOf,
+  repairBlocker,
+  FIELD_REPAIR_TARGET,
+  YARD_REPAIR_TARGET,
+  MATERIAL_HIT,
+  MATERIAL_CRITICAL,
+  FEE_HIT,
+  FEE_CRITICAL,
+  REPAIR_HIT,
+  REPAIR_CRITICAL,
 } from '../model';
 import { hitZoneNames } from './time-view';
+
+/** Ein Treffer auf der Detailseite Schaden (2026-11-27d). */
+export interface RepairHit {
+  readonly ship: string;
+  readonly at: number;
+  /** „Maneuver“, bei einem Beiboot an Bord mit seinem Namen davor. */
+  readonly label: string;
+  readonly critical: boolean;
+  readonly patched: boolean;
+  /** Was die Werft für diesen Treffer verlangt. */
+  readonly yardPrice: number;
+}
+
+/** Wer einen Reparaturversuch machen kann, mit DM und Zielwert; `blockers` je Treffer in derselben Reihenfolge wie `hits`. */
+export interface RepairPerson {
+  readonly id: string;
+  readonly name: string;
+  readonly engineering: number;
+  readonly need: number;
+  readonly blocker: string | undefined;
+  readonly blockers: readonly (string | undefined)[];
+}
+
+/** Die Detailseite Schaden (2026-11-27d): unterwegs flicken, in der Werft selbst reparieren oder auswählen und bezahlen. */
+export interface RepairView {
+  readonly hits: readonly RepairHit[];
+  /** Das Schiff steht an einer Werft (A oder B) und die Gruppe ist bei ihm. */
+  readonly atYard: boolean;
+  /** Warum die Werft gerade nicht reparieren kann. */
+  readonly yardBlocker: string | undefined;
+  /** Zielwert des Reparaturversuchs: unterwegs 10, in der Werft 8. */
+  readonly target: number;
+  readonly people: readonly RepairPerson[];
+  /** Material und Gebühr, wenn ein Engineer in der Werft selbst repariert. */
+  readonly material: { readonly hit: number; readonly critical: number };
+  readonly fee: { readonly hit: number; readonly critical: number };
+}
 
 /** Ein Turret auf einem Hardpoint des eigenen Schiffs (2026-11-21g). */
 export interface TurretRow {
@@ -265,6 +315,8 @@ export interface ShipView {
         readonly damage: readonly string[];
         readonly turretsOut: readonly number[];
         readonly repairCost: number;
+        /** Die Detailseite Schaden (2026-11-27d): Treffer, Wege der Reparatur und wer es versuchen kann. */
+        readonly repair: RepairView;
         /** Höchstschub und Sprung nach dem Schaden. */
         readonly maneuverNow: number;
         readonly maneuver: number;
@@ -391,9 +443,10 @@ export function buildShipView(campaign: Campaign, deckPlans: readonly DeckPlan[]
             retireBlocker: retireShipBlocker(campaign),
             repairBlocker: shipyardBlocker(campaign)?.replace('umgerüstet', 'repariert').replace('Umrüsten', 'Reparieren'),
             craftWeapons: isSmallCraft(ship) ? weaponsLine(ship) : undefined,
-            damage: damagedAtYard(campaign, ship).flatMap((s) => (s.damage?.hits ?? []).map((h) => (s.id === ship.id ? hitZoneNames[h] : `${s.name}: ${hitZoneNames[h]}`))),
-            turretsOut: (ship.damage?.turretsOut ?? []).map((i) => i + 1),
+            damage: damagedAtYard(campaign, ship).flatMap((s) => (s.damage?.hits ?? []).map((h, at) => `${s.id === ship.id ? '' : `${s.name}: `}${hitZoneNames[h]}${s.damage?.patched?.includes(at) ? ' (geflickt)' : ''}`)),
+            turretsOut: turretsDown(ship.damage).map((i) => i + 1),
             repairCost: repairCostOf(campaign, ship),
+            repair: repairView(campaign, ship),
             maneuverNow: maneuverAfter(ship.design, ship.damage),
             maneuver: plan.maneuver,
             jumpNow: jumpAfter(ship.design, ship.damage),
@@ -474,4 +527,26 @@ function weaponsLine(craft: Ship): string {
   for (const w of weapons) counts.set(w, (counts.get(w) ?? 0) + 1);
   const line = [...counts].map(([w, n]) => `${n > 1 ? `${n} × ` : ''}${shipWeaponOf(w).name}`).join(', ');
   return (craft.damage?.turretsOut.length ?? 0) > 0 ? `${line} (ausgefallen)` : line;
+}
+
+/** Die Detailseite Schaden (2026-11-27d): die Treffer und jeder lebende Charakter mit seinem Stand. */
+function repairView(campaign: Campaign, ship: Ship): RepairView {
+  const hits = damagedHitsOf(campaign, ship).map((h): RepairHit => {
+    const name = h.ship === ship.id ? '' : `${campaign.ships.find((s) => s.id === h.ship)?.name ?? 'Beiboot'}: `;
+    return { ship: h.ship, at: h.at, label: `${name}${hitZoneNames[h.zone]}`, critical: h.critical, patched: h.patched, yardPrice: h.critical ? REPAIR_CRITICAL : REPAIR_HIT };
+  });
+  const yard = atShipyard(campaign);
+  const target = yard ? YARD_REPAIR_TARGET : FIELD_REPAIR_TARGET;
+  return {
+    hits,
+    atYard: yard,
+    yardBlocker: shipyardBlocker(campaign)?.replace('umgerüstet', 'repariert').replace('Umrüsten', 'Reparieren'),
+    target,
+    people: candidatesFor(campaign).map((c) => {
+      const engineering = engineeringOf(c);
+      return { id: c.id, name: c.name, engineering, need: target - engineering, blocker: repairBlocker(campaign, c.id), blockers: hits.map((h) => repairBlocker(campaign, c.id, h)) };
+    }),
+    material: { hit: MATERIAL_HIT, critical: MATERIAL_CRITICAL },
+    fee: { hit: FEE_HIT, critical: FEE_CRITICAL },
+  };
 }

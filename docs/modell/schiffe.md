@@ -318,6 +318,41 @@ zusammengefasst in [`regeln-schiffe.md`](../regeln-schiffe.md)). Entscheidungen 
   Demo-Kampagne, die damit Maneuver und Target in der CPU hat. Posten sind zunächst leer; die
   Demo-Kampagne setzt Kira Vant als Pilot und Jonas Reyl als Gunner des Turrets ein.
 
+## Reparatur außerhalb des Kampfs
+
+*freigegeben am 27. November 2026, Kennzeichen 2026-11-27d (Owner).* Regeln: SR 28
+(Reparatur 10+ je Techniker und Woche) und SR 42 (*Repair Parts*: unterwegs nur provisorisch, voll
+nur an einer Werft), zusammengefasst in [`regeln-schiffe.md`](../regeln-schiffe.md). Bisher gab es nur
+„Alles reparieren“ in der Werft.
+
+- **Detailseite Schaden.** Ein Tipp auf die Kachel *Schaden* im Bereich Schiff öffnet sie: alle
+  Treffer des Schiffs (geflickte mit „geflickt“) und seiner Beiboote an Bord, und je nachdem, wo das
+  Schiff steht, die Wege unten. Dieselbe Seite öffnet die Werft statt des Abschnitts *Reparatur*.
+- **Reparaturversuch** (`ShipRepair`, Logeintrag). Ein Charakter (`by`) versucht an einem Treffer
+  der Zone `zone` von Schiff `ship`: 2W6 + Engineering (`dm`; ⚑ ohne Fertigkeit 0). `yard` sagt, ob
+  es in der Werft war. `/success`: unterwegs 10+, in der Werft 8+. Gewählt wird der Treffer auf der
+  Detailseite; wie bei der Schadenskontrolle hält der Eintrag die Zone, `ShipDamage` die Stelle.
+- **Unterwegs flicken** (Owner: geflickt, 1× je Woche, 10+). Nicht im Systemflug und nicht in der
+  Werft; die Gruppe ist beim Schiff. Je Charakter **ein Versuch je Spielwoche** (Woche wie bei
+  „Woche beenden“), ⚑ egal an welchem Treffer. Gelingt er, ist der Treffer geflickt
+  (`ShipDamage.patched`) wie nach der Schadenskontrolle: Er wirkt nicht mehr, die Werft berechnet ihn
+  weiter. Kritische Treffer lassen sich unterwegs nicht flicken. Kosten keine. Die Zeit läuft dafür
+  nicht von selbst weiter.
+- **In der Werft selbst reparieren** (Owner: der eigene Engineer gegen Material). An einem
+  Raumhafen A oder B, wie Umrüsten. Nur wer **Engineering-1** oder mehr hat. Je Charakter **ein
+  Treffer je Tag** oder **ein kritischer Treffer je Woche** (Owner). Auch geflickte und kritische
+  Treffer. Gelingt der Wurf (8+), ist der Treffer **ganz repariert** (er verschwindet aus
+  `ShipDamage`), und das **Material** kostet die Hälfte des Werftpreises: Cr 50.000, kritisch
+  Cr 500.000. Misslingt er, kostet es eine **Gebühr** von Cr 10.000, kritisch Cr 20.000 (Owner).
+  Gebucht wird wie die Reparatur (`shipCost` repair, `forShip`, Hinweis mit Zone und Erfolg). Reicht
+  die Kasse für das Material nicht, geht der Versuch nicht.
+- **Die Werft repariert, was man auswählt** (Owner). Auf der Detailseite die Treffer anhaken; die
+  Werft repariert genau diese zum bisherigen Preis (Cr 100.000, kritisch Cr 1.000.000), eine
+  Buchung für alle. „Alles auswählen“ bleibt als Abkürzung.
+- **Ein Treffer verschwindet** (Werft oder selbst): Die übrigen Treffer behalten ihre Reihenfolge;
+  `patched` und `turretsOut` werden mitgezogen (ein Turret-Treffer nimmt sein ausgefallenes Turret
+  mit, das wieder arbeitet). Ist kein Treffer mehr übrig, entfällt `Ship.damage`.
+
 ## Schiffsbegegnungen bei Abreise und Ankunft
 
 (freigegeben am 22. November 2026, Kennzeichen 2026-11-22b; Owner,

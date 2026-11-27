@@ -2,7 +2,7 @@ import { referenceData, type Cascade, type ComputerModel, type Entry, type Event
 import { DomainError } from './errors';
 
 export { nameSlotIds, nameSounds, type NameSound } from '../data';
-export { armorClasses, itemKinds, ranges, softwareKinds } from '../data';
+export { armorClasses, DRIVE_LETTERS, itemKinds, ranges, softwareKinds } from '../data';
 export type {
   Aging,
   ArmorClass,
@@ -33,6 +33,7 @@ export type {
   SectionKind,
   Service,
   ShipDesign,
+  DrivePotential,
   Skill,
   Slot,
   Software,
@@ -128,6 +129,19 @@ export function serviceOf(id: string): Service {
 
 export function shipDesignOf(id: string): ShipDesign {
   return found(designById.get(id), 'Der Schiffsentwurf', id);
+}
+
+const potentialHulls = [...new Set(ref.drivePotential.map((p) => p.hull))].sort((x, y) => x - y);
+const potential = new Map(ref.drivePotential.map((p) => [`${p.hull}-${p.letter}`, p.rating]));
+
+/**
+ * Drive Potential (SE 10, 2026-11-22d): die Leistung eines Antriebsbuchstabens in einem Rumpf – G,
+ * Sprungzahl oder Energiewerkszahl. Für Zwischengrößen zählt die nächstgrößere Zeile; fehlt sie oder
+ * der Buchstabe darin, arbeitet der Antrieb nicht (0).
+ */
+export function drivePotentialOf(hull: number, letter: string): number {
+  const row = potentialHulls.find((h) => h >= hull);
+  return row === undefined ? 0 : (potential.get(`${row}-${letter}`) ?? 0);
 }
 
 export function turretTypeOf(id: string): TurretType {

@@ -91,3 +91,36 @@ Aus [`docs/regeln-kampf.md`](docs/regeln-kampf.md), noch offen:
   seinen Tierwerten (Hits, Angriffe, Speed), ohne Shop, Gepäck und Proben. Offen: wer es im Kampf
   steuert, ob und wie es mitreist (Passage?), wie es heilt, was aus dem Verweis auf die Tiertabelle
   seiner Welt wird, was der Editor bei einem Tier zeigt. Geht zuerst als Änderung ins Domänenmodell.
+
+## Raumkampf
+
+Die offenen Stufen aus dem Stufenplan in [`docs/konzept-raumkampf.md`](docs/konzept-raumkampf.md)
+(Reihenfolge vom Owner bestätigt am 22. November 2026); Regeln in
+[`docs/regeln-schiffe.md`](docs/regeln-schiffe.md#raumkampf). Jede Stufe ist eine eigene Änderung
+im Modell.
+
+- [ ] **Stufe 3: Raketen und Sand** (SR 39–42, SE 12–13; MD, SS3): Standardrakete 5G6 als eigene
+  Einheit mit Brennschluss, Abfangen auf 2.500 km, Kontakt, Detonation 1W Treffer, Anti-Missile,
+  ECM 9+, Nachladen (Gunner feuert in der Runde nicht), Munition in der Werft kaufen; Sandwolke als
+  treibende Einheit, −3 je Raumband. Dazu Raketen und Sand für die Small Craft und das Log der
+  laufenden Runde.
+- [ ] **Stufe 4b: Small Craft im Kampf und Entern**: Aussetzen während des Kampfs, Brennstufen nach
+  Mayday, Rotten (ein Schub für mehrere), alle eigenen Einheiten kämpfen, Gunner der Small Craft,
+  fremde Small Craft (das \* der Starship Encounter Table); Entern unter 100 km und 0,1 km/s mit
+  Übergang in den Kampf; Absichten *Entern* und *Abfangen* für NSC-Schiffe.
+- [ ] **Stufe 5: Ortung** (SR 39–42): Reichweiten 15/60/90 Raumbänder, Schatten der Körper,
+  nicht geortete Einheiten am zuletzt bekannten Ort. Mit ihr entscheiden: *Wer schubt, leuchtet*
+  als Hausregel?
+- [ ] **Dekompression** bei Hull-Treffern (heute ohne Folgen, siehe `modell/schiffe.md`).
+- [ ] **Danach**, ohne eigene Stufe: Raketen aus Bauteilen nach Supplement 3, Minen, Zoll und
+  Patrouille mit dem Handel, Bergung von Wracks.
+
+## Psionik
+
+- [ ] **Regeln übertragen**: Psionik ist noch in keinem Regeldoku; SE 24 steht in
+  `docs/regeln-kampf.md` nur unter „nicht übernommen“; den Text dazu vermutlich im Regelheft (SR) suchen.
+  Erst das PDF lesen und ein eigenes Regeldoku `docs/regeln-psionik.md` anlegen (etwa
+  Psi-Stärke, Test und Training, Talente, Kosten und Erholung, Drogen – was die Quellen
+  hergeben), in AGENTS.md bei den Regeldokus nachtragen, dann ins Domänenmodell.
+- [ ] **Psionik bei Tieren und Begegnungen**: die Tier-Psionik (offen unter *Tierbegegnungen, Rest*)
+  und die *Psionic Assaulters* aus den Ereignissen (`regeln-kampf.md`), sobald es Psi-Werte gibt.

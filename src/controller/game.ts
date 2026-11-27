@@ -102,7 +102,10 @@ import {
   placeFoe,
   endFirePhase,
   fireHardpoint,
+  controlDamage,
   repairShip,
+  repairSelected,
+  attemptRepair,
   type Intent,
   installWeapon,
   removeWeapon,
@@ -3106,6 +3109,21 @@ export class GameController {
   }
 
   /**
+   * Der Engineer des eigenen Schiffs `ship` flickt den Treffer `hit` – ein Tipp im Blatt (SR 42,
+   * 2026-11-22d); der Wurf rollt im Vordergrund.
+   */
+  controlDamage(ship: number, hit: number): void {
+    const space = this.openSpaceState();
+    const before = this.campaign.log.length;
+    try {
+      this.change(controlDamage(this.campaign, ship, hit, this.deps.random, this.deps.clock), { space: without(space, 'run'), volley: { from: before, delay: 0 } });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ notice: error.message });
+    }
+  }
+
+  /**
    * „End Turn“ (2026-11-23): Die fremden Schiffe feuern, die noch nicht gefeuert haben, dann rückt die
    * Raumrunde weiter.
    */
@@ -3127,6 +3145,25 @@ export class GameController {
   /** Repariert das eigene Schiff in der Werft (2026-11-21h). */
   repairShip(): void {
     this.inShip(() => repairShip(this.campaign, this.deps.clock));
+  }
+
+  /** Die Werft repariert die ausgewählten Treffer (Detailseite Schaden, 2026-11-27d). */
+  repairHits(hits: readonly { readonly ship: string; readonly at: number }[]): void {
+    this.inShip(() => repairSelected(this.campaign, hits, this.deps.clock));
+  }
+
+  /**
+   * Ein Charakter versucht, einen Treffer zu reparieren (2026-11-27d): unterwegs flicken, in der Werft
+   * selbst ganz reparieren. Der Wurf läuft auf der Würfelbühne.
+   */
+  attemptRepair(who: string, ship: string, at: number): void {
+    try {
+      const after = attemptRepair(this.campaign, who, { ship, at }, this.deps.random, this.deps.clock);
+      this.change(after, { shipError: undefined, result: after.log.length - 1 });
+    } catch (error) {
+      if (!(error instanceof DomainError)) throw error;
+      this.update({ shipError: error.message });
+    }
   }
 
   private openSpaceState(): OpenSpace {

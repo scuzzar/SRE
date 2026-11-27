@@ -1,4 +1,4 @@
-import type { AttackItem, CardItem, CardView, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, MonthEndItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem, SpaceAttackItem } from '../controller';
+import type { AttackItem, CardItem, CardView, CheckItem, DamageItem, DmPart, ButcheringItem, EventItem, JourneyItem, LogItem, MonthEndItem, TripDayItem, PatronItem, RecoveryItem, RumorItem, SaveItem, TaskItem, SpaceAttackItem, DamageControlItem, ShipRepairItem } from '../controller';
 import type { Answer, ArmorClass, AttackKind, BookingKind, ShipCost, ShipIncome, MissionState, NpcRole, RecoveryKind, WoundState, Characteristic, ItemKind, MapDirection, MapIcon, PathKind, Range, Scatter } from '../model';
 
 // Reine Darstellung: Schreibweisen, die keine Regel sind.
@@ -408,6 +408,10 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
       return { head: `Fremdes Schiff: ${item.foe}`, rest: `${item.design}, ${item.intent}` };
     case 'spaceAttack':
       return { head: `${item.attacker} → ${item.target}: ${item.hit ? 'Treffer' : 'daneben'}`, rest: spaceAttackDetail(item) };
+    case 'damageControl':
+      return { head: `Schadenskontrolle · ${damageControlTitle(item)}`, rest: damageControlDetail(item) };
+    case 'shipRepair':
+      return { head: `Reparatur · ${shipRepairTitle(item)}`, rest: shipRepairDetail(item) };
     case 'spaceBattleEnd':
       return { head: `Raumkampf vorbei: ${item.foe} ${item.outcome}`, rest: '' };
     case 'tripDay':
@@ -421,6 +425,26 @@ export function resultLine(item: LogItem): { head: string; rest: string } {
 export function spaceAttackDetail(item: SpaceAttackItem): string {
   const parts = item.parts.map((p) => ` ${p.dm > 0 ? '+' : '−'} ${Math.abs(p.dm)} (${p.label})`).join('');
   return `Runde ${item.round} · ${item.weapon} (Turret ${item.turret + 1}): ${item.dice[0]} + ${item.dice[1]}${parts} = ${item.total}, 8+ nötig${item.hits.length > 0 ? ` · ${item.hits.join(', ')}` : ''}`;
+}
+
+/** Die Kopfzeile einer Schadenskontrolle: „Free Trader: Maneuver geflickt“ (2026-11-22d). */
+export function damageControlTitle(item: DamageControlItem): string {
+  return `${item.unit}: ${item.zone} ${item.success ? 'geflickt' : 'nicht geflickt'}`;
+}
+
+/** Eine Schadenskontrolle in Zahlen: „Runde 3 · Kira Vant (Engineer): 5 + 3 + 1 (Engineering) = 9, 9+ nötig“. */
+export function damageControlDetail(item: DamageControlItem): string {
+  const dm = item.dm === 0 ? '' : ` ${item.dm > 0 ? '+' : '−'} ${Math.abs(item.dm)} (Engineering)`;
+  return `Runde ${item.round} · ${item.by === undefined ? 'Engineer des fremden Schiffs' : `${item.by} (Engineer)`}: ${item.dice[0]} + ${item.dice[1]}${dm} = ${item.total}, 9+ nötig`;
+}
+
+/** Ein Reparaturversuch (2026-11-27d): Kopf „Jonas Reyl flickt Maneuver: gelungen“, Rest in Zahlen. */
+export function shipRepairTitle(item: ShipRepairItem): string {
+  return `${item.by} ${item.yard ? 'repariert' : 'flickt'} ${item.zone}: ${item.success ? 'gelungen' : 'misslungen'}`;
+}
+
+export function shipRepairDetail(item: ShipRepairItem): string {
+  return `${item.ship}${item.yard ? ', in der Werft' : ', unterwegs'} · ${item.dice[0]} + ${item.dice[1]} + ${item.dm} (Engineering) = ${item.total}, ${item.target}+ nötig`;
 }
 
 /** Ein Test in Zahlen: „3 (5+ nötig): heute keine Begegnung“, bei der Polizei mit Gesetz und Reaktion. */

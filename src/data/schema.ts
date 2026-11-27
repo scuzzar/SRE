@@ -139,6 +139,10 @@ export const shipKinds = ['starship', 'smallCraft'] as const;
  * Crewbedarf als Text, `basePrice` in Cr. `id` ist bei Schiffen der Buchstabencode aus den
  * Schiffsbegegnungen (S, A, R, …), bei Small Craft ein sprechendes Kürzel (`launch`, `boat`, …).
  */
+/** Die Buchstaben der Antriebe (SE 10): A bis Z ohne I und O. */
+export const DRIVE_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+const DRIVE_LETTER = /^[A-HJ-NP-Z]$/;
+
 export const ShipDesignSchema = z.object({
   id: z.string().min(1),
   code: z.string().min(1),
@@ -170,6 +174,17 @@ export const ShipDesignSchema = z.object({
   turrets: z.array(z.object({ type: z.string().min(1), weapons: z.array(z.string().min(1)).max(3) })).default([]),
   /** Nur Small Craft: wie viele Laser der Typ höchstens tragen darf (SR 34–35, 2026-11-22). */
   lasers: z.number().int().min(0).max(3).optional(),
+  /** Die Antriebsbuchstaben aus SR 35–37 (SE 10, 2026-11-22d); Small Craft und Entwürfe außerhalb der SR haben keine. */
+  maneuverDrive: z.string().regex(DRIVE_LETTER).optional(),
+  jumpDrive: z.string().regex(DRIVE_LETTER).optional(),
+  powerPlant: z.string().regex(DRIVE_LETTER).optional(),
+});
+
+/** Die Leistung eines Antriebsbuchstabens in einem Rumpf (SE 10, Drive Potential, 2026-11-22d): G, Sprungzahl oder Energiewerkszahl; fehlt die Zeile, arbeitet der Antrieb in diesem Rumpf nicht. */
+export const DrivePotentialSchema = z.object({
+  hull: z.number().int().min(1),
+  letter: z.string().regex(DRIVE_LETTER),
+  rating: z.number().int().min(1).max(6),
 });
 
 /** Eine Turmart aus SE 10 (2026-11-21g): Single, Double oder Triple Turret mit 1–3 Plätzen für Waffen; Preis in Cr. */
@@ -610,6 +625,8 @@ export const ReferenceDataSchema = z
     /** Die Turmarten und Schiffswaffen (SE 10, 2026-11-21g). */
     turretTypes: z.array(TurretTypeSchema).min(1),
     starshipEncounters: StarshipEncountersSchema,
+    /** Drive Potential (SE 10, 2026-11-22d). */
+    drivePotential: z.array(DrivePotentialSchema).min(1),
     shipWeapons: z.array(ShipWeaponSchema).min(1),
     /** Die Rechnermodelle (SE 10). */
     computers: z.array(ComputerModelSchema).min(1),
@@ -821,6 +838,7 @@ export type Item = z.infer<typeof ItemSchema>;
 export type Vehicle = z.infer<typeof VehicleSchema>;
 export type VehicleSpeed = z.infer<typeof VehicleSpeedSchema>;
 export type ShipDesign = z.infer<typeof ShipDesignSchema>;
+export type DrivePotential = z.infer<typeof DrivePotentialSchema>;
 export type ComputerModel = z.infer<typeof ComputerModelSchema>;
 export type TurretType = z.infer<typeof TurretTypeSchema>;
 export type ShipWeapon = z.infer<typeof ShipWeaponSchema>;

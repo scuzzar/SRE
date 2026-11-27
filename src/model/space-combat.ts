@@ -1,16 +1,14 @@
-import type { Campaign } from './campaign';
+import type { Campaign, Character } from './campaign';
 import { DomainError } from './errors';
 import type { Clock, Random } from './ports';
-import { ref, shipDesignOf, softwareOf } from './reference';
+import { DRIVE_LETTERS, drivePotentialOf, ref, shipDesignOf, softwareOf } from './reference';
 import { roll2d6, sum, type Dice } from './rules';
 import { hexById, hexIdOfWorld, worldById } from './sector';
 import { starportLetter } from './surface-map';
 import { craftOf, shipById, shipOf, type Ship, type Turret } from './ship';
 import { evadeDmOf, evades, hasTarget, hasThrust, predictDm, returnsFire, slotOfProgram, TARGET_PROGRAM, usesGunner, type SoftwareSlot } from './software';
-import { gunnerPost, postSkill, postsOf } from './crew';
-import { bookShip, fundsOf } from './shop';
-import { shipyardBlocker } from './armament';
-import type { SpaceAttack, SpaceBattle, SpaceBattleEnd } from './log';
+import { gunnerPost, holderOf, postSkill, postsOf } from './crew';
+import type { DamageControl, SpaceAttack, SpaceBattle, SpaceBattleEnd } from './log';
 import {
   activeFlight,
   BAND_KM,
@@ -19,6 +17,7 @@ import {
   partyIndexOf,
   flightTime,
   lengthOf,
+  phaseOf,
   lineOfSight,
   propagate,
   ROUND_SECONDS,
@@ -68,9 +67,14 @@ export const intents = ['attack', 'flee', 'ignore'] as const;
 export type BattleOutcome = 'destroyed' | 'disabled' | 'escaped' | 'broken' | 'lost' | 'departed';
 export const battleOutcomes = ['destroyed', 'disabled', 'escaped', 'broken', 'lost', 'departed'] as const;
 
-/** Der Schaden eines Schiffs (Domänenmodell: `ShipDamage`): die Treffer in ihrer Reihenfolge und die ausgefallenen Turrets. */
+/**
+ * Der Schaden eines Schiffs (Domänenmodell: `ShipDamage`): die Treffer in ihrer Reihenfolge, die
+ * Stellen der geflickten darin (`patched`, 2026-11-22d; fehlt heißt keine) und die ausgefallenen
+ * Turrets – je Treffer auf Turret oder Weapons einer, in derselben Reihenfolge.
+ */
 export interface ShipDamage {
   readonly hits: readonly HitZone[];
+  readonly patched?: readonly number[];
   readonly turretsOut: readonly number[];
 }
 
@@ -92,20 +96,56 @@ export const TRACKING_BANDS = 90;
 export const REPAIR_HIT = 100_000;
 export const REPAIR_CRITICAL = 1_000_000;
 
-const isCritical = (zone: HitZone) => zone.startsWith('critical') || zone === 'crew' || zone === 'explode';
-const count = (damage: ShipDamage | undefined, ...zones: HitZone[]) => (damage?.hits ?? []).filter((h) => zones.includes(h)).length;
+export const isCritical = (zone: HitZone) => zone.startsWith('critical') || zone === 'crew' || zone === 'explode';
+const isPatched = (damage: ShipDamage | undefined, at: number) => damage?.patched?.includes(at) === true;
+/** Die Treffer, die wirken: alle außer den geflickten (2026-11-22d). */
+const activeHits = (damage: ShipDamage | undefined): readonly HitZone[] => (damage?.hits ?? []).filter((_, at) => !isPatched(damage, at));
+const count = (damage: ShipDamage | undefined, ...zones: HitZone[]) => activeHits(damage).filter((h) => zones.includes(h)).length;
 
-/** `/maneuver`: die G des Antriebs nach dem Schaden; Maneuver und Power Plant je −1, kritisch 0. */
+/**
+ * Die ausgefallenen Turrets: je Treffer auf Turret oder Weapons das Turret aus `turretsOut`, außer
+ * der Treffer ist geflickt (2026-11-22d).
+ */
+export function turretsDown(damage: ShipDamage | undefined): readonly number[] {
+  if (damage === undefined) return [];
+  const stations = damage.hits.flatMap((h, at) => (h === 'turret' || h === 'weapons' ? [at] : []));
+  return damage.turretsOut.filter((_, k) => !isPatched(damage, stations[k] ?? -1));
+}
+
+/** Die Leistung eines Antriebs, dessen Buchstabe `hits` Stufen gesunken ist (SR 41); unter A ist er zerstört. */
+function driveAfter(hull: number, letter: string, hits: number): number {
+  const at = DRIVE_LETTERS.indexOf(letter) - hits;
+  return at < 0 ? 0 : drivePotentialOf(hull, DRIVE_LETTERS[at]!);
+}
+
+/**
+ * `/maneuver`: die G nach dem Schaden (2026-11-22d). Jeder Treffer auf Maneuver oder Power Plant senkt
+ * dessen Buchstaben um eine Stufe; es zählt das Kleinere aus der Leistung beider (Drive Potential,
+ * SE 10). Kritisch 0. Ein Entwurf ohne Buchstaben (Small Craft, Entwürfe außerhalb der SR) verliert
+ * je Treffer 1 G wie in Stufe 2.
+ */
 export function maneuverAfter(design: string, damage: ShipDamage | undefined): number {
   // Drive eines Small Craft: es kann sich nicht mehr bewegen (SR 41, 2026-11-22).
   if (count(damage, 'criticalManeuver', 'criticalPowerPlant', 'crew', 'explode', 'drive', 'criticalDrive') > 0) return 0;
-  return Math.max(0, shipDesignOf(design).maneuver - count(damage, 'maneuver', 'powerPlant'));
+  const plan = shipDesignOf(design);
+  if (plan.maneuverDrive === undefined || plan.powerPlant === undefined) return Math.max(0, plan.maneuver - count(damage, 'maneuver', 'powerPlant'));
+  return Math.min(driveAfter(plan.hull, plan.maneuverDrive, count(damage, 'maneuver')), driveAfter(plan.hull, plan.powerPlant, count(damage, 'powerPlant')));
 }
 
-/** `/jump`: die Sprungzahl nach dem Schaden; Jump je −1, kritisch 0. */
+/** `/jump`: die Sprungzahl nach dem Schaden, wie `/maneuver` aus Jump Drive und Power Plant; kritisch 0. */
 export function jumpAfter(design: string, damage: ShipDamage | undefined): number {
   if (count(damage, 'criticalJump', 'criticalPowerPlant', 'explode') > 0) return 0;
-  return Math.max(0, shipDesignOf(design).jump - count(damage, 'jump', 'powerPlant'));
+  const plan = shipDesignOf(design);
+  if (plan.jumpDrive === undefined || plan.powerPlant === undefined) return Math.max(0, plan.jump - count(damage, 'jump', 'powerPlant'));
+  return Math.min(driveAfter(plan.hull, plan.jumpDrive, count(damage, 'jump')), driveAfter(plan.hull, plan.powerPlant, count(damage, 'powerPlant')));
+}
+
+/** Die Buchstaben der Antriebe nach dem Schaden (Jump, Maneuver, Power Plant), „–“ unter A; `undefined` ohne Buchstaben. */
+export function driveLettersAfter(design: string, damage: ShipDamage | undefined): { readonly jump: string; readonly maneuver: string; readonly powerPlant: string } | undefined {
+  const plan = shipDesignOf(design);
+  if (plan.jumpDrive === undefined || plan.maneuverDrive === undefined || plan.powerPlant === undefined) return undefined;
+  const after = (letter: string, critical: HitZone, hit: HitZone) => (count(damage, critical) > 0 ? '–' : (DRIVE_LETTERS[DRIVE_LETTERS.indexOf(letter) - count(damage, hit)] ?? '–'));
+  return { jump: after(plan.jumpDrive, 'criticalJump', 'jump'), maneuver: after(plan.maneuverDrive, 'criticalManeuver', 'maneuver'), powerPlant: after(plan.powerPlant, 'criticalPowerPlant', 'powerPlant') };
 }
 
 /** `/destroyed`: ein kritischer Treffer *Explode*. */
@@ -127,7 +167,7 @@ export function withoutComputer(design: string): boolean {
 /** Die Laser eines Schiffs, die noch feuern können: je Turret, das nicht ausgefallen ist; ohne Computer nur der erste. */
 function workingLasers(design: string, turrets: readonly Turret[], damage: ShipDamage | undefined): readonly { turret: number; weapon: string }[] {
   if (!canFire(damage)) return [];
-  const lasers = turrets.flatMap((t, i) => (damage?.turretsOut.includes(i) ? [] : t.weapons.filter((w) => w.endsWith('laser')).map((weapon) => ({ turret: i, weapon }))));
+  const lasers = turrets.flatMap((t, i) => (turretsDown(damage).includes(i) ? [] : t.weapons.filter((w) => w.endsWith('laser')).map((weapon) => ({ turret: i, weapon }))));
   return withoutComputer(design) ? lasers.slice(0, 1) : lasers;
 }
 
@@ -416,7 +456,7 @@ export function hardpointBlocker(campaign: Campaign, index: number, target: numb
   const turrets = turretsOfUnit(campaign, unit);
   if (turrets[turret] === undefined) return 'Diesen Hardpoint gibt es nicht.';
   if (turrets[turret].weapons.filter((w) => w.endsWith('laser')).length === 0) return `${name}: kein Laser auf Hardpoint ${turret + 1}.`;
-  if (damageOfUnit(campaign, unit)?.turretsOut.includes(turret) === true) return `Hardpoint ${turret + 1} von ${name} ist ausgefallen.`;
+  if (turretsDown(damageOfUnit(campaign, unit)).includes(turret)) return `Hardpoint ${turret + 1} von ${name} ist ausgefallen.`;
   const ship = shipOfUnit(campaign, unit);
   if (ship !== undefined && !hasTarget(ship)) return `Ohne ${softwareOf(TARGET_PROGRAM).name} in der CPU feuert kein Turret (SE 13).`;
   if (target === undefined) return undefined;
@@ -457,7 +497,7 @@ export function hardpointsOf(campaign: Campaign, index: number): readonly Hardpo
         name: `Hardpoint ${at + 1}`,
         weapons: guns,
         lasers: usable.length,
-        out: damage?.turretsOut.includes(at) ?? false,
+        out: turretsDown(damage).includes(at),
         fired: (unit.firedTurrets ?? []).includes(at),
         blocker: hardpointBlocker(campaign, index, undefined, at),
       };
@@ -692,11 +732,11 @@ function applyHits(campaign: Campaign, index: number, zones: readonly HitZone[],
     let hit = zone;
     // Weapons eines Small Craft: seine Bewaffnung ist zerstört (SR 41); ohne zählt er wie Cabin.
     if (zone === 'weapons') {
-      if (turrets.length === 0 || damage.turretsOut.includes(0)) hit = 'cabin';
+      if (turrets.length === 0 || turretsDown(damage).includes(0)) hit = 'cabin';
       else damage = { ...damage, turretsOut: [...damage.turretsOut, 0] };
     }
     if (zone === 'turret') {
-      const working = turrets.map((_, i) => i).filter((i) => !damage.turretsOut.includes(i));
+      const working = turrets.map((_, i) => i).filter((i) => !turretsDown(damage).includes(i));
       if (working.length === 0) hit = 'hull';
       else damage = { ...damage, turretsOut: [...damage.turretsOut, working[(d6(random) - 1) % working.length]!] };
     }
@@ -865,6 +905,110 @@ export function foesFire(campaign: Campaign, random: Random, clock: Clock): Camp
   return after;
 }
 
+// --- Schadenskontrolle (SR 42, Domänenmodell 2026-11-22d) -----------------------------------------
+
+/** Schadenskontrolle gelingt auf 2W6 + Engineering 9+ (SR 42). */
+export const DAMAGE_CONTROL_TARGET = 9;
+/** ⚑ Ein fremdes Schiff flickt mit Engineering 1 (2026-11-22d). */
+const FOE_ENGINEERING = 1;
+
+/** Gelang die Schadenskontrolle (`/success`)? */
+export function patchSucceeded(entry: Pick<DamageControl, 'dice' | 'dm'>): boolean {
+  return sum(entry.dice) + entry.dm >= DAMAGE_CONTROL_TARGET;
+}
+
+/** Die Treffer, die sich flicken lassen: ungeflickt und nicht kritisch, als Stellen in `hits`. */
+export function patchableHits(damage: ShipDamage | undefined): readonly number[] {
+  return (damage?.hits ?? []).flatMap((h, at) => (isCritical(h) || isPatched(damage, at) ? [] : [at]));
+}
+
+/** Der Engineer eines eigenen Schiffs (Domänenmodell 2026-11-22d): wer den Posten hat und seine Fertigkeit darauf. */
+export function engineerOf(campaign: Campaign, ship: Ship): { readonly who: Character; readonly skill: number } | undefined {
+  const at = postsOf(ship).findIndex((p) => p.post === 'engineer');
+  if (at < 0) return undefined;
+  const who = holderOf(campaign, ship, at);
+  return who === undefined ? undefined : { who, skill: postSkill(campaign, ship, at) };
+}
+
+/** Hat die Einheit in dieser Raumrunde schon geflickt? Ein Logeintrag dieses Flugs mit ihrem Namen und der Raumrunde. */
+function patchedThisRound(campaign: Campaign, unit: SpaceUnit): boolean {
+  const flight = activeFlight(campaign);
+  const name = nameOfUnit(campaign, unit);
+  return campaign.log.some((e) => e.kind === 'damageControl' && e.round === flight.round && e.unit === name && e.at >= flight.startedAt);
+}
+
+/**
+ * Warum das eigene Schiff der Einheit `index` jetzt nicht flicken kann (2026-11-22d); mit `hit` auch,
+ * ob sich dieser Treffer flicken lässt. Einmal je Raumrunde, im Raumkampf nach der Bewegung, mit
+ * einem Engineer auf dem Posten; die Crew darf nicht außer Gefecht sein.
+ */
+export function damageControlBlocker(campaign: Campaign, index: number, hit?: number): string | undefined {
+  const flight = activeFlight(campaign);
+  const unit = flight.units[index];
+  if (unit === undefined) return 'Diese Einheit gibt es nicht.';
+  const ship = shipOfUnit(campaign, unit);
+  if (ship === undefined) return 'Ein fremdes Schiff flickt von selbst.';
+  if (!battleRunning(campaign)) return 'Geflickt wird im Raumkampf (SR 42); den Rest repariert die Werft.';
+  if (phaseOf(flight) !== 'fire') return 'Erst die Bewegung abwarten.';
+  if (unit.crashed) return `${ship.name} ist aufgeschlagen.`;
+  if (count(ship.damage, 'crew', 'explode') > 0) return `Die Crew von ${ship.name} ist außer Gefecht.`;
+  if (engineerOf(campaign, ship) === undefined) return `${ship.name} hat keinen Engineer.`;
+  if (patchedThisRound(campaign, unit)) return `${ship.name} hat in dieser Raumrunde schon geflickt.`;
+  const patchable = patchableHits(ship.damage);
+  if (patchable.length === 0) return `${ship.name} hat keinen Treffer, der sich flicken lässt.`;
+  if (hit !== undefined && !patchable.includes(hit)) return 'Diesen Treffer kann man nicht flicken (kritisch oder schon geflickt).';
+  return undefined;
+}
+
+/** Würfelt die Schadenskontrolle der Einheit `index` auf den Treffer `hit` und hängt den Eintrag an; gelingt sie, ist der Treffer geflickt. */
+function patch(campaign: Campaign, index: number, hit: number, dm: number, by: Character | undefined, random: Random, clock: Clock): Campaign {
+  const flight = activeFlight(campaign);
+  const unit = flight.units[index]!;
+  const damage = damageOfUnit(campaign, unit)!;
+  const dice = roll2d6(random);
+  const entry: DamageControl = { kind: 'damageControl', at: clock.now(), day: campaign.day, round: flight.round, unit: nameOfUnit(campaign, unit), dice, dm, zone: damage.hits[hit]!, ...(by ? { by: by.id } : {}) };
+  const logged = { ...campaign, log: [...campaign.log, entry] };
+  if (!patchSucceeded(entry)) return logged;
+  const patched: ShipDamage = { ...damage, patched: [...(damage.patched ?? []), hit].sort((a, b) => a - b) };
+  if (unit.ship !== undefined) {
+    const id = unit.ship;
+    return { ...logged, ships: logged.ships.map((s) => (s.id === id ? { ...s, damage: patched } : s)) };
+  }
+  return { ...logged, flight: { ...flight, units: flight.units.map((u, i) => (i === index ? { ...u, damage: patched } : u)) } };
+}
+
+/**
+ * Der Engineer des eigenen Schiffs der Einheit `index` flickt den Treffer `hit` (SR 42, 2026-11-22d):
+ * 2W6 + Engineering, 9+; ein geflickter Treffer wirkt nicht mehr, kostet in der Werft aber weiter.
+ */
+export function controlDamage(campaign: Campaign, index: number, hit: number, random: Random, clock: Clock): Campaign {
+  const blocker = damageControlBlocker(campaign, index, hit);
+  if (blocker) throw new DomainError(blocker);
+  const ship = shipOfUnit(campaign, activeFlight(campaign).units[index]!)!;
+  const engineer = engineerOf(campaign, ship)!;
+  return patch(campaign, index, hit, engineer.skill, engineer.who, random, clock);
+}
+
+/** In welcher Reihenfolge ein fremdes Schiff flickt (⚑ 2026-11-22d): Maneuver und Power Plant, dann Turret, dann der Rest. */
+const FOE_PATCH_ORDER: readonly HitZone[] = ['maneuver', 'powerPlant', 'turret'];
+
+/** Nach dem Feuer (End Turn): Jedes fremde Schiff, das noch kämpft oder flieht, versucht einmal, einen Treffer zu flicken, mit Engineering 1 (⚑). */
+export function foesControlDamage(campaign: Campaign, random: Random, clock: Clock): Campaign {
+  let after = campaign;
+  for (const [i, u] of activeFlight(campaign).units.entries()) {
+    if (!activeFoe(after, u) || count(u.damage, 'crew', 'explode') > 0 || patchedThisRound(after, u)) continue;
+    const open = patchableHits(u.damage);
+    if (open.length === 0) continue;
+    const rank = (at: number) => {
+      const r = FOE_PATCH_ORDER.indexOf(u.damage!.hits[at]!);
+      return r < 0 ? 2 : r < 2 ? 0 : 1;
+    };
+    const hit = [...open].sort((a, b) => rank(a) - rank(b) || a - b)[0]!;
+    after = patch(after, i, hit, FOE_ENGINEERING, undefined, random, clock);
+  }
+  return after;
+}
+
 /** Feuert gleich ein fremdes Schiff nach der Bewegung? Dann braucht die Raumrunde Würfel. */
 export function foesWillFire(campaign: Campaign): boolean {
   return activeFlight(campaign).units.some((u) => u.ship === undefined && u.intent === 'attack' && !u.crashed);
@@ -942,24 +1086,12 @@ export function repairCostOf(campaign: Campaign, ship: Ship): number {
     .reduce((n, h) => n + (isCritical(h) ? REPAIR_CRITICAL : REPAIR_HIT), 0);
 }
 
-/** Repariert das eigene Schiff samt seinen Beibooten an Bord an einer Werft (Raumhafen A oder B), alles auf einmal. */
-export function repairShip(campaign: Campaign, clock: Clock): Campaign {
-  const ship = shipOf(campaign);
-  if (ship === undefined) throw new DomainError('Die Gruppe hat kein Schiff.');
-  const damaged = damagedAtYard(campaign, ship);
-  if (damaged.length === 0) throw new DomainError(`${ship.name} hat keinen Schaden.`);
-  const blocker = shipyardBlocker(campaign);
-  if (blocker) throw new DomainError(blocker.replace('umgerüstet', 'repariert').replace('Umrüsten', 'Reparieren'));
-  const cost = repairCostOf(campaign, ship);
-  if (cost > fundsOf(campaign)) throw new DomainError(`Die Reparatur kostet Cr ${cost.toLocaleString('de-DE')}, in der Kasse ist Cr ${fundsOf(campaign).toLocaleString('de-DE')}.`);
-  const hits = damaged.reduce((n, s) => n + (s.damage?.hits.length ?? 0), 0);
-  const paid = bookShip(campaign, -cost, ship.id, 'repair', clock, `Reparatur, ${hits} Treffer`);
-  const ids = new Set(damaged.map((s) => s.id));
-  return { ...paid, ships: paid.ships.map((s) => (ids.has(s.id) ? (({ damage: _d, ...rest }) => (void _d, rest))(s) : s)) };
-}
-
 /** Prüft einen geladenen Schaden. */
 export function checkDamage(damage: ShipDamage, turrets: number): void {
   for (const h of damage.hits) if (!hitZones.includes(h)) throw new DomainError(`Die Trefferzone ${h} gibt es nicht.`);
   for (const t of damage.turretsOut) if (!Number.isInteger(t) || t < 0 || t >= turrets) throw new DomainError('Ein ausgefallenes Turret gibt es nicht.');
+  for (const at of damage.patched ?? []) {
+    const hit = damage.hits[at];
+    if (hit === undefined || isCritical(hit)) throw new DomainError('Ein geflickter Treffer gibt es nicht.');
+  }
 }

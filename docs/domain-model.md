@@ -424,6 +424,7 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Antriebsbuchstabe | `ShipDesign.maneuverDrive`, `jumpDrive`, `powerPlant` | Der Buchstabe von Maneuver Drive, Jump Drive und Power Plant (A–Z, SE 10); seine Leistung folgt aus dem Drive Potential (2026-11-22d) |
 | Drive Potential | `DrivePotential` | Referenzdaten: Leistung eines Antriebsbuchstabens in einem Rumpf (G, Sprungzahl oder Energiewerkszahl, SE 10) (2026-11-22d) |
 | Schadenskontrolle | `DamageControl`, `ShipDamage.patched` | Logeintrag: Der Engineer flickt im Raumkampf einen Treffer, 2W6 + Engineering, 9+ (SR 42); geflickt wirkt der Treffer nicht mehr, kostet in der Werft aber weiter (2026-11-22d) |
+| Reparaturversuch | `ShipRepair` | Logeintrag: Ein Charakter repariert einen Treffer außerhalb des Kampfs; unterwegs flickt er ihn (10+, einmal je Woche), in der Werft repariert er ihn ganz (8+, gegen Material oder Gebühr) (2026-11-27d) |
 | Ausweichen | `SpaceUnit./evading` | In der CPU läuft Maneuver/Evade oder Auto-Evade: Verteidigungs-DM gegen Laser, dafür 1 G weniger Schub (Mayday) (2026-11-22d) |
 | Rückfeuer | `SpaceUnit.returned`, `SpaceAttack.returnFire` | Mit dem Programm Return Fire feuert eine beschossene Einheit einmal je Raumrunde zurück, auch wenn sie schon gefeuert hat (2026-11-22d) |
 | Deckplan | `DeckPlan` | Der Plan eines Schiffsentwurfs als Bild: bis zu drei eigene, als PNG hochgeladen oder fotografiert; über Kampagnen hinweg gehalten und mit OneDrive abgeglichen (2026-11-17), der Export nimmt sie nicht mit |
@@ -598,6 +599,23 @@ Diagramm mit diesen Ausnahmen:
   (`SystemFlight.party`, 2026-11-21b) aus, und fremde Schiffe zielen auf sie; andere eigene Einheiten
   (ein Mutterschiff ohne Gruppe) nehmen am Raumkampf nicht teil. Ein fremdes Schiff bekommt beim Auftauchen eine Spur so lang wie die Raumrunden
   (lauter Punkte an seinem Startort), damit sie zur Raumrunde passt.
+- **Reparatur außerhalb des Kampfs** (2026-11-27d) ist gebaut (`model/ship-repair.ts`, Detailseite
+  *Schaden* in `view/ship/ShipScreen.tsx`). Abweichungen:
+  - Die Takte (einmal je Woche unterwegs, ein Treffer je Tag oder ein kritischer je Woche in der
+    Werft) liest der Code aus den `ShipRepair`-Einträgen im Log; ein eigenes Feld gibt es nicht.
+  - Wer repariert, wählt man unter allen lebenden Charakteren (wie bei den Schiffspositionen); ob er
+    gerade beim Schiff ist, prüft die App nur über die Gruppe.
+  - Der Wurf läuft auf der Würfelbühne der Proben, als Probe auf Engineering mit dem Zielwert.
+- **Raumkampf, Stufe 2b** (2026-11-22d) ist gebaut: Schiffspositionen (`model/crew.ts`), Programme
+  (`model/software.ts`), Antriebsbuchstaben mit `DrivePotential` (Tabelle in `src/data/ships.json`)
+  und Schadenskontrolle (`model/space-combat.ts`). Abweichungen:
+  - Ob eine Einheit in dieser Raumrunde schon geflickt hat, liest der Code aus dem Log
+    (`DamageControl` dieses Flugs mit ihrem Namen und der Raumrunde); ein eigenes Feld gibt es nicht.
+  - `ShipDamage.patched` steht nur im Spielstand, wenn etwas geflickt ist (fehlt heißt keins).
+  - **Corsair** und **Seeker** (Begegnungsschiffe außerhalb von SR 35–37) haben keine Buchstaben;
+    sie verlieren wie in Stufe 2 je Treffer 1 G bzw. einen Sprung. Das Modell sagt dazu nichts.
+  - Gewählt wird im Blatt des Raumkampfs unter den Hardpoints: je Treffer, der sich flicken lässt,
+    ein Knopf (wie die Hardpoints); der Wurf rollt im Vordergrund wie die Laserschüsse.
 - **Bewaffnung der Small Craft** (2026-11-22) ist gebaut (`model/armament.ts`, `model/space-combat.ts`,
   Referenzdaten in `src/data/ships.json`), auf Wunsch des Owners schon vor der Freigabe des Bilds.
 - **Bewaffnung** (2026-11-21g) ist gebaut (`model/armament.ts`, Referenzdaten in

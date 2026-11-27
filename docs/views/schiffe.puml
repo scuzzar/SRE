@@ -214,9 +214,17 @@ hide <<browser>> stereotype
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class Skimming $raum
   class ShipDamage <<value>> $raum
+  enum HitZone <<value>> $raum
   class SpaceBattle $raum
   class SpaceAttack $raum
   class SpaceUnit $raum
+  class ShipRepair $schiffe {
+    dice: number[2]
+    dm: number
+    zone: HitZone
+    yard: boolean
+    /success: boolean
+  }
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -225,6 +233,7 @@ hide <<browser>> stereotype
 ' Missionen
 
 ' Verlauf
+  abstract class LogEntry $probe
 
 ' Zeit und Reisen
   class Journey $reise
@@ -273,6 +282,10 @@ SpaceUnit "*" --> "0..1" ShipDesign : design
 Ship "1" *-- "0..1" ShipDamage : damage
 SpaceBattle "*" --> "1" ShipDesign : design
 SpaceAttack "*" --> "1" ShipWeapon : weapon
+LogEntry <|-- ShipRepair
+ShipRepair --> HitZone
+ShipRepair "*" --> "1" Ship : ship
+ShipRepair "*" --> "1" Character : by
 Skimming "*" --> "1" Ship : ship
 Gain "*" --> "0..1" ShipDesign : ship
 DeckPlan "*" --> "1" ShipDesign : design

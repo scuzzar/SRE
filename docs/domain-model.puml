@@ -563,6 +563,13 @@ hide <<browser>> stereotype
     zone: HitZone
     /success: boolean
   }
+  class ShipRepair $schiffe {
+    dice: number[2]
+    dm: number
+    zone: HitZone
+    yard: boolean
+    /success: boolean
+  }
   class TrackPoint <<value>> $raum {
     position: Vec
     velocity: Vec
@@ -1553,6 +1560,10 @@ SpaceAttack "*" --> "0..1" Character : gunner
 LogEntry <|-- DamageControl
 DamageControl --> HitZone
 DamageControl "*" --> "0..1" Character : by
+LogEntry <|-- ShipRepair
+ShipRepair --> HitZone
+ShipRepair "*" --> "1" Ship : ship
+ShipRepair "*" --> "1" Character : by
 SpaceAttack --> HitZone
 SpaceBattleEnd --> BattleOutcome
 SpaceBattle --> EncounterOccasion

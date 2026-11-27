@@ -31,12 +31,16 @@ export function SpaceVolley({ volley, onShot, onDone }: { volley: Volley; onShot
   useEffect(() => {
     if (landedShot === undefined) return;
     const s = shots[landedShot]!;
+    if (s.kind !== 'spaceAttack') return;
     onShot?.({ id: `${volley.key}-${landedShot}`, attacker: s.attacker, target: s.target, hit: s.hit, hits: s.hits });
   }, [landedShot, onShot, shots, volley.key]);
   useEffect(() => {
     const ms = step === 'wait' ? volley.delay : step === 'end' ? END_MS : step.landed ? SHOW_MS : THROW_MS;
     const timer = setTimeout(next, ms);
-    if (step !== 'wait' && step !== 'end' && step.landed) haptic(shots[step.shot]!.hit ? 'land' : 'pick');
+    if (step !== 'wait' && step !== 'end' && step.landed) {
+      const s = shots[step.shot]!;
+      haptic((s.kind === 'spaceAttack' ? s.hit : s.success) ? 'land' : 'pick');
+    }
     return () => clearTimeout(timer);
   });
   if (step === 'wait') return null;
@@ -53,14 +57,36 @@ export function SpaceVolley({ volley, onShot, onDone }: { volley: Volley; onShot
     );
   }
   const shot = shots[step.shot]!;
+  const onTap = () => {
+    stopHaptics();
+    next();
+  };
+  // Schadenskontrolle (2026-11-22d): derselbe Wurf im Vordergrund, 2W6 + Engineering, 9+.
+  if (shot.kind === 'damageControl') {
+    return (
+      <div className="dice-roll space-volley" aria-live="polite" onClick={onTap}>
+        <span className="dice-roll-kicker">SCHADENSKONTROLLE · {shot.unit.toUpperCase()}</span>
+        <span className="space-volley-weapon">
+          {shot.by ?? 'Engineer'} flickt {shot.zone} · Wurf {step.shot + 1}/{shots.length}
+        </span>
+        <span className="space-volley-need">
+          braucht <b>{shot.need}+</b> auf 2W6{shot.dm !== 0 ? ` (9 ${shot.dm > 0 ? '−' : '+'} ${Math.abs(shot.dm)} Engineering)` : ''}
+        </span>
+        <DiceView key={step.shot} dice={shot.dice} seed={volley.key * 31 + step.shot} landed={step.landed} />
+        <div className={step.landed ? 'dice-sum shown' : 'dice-sum'}>
+          <strong className={shot.success ? 'space-hit' : 'space-miss'}>{shot.success ? 'geflickt' : 'nicht geflickt'}</strong>
+          <span>
+            {shot.dice[0]} + {shot.dice[1]} = {shot.total - shot.dm} · braucht {shot.need}+
+          </span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className="dice-roll space-volley"
       aria-live="polite"
-      onClick={() => {
-        stopHaptics();
-        next();
-      }}
+      onClick={onTap}
     >
       <span className="dice-roll-kicker">
         {shot.attacker.toUpperCase()} → {shot.target.toUpperCase()}

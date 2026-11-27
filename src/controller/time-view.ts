@@ -60,6 +60,13 @@ import {
   type SpaceBattle,
   type SpaceAttack,
   type SpaceBattleEnd,
+  type DamageControl,
+  type ShipRepair,
+  repairSucceeded,
+  FIELD_REPAIR_TARGET,
+  YARD_REPAIR_TARGET,
+  DAMAGE_CONTROL_TARGET,
+  patchSucceeded,
   type HitZone,
   type Intent,
   type BattleOutcome,
@@ -226,6 +233,59 @@ export interface SpaceAttackItem {
   readonly hits: readonly string[];
   /** Der Schuss war ein Rückfeuer (2026-11-23). */
   readonly returnFire?: boolean;
+}
+
+/** Schadenskontrolle im Log (SR 42, 2026-11-22d): wer an welchem Treffer flickte, mit Wurf und Erfolg. */
+export interface DamageControlItem {
+  readonly kind: 'damageControl';
+  readonly at: string;
+  readonly round: number;
+  readonly unit: string;
+  /** Der Engineer; fehlt bei einem fremden Schiff. */
+  readonly by: string | undefined;
+  readonly zone: string;
+  readonly dice: readonly number[];
+  readonly dm: number;
+  readonly total: number;
+  /** Was auf 2W6 nötig war: 9 − DM. */
+  readonly need: number;
+  readonly success: boolean;
+}
+
+export function damageControlItem(campaign: Campaign, entry: DamageControl): DamageControlItem {
+  const by = entry.by === undefined ? undefined : (campaign.characters.find((c) => c.id === entry.by)?.name ?? 'Engineer');
+  return { kind: 'damageControl', at: entry.at, round: entry.round, unit: entry.unit, by, zone: hitZoneNames[entry.zone], dice: entry.dice, dm: entry.dm, total: entry.dice[0] + entry.dice[1] + entry.dm, need: DAMAGE_CONTROL_TARGET - entry.dm, success: patchSucceeded(entry) };
+}
+
+/** Ein Reparaturversuch außerhalb des Kampfs im Log (2026-11-27d). */
+export interface ShipRepairItem {
+  readonly kind: 'shipRepair';
+  readonly at: string;
+  readonly ship: string;
+  readonly by: string;
+  readonly zone: string;
+  readonly yard: boolean;
+  readonly dice: readonly number[];
+  readonly dm: number;
+  readonly total: number;
+  readonly target: number;
+  readonly success: boolean;
+}
+
+export function shipRepairItem(campaign: Campaign, entry: ShipRepair): ShipRepairItem {
+  return {
+    kind: 'shipRepair',
+    at: entry.at,
+    ship: campaign.ships.find((s) => s.id === entry.ship)?.name ?? 'Schiff',
+    by: campaign.characters.find((c) => c.id === entry.by)?.name ?? 'Charakter',
+    zone: hitZoneNames[entry.zone],
+    yard: entry.yard,
+    dice: entry.dice,
+    dm: entry.dm,
+    total: entry.dice[0] + entry.dice[1] + entry.dm,
+    target: entry.yard ? YARD_REPAIR_TARGET : FIELD_REPAIR_TARGET,
+    success: repairSucceeded(entry),
+  };
 }
 
 /** Ein DM mit seinem Grund, wie Blatt, Würfe und Log ihn schreiben. */

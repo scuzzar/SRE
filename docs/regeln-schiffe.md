@@ -48,22 +48,22 @@ dabei.
 
 | Regel | Quelle | App |
 |---|---|---|
-| [Schiffsarten und Begriffe](#schiffsarten-und-begriffe) | SR 31 | ○ |
-| [Schiffskauf und Finanzierung](#schiffskauf-und-finanzierung) | SR 29 | ○ |
-| [Laufende Kosten](#laufende-kosten) | SR 30 | ○ |
-| [Einnahmen](#einnahmen) | SR 30 | ○ |
-| [Hafengebühren und Handelsbräuche](#hafengebühren-und-handelsbräuche) | SR 31 | ○ |
-| [Schiffspannen](#schiffspannen) | SR 28–29 | ○ |
-| [Piraterie, Entführung und Zahlungsausfall](#piraterie-entführung-und-zahlungsausfall) | SR 28–29 | ○ |
-| [Schiffsaufbau](#schiffsaufbau) | SR 31–33 | ○ |
-| [Optionale Komponenten](#optionale-komponenten) | SR 32–33 | ○ |
+| [Schiffsarten und Begriffe](#schiffsarten-und-begriffe) | SR 31 | ✔ (Begriffe in App und Modell; Small Craft als eigene Entwürfe unter 100 t, 2026-11-21b) |
+| [Schiffskauf und Finanzierung](#schiffskauf-und-finanzierung) | SR 29 | ◐ (Kauf in der Werft bar oder mit Bankkredit: 20 % Anzahlung, 480 Monatsraten, Restschuld; Ship-Vorteil der Abmusterung; 2026-11-16, Monatsende 2026-11-17b; Small Craft ebenso, 2026-11-21c. Wirtschaftsplan, subventionierte Schiffe, Bauzeit, eigene Entwürfe, gebrauchte Schiffe und Pfändung bei Zahlungsverzug ○) |
+| [Laufende Kosten](#laufende-kosten) | SR 30 | ◐ ✱ (Monatsabrechnung mit Raten, Treibstoff und Lebenserhaltung, 2026-11-17b; unraffinierter Treibstoff vom Gasriesen, 2026-11-21f; Lebenserhaltung der Fahrgäste, 2026-11-27. Routinewartung und Heuer ○) |
+| [Einnahmen](#einnahmen) | SR 30 | ✔ ✱ (Fracht, Passagiere und Post seit 2026-11-27; Stand und Hausregeln in [`regeln-handel.md`](regeln-handel.md)) |
+| [Hafengebühren und Handelsbräuche](#hafengebühren-und-handelsbräuche) | SR 31 | ◐ (Berthing Costs ✔ ✱, 2026-11-17b; Shuttle-Service, Charter und örtlich niedrigere Gebühren ○) |
+| [Schiffspannen](#schiffspannen) | SR 28–29 | ◐ (Fehlsprungwurf je Sprung mit allen DMs, 2026-11-21f, 2026-11-22b; die Folgen würfelt die App nicht. Drive Failure und Reparatur der Antriebe ○) |
+| [Piraterie, Entführung und Zahlungsausfall](#piraterie-entführung-und-zahlungsausfall) | SR 28–29 | ◐ (Low Lottery ✔, 2026-11-27; Piraten über die [Schiffsbegegnungen](#schiffsbegegnungen-im-system); Hijacking und Skipping ○) |
+| [Schiffsaufbau](#schiffsaufbau) | SR 31–33 | ◐ (Bewaffnung: Turrets und Waffen in der Werft, 2026-11-21g; eigene Entwürfe ○) |
+| [Optionale Komponenten](#optionale-komponenten) | SR 32–33 | ◐ (Stromlinienform mit Schöpfen am Gasriesen, 2026-11-21f; Ship's Vehicles als Beiboote, 2026-11-21b; Schöpfen in Gewässern und Ship's Locker ○) |
 | [Crew](#crew) | SR 33 | ◐ (Posten im Unterreiter Crew des Schiffes: Pilot, Gunner je Turret, Navigator, Engineer, Steward, Medic; Zuweisung durch Ziehen oder Blatt, zwei Posten mit je einem Punkt Abzug, Grundwert als Hinweis; 2026-11-22d. Heuer, Pflicht ab Tonnage und Crewbedarf bleiben offen) |
 | [Computer und Software](#computer-und-software) | SR 38–39 | ◐ (CPU, Speicher und Archiv im Unterreiter Computer des Schiffes; Umstecken durch Ziehen oder Blatt, Werfen jederzeit; Kauf in der Werft des Reiters; Pflichtprogramme Maneuver und Target in der CPU; Wirkung in Stufe 2b für Target, Maneuver, Predict, Gunner Interact, Auto-Evade und Return Fire; 2026-11-22d. Schreiben eigener Programme und Fehlermeldungen dazu bleiben offen) |
-| [Standardentwürfe](#standardentwürfe) | SR 35–37 | ○ |
+| [Standardentwürfe](#standardentwürfe) | SR 35–37 | ✔ (die neun Entwürfe in der Werft, `src/data/ships.json`, 2026-11-16; Baupläne zu Cr100 ○) |
 | [Kleine Schiffe (Small Craft)](#kleine-schiffe-small-craft) | SR 33–35 | ◐ (die acht Entwürfe als Beiboote der Standardentwürfe, aussetzen, andocken, landen und Reise im System, 2026-11-21b;andocken am Knopf „Andocken“ der Knopfreihe mit Hausregel (2026-11-23c: genug Schub, um den Ort des Mutterschiffs in der nächsten Bewegung zu erreichen, und Platz – Liegeplatz des Entwurfs oder freier Laderaum; aus 100 km dockt es sofort an, weiter weg fliegt es mit der nächsten Bewegung heim), 2026-11-23; einzeln zu kaufen als Beiboot im Laderaum oder eigenständig, 2026-11-21c; ab Werft mit Beam Lasern, feuern im Raumkampf, Trefferzonen der Small Craft, 2026-11-22; Fittings, Module, Raketen, Sand, Computer und Charter offen) |
 | [Schiffsbegegnungen im System](#schiffsbegegnungen-im-system) | SR 42 | ◐ (bei Abreise und Ankunft mit eigenem Schiff und von Hand, mit Dialog; ohne Small Craft; 2026-11-21h, 2026-11-22b) |
-| [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ○ |
-| [Raumkampf](#raumkampf) | SR 39–42 | ◐ ✱ (Laserfeuer, Rückfeuer, Trefferzonen, Schaden, ein fremdes Schiff mit Absicht; 2026-11-21h) |
+| [Handel und Gewerbe](#handel-und-gewerbe) | SR 52 | ◐ ✱ (Handel, Schritt 1, 2026-11-27; Stand in [`regeln-handel.md`](regeln-handel.md)) |
+| [Raumkampf](#raumkampf) | SR 39–42 | ◐ ✱ (Laserfeuer, Rückfeuer, Trefferzonen, Schaden, ein fremdes Schiff mit Absicht, 2026-11-21h; Schiffspositionen und Programme mit Ausweichen, Antriebsschaden über den Buchstaben, Schadenskontrolle, 2026-11-22d; Flucht per Sprung, 2026-11-22b. Raketen, Sand, Ortung, Entern, Dekompression ○) |
 | [Vektorbewegung (Mayday, Supplement 3)](#vektorbewegung-mayday-supplement-3) | MD, SS3 4–11 | ◐ ✱ (Bewegung mit echter Schwerkraft als Systemflug, 2026-11-18c; Waffen, Raketen, Sand offen) |
 
 ---
@@ -132,8 +132,8 @@ dabei.
   unraffiniert kostenlos am Gasriesen geschöpft, 2026-11-21f);
   Lebenserhaltung je Kabine ✔✱ als Cr2.000 je Reisendem und Sprung mit dem eigenen Schiff
   (Doppelbelegung verdoppelt die Kosten; die Gruppe darf zur Not zu zweit in eine Kabine, für
-  jeden Entwurf); Lebenserhaltung je Koje ○ (auf dem eigenen Schiff reist noch niemand in
-  Kälteschlaf); Routinewartung ○; Gehälter ○ (kommen mit den Hirelings). Ein Monat ist ✱ vier
+  jeden Entwurf); Lebenserhaltung je Koje ✔ seit 2026-11-27 (Cr100 je Low-Fahrgast und Sprung, mit den
+  zahlenden Passagieren; ebenso Cr2.000 je High- und Middle-Fahrgast); Routinewartung ○; Gehälter ○ (kommen mit den Hirelings). Ein Monat ist ✱ vier
   Wochen; an jedem Monatsende werden die Raten gebucht, und eine Monatsabrechnung mit allen
   laufenden Kosten steht im Log.
 
@@ -158,6 +158,9 @@ Schiffe verdienen an **Fracht**, **Passagieren** und **Post**.
   Tonne Postfracht, höchstens 5 t je Reise); das Schiff muss bewaffnet sein und einen Gunner in der
   Crew führen.
 - **Private Post/Botengänge**: 9+ für ein Angebot, Bote erhält ein Honorar nach Würfel.
+- **Stand in der App** (2026-11-27): Fracht, Passagiere, Post und private Botschaften ✔ mit dem
+  Handel; ✱ ein Postvertrag für jedes Schiff, nicht nur für subventionierte (E12). Regeln, Stand
+  und Entscheidungen in [`regeln-handel.md`](regeln-handel.md).
 
 ---
 
@@ -775,7 +778,15 @@ in `modell/raum.md`): Laserfeuer ✔ (8+, Pulse −1, Entfernung über 25 und 50
 Rückfeuer ✔ gleichzeitig nach der Bewegung, ✱ ohne Programme und ohne Schiffspositionen; Trefferzonen
 und kritische Treffer ✔; Schaden ✱ ohne Antriebsbuchstaben (je Treffer −1 G bzw. −1 Sprung,
 kritisch 0); Hull ohne Folgen; Turret-Treffer legt ein zufälliges Turret still; Crew: das Schiff
-handelt nicht mehr; Explode: zerstört. Raketen, Sand, Ortung, Schadenskontrolle, Entern ○.
+handelt nicht mehr; Explode: zerstört. Raketen, Sand, Ortung, Entern ○. Seit 2026-11-22d wirken
+Schiffspositionen und Programme (Target, Predict, Gunner Interact, Maneuver/Evade, Auto-Evade,
+Return Fire; `modell/schiffe.md`). Antriebsschaden ✔ seit 2026-11-27 über den Buchstaben: jeder
+Treffer senkt Maneuver, Jump oder Power Plant um eine Stufe, die Leistung kommt aus dem Drive
+Potential, das Power Plant begrenzt beide (Corsair und Seeker ohne Buchstaben ✱: je Treffer −1).
+Schadenskontrolle ✔ seit 2026-11-27 (SR 42): einmal je Raumrunde und Schiff in der Feuerphase,
+2W6 + Engineering des Engineers, 9+ flickt einen nicht kritischen Treffer; geflickt wirkt er nicht
+mehr, ✱ die Werft berechnet ihn weiter. ✱ Fremde Schiffe flicken bei „End Turn“ von selbst mit
+Engineering 1, zuerst Maneuver und Power Plant, dann Turret.
 Schiffsbegegnungen im System ✔ als Knopf im Systemflug (SE 13 mit Reaktion nach SE 21), ✔ seit
 2026-11-22b beim Start von der Welt und bei der Ankunft jeder Reise mit eigenem Schiff (Sprung und
 Reise im System) und von Hand im Bereich Begegnung, je mit Dialog (Zielwert, Würfeln, Abbrechen lang
@@ -827,6 +838,12 @@ Hauptbereich oder Engineering nach Wahl, 3+ normale Zufallslokalisierung) geziel
 - **Repair Parts**: provisorische Reparatur aus dem Ship's Locker; volle Reparatur/Ersatz nur an
   einer Werft, Kosten ca. 10–120 % des Neuwerts der Baugruppe je nach Fall (2W, in 10 %-Schritten),
   DM −2 bei Reparatur durch die eigene Crew statt einer Werft.
+- **Stand in der App** (2026-11-27d, Detailseite *Schaden*, `model/ship-repair.ts`): unterwegs ✔ ✱
+  je Charakter einmal je Woche 2W6 + Engineering 10+ (nach SR 28), dann geflickt; kritische Treffer
+  nicht. In der Werft ✔ ✱: die Werft repariert, was man auswählt (Cr 100.000 je Treffer, Cr 1.000.000
+  je kritischem), oder ein Engineer ab Engineering-1 repariert selbst ganz, 8+, gegen Material zum
+  halben Werftpreis, beim Fehlschlag eine Gebühr von Cr 10.000 (kritisch Cr 20.000); ein Treffer je
+  Tag oder ein kritischer je Woche. Die 10–120 % aus SR 42 bildet die App nicht ab (keine Baugruppen).
 
 ### Ship's Data Card (SR 39–40, SE 12)
 

@@ -132,6 +132,7 @@ hide <<browser>> stereotype
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SpaceAttack $raum
   class DamageControl $raum
+  class ShipRepair $schiffe
 
 ' Charaktererschaffung und Lebenslauf
   class Generation $erschaffung
@@ -204,6 +205,7 @@ PriceRoll "*" --> "0..1" Character : helper
 ' Raumkarte und Systemflug
 SpaceAttack "*" --> "0..1" Character : gunner
 DamageControl "*" --> "0..1" Character : by
+ShipRepair "*" --> "1" Character : by
 
 ' Zeit und Reisen
 Passenger "*" --> "1" Character : for

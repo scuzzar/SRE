@@ -327,7 +327,8 @@ Nach den SR (*Turn Sequence*), angepasst an gleichzeitige Bewegung ⚑:
 [`mock/raumkampf-ui.html`](mock/raumkampf-ui.html)): Der eine Knopf unten heißt in der Schubphase
 **Bewegen** (Phase 1 und 2 – Schub wählen und Bewegung, die Raumrunde rückt *nicht* weiter) und in der
 Feuerphase **End Turn** (Phase 3 bis 6 – eigene Salven werden getippt, am Ende feuern die fremden
-Schiffe und das Rückfeuer, dann rückt die Raumrunde weiter). Raketen, Sand, Schadenskontrolle und
+Schiffe und das Rückfeuer, dann rückt die Raumrunde weiter). Die Schadenskontrolle
+(seit 27. November 2026) tippt man in der Feuerphase im Blatt unter den Hardpoints; Raketen, Sand und
 Nachladen folgen in den nächsten Stufen; `SystemFlight.phase` (`thrust`, `fire`) hält die Phase im
 Spielstand.
 
@@ -534,11 +535,12 @@ Jede Stufe ist für sich spielbar und bekommt ihre eigene Änderung im Modell. S
 | 4a | **Small Craft ohne Kampf**: Beiboote als eigene Schiffe, aussetzen, andocken, landen, im System reisen; einzeln kaufen | 2026-11-21b, 2026-11-21c |
 | 4b (Teil) | **Waffen der Small Craft**: Laser ab Werft, eigene Trefferzonen, DM −1 ohne Computer | 2026-11-22 |
 | 5 (Teil) | **Begegnungen**: Wurf auf der Starship Encounter Table bei Abreise und Ankunft, Sichtung, Weiterreise aus dem Systemflug, Flucht per Sprung mit DM +5/+15; Reise Tag für Tag | 2026-11-22b, 2026-11-22c |
+| 2b | **Crew und Programme**: Schiffspositionen der SC, wirkende Programme (Target, Predict, Gunner Interact, Maneuver/Evade, Auto-Evade, Return Fire), Ausweichen kostet 1 G, Antriebsschaden über den Buchstaben (Drive Potential), Schadenskontrolle 9+ (auch für fremde Schiffe), Software in der Werft, Oberflächen für Crew und Computer; Dekompression bleibt für später | 2026-11-22d (Schadenskontrolle und Antriebsbuchstaben gebaut am 27. November 2026) |
 
 **Was Stufe 2 bewusst vereinfacht hat** (✱ in `regeln-schiffe.md`): keine Programme (jedes Schiff
 schießt, als liefe *Target*), keine Schiffspositionen und damit keine Fertigkeits-DMs, kein
 Ausweichen, Antriebsschaden als −1 G je Treffer statt über den Buchstaben, Hull-Treffer ohne
-Folgen, keine Schadenskontrolle. Nur die Gruppe kämpft (`SystemFlight.party`), ein Mutterschiff ohne
+Folgen, keine Schadenskontrolle (bis auf die Hull-Treffer mit Stufe 2b nachgeholt). Nur die Gruppe kämpft (`SystemFlight.party`), ein Mutterschiff ohne
 Gruppe nicht. Von den fünf Absichten im Konzept gibt es drei; *Entern* und *Abfangen* fehlen, weil es
 das Entern noch nicht gibt.
 
@@ -546,7 +548,6 @@ das Entern noch nicht gibt.
 
 | Stufe | Inhalt | Ergebnis |
 |---|---|---|
-| **2b** | **Crew und Programme**: Schiffspositionen der SC (Pilot, Gunner, Engineer), Programme an Bord wirken (Target, Predict, Gunner Interact, Maneuver/Evade und Auto-Evade, Return Fire); Ausweichen kostet 1 G (schon entschieden); Antriebsschaden über den Buchstaben (Drive Potential, Power Plant begrenzt den Antrieb); Schadenskontrolle 9+; Software kaufen in der Werft; Oberflächen für Crew und Computer (Änderung 2026-11-22d, freigegeben am 23. November 2026; Dekompression bleibt für später) | Der Laserkampf folgt den SR statt der Vereinfachung, und die Fertigkeiten der SC zählen |
 | **3** | **Raketen und Sand**: Standardrakete 5G6 als eigene Einheit mit Brennschluss, Abfangen auf 2.500 km, Kontakt, Detonation 1W Treffer, Anti-Missile, ECM 9+, Nachladen, Munition in der Werft kaufen; Sandwolke als treibende Einheit, −3 je Raumband | Das volle Waffenprogramm der SR |
 | **4b** | **Small Craft im Kampf und Entern**: Aussetzen während des Kampfs, Brennstufen nach Mayday, Rotten (ein Schub für mehrere), alle eigenen Einheiten kämpfen; Entern unter 100 km und 0,1 km/s mit Übergang in die Kampfsimulation; Absichten *Entern* und *Abfangen* für NSC | Träger, Enterkommandos, Piraten, die wirklich entern |
 | **5** | **Ortung**: Reichweiten 15/60/90 Raumbänder, Schatten der Körper, *Wer schubt, leuchtet* (offen), nicht geortete Einheiten als zuletzt bekannter Ort | Verstecken und Überraschen werden möglich |

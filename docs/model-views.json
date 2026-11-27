@@ -772,6 +772,19 @@
         "Booking",
         "LowBerth"
       ]
+    },
+    {
+      "id": "2026-11-27d",
+      "file": "2026-11-27d-reparatur",
+      "title": "Reparatur außerhalb des Kampfs: Detailseite Schaden; unterwegs flickt ein Charakter einmal je Woche (10+), in der Werft repariert ein Engineer selbst (8+, Material oder Gebühr), und die Werft repariert, was man auswählt",
+      "approved": true,
+      "show": [
+        "Ship",
+        "ShipDamage",
+        "Character",
+        "LogEntry",
+        "Booking"
+      ]
     }
   ]
 }

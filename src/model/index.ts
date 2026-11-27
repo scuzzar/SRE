@@ -32,6 +32,7 @@ export * from './crew';
 export * from './software';
 export * from './armament';
 export * from './space-combat';
+export * from './ship-repair';
 export * from './surface-grid';
 export * from './surface-map';
 export * from './shop';

@@ -182,5 +182,6 @@ der Owner entscheidet sie mit dem Ausprobieren.
   gleich ausprobieren kann (die Kasse der Demo reicht für keinen Laser).
 - **Reparatur** ⚑ (SR 42 nennt 10–120 % des Neuwerts der Baugruppe, die Referenzdaten haben keine
   Baugruppen): in der Werft an einem Raumhafen A oder B, Cr 100.000 je Treffer und Cr 1.000.000 je
-  kritischem Treffer, alles auf einmal (Buchung mit `shipCost` repair); danach ist `Ship.damage`
-  leer. Ausgefallene Turrets arbeiten wieder.
+  kritischem Treffer, je ausgewähltem Treffer (seit 2026-11-27d auf der Detailseite *Schaden*, siehe
+  [Reparatur außerhalb des Kampfs](schiffe.md#reparatur-außerhalb-des-kampfs); Buchung mit
+  `shipCost` repair). Ist alles repariert, ist `Ship.damage` leer; ausgefallene Turrets arbeiten wieder.
