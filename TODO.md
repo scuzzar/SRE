@@ -8,9 +8,9 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 ## Handel
 
 - [ ] **Handel umsetzen** nach [`docs/regeln-handel.md`](docs/regeln-handel.md): die
-  Auslegungsfragen sind entschieden (E1–E11), als Nächstes ins Domänenmodell (Laderaum mit
-  Ladungen, Passagiere an Bord, angekündigtes Ziel, Warenwurf je Woche, Makler); Reisezonen
-  (Amber, Red) fehlen der App noch und werden für Fracht und Passagiere gebraucht.
+  Auslegungsfragen sind entschieden (E1–E11), Modell-Entwurf
+  2026-11-27 (`docs/modell/handel.md`) wartet auf Freigabe, danach in den Code. Später: Post und
+  private Botschaften, Charter, Shuttle, subventionierte Schiffe, Bumping, Blinde Passagiere.
 
 ## Kampf
 

@@ -125,6 +125,9 @@ hide <<browser>> stereotype
 ' Schiffe
   class CrewPost $schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+  class PriceRoll $handel $newClass("2026-11-27")
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SpaceAttack $raum
   class DamageControl $raum
@@ -192,6 +195,9 @@ Booking "*" --> "0..1" Character : for
 
 ' Schiffe
 CrewPost "*" --> "1" Character : who
+
+' Handel
+PriceRoll "*" -$newArrow("2026-11-27")-> "0..1" Character : helper
 
 ' Raumkarte und Systemflug
 SpaceAttack "*" --> "0..1" Character : gunner
@@ -279,4 +285,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Booking #line:d0021b;line.bold
 @enduml

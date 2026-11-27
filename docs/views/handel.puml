@@ -1,0 +1,275 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Ausschnitt: Handel
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+  class Campaign $kampagne
+  class Booking $shop
+  class Character $charakter
+
+' Schiffe
+  class Ship $schiffe
+
+' Handel (Regeln: docs/regeln-handel.md)
+  class Market $handel $newClass("2026-11-27") {
+    week: number
+    /current: boolean
+  }
+  class GoodsRoll $handel $newClass("2026-11-27") {
+    dice: number[2]
+    dm: number
+    quantityDice: number[*]
+    /quantity: number
+  }
+  class PriceRoll $handel $newClass("2026-11-27") {
+    sale: boolean
+    dice: number[2]
+    tradeDm: number
+    skillDm: number
+    brokerDm: number
+    /percent: number
+    /price: number
+  }
+  class Cargo $handel $newClass("2026-11-27") {
+    kind: CargoKind
+    tons: number
+    count: number [0..1]
+    paid: number [0..1]
+    retired: boolean
+  }
+  enum CargoKind <<value>> $handel $newClass("2026-11-27") {
+    goods
+    freight
+  }
+  class FreightOffer <<value>> $handel $newClass("2026-11-27") {
+    dice: number[3]
+    dm: number
+  }
+  class FreightLot <<value>> $handel $newClass("2026-11-27") {
+    size: FreightSize
+    die: number
+    /tons: number
+    taken: boolean
+  }
+  enum FreightSize <<value>> $handel $newClass("2026-11-27") {
+    major
+    minor
+    incidental
+  }
+  class PassengerOffer <<value>> $handel $newClass("2026-11-27") {
+    highDice: number[*]
+    middleDice: number[*]
+    lowDice: number[*]
+    dm: number
+    /high: number
+    /middle: number
+    /low: number
+    high: number
+    middle: number
+    low: number
+  }
+  enum ShipIncome <<value>> $handel $newClass("2026-11-27") {
+    freight
+    passage
+    goods
+  }
+  enum TravelZone <<value>> $handel $newClass("2026-11-27") {
+    amber
+    red
+  }
+  class TradeGood <<reference>> $handel $newClass("2026-11-27") {
+    roll: number
+    name: string
+    basePrice: number
+    quantity: DiceExpr
+    perItem: boolean
+    tonsPerItem: number [0..1]
+  }
+  class TradeDm <<value>> $handel $newClass("2026-11-27") {
+    dm: number
+  }
+  class ActualValue <<reference>> $handel $newClass("2026-11-27") {
+    roll: number
+    percent: number
+  }
+  class CargoRow <<reference>> $handel $newClass("2026-11-27") {
+    population: number
+    major: DiceExpr [0..1]
+    minor: DiceExpr [0..1]
+    incidental: DiceExpr [0..1]
+  }
+  class PassengerRow <<reference>> $handel $newClass("2026-11-27") {
+    population: number
+    high: DiceExpr [0..1]
+    middle: DiceExpr [0..1]
+    low: DiceExpr [0..1]
+  }
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class Hex $sektor
+  class World $sektor
+
+' Missionen
+
+' Verlauf
+  abstract class LogEntry $probe
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+' Fahrzeuge und Wege auf der Oberfläche
+  class TradeCode <<reference>> $sektor
+  ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
+
+' Kampagne
+
+' Schiffe
+
+' Handel
+Campaign "1" *-$newArrow("2026-11-27")- "0..*" Market : markets
+Market "*" -$newArrow("2026-11-27")-> "1" World : at
+Market "*" -$newArrow("2026-11-27")-> "0..1" GoodsRoll : goods
+Market "*" -$newArrow("2026-11-27")-> "0..1" PriceRoll : purchase
+Market "*" -$newArrow("2026-11-27")-> "*" PriceRoll : sales
+Market "1" *-$newArrow("2026-11-27")- "*" FreightOffer : freight
+Market "1" *-$newArrow("2026-11-27")- "*" PassengerOffer : passengers
+FreightOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
+FreightOffer "1" *-$newArrow("2026-11-27")- "*" FreightLot : lots {ordered}
+FreightLot -$newArrow("2026-11-27")-> FreightSize
+PassengerOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
+LogEntry <|-$newArrow("2026-11-27")- GoodsRoll
+LogEntry <|-$newArrow("2026-11-27")- PriceRoll
+GoodsRoll "*" -$newArrow("2026-11-27")-> "1" World : at
+GoodsRoll "*" -$newArrow("2026-11-27")-> "1" TradeGood : /goods
+PriceRoll "*" -$newArrow("2026-11-27")-> "1" World : at
+PriceRoll "*" -$newArrow("2026-11-27")-> "0..1" GoodsRoll : offer
+PriceRoll "*" -$newArrow("2026-11-27")-> "0..1" Cargo : lot
+PriceRoll "*" -$newArrow("2026-11-27")-> "0..1" Character : helper
+PriceRoll "*" -$newArrow("2026-11-27")-> "1" ActualValue : /value
+Ship "1" *-$newArrow("2026-11-27")- "*" Cargo : hold {ordered}
+Cargo -$newArrow("2026-11-27")-> CargoKind
+Cargo "*" -$newArrow("2026-11-27")-> "0..1" TradeGood : goods
+Cargo "*" -$newArrow("2026-11-27")-> "1" World : from
+Cargo "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
+Booking "*" -$newArrow("2026-11-27")-> "0..1" Cargo : forCargo
+Booking -$newArrow("2026-11-27")-> ShipIncome
+Hex -$newArrow("2026-11-27")-> TravelZone
+TradeGood "1" *-$newArrow("2026-11-27")- "*" TradeDm : purchase
+TradeGood "1" *-$newArrow("2026-11-27")- "*" TradeDm : resale
+TradeDm "*" -$newArrow("2026-11-27")-> "1" TradeCode : code
+
+' Raumkarte und Systemflug
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+class Booking #line:d0021b;line.bold
+class Ship #line:d0021b;line.bold
+class Hex #line:d0021b;line.bold
+@enduml

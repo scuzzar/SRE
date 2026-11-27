@@ -699,3 +699,10 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > [`changes/2026-11-26-beide-haende-keine-wahl.png`](../changes/2026-11-26-beide-haende-keine-wahl.png).
 > Ist die zweihändige Waffe leer und kein Magazin mehr da, greift er wieder mit Sekundärwaffe bzw.
 > Händen an (Owner).
+
+> Wartet auf Freigabe (Kennzeichen **2026-11-27**): **Handel, Schritt 1.** Spekulation mit einem
+> Markt je Welt und Woche (Warenwurf und Preiswürfe als Logeinträge, Makler und Fertigkeit),
+> Ladungen im Laderaum statt einer freien Tonnenzahl, Fracht- und Passagierangebote je Ziel, das
+> angekündigte Ziel am Schiff, zahlende Passagiere an der Reise, Reisezonen am Hex, die Tabellen
+> aus SE 9 und SE 22 als Referenzdaten. Regeln in [`handel.md`](handel.md). Der Ausschnitt dazu
+> liegt unter [`changes/2026-11-27-handel.png`](../changes/2026-11-27-handel.png).

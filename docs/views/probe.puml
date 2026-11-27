@@ -82,6 +82,10 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+  class GoodsRoll $handel $newClass("2026-11-27")
+  class PriceRoll $handel $newClass("2026-11-27")
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class Skimming $raum
   class SpaceBattle $raum
@@ -157,6 +161,10 @@ Campaign "1" *-- "*" LogEntry : log {ordered}
 
 ' Schiffe
 
+' Handel
+LogEntry <|-$newArrow("2026-11-27")- GoodsRoll
+LogEntry <|-$newArrow("2026-11-27")- PriceRoll
+
 ' Raumkarte und Systemflug
 LogEntry <|-- SpaceBattle
 LogEntry <|-- SpaceAttack
@@ -223,4 +231,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Journey #line:d0021b;line.bold
 @enduml

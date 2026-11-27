@@ -81,6 +81,8 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
 ' Charaktererschaffung und Lebenslauf
@@ -140,6 +142,8 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
+' Handel
+
 ' Raumkarte und Systemflug
 
 ' Zeit und Reisen
@@ -185,4 +189,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Booking #line:d0021b;line.bold
 @enduml

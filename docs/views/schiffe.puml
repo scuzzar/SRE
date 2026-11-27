@@ -85,7 +85,8 @@ hide <<browser>> stereotype
     name: string
     fuel: number
     unrefined: number
-    cargo: number
+$gone("2026-11-27", "cargo: number")
+    $new("2026-11-27", "/cargo: number")
     price: number
     initialLoan: number [0..1]
     loanBalance: number [0..1]
@@ -106,6 +107,9 @@ hide <<browser>> stereotype
     armament
     repair
     software
+    $new("2026-11-27", "goods")
+    $new("2026-11-27", "handling")
+    $new("2026-11-27", "broker")
   }
   class ShipSoftware $schiffe {
     slot: SoftwareSlot
@@ -202,6 +206,9 @@ hide <<browser>> stereotype
     image: string
   }
 
+' Handel (Regeln: docs/regeln-handel.md)
+  class Cargo $handel $newClass("2026-11-27")
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class Skimming $raum
   class ShipDamage <<value>> $raum
@@ -212,6 +219,7 @@ hide <<browser>> stereotype
 ' Charaktererschaffung und Lebenslauf
 
 ' Subsektor und Welten
+  class Hex $sektor
 
 ' Missionen
 
@@ -253,6 +261,10 @@ ShipDesign --> ShipKind
 ShipDesign "*" --> "*" ShipDesign : craft {ordered}
 Ship "*" --> "0..1" Ship : mother
 Booking "*" --> "0..1" Ship : forShip
+
+' Handel
+Ship "1" *-$newArrow("2026-11-27")- "*" Cargo : hold {ordered}
+Ship "*" -$newArrow("2026-11-27")-> "0..1" Hex : destination
 
 ' Raumkarte und Systemflug
 SpaceUnit "*" --> "0..1" Ship : ship
@@ -297,4 +309,9 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Booking #line:d0021b;line.bold
+class Ship #line:d0021b;line.bold
+class ShipCost #line:d0021b;line.bold
+class Hex #line:d0021b;line.bold
+class Journey #line:d0021b;line.bold
 @enduml

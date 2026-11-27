@@ -84,6 +84,8 @@ hide <<browser>> stereotype
   class ShipWeapon <<reference>> $schiffe
   class ShipDesign <<reference>> $schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SystemFlight $raum {
     startedAt: datetime
@@ -275,6 +277,8 @@ hide <<browser>> stereotype
 
 ' Schiffe
 
+' Handel
+
 ' Raumkarte und Systemflug
 Campaign "1" *-- "0..1" SystemFlight : flight
 SystemFlight "*" --> "1" World : world
@@ -346,4 +350,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Ship #line:d0021b;line.bold
+class Hex #line:d0021b;line.bold
 @enduml

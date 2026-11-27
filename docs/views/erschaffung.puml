@@ -82,6 +82,8 @@ hide <<browser>> stereotype
 ' Schiffe
   class ShipDesign <<reference>> $schiffe
 
+' Handel (Regeln: docs/regeln-handel.md)
+
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
 
 ' Charaktererschaffung und Lebenslauf
@@ -217,6 +219,8 @@ hide <<browser>> stereotype
 ' Kampagne
 
 ' Schiffe
+
+' Handel
 
 ' Raumkarte und Systemflug
 Gain "*" --> "0..1" ShipDesign : ship

@@ -40,9 +40,10 @@ Bereiche und Änderungen stehen in [`model-views.json`](model-views.json).
 | Schiffe | [views/schiffe.png](views/schiffe.png) | [modell/schiffe.md](modell/schiffe.md) |
 | Missionen | [views/mission.png](views/mission.png) | [modell/mission.md](modell/mission.md) |
 | Raumkarte und Systemflug | [views/raum.png](views/raum.png) | [modell/raum.md](modell/raum.md) |
+| Handel | [views/handel.png](views/handel.png) | [modell/handel.md](modell/handel.md) |
 
 Die Änderungen, offen und freigegeben, liegen unter [`changes/`](changes/); offen ist derzeit
-keine.
+**2026-11-27** (Handel, Schritt 1, [`changes/2026-11-27-handel.png`](changes/2026-11-27-handel.png)).
 
 Das Diagramm zeigt den **gespeicherten Stand** und die Referenzdaten, auf die er verweist: Daten und
 Beziehungen, keine Operationen. **Blau** ist der Spielstand, den die App speichert. **Grau mit
@@ -338,7 +339,19 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Kleine Meere, verstreute Seen | `Surface.smallSeas`, `Surface.scatteredLakes` | Gewässer von etwa einem Hex bzw. einem halben |
 | Einheimisches Leben | `Surface.life` | Ob auf der Welt eigenes Leben entstanden ist; ohne Leben ist das Land später Wüste |
 | Kontinente- und Ozeane-Tabelle | `SurfaceRow`, `SurfaceTable` | Die beiden Tabellen des *World Builder's Handbook* (S. 70), aus denen die Land- bzw. Wassermassen kommen |
-| Würfelausdruck | `DiceExpr` | Wie viele W6 plus welcher DM, z. B. 2W6 + 1 oder 3W6 − 3 |
+| Würfelausdruck | `DiceExpr` | Wie viele W6 plus welcher DM, z. B. 2W6 + 1 oder 3W6 − 3; mit `less` abgezogene W6 (3D−1D) und mit `times` ein Faktor (3D×5) (2026-11-27) |
+| Reisezone | `Hex.travelZone`, `TravelZone` | Amber oder Red, von Hand gesetzt; ohne Zone ist das System grün (2026-11-27) |
+| Ware | `TradeGood` | Eine Zeile der Trade and Speculation Table (SE 22): Wurf, Name, Grundpreis, Menge, Purchase und Resale DMs je Handelscode (`TradeDm`); Stückwaren mit Tonnen je Stück (2026-11-27) |
+| Grundpreis | `TradeGood.basePrice` | Der feste Wert einer Ware je Tonne bzw. Stück; Kauf- und Verkaufspreis sind Prozente davon (2026-11-27) |
+| Actual Value Table | `ActualValue` | Prozent des Grundpreises nach dem modifizierten 2W6-Wurf (SE 22) (2026-11-27) |
+| Markt | `Market` | Was eine Welt in einer Woche bietet: Ware, Fracht- und Passagierangebote; verfällt am Wochenende (2026-11-27) |
+| Warenwurf | `GoodsRoll` | Logeintrag: welche Ware in welcher Menge an einer Welt zu haben ist (2026-11-27) |
+| Preiswurf | `PriceRoll` | Logeintrag: Kauf- oder Verkaufspreis mit Würfeln und DMs (Handelscodes, Fertigkeit, Makler) (2026-11-27) |
+| Makler | `PriceRoll.brokerDm` | Hilft beim Verkauf mit DM +1 bis +4 gegen 5 % je +1 vom gewürfelten Erlös (2026-11-27) |
+| Ladung | `Cargo`, `Ship.hold` | Was im Laderaum liegt: eigene Ware oder fremde Fracht mit Ziel (2026-11-27) |
+| Frachtangebot | `FreightOffer`, `FreightLot` | Die Haupt-, Neben- und Gelegenheitsladungen, die an einer Welt auf ein Ziel warten (2026-11-27) |
+| Passagierangebot | `PassengerOffer` | Wie viele Passagiere je Klasse zum angekündigten Ziel reisen wollen und wie viele mitfliegen (2026-11-27) |
+| Angekündigtes Ziel | `Ship.destination` | Das System, für das das Schiff Fracht und Passagiere aufnimmt (2026-11-27) |
 | Schiff | `Ship`, `Campaign.ships`, `Campaign./ship` | Das eine Schiff der Gruppe als Basis: Entwurf, Name, Treibstoff und Fracht in Tonnen, offene Restschuld. Die Kampagne hält alle ihre Schiffe (auch die ausgeblendeten, 2026-11-16c); `/ship` ist das nicht ausgeblendete, wie `focus` beim Charakter; die Schiffs-Id (s1, s2, …) ist wie bei Charakteren nicht gezeichnet |
 | Schiffsentwurf | `ShipDesign` | Referenzdaten eines Standardentwurfs (Scout/Courier, Free Trader, …): Rumpf, Antriebe, Treibstofftank, Computer, Kabinen, Niedrigbetten, Hardpoints, Laderaum, Crewbedarf, Bauzeit; siehe [`regeln-schiffe.md`](regeln-schiffe.md) unter *Standardentwürfe* |
 | Art des Entwurfs | `ShipDesign.kind`, `ShipKind` | Ob ein Entwurf ein Schiff (`starship`, 100 t und mehr) oder ein Small Craft (`smallCraft`, unter 100 t, ohne Sprungantrieb, SR 33) ist (2026-11-21b) |

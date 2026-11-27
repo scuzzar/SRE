@@ -103,6 +103,7 @@ hide <<browser>> stereotype
     count: number [0..1]
     text: string [0..1]
     shipCost: ShipCost [0..1]
+    $new("2026-11-27", "shipIncome: ShipIncome [0..1]")
   }
   enum BookingKind <<value>> $shop {
     income
@@ -169,7 +170,8 @@ hide <<browser>> stereotype
     name: string
     fuel: number
     unrefined: number
-    cargo: number
+$gone("2026-11-27", "cargo: number")
+    $new("2026-11-27", "/cargo: number")
     price: number
     initialLoan: number [0..1]
     loanBalance: number [0..1]
@@ -190,6 +192,9 @@ hide <<browser>> stereotype
     armament
     repair
     software
+    $new("2026-11-27", "goods")
+    $new("2026-11-27", "handling")
+    $new("2026-11-27", "broker")
   }
   class ShipSoftware $schiffe {
     slot: SoftwareSlot
@@ -284,6 +289,101 @@ hide <<browser>> stereotype
     key: string
     name: string
     image: string
+  }
+
+' Handel (Regeln: docs/regeln-handel.md)
+  class Market $handel $newClass("2026-11-27") {
+    week: number
+    /current: boolean
+  }
+  class GoodsRoll $handel $newClass("2026-11-27") {
+    dice: number[2]
+    dm: number
+    quantityDice: number[*]
+    /quantity: number
+  }
+  class PriceRoll $handel $newClass("2026-11-27") {
+    sale: boolean
+    dice: number[2]
+    tradeDm: number
+    skillDm: number
+    brokerDm: number
+    /percent: number
+    /price: number
+  }
+  class Cargo $handel $newClass("2026-11-27") {
+    kind: CargoKind
+    tons: number
+    count: number [0..1]
+    paid: number [0..1]
+    retired: boolean
+  }
+  enum CargoKind <<value>> $handel $newClass("2026-11-27") {
+    goods
+    freight
+  }
+  class FreightOffer <<value>> $handel $newClass("2026-11-27") {
+    dice: number[3]
+    dm: number
+  }
+  class FreightLot <<value>> $handel $newClass("2026-11-27") {
+    size: FreightSize
+    die: number
+    /tons: number
+    taken: boolean
+  }
+  enum FreightSize <<value>> $handel $newClass("2026-11-27") {
+    major
+    minor
+    incidental
+  }
+  class PassengerOffer <<value>> $handel $newClass("2026-11-27") {
+    highDice: number[*]
+    middleDice: number[*]
+    lowDice: number[*]
+    dm: number
+    /high: number
+    /middle: number
+    /low: number
+    high: number
+    middle: number
+    low: number
+  }
+  enum ShipIncome <<value>> $handel $newClass("2026-11-27") {
+    freight
+    passage
+    goods
+  }
+  enum TravelZone <<value>> $handel $newClass("2026-11-27") {
+    amber
+    red
+  }
+  class TradeGood <<reference>> $handel $newClass("2026-11-27") {
+    roll: number
+    name: string
+    basePrice: number
+    quantity: DiceExpr
+    perItem: boolean
+    tonsPerItem: number [0..1]
+  }
+  class TradeDm <<value>> $handel $newClass("2026-11-27") {
+    dm: number
+  }
+  class ActualValue <<reference>> $handel $newClass("2026-11-27") {
+    roll: number
+    percent: number
+  }
+  class CargoRow <<reference>> $handel $newClass("2026-11-27") {
+    population: number
+    major: DiceExpr [0..1]
+    minor: DiceExpr [0..1]
+    incidental: DiceExpr [0..1]
+  }
+  class PassengerRow <<reference>> $handel $newClass("2026-11-27") {
+    population: number
+    high: DiceExpr [0..1]
+    middle: DiceExpr [0..1]
+    low: DiceExpr [0..1]
   }
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
@@ -486,6 +586,7 @@ hide <<browser>> stereotype
     navalBase: boolean [0..1]
     scoutBase: boolean [0..1]
     gasGiant: boolean [0..1]
+    $new("2026-11-27", "travelZone: TravelZone [0..1]")
     /step: WorldStep
   }
   class World $sektor {
@@ -643,6 +744,8 @@ hide <<browser>> stereotype
   }
   class Journey $reise {
     days: number
+    $new("2026-11-27", "high: number")
+    $new("2026-11-27", "middle: number")
     npcDie: number [0..1]
     lot: number [0..1]
     /pot: number
@@ -1232,6 +1335,8 @@ hide <<browser>> stereotype
   class DiceExpr <<value>> $sektor {
     dice: number
     dm: number
+    $new("2026-11-27", "less: number [0..1]")
+    $new("2026-11-27", "times: number [0..1]")
   }
   class Temperature <<reference>> $sektor {
     from: number [0..1]
@@ -1367,6 +1472,40 @@ ShipDesign --> ShipKind
 ShipDesign "*" --> "*" ShipDesign : craft {ordered}
 Ship "*" --> "0..1" Ship : mother
 Booking "*" --> "0..1" Ship : forShip
+
+' Handel
+Campaign "1" *-$newArrow("2026-11-27")- "0..*" Market : markets
+Market "*" -$newArrow("2026-11-27")-> "1" World : at
+Market "*" -$newArrow("2026-11-27")-> "0..1" GoodsRoll : goods
+Market "*" -$newArrow("2026-11-27")-> "0..1" PriceRoll : purchase
+Market "*" -$newArrow("2026-11-27")-> "*" PriceRoll : sales
+Market "1" *-$newArrow("2026-11-27")- "*" FreightOffer : freight
+Market "1" *-$newArrow("2026-11-27")- "*" PassengerOffer : passengers
+FreightOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
+FreightOffer "1" *-$newArrow("2026-11-27")- "*" FreightLot : lots {ordered}
+FreightLot -$newArrow("2026-11-27")-> FreightSize
+PassengerOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
+LogEntry <|-$newArrow("2026-11-27")- GoodsRoll
+LogEntry <|-$newArrow("2026-11-27")- PriceRoll
+GoodsRoll "*" -$newArrow("2026-11-27")-> "1" World : at
+GoodsRoll "*" -$newArrow("2026-11-27")-> "1" TradeGood : /goods
+PriceRoll "*" -$newArrow("2026-11-27")-> "1" World : at
+PriceRoll "*" -$newArrow("2026-11-27")-> "0..1" GoodsRoll : offer
+PriceRoll "*" -$newArrow("2026-11-27")-> "0..1" Cargo : lot
+PriceRoll "*" -$newArrow("2026-11-27")-> "0..1" Character : helper
+PriceRoll "*" -$newArrow("2026-11-27")-> "1" ActualValue : /value
+Ship "1" *-$newArrow("2026-11-27")- "*" Cargo : hold {ordered}
+Ship "*" -$newArrow("2026-11-27")-> "0..1" Hex : destination
+Cargo -$newArrow("2026-11-27")-> CargoKind
+Cargo "*" -$newArrow("2026-11-27")-> "0..1" TradeGood : goods
+Cargo "*" -$newArrow("2026-11-27")-> "1" World : from
+Cargo "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
+Booking "*" -$newArrow("2026-11-27")-> "0..1" Cargo : forCargo
+Booking -$newArrow("2026-11-27")-> ShipIncome
+Hex -$newArrow("2026-11-27")-> TravelZone
+TradeGood "1" *-$newArrow("2026-11-27")- "*" TradeDm : purchase
+TradeGood "1" *-$newArrow("2026-11-27")- "*" TradeDm : resale
+TradeDm "*" -$newArrow("2026-11-27")-> "1" TradeCode : code
 
 ' Raumkarte und Systemflug
 Campaign "1" *-- "0..1" SystemFlight : flight

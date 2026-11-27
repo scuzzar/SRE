@@ -81,6 +81,17 @@ hide <<browser>> stereotype
   class Character $charakter
 
 ' Schiffe
+  class Ship $schiffe
+
+' Handel (Regeln: docs/regeln-handel.md)
+  class Market $handel $newClass("2026-11-27")
+  class GoodsRoll $handel $newClass("2026-11-27")
+  class PriceRoll $handel $newClass("2026-11-27")
+  class Cargo $handel $newClass("2026-11-27")
+  class FreightOffer <<value>> $handel $newClass("2026-11-27")
+  class PassengerOffer <<value>> $handel $newClass("2026-11-27")
+  enum TravelZone <<value>> $handel $newClass("2026-11-27")
+  class TradeDm <<value>> $handel $newClass("2026-11-27")
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
   class SystemFlight $raum
@@ -100,6 +111,7 @@ hide <<browser>> stereotype
     navalBase: boolean [0..1]
     scoutBase: boolean [0..1]
     gasGiant: boolean [0..1]
+    $new("2026-11-27", "travelZone: TravelZone [0..1]")
     /step: WorldStep
   }
   class World $sektor {
@@ -222,6 +234,8 @@ hide <<browser>> stereotype
   class DiceExpr <<value>> $sektor {
     dice: number
     dm: number
+    $new("2026-11-27", "less: number [0..1]")
+    $new("2026-11-27", "times: number [0..1]")
   }
   class Temperature <<reference>> $sektor {
     from: number [0..1]
@@ -266,6 +280,18 @@ hide <<browser>> stereotype
 Booking "*" --> "0..1" World : in
 
 ' Schiffe
+
+' Handel
+Market "*" -$newArrow("2026-11-27")-> "1" World : at
+FreightOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
+PassengerOffer "*" -$newArrow("2026-11-27")-> "1" Hex : to
+GoodsRoll "*" -$newArrow("2026-11-27")-> "1" World : at
+PriceRoll "*" -$newArrow("2026-11-27")-> "1" World : at
+Ship "*" -$newArrow("2026-11-27")-> "0..1" Hex : destination
+Cargo "*" -$newArrow("2026-11-27")-> "1" World : from
+Cargo "*" -$newArrow("2026-11-27")-> "0..1" Hex : to
+Hex -$newArrow("2026-11-27")-> TravelZone
+TradeDm "*" -$newArrow("2026-11-27")-> "1" TradeCode : code
 
 ' Raumkarte und Systemflug
 SystemFlight "*" --> "1" World : world
@@ -341,4 +367,9 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Booking #line:d0021b;line.bold
+class Ship #line:d0021b;line.bold
+class Hex #line:d0021b;line.bold
+class Journey #line:d0021b;line.bold
+class DiceExpr #line:d0021b;line.bold
 @enduml

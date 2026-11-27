@@ -59,6 +59,10 @@
     {
       "id": "raum",
       "title": "Raumkarte und Systemflug"
+    },
+    {
+      "id": "handel",
+      "title": "Handel"
     }
   ],
   "changes": [
@@ -719,6 +723,15 @@
         "Character",
         "Strike",
         "AttackResult"
+      ]
+    },
+    {
+      "id": "2026-11-27",
+      "file": "2026-11-27-handel",
+      "title": "Handel, Schritt 1: Spekulation mit Markt je Welt und Woche (Warenwurf, Preiswürfe), Ladungen im Laderaum, Fracht- und Passagierangebote je Ziel, angekündigtes Ziel, zahlende Passagiere an der Reise, Reisezonen",
+      "approved": false,
+      "show": [
+        "TradeCode"
       ]
     }
   ]
