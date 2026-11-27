@@ -7,8 +7,8 @@ Code ([AGENTS.md](AGENTS.md)). Die Regeln stehen in den Regeldokus unter [`docs/
 
 ## Handel
 
-- [ ] **Handel umsetzen** nach [`docs/regeln-handel.md`](docs/regeln-handel.md): erst die zehn
-  *Offenen Fragen zur Auslegung* mit dem Owner klären, dann ins Domänenmodell (Laderaum mit
+- [ ] **Handel umsetzen** nach [`docs/regeln-handel.md`](docs/regeln-handel.md): die
+  Auslegungsfragen sind entschieden (E1–E11), als Nächstes ins Domänenmodell (Laderaum mit
   Ladungen, Passagiere an Bord, angekündigtes Ziel, Warenwurf je Woche, Makler); Reisezonen
   (Amber, Red) fehlen der App noch und werden für Fracht und Passagiere gebraucht.
 

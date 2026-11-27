@@ -26,9 +26,9 @@ geht es um Passagiere, die das **eigene Schiff** befördert.
 - „1D“, „2D“ heißt 1W6, 2W6; „3D−1D“ heißt drei Würfel, davon ein weiterer Würfel abgezogen;
   „3D×5“ heißt drei Würfel mal 5; „8+“ heißt „8 oder mehr“; „DM“ ist ein Würfelmodifikator.
 - Preise in Credits (Cr), Ladung in Tonnen (t).
-- **⚑** markiert eine Stelle, an der die Quelle offen, widersprüchlich oder verschieden lesbar ist;
-  sie steht gesammelt unter [Offene Fragen](#offene-fragen-zur-auslegung) und muss vor dem Bauen
-  entschieden werden.
+- **⚑** markiert eine Stelle, an der die Quelle offen, widersprüchlich oder verschieden lesbar ist.
+  Der Owner hat alle am 27. November 2026 entschieden; die Entscheidungen stehen gesammelt unter
+  [Entscheidungen zur Auslegung](#entscheidungen-zur-auslegung) und gelten für die App.
 
 **Stand in der App** je Regel:
 
@@ -156,7 +156,7 @@ Zahl der verfügbaren Ladungen an der **Ursprungswelt**, nach deren Bevölkerung
 | Bevölkerung 8 oder mehr | +1 |
 | Red Zone | keine Fracht |
 | Amber Zone | keine Hauptladungen |
-| Tech Level | Unterschied zwischen Ursprung und Ziel addieren bzw. abziehen (⚑ Richtung, siehe unten) |
+| Tech Level | Unterschied zwischen Ursprung und Ziel addieren bzw. abziehen (Richtung siehe Beispiel: TL Ursprung − TL Ziel) |
 
 Ein Ergebnis unter 0 heißt keine Ladung (– heißt: es gibt diese Art an dieser Welt nicht).
 
@@ -217,8 +217,8 @@ Zahl der verfügbaren Passagiere an der **Ursprungswelt**, nach deren Bevölkeru
 | Tech Level | Unterschied zwischen Ursprung und Ziel addieren bzw. abziehen (wie bei Fracht: TL Ursprung − TL Ziel) |
 
 Ergebnisse unter 0 zählen als 0 (✱ selbstverständlich, nicht ausdrücklich gedruckt).
-⚑ Ob die DMs auf jeden der drei Würfe einzeln wirken, sagt die Tabelle nicht ausdrücklich; die
-übliche Lesart und die der Cargo-Tabelle ist: ja, auf jede Klasse.
+⚑ Ob die DMs auf jeden der drei Würfe einzeln wirken, sagt die Tabelle nicht ausdrücklich.
+**Entschieden:** ja, auf jede Klasse einzeln, wie bei der Cargo-Tabelle (E9).
 
 ### Preise und Bedingungen (SR 28–29; SE 9)
 
@@ -248,7 +248,8 @@ Ergebnisse unter 0 zählen als 0 (✱ selbstverständlich, nicht ausdrücklich g
   Lotterie gibt. Jeder Niedrigpassagier rät, wie viele Niedrigpassagiere die Reise überleben. Wer
   richtig liegt, gewinnt den Topf; überlebt der Gewinner selbst nicht, bekommt ihn der Kapitän. Der
   Steward führt die Lotterie. ⚑ Wer gewinnt, wenn mehrere richtig raten oder keiner, sagt die
-  Regel nicht.
+  Regel nicht. **Entschieden ✱:** Mehrere überlebende Richtige teilen den Topf; trifft keiner oder
+  ist kein Richtiger am Leben, bekommt ihn der Kapitän (E10).
 - **Working Passage:** höchstens drei Sprünge, sonst gilt die Person als zum Standardlohn angeheuert;
   sie braucht Fertigkeit im Posten (Jack-of-all-Trades geht zur Not).
 - **Blinde Passagiere** (SR 28): Entdeckung 4+ je Tag (DMs nach Ermessen der Spielleitung). Bei
@@ -276,7 +277,7 @@ Ergebnisse unter 0 zählen als 0 (✱ selbstverständlich, nicht ausdrücklich g
   Honorar von **Cr20 bis Cr120**. **9+**: eine solche Botschaft wartet; welches Crewmitglied
   angesprochen wird, bestimmt der Zufall. Wer eine Botschaft überbringt, gilt beim Empfänger als
   verlässlich eingeführt (ein Anknüpfungspunkt für Patrone). ⚑ Wie das Honorar zwischen Cr20 und
-  Cr120 gewürfelt wird, sagt die Regel nicht (naheliegend: 1D × Cr20).
+  Cr120 gewürfelt wird, sagt die Regel nicht. **Entschieden ✱:** 1D × Cr20 (E11).
 
 ---
 
@@ -325,18 +326,20 @@ Voraussetzung: freier Laderaum und freies Kapital.
    enthält so viel Ware, in **Tonnen** – außer bei 51 bis 56, dort in **Stück** (siehe
    [Waren in Stück](#waren-in-stück)). Es gibt höchstens so viel, wie gewürfelt wurde.
 3. **Teilkauf:** Die Händler dürfen auch nur einen Teil der Partie kaufen; ein Teilkauf kostet eine
-   **Bearbeitungsgebühr von 1 %**. ⚑ 1 % wovon – vom Kaufpreis des gekauften Teils ist die
-   naheliegende Lesart.
-4. **Kaufpreis:** 2D auf die **Actual Value Table**, mit den DMs aus Fertigkeiten, Makler und
-   Handelscodes (Purchase DMs) der Welt, auf der gekauft wird. Der Prozentsatz × Grundpreis × Menge
+   **Bearbeitungsgebühr von 1 %**. ⚑ Wovon, sagt die Regel nicht. **Entschieden:** 1 % vom
+   Kaufpreis des gekauften Teils, zusätzlich zu zahlen (E5).
+4. **Kaufpreis:** 2D auf die **Actual Value Table**, mit den Purchase DMs der Handelscodes der
+   Welt, auf der gekauft wird, und **minus** Admin oder Bribery eines Charakters (E1). Der Prozentsatz × Grundpreis × Menge
    ergibt den Nettopreis der Partie.
 5. **Verkaufspreis:** An einem möglichen Markt wieder 2D auf die Actual Value Table, diesmal mit den
-   **Resale DMs** der Welt, auf der verkauft wird, plus Makler oder Fertigkeit. Prozentsatz ×
+   **Resale DMs** der Welt, auf der verkauft wird, **plus** Makler **und** Fertigkeit (E2). Prozentsatz ×
    Grundpreis × Menge ist der Erlös.
 
 ⚑ Ob die Händler nach dem Würfeln des Preises noch ablehnen dürfen (nicht kaufen, nicht verkaufen
 und weiterfliegen), sagt die Regel für den Kauf nicht ausdrücklich; für den Verkauf setzt sie es
 voraus (der Makler wird bezahlt, „auch wenn der Verkäufer sich entscheidet, nicht zu verkaufen“).
+**Entschieden:** Verzichten geht beim Kauf wie beim Verkauf. Ware, Menge und Preis gelten an dieser
+Welt bis zum Ende der Woche; neu gewürfelt wird erst in der nächsten Woche (E3).
 
 ### Waren in Stück
 
@@ -349,11 +352,21 @@ voraus (der Makler wird bezahlt, „auch wenn der Verkäufer sich entscheidet, n
   Beispiel: Eine Schrotflinte kostet Cr150 und wiegt 3,75 kg; eine Tonne Firearms hat den
   Grundpreis Cr30.000. Nach Gewicht wären es 266 Flinten, nach Preis **200 Flinten zu je Cr150** –
   das übrige Gewicht ist Verpackung und Kisten.
-- Die Waren **51 bis 56** (laut SR auch **66**, ⚑ siehe unten) werden **einzeln** statt in Tonnen
-  gehandelt: Die Menge ist eine Stückzahl; Tonnage und Grundpreis je Stück bestimmen Spieler oder
-  Spielleitung nach den bekannten Preisen der Ausrüstung (SR 55, *Vehicles*). Zum Vergleich
-  einige Fahrzeuge aus der Ausrüstungsliste: Fixed Wing Aircraft (TL 6) Cr1.000.000, 5 t;
-  Air/raft (TL 8) Cr600.000, 4 t.
+- Die Waren **51 bis 56** werden **einzeln** statt in Tonnen gehandelt: Die Menge ist eine
+  Stückzahl; Tonnage und Grundpreis je Stück bestimmen laut SR Spieler oder Spielleitung nach den
+  bekannten Preisen der Ausrüstung. ⚑ SR 52 zählt auch **66** (Vacc Suits) dazu, die Tabelle SE 22
+  nicht. **Entschieden:** 66 wird wie in der Tabelle in **Tonnen** gehandelt (E6).
+- **Entschieden (E7):** Der Grundpreis der Tabelle ist der Preis **je Stück** (SE 22), und jede
+  Stückware hat eine feste Tonnage je Stück:
+
+  | Wurf | Ware | Grundpreis je Stück | Tonnen je Stück | Beleg |
+  |---|---|---:|---:|---|
+  | 51 | Aircraft | Cr1.000.000 | 5 | SR 55, Fixed Wing Aircraft (TL 6) Cr1.000.000, 5 t |
+  | 52 | Air/raft | Cr600.000 | 4 | SR 55, Air/raft (TL 8) Cr600.000, 4 t |
+  | 53 | Computers | Cr10.000.000 | 1 | ✱ Hausregel, keine Quelle |
+  | 54 | All Terrain Vehicles | Cr30.000 | 10 | SR 56, Wheeled/Tracked ATV (TL 6) Cr30.000, 10 t |
+  | 55 | Armored Vehicles | Cr70.000 | 1 | ✱ Hausregel, keine Quelle |
+  | 56 | Farm Machinery | Cr150.000 | 1 | ✱ Hausregel, keine Quelle |
 
 ---
 
@@ -458,18 +471,19 @@ Makler helfen beim **Verkauf** von Ware, die an eine Welt geliefert wurde. Es gi
 - Je +1 kostet 5 % des Verkaufs; mehr als **+4** gibt es nie.
 - **Nur ein Makler** darf bei einem Verkauf helfen.
 - Der Makler muss **bezahlt werden, auch wenn der Verkäufer sich entscheidet, nicht zu
-  verkaufen**. ⚑ Wovon die Provision dann berechnet wird, sagt die Regel nicht (naheliegend: vom
-  gewürfelten, aber ausgeschlagenen Erlös).
+  verkaufen**. ⚑ Wovon die Provision dann berechnet wird, sagt die Regel nicht. **Entschieden:**
+  vom gewürfelten, aber ausgeschlagenen Erlös (E4).
 
 ### Fertigkeiten der Charaktere
 
 - **Bribery** oder **Admin** dürfen als DM in Höhe der Stufe auf den Verkauf angerechnet werden
   (SR 52: „for the sale of goods“; SE 22 und die Einleitung von SR 52 sagen allgemeiner: auf die
-  Actual Value Table, ⚑ also womöglich auch beim Kauf).
-- **Nur ein Charakter** darf einen Verkauf beeinflussen.
+  Actual Value Table). ⚑ **Entschieden:** auch beim Kauf; dort wird die Stufe **abgezogen**, damit
+  sie den Preis drückt (E1).
+- **Nur ein Charakter** darf einen Verkauf (und einen Kauf) beeinflussen.
 - ⚑ Ob Makler und Fertigkeit zusammen wirken dürfen, sagt die Regel nicht ausdrücklich: „Only one
-  broker“ und „only one character“ stehen getrennt. Die alte Zusammenfassung in
-  `regeln-schiffe.md` las es als „entweder – oder“; der Text gibt das nicht her.
+  broker“ und „only one character“ stehen getrennt. **Entschieden:** ja, je ein Makler und ein
+  Charakter, ihre DMs addieren sich (E2).
 - Auch für Geschäftsangebote allgemein gilt Admin oder Bribery als DM auf den Reaktionswurf (SR 52,
   *Reactions*).
 
@@ -489,7 +503,7 @@ Handel. Die App leitet sie schon aus dem UWP ab (`/trade`, Bedingungen nach Char
 | Code | Kürzel | Bedingungen (SR 45) | Bedingungen (SE 22) |
 |---|---|---|---|
 | Agricultural | A (sonst Ag) | Atmosphäre 4–9, Hydrographie 4–8, Bevölkerung 5–7 | gleich |
-| Non-Agricultural | NA (sonst Na) | Atmosphäre 0–3, **Hydrographie 0–3**, Bevölkerung 6+ | Atmosphäre 0–3, Bevölkerung 6+ (⚑ ohne Hydrographie) |
+| Non-Agricultural | NA (sonst Na) | Atmosphäre 0–3, **Hydrographie 0–3**, Bevölkerung 6+ | Atmosphäre 0–3, Bevölkerung 6+ (⚑ ohne Hydrographie; **entschieden:** es gilt SR 45 mit Hydrographie, E8) |
 | Industrial | I (sonst In) | Atmosphäre 0, 1, 2, 4, 7 oder 9, Bevölkerung 9+ | gleich |
 | Non-Industrial | NI (sonst Ni) | Bevölkerung 0–6 | gleich |
 | Rich | R (sonst Ri) | Regierung 4–9, Atmosphäre 6 oder 8, Bevölkerung 6–8 | gleich |
@@ -559,26 +573,21 @@ Stand 27. November 2026, als Grundlage für das Modell:
 - **Wochentakt** für den Warenwurf („einmal je Woche“).
 - **Makler** als käufliche Dienstleistung am Hafen.
 
-## Offene Fragen zur Auslegung
+## Entscheidungen zur Auslegung
 
-Vor dem Modellieren mit dem Owner zu entscheiden (⚑ oben im Text):
+Der Owner hat die offenen Stellen (⚑) am 27. November 2026 entschieden. ✱ heißt: eigene Hausregel,
+weil die Quelle nichts dazu sagt; die übrigen sind die Wahl zwischen zwei Lesarten der Quelle.
 
-1. **Fertigkeit beim Kauf:** Wirken Admin oder Bribery nur beim Verkauf (SR 52, *Character
-   Skills*) oder auch beim Kauf (SR 52 Einleitung, SE 22)? Und wenn beim Kauf: mit welchem
-   Vorzeichen (der Wurf soll den Preis drücken, also **abziehen**)?
-2. **Makler und Fertigkeit zusammen** oder nur eines von beiden je Verkauf?
-3. **Ablehnen nach dem Preiswurf:** Dürfen die Händler nach dem Kaufpreiswurf verzichten? Darf am
-   selben Markt in derselben Woche neu gewürfelt werden (vermutlich nein, „einmal je Woche“)?
-4. **Makler bei Verzicht:** Provision vom ausgeschlagenen Erlös?
-5. **Teilkauf-Gebühr 1 %:** vom Preis des gekauften Teils?
-6. **Vacc Suits (66):** SR 52 nennt 66 bei den Stückwaren, die Tabelle SE 22 rechnet 61–66 in
-   Tonnen. Was gilt?
-7. **Stückwaren 51–56:** Ist der Grundpreis der Tabelle der Preis **je Stück** (SE 22: „expressed
-   per each single item“), oder bestimmt die Spielleitung ihn erst (SR 52)? Die Grundpreise passen
-   zu den Ausrüstungspreisen (Aircraft Cr1.000.000, Air/raft Cr600.000), also vermutlich je Stück;
-   die Tonnage je Stück stünde in der Ausrüstungsliste.
-8. **Non-Agricultural:** mit Hydrographie 0–3 (SR 45, Charts S. 15 – so hat es die App) oder ohne
-   (SE 22)?
-9. **Passagier-DMs** je Klasse einzeln (übliche Lesart)?
-10. **Low Lottery** bei mehreren oder keinen richtigen Tipps; **Honorar für private Post**
-    (Cr20–120, wie würfeln?).
+| Nr. | Frage | Entscheidung |
+|---|---|---|
+| E1 | Wirken Admin oder Bribery auch beim Kauf? | Ja. Beim Kauf wird die Stufe vom Wurf der Actual Value Table **abgezogen**, beim Verkauf **addiert**. Je Geschäft nur ein Charakter. |
+| E2 | Makler und Fertigkeit beim selben Verkauf? | Ja, beides; die DMs addieren sich (Makler höchstens +4, dazu die Stufe eines Charakters). |
+| E3 | Verzicht nach dem Preiswurf, neu würfeln? | Verzichten geht beim Kauf und Verkauf. Ware, Menge und Preis gelten an der Welt bis zum Ende der Woche; neuer Warenwurf erst in der nächsten Woche. |
+| E4 | Makler bei Verzicht auf den Verkauf | Provision in Prozent des gewürfelten, ausgeschlagenen Erlöses. |
+| E5 | Teilkauf-Gebühr 1 % wovon? | Vom Kaufpreis des gekauften Teils, zusätzlich. |
+| E6 | Vacc Suits (66): Stück oder Tonnen? | Tonnen, wie die Tabelle SE 22 (SR 52 gilt hier nicht). |
+| E7 | Stückwaren 51–56: Preis und Tonnage | Grundpreis = Preis je Stück. Tonnage je Stück fest: Aircraft 5 t, Air/raft 4 t, ATV 10 t (aus SR 55–56); ✱ Computers, Armored Vehicles und Farm Machinery je 1 t. |
+| E8 | Non-Agricultural mit oder ohne Hydrographie? | Mit Hydrographie 0–3 (SR 45, Charts S. 15), wie die App es schon rechnet. |
+| E9 | Passagier-DMs je Klasse? | Ja, die DMs der Zielwelt wirken auf jede der drei Klassen einzeln. |
+| E10 | Low Lottery bei mehreren oder keinen Richtigen | ✱ Mehrere überlebende Richtige teilen den Topf; sonst bekommt ihn der Kapitän. |
+| E11 | Honorar für private Post | ✱ 1D × Cr20. |
