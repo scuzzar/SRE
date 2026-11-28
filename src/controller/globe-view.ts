@@ -3,6 +3,7 @@ import {
   happenedAt,
   missionCells,
   missionsAt,
+  openMissions,
   landformAt,
   mapLocked,
   placeCell,
@@ -63,7 +64,10 @@ export interface GlobeVolcano {
 
 /** Was im angetippten Feld ist. */
 export interface PickedCell {
-  readonly cell: number;
+  /** Das Feld; fehlt bei einer angetippten Orbitalstadt (Highport, 2026-11-28b). */
+  readonly cell: number | undefined;
+  /** Eine Orbitalstadt statt eines Felds. */
+  readonly orbit: boolean;
   readonly landform: string;
   readonly temperature: string;
   readonly position: string;
@@ -166,7 +170,7 @@ export function position(grid: SurfaceGrid, cell: number): string {
 }
 
 /** Der Globus der Welt `worldId` (Hauptwelt oder Nebenwelt, 2026-11-20d); `undefined`, solange sie keine Oberflächenkarte hat. */
-export function globeView(campaign: Campaign, worldId: string, picked: number | undefined, plan?: Trip, trace = false, landing = false, touchdown = 0): GlobeView | undefined {
+export function globeView(campaign: Campaign, worldId: string, picked: number | undefined, plan?: Trip, trace = false, landing = false, touchdown = 0, orbit?: number): GlobeView | undefined {
   const hexes = campaign.hexes;
   const hex = hexById(hexes, hexIdOfWorld(worldId));
   const found = worldById(hexes, worldId);
@@ -201,6 +205,7 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
     const volcano = volcanoes.find((v) => v.cell === picked);
     pickedCell = {
       cell: picked,
+      orbit: false,
       landform: LANDFORM_NAMES[landformAt(map, picked)],
       temperature: `${Math.round(cellTemperature(size, found.temperature, grid.lat[picked]!))} °C im Jahresmittel`,
       position: position(grid, picked),
@@ -213,6 +218,30 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
       npcs: npcs.filter((n) => n.cell === picked),
       happened: happenedAt(campaign, id, picked).filter(shown),
       missions: missionsAt(campaign, id, picked).map(({ mission, places }) => ({ id: mission.id, title: mission.title, labels: places.flatMap((p) => (p.label === undefined ? [] : [p.label])) })),
+    };
+  }
+  const station = orbit === undefined ? undefined : map.cities?.[orbit];
+  if (station !== undefined && station.cell === undefined) {
+    const own = cities[orbit!]!;
+    const atCity = (p: { readonly world: string; readonly city?: number } | undefined) => p?.world === id && p.city === orbit;
+    pickedCell = {
+      cell: undefined,
+      orbit: true,
+      landform: orbit === map.highport ? 'Highport' : 'Orbitalstadt',
+      temperature: '',
+      position: 'im Orbit',
+      cities: [{ index: own.index, name: own.label, detail: own.detail }],
+      towns: 0,
+      volcano: undefined,
+      river: false,
+      road: false,
+      city: orbit,
+      npcs: campaign.characters.filter((c) => c.npc && !c.dead && atCity(c.place)).map((c) => npcs.find((n) => n.id === c.id)!),
+      happened: campaign.log.flatMap((e, i) => (atCity(e.place) && shown(i) ? [i] : [])),
+      missions: openMissions(campaign).flatMap((m) => {
+        const places = m.places.filter((p) => atCity(p.place));
+        return places.length ? [{ id: m.id, title: m.title, labels: places.flatMap((p) => (p.label === undefined ? [] : [p.label])) }] : [];
+      }),
     };
   }
   return {

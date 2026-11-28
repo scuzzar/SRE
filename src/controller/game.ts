@@ -1534,8 +1534,10 @@ export class GameController {
     const campaign = this.state.campaign;
     const at = this.state.world;
     const cell = this.state.globe?.picked;
-    if (!campaign || !at || cell === undefined) return 'Erst ein Feld auf dem Globus antippen.';
+    const orbit = this.state.globe?.orbit;
+    if (!campaign || !at || (cell === undefined && orbit === undefined)) return 'Erst ein Feld auf dem Globus antippen.';
     if (campaign.location?.world !== openWorldId(at)) return 'Einkaufen geht nur auf der Welt der Gruppe.';
+    if (orbit !== undefined) return undefined;
     const city = worldById(campaign.hexes, openWorldId(at))?.map?.cities?.some((c) => c.cell === cell) ?? false;
     return city ? undefined : 'Einkaufen geht nur in einer Stadt.';
   }
@@ -3286,6 +3288,12 @@ export class GameController {
     this.update({ globe: { picked: this.state.globe.picked } });
   }
 
+  /** Tippt eine Orbitalstadt in der Liste *Orte* an, etwa den Highport (2026-11-28b); sie steht dann wie ein Feld im Blatt. */
+  pickOrbit(city: number): void {
+    if (!this.state.globe) return;
+    this.update({ globe: { picked: undefined, orbit: city }, npcPlacing: undefined, globeFocus: undefined, ...(this.state.tripPlan && this.state.tripPlan.orbit !== city ? { tripPlan: undefined } : {}) });
+  }
+
   pickCell(cell: number | undefined): void {
     if (!this.state.globe) return;
     // Ein anderes Feld anzutippen bricht NSC platzieren ab.
@@ -3299,13 +3307,17 @@ export class GameController {
   planTrip(): void {
     const at = this.state.world;
     const target = this.state.globe?.picked;
-    if (!at || target === undefined) return;
+    const orbit = this.state.globe?.orbit;
+    if (!at || (target === undefined && orbit === undefined)) return;
+    const goal = { target, ...(orbit === undefined ? {} : { orbit }) };
     try {
       if (this.campaign.location?.world !== openWorldId(at)) throw new DomainError('Die Gruppe ist nicht auf dieser Welt.');
-      this.update({ tripPlan: { target, options: planOptions(this.campaign, target), chosen: 0, error: undefined } });
+      // Ziel Orbitalstadt: nur der Highport ist mit der Fahrt erreichbar (2026-11-28b).
+      if (orbit !== undefined && worldById(this.campaign.hexes, openWorldId(at))?.map?.highport !== orbit) throw new DomainError('Zu dieser Orbitalstadt fährt kein Shuttle.');
+      this.update({ tripPlan: { ...goal, options: planOptions(this.campaign, orbit !== undefined ? 'highport' : target!), chosen: 0, error: undefined } });
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
-      this.update({ tripPlan: { target, options: [], chosen: 0, error: error.message } });
+      this.update({ tripPlan: { ...goal, options: [], chosen: 0, error: error.message } });
     }
   }
 
@@ -3402,6 +3414,8 @@ export class GameController {
   /** Der Ort des angetippten Feldes auf dem Globus: die erste Stadt darauf, sonst das Feld. */
   private pickedPlace(): Place {
     const at = this.state.world;
+    const orbit = this.state.globe?.orbit;
+    if (at && orbit !== undefined) return { world: openWorldId(at), city: orbit };
     const cell = this.state.globe?.picked;
     if (!at || cell === undefined) throw new DomainError('Erst ein Feld auf dem Globus antippen.');
     const world = openWorldId(at);

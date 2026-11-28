@@ -316,6 +316,7 @@
   "name": "Air/Raft",
   "item": "vehicle-air-raft",
   "flight": 100,
+  "orbit": true,
   "speeds": [],
   "landsOn": [
    "water",
@@ -336,6 +337,7 @@
   "name": "GCarrier",
   "item": "vehicle-gcarrier",
   "flight": 100,
+  "orbit": true,
   "speeds": [],
   "landsOn": [
    "water",
@@ -356,6 +358,7 @@
   "name": "Speeder",
   "item": "vehicle-speeder",
   "flight": 1000,
+  "orbit": true,
   "speeds": [],
   "landsOn": [
    "water",
@@ -404,6 +407,19 @@
    "B",
    "C",
    "F"
+  ]
+ },
+ {
+  "id": "shuttle",
+  "name": "Shuttle",
+  "tl": 0,
+  "fare": 100,
+  "orbit": true,
+  "craft": "shuttle",
+  "speeds": [],
+  "landsAt": [
+   "A",
+   "B"
   ]
  }
 ]

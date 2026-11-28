@@ -15,7 +15,9 @@ import { surfaceGrid, type SurfaceGrid } from './surface-grid';
 import type { SurfaceMap } from './surface-map';
 import { dayOf } from './time';
 import { afterTime } from './upkeep';
-import { distanceKm, flies, landsAt, stepSpeed, vehicleOf, vehicleOfItem, vehicles, WALK, waysOf, worksIn, scheduled, type Vehicle, type Ways } from './vehicle';
+import { distanceKm, flies, landsAt, orbitOnly, radiusKm, stepSpeed, vehicleOf, vehicleOfItem, vehicles, WALK, waysOf, worksIn, scheduled, type Vehicle, type Ways } from './vehicle';
+import { shipDesignOf } from './reference';
+import { gravityOf } from './star-system';
 
 /** Ein Abschnitt der Fahrt: ein Fahrzeug, gemietet oder nicht, über Felder in Reihenfolge (ein Flug nur Start und Landepunkt). */
 export interface Leg {
@@ -23,6 +25,11 @@ export interface Leg {
   readonly by: string;
   readonly rented: boolean;
   readonly cells: readonly number[];
+  /**
+   * Der Abschnitt beginnt (`start`) bzw. endet (`end`) am Highport (2026-11-28b); sein einziges Feld
+   * ist das Feld, an dem er vom Boden abhebt bzw. aufsetzt.
+   */
+  readonly highport?: 'start' | 'end';
 }
 
 /** Die Fahrt der Gruppe auf der Welt ihres Aufenthaltsorts; `hours` sind die schon gefahrenen Stunden. */
@@ -84,9 +91,46 @@ function hoursBetween(surface: TripSurface, vehicle: Vehicle, a: number, b: numb
   return speed > 0 ? km / speed : Infinity;
 }
 
+/** Ein Welttag in Sekunden (Hausregel 2026-11-28b: jede Welt dreht sich in 24 Stunden). */
+const WORLD_DAY_S = 24 * 3600;
+
+/**
+ * Die Höhe des Highports über dem Boden in km (2026-11-28b): die geostationäre Bahn
+ * `∛(g × R² × T² / 4π²)` weniger den Weltradius, mit der Schwerkraft der Welt und einem Tag von 24 Stunden.
+ */
+export function highportAltitudeKm(surface: TripSurface): number {
+  const r = radiusKm(surface.size) * 1000;
+  const g = gravityOf(surface.hex) * 9.81;
+  const orbit = Math.cbrt((g * r * r * WORLD_DAY_S * WORLD_DAY_S) / (4 * Math.PI * Math.PI));
+  return Math.max(0, orbit - r) / 1000;
+}
+
+/**
+ * Die Flugzeit zwischen Boden und Highport in Stunden (2026-11-28b): mit dem Schub eines Small Craft
+ * die halbe Strecke beschleunigen und die andere bremsen, `2 × √(Strecke / Beschleunigung)`, ohne
+ * Schwerkraft gerechnet; sonst Strecke durch die Fluggeschwindigkeit.
+ */
+export function orbitHours(surface: TripSurface, vehicle: Vehicle): number {
+  const km = highportAltitudeKm(surface);
+  if (vehicle.craft !== undefined) return (2 * Math.sqrt((km * 1000) / (shipDesignOf(vehicle.craft).maneuver * 9.81))) / 3600;
+  return vehicle.flight === undefined ? Infinity : km / vehicle.flight;
+}
+
+/** Der Ort des Highports der Welt, auf der gefahren wird; ohne Highport keiner. */
+export function highportPlace(surface: TripSurface): Place | undefined {
+  return surface.map.highport === undefined ? undefined : { world: surface.world, city: surface.map.highport };
+}
+
+/** Steht die Gruppe am Highport ihrer Welt? */
+export function atHighport(campaign: Campaign): boolean {
+  const surface = tripSurface(campaign);
+  return surface?.map.highport !== undefined && campaign.location?.city === surface.map.highport;
+}
+
 /** `Leg./hours`: die Fahrstunden eines Abschnitts. */
 export function legHours(surface: TripSurface, leg: Leg): number {
   const vehicle = vehicleOf(leg.by);
+  if (leg.highport !== undefined) return orbitHours(surface, vehicle);
   if (flies(vehicle)) return hoursBetween(surface, vehicle, leg.cells[0]!, leg.cells.at(-1)!);
   let total = 0;
   for (let i = 1; i < leg.cells.length; i++) total += hoursBetween(surface, vehicle, leg.cells[i - 1]!, leg.cells[i]!);
@@ -174,6 +218,13 @@ export function positionAt(surface: TripSurface, trip: Trip, hours = trip.hours)
   for (let l = 0; l < trip.legs.length; l++) {
     const leg = trip.legs[l]!;
     const vehicle = vehicleOf(leg.by);
+    if (leg.highport !== undefined) {
+      // Unterwegs zum oder vom Highport bleibt der Standort das Feld des Abschnitts (2026-11-28b).
+      t += orbitHours(surface, vehicle);
+      if (t > hours + EPS) return { cell: leg.cells[0]!, leg: l };
+      at = { cell: leg.cells[0]!, leg: l };
+      continue;
+    }
     const steps = flies(vehicle) ? [leg.cells[0]!, leg.cells.at(-1)!] : leg.cells;
     for (let i = 1; i < steps.length; i++) {
       t += hoursBetween(surface, vehicle, steps[i - 1]!, steps[i]!);
@@ -215,7 +266,12 @@ const HOUR_VALUES = [3, 30, 300, 3000] as const;
 
 /** Der Linienverkehr auf dieser Welt: ab seinem TL, wo die Atmosphäre reicht. */
 export function scheduledVehicles(surface: TripSurface): readonly Vehicle[] {
-  return vehicles.filter((v) => scheduled(v) && (v.tl ?? 0) <= surface.tech && worksIn(v, surface.atmosphere));
+  return vehicles.filter((v) => scheduled(v) && !orbitOnly(v) && (v.tl ?? 0) <= surface.tech && worksIn(v, surface.atmosphere));
+}
+
+/** Der Linienverkehr zum Highport (das Shuttle): nur, wo die Welt einen hat. */
+export function shuttles(surface: TripSurface): readonly Vehicle[] {
+  return surface.map.highport === undefined ? [] : vehicles.filter((v) => scheduled(v) && orbitOnly(v));
 }
 
 /** Die Fahrzeuge, die man auf dieser Welt mieten kann: in Siedlungen, bis zum TL der Welt, wo die Atmosphäre reicht. */
@@ -234,13 +290,69 @@ function affordableRentals(campaign: Campaign, surface: TripSurface): readonly V
  * Miete (zu Fuß und eigene Fahrzeuge), je mietbarem Fahrzeug die schnellste Route damit und gemischte,
  * die Zeit gegen Miete abwägen. Je Fahrzeugfolge bleibt die schnellste; die schnellste zuerst.
  */
-export function planOptions(campaign: Campaign, target: number): readonly Trip[] {
+export function planOptions(campaign: Campaign, target: number | 'highport'): readonly Trip[] {
+  if (target === 'highport' || atHighport(campaign)) return orbitOptions(campaign, target);
+  return groundOptions(campaign, target);
+}
+
+/** Wie viele Häfen das Shuttle beim Planen höchstens prüft: die nächsten. */
+const SHUTTLE_PORTS = 3;
+
+/**
+ * Die Varianten zum oder vom Highport (2026-11-28b): mit einem eigenen Grav-Fahrzeug, das den Orbit
+ * erreicht, direkt; mit dem Shuttle über eine der nächsten Städte mit passendem Hafen, dazu die
+ * Route am Boden wie sonst.
+ */
+function orbitOptions(campaign: Campaign, target: number | 'highport'): readonly Trip[] {
+  const surface = surfaceFor(campaign);
+  const hp = surface.map.highport;
+  if (hp === undefined) throw new DomainError('Diese Welt hat keinen Highport.');
+  const up = target === 'highport';
+  const here = atHighport(campaign);
+  if (up && here) throw new DomainError('Die Gruppe ist schon am Highport.');
+  if (campaign.encounters.some((e) => !e.ended)) throw new DomainError('Während einer laufenden Begegnung fährt man nicht.');
+  const start = startCell(campaign);
+  if (up && start === undefined) throw new DomainError('Erst die Gruppe auf ein Feld oder in eine Stadt setzen.');
+  const found: Trip[] = [];
+  // Eigene Fahrzeuge, die den Orbit erreichen: dabei oder dort abgestellt, wo die Gruppe steht.
+  for (const p of ownVehicles(campaign)) {
+    const vehicle = vehicleOfItem(p.of)!;
+    if (vehicle.orbit !== true || !worksIn(vehicle, surface.atmosphere)) continue;
+    const there = p.parked === undefined || (p.parked.world === surface.world && (here ? p.parked.city === hp : placeCell(campaign.hexes, p.parked) === start));
+    if (!there) continue;
+    if (up) found.push({ hours: 0, legs: [{ by: vehicle.id, rented: false, cells: [start!], highport: 'end' }] });
+    else if (landsAt(vehicle, surface.map, surface.ways, target)) found.push({ hours: 0, legs: [{ by: vehicle.id, rented: false, cells: [target], highport: 'start' }] });
+  }
+  // Das Shuttle über die nächsten Häfen, an denen es landet.
+  const near = up ? start! : target;
+  for (const shuttle of shuttles(surface)) {
+    const ports = [...surface.ways.cityAt.keys()].filter((c) => landsAt(shuttle, surface.map, surface.ways, c));
+    ports.sort((a, b) => distanceKm(surface.grid, surface.size, a, near) - distanceKm(surface.grid, surface.size, b, near));
+    for (const port of ports.slice(0, SHUTTLE_PORTS)) {
+      const flight: Leg = { by: shuttle.id, rented: false, cells: [port], highport: up ? 'end' : 'start' };
+      if (port === near) {
+        found.push({ hours: 0, legs: [flight] });
+        continue;
+      }
+      try {
+        for (const ground of groundOptions(campaign, up ? port : target, up ? undefined : port)) found.push({ hours: 0, legs: up ? [...ground.legs, flight] : [flight, ...ground.legs] });
+      } catch (error) {
+        if (!(error instanceof DomainError)) throw error;
+      }
+    }
+  }
+  if (found.length === 0) throw new DomainError(up ? 'Zum Highport gibt es von hier keinen Weg.' : 'Vom Highport gibt es dorthin keinen Weg.');
+  return bestOptions(campaign, surface, found);
+}
+
+/** Die Varianten am Boden; `from` ist der Start, wenn er nicht das Feld der Gruppe ist (nach dem Shuttle). */
+function groundOptions(campaign: Campaign, target: number, from?: number): readonly Trip[] {
   const surface = surfaceFor(campaign);
   const found: Trip[] = [];
   let firstError: unknown;
   const attempt = (options: PlanOptions) => {
     try {
-      found.push(planTrip(campaign, target, options));
+      found.push(planTrip(campaign, target, options, from));
     } catch (error) {
       if (!(error instanceof DomainError)) throw error;
       firstError ??= error;
@@ -253,6 +365,11 @@ export function planOptions(campaign: Campaign, target: number): readonly Trip[]
   // Gemischte Varianten: mehrere Fahrzeuge nacheinander, wo es sich lohnt (Auto bis zum Fluss, dann Boot).
   for (const hourValue of HOUR_VALUES) attempt({ rent: true, scheduled: true, hourValue });
   if (found.length === 0) throw firstError instanceof DomainError ? firstError : new DomainError('Dorthin gibt es keinen Weg.');
+  return bestOptions(campaign, surface, found);
+}
+
+/** Je Fahrzeugfolge nur die schnellste Variante; eigene Fahrzeuge zuerst, sonst die schnellste. */
+function bestOptions(campaign: Campaign, surface: TripSurface, found: readonly Trip[]): readonly Trip[] {
   // Je Fahrzeugfolge (z. B. Ground Car › Helicopter) nur die schnellste Variante.
   const key = (t: Trip) => t.legs.map((l) => `${l.by}${l.rented ? '*' : ''}`).filter((k, i, all) => i === 0 || all[i - 1] !== k).join('>');
   const persons = farePayers(campaign);
@@ -358,9 +475,9 @@ class Heap {
  * erlaubt, mit gemieteten aus Siedlungen. Fluggeräte fliegen gerade von Landepunkt zu Landepunkt.
  * Ergebnis ist eine Fahrt mit null gefahrenen Stunden.
  */
-export function planTrip(campaign: Campaign, target: number, options: PlanOptions): Trip {
+export function planTrip(campaign: Campaign, target: number, options: PlanOptions, from?: number): Trip {
   const surface = surfaceFor(campaign);
-  const start = startCell(campaign);
+  const start = from ?? startCell(campaign);
   if (start === undefined) throw new DomainError('Erst die Gruppe auf ein Feld oder in eine Stadt setzen.');
   if (!Number.isInteger(target) || target < 0 || target >= surface.grid.cells) throw new DomainError('Dieses Feld gibt es nicht.');
   if (target === start) throw new DomainError('Die Gruppe ist schon hier.');
@@ -470,6 +587,16 @@ export function checkTrip(campaign: Campaign, trip: Trip): void {
   if (trip.legs.length === 0) throw new DomainError('Eine Fahrt hat mindestens einen Abschnitt.');
   trip.legs.forEach((leg, i) => {
     const vehicle = vehicleOf(leg.by);
+    if (leg.highport !== undefined) {
+      // Zum oder vom Highport (2026-11-28b): ein Feld, nur am Anfang bzw. Ende, nur mit einem Fahrzeug, das den Orbit erreicht.
+      if (surface.map.highport === undefined) throw new DomainError('Diese Welt hat keinen Highport.');
+      if (vehicle.orbit !== true) throw new DomainError(`${vehicle.name} erreicht den Orbit nicht.`);
+      if (leg.cells.length !== 1 || !Number.isInteger(leg.cells[0]) || leg.cells[0]! < 0 || leg.cells[0]! >= surface.grid.cells) throw new DomainError('Ein Abschnitt zum Highport hat genau ein Feld.');
+      if ((leg.highport === 'start' && i !== 0) || (leg.highport === 'end' && i !== trip.legs.length - 1)) throw new DomainError('Zum Highport geht es nur am Anfang oder Ende einer Fahrt.');
+      if (i > 0 && trip.legs[i - 1]!.cells.at(-1) !== leg.cells[0]) throw new DomainError('Die Abschnitte der Fahrt schließen nicht aneinander an.');
+      if (orbitOnly(vehicle) && !landsAt(vehicle, surface.map, surface.ways, leg.cells[0]!)) throw new DomainError(`${vehicle.name} landet nur an seinen Häfen.`);
+      return;
+    }
     if (leg.cells.length < 2 || leg.cells.some((c) => !Number.isInteger(c) || c < 0 || c >= surface.grid.cells)) throw new DomainError('Ein Abschnitt der Fahrt hat ungültige Felder.');
     if (i > 0 && trip.legs[i - 1]!.cells.at(-1) !== leg.cells[0]) throw new DomainError('Die Abschnitte der Fahrt schließen nicht aneinander an.');
     if (leg.rented && vehicle.item === undefined) throw new DomainError('Zu Fuß mietet man nicht.');
@@ -483,7 +610,8 @@ export function checkTrip(campaign: Campaign, trip: Trip): void {
 /** Beginnt eine geplante Fahrt; sie beginnt am Feld der Gruppe. */
 export function startTrip(campaign: Campaign, trip: Trip): Campaign {
   if (campaign.trip) throw new DomainError('Die Gruppe ist schon unterwegs.');
-  if (trip.hours !== 0 || trip.legs[0]?.cells[0] !== startCell(campaign)) throw new DomainError('Die Fahrt beginnt nicht hier.');
+  const fromHighport = trip.legs[0]?.highport === 'start';
+  if (trip.hours !== 0 || (fromHighport ? !atHighport(campaign) : trip.legs[0]?.cells[0] !== startCell(campaign))) throw new DomainError('Die Fahrt beginnt nicht hier.');
   checkTrip(campaign, trip);
   return { ...campaign, trip };
 }
@@ -521,13 +649,16 @@ function unparked(p: Possession): Possession {
  * wird abgeholt), alle anderen eigenen Fahrzeuge, die mit der Gruppe unterwegs sind, bleiben hier stehen.
  */
 function settleVehiclesAt(campaign: Campaign, surface: TripSurface, leg: Leg): Campaign {
-  const here = placeAtCell(surface, leg.cells[0]!);
+  // Ein Abschnitt vom Highport beginnt dort (2026-11-28b), nicht am Feld, an dem er aufsetzt.
+  const fromHighport = leg.highport === 'start' ? highportPlace(surface) : undefined;
+  const here = fromHighport ?? placeAtCell(surface, leg.cells[0]!);
   const cell = leg.cells[0]!;
+  const isHere = (p: Possession) => p.parked !== undefined && p.parked.world === surface.world && (fromHighport ? p.parked.city === fromHighport.city : placeCell(campaign.hexes, p.parked) === cell);
   let stash = campaign.stash;
   let used: Possession | undefined;
-  if (!leg.rented && leg.by !== WALK.id) {
+  if (!leg.rented && leg.by !== WALK.id && !scheduled(vehicleOf(leg.by))) {
     const item = vehicleOf(leg.by).item!;
-    const parkedHere = stash.find((p) => p.of === item && p.parked !== undefined && p.parked.world === surface.world && placeCell(campaign.hexes, p.parked) === cell);
+    const parkedHere = stash.find((p) => p.of === item && isHere(p));
     const withGroup = stash.find((p) => p.of === item && p.parked === undefined);
     if (parkedHere && !withGroup) {
       stash = moveOne(stash, parkedHere, unparked(parkedHere));
@@ -584,7 +715,8 @@ export function driveDay(campaign: Campaign, clock: Clock): Campaign {
 
   const arrived = to >= total - EPS;
   const cell = arrived ? trip.legs.at(-1)!.cells.at(-1)! : positionAt(surface, trip, to).cell;
-  const location = placeAtCell(surface, cell);
+  // Am Ende eines Abschnitts zum Highport ist die Gruppe dort (2026-11-28b).
+  const location = (arrived && trip.legs.at(-1)!.highport === 'end' ? highportPlace(surface) : undefined) ?? placeAtCell(surface, cell);
   const today = dayOf(campaign);
   const index = after.log.length;
   const entry: TripDay = { kind: 'tripDay', at: clock.now(), day: today, place: location, hours: Math.round((to - from) * 100) / 100, rent, fare, arrived };

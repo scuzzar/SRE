@@ -332,7 +332,7 @@ const StashPossessionSchema = PossessionSchema.extend({ parked: PlaceSchema.opti
 /** Die Fahrt der Gruppe (2026-11-15). */
 const TripSchema = z.object({
   hours: z.number().min(0),
-  legs: z.array(z.object({ by: z.string().min(1), rented: z.boolean(), cells: z.array(z.number().int().min(0)).min(2) })).min(1),
+  legs: z.array(z.object({ by: z.string().min(1), rented: z.boolean(), cells: z.array(z.number().int().min(0)).min(1), highport: z.enum(['start', 'end']).optional() })).min(1),
 });
 /** Ein Vektor in der Ebene (2026-11-18). */
 const VecSchema = z.object({ x: z.number().finite(), y: z.number().finite() });
@@ -670,7 +670,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       }),
       ...(file.markets === undefined || file.markets.length === 0 ? {} : { markets: file.markets.map((m) => ({ ...m, goods: [...m.goods], purchases: [...m.purchases], sales: [...m.sales], bought: m.bought.map((b) => ({ ...b })), freight: m.freight.map((f) => ({ to: f.to, dice: f.dice.map((d) => (d === null ? null : [...d])), dm: f.dm, lots: f.lots.map((l) => ({ ...l })) })), passengers: m.passengers.map((p) => ({ ...p, highDice: [...p.highDice], middleDice: [...p.middleDice], lowDice: [...p.lowDice] })), messages: m.messages.map((x) => ({ to: x.to, dice: [x.dice[0], x.dice[1]] as const, die: x.die, taken: x.taken })) })) as Market[] }),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
-      ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
+      ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells], ...(l.highport === undefined ? {} : { highport: l.highport }) })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
       ...(file.voyage === undefined ? {} : { voyage: { entry: file.voyage.entry, days: file.voyage.days } }),
       // NSC aus Dateien von vor 2026-11-08c bleiben, wie sie sind; upgradeNpcs macht Charaktere aus ihnen.

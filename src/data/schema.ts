@@ -128,6 +128,10 @@ export const VehicleSchema = z.object({
   speeds: z.array(VehicleSpeedSchema),
   landsOn: z.array(LandformSchema).default([]),
   landsAt: z.array(PortSchema).default([]),
+  /** Erreicht den Orbit: fliegt zum Highport und zurück (2026-11-28b). */
+  orbit: z.boolean().optional(),
+  /** Fliegt wie dieser Small-Craft-Entwurf, mit dessen Schub (das Shuttle, 2026-11-28b). */
+  craft: z.string().min(1).optional(),
 });
 
 /** Die Art eines Entwurfs (2026-11-21b): Schiff ab 100 t oder Small Craft unter 100 t ohne Sprungantrieb (SR 33). */
@@ -663,7 +667,8 @@ export const ReferenceDataSchema = z
     uniqueIds(data.vehicles.flatMap((v) => (v.item === undefined ? [] : [v.item])), 'Gegenstand eines Fahrzeugs', ctx);
     for (const v of data.vehicles) {
       if (v.item !== undefined && data.items.find((i) => i.id === v.item)?.kind !== 'vehicle') ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: ${v.item} ist kein Fahrzeug unter den Gegenständen` });
-      if ((v.flight === undefined) !== (v.landsOn.length === 0 && v.landsAt.length === 0)) ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: genau Fluggeräte haben Landepunkte` });
+      if ((v.flight === undefined && v.craft === undefined) !== (v.landsOn.length === 0 && v.landsAt.length === 0)) ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: genau Fluggeräte haben Landepunkte` });
+      if (v.craft !== undefined && (v.orbit !== true || data.ships.find((s) => s.id === v.craft)?.kind !== 'smallCraft')) ctx.addIssue({ code: 'custom', message: `Das Fahrzeug ${v.id}: fliegt wie ein Small Craft, das es nicht gibt, oder nicht in den Orbit` });
     }
     if (data.vehicles.filter((v) => v.item === undefined && v.fare === undefined).length !== 1) ctx.addIssue({ code: 'custom', message: 'Genau ein Fahrzeug ohne Gegenstand und Fahrpreis: zu Fuß' });
     for (const v of data.vehicles) {
