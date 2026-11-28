@@ -9924,6 +9924,13 @@ button:disabled {
 .armament select {
   max-width: 100%;
 }
+/* Gesperrt (keine Werft hier): sichtbar ausgegraut, der Grund steht darüber. Ohne das sahen die Felder
+   auf Android gleich aus wie bedienbare und wirkten tot. */
+.armament select:disabled,
+.armament button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 
 /* Raumkampf im Blatt der Raumkarte (2026-11-21h) */
 .space-battle {

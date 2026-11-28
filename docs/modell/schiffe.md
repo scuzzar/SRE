@@ -77,6 +77,15 @@ wie das Gruppengepäck.
      Die alten Gegenstände `scout-ship` und `free-trader` (Art `ship`) entfallen
      aus `items.json`, sobald der Code folgt; ihre Preise stehen jetzt als `basePrice` an
      `ShipDesign`.
+  - *Wo gekauft wird* (freigegeben am 28. November 2026, Kennzeichen 2026-11-28; Owner: „Sperren
+    sind gut“). Nach SR 29 nur an einer Werft. Maßgeblich ist der Raumhafen des
+    **Aufenthaltsorts der Gruppe** (`Campaign.location`: der Hafen der Stadt, auf einer Welt ohne
+    Globus der Raumhafen des UWP). An **Raumhafen A** gibt es jeden Standardentwurf und jedes Small
+    Craft, an **B** nur Small Craft (die Werft dort baut nichts mit Jump Drive), an **C, D, E, X**
+    und **ohne Aufenthaltsort** nichts. Das gilt für Weg 1 und 2 (bar und Bank), **nicht** für den
+    Ship-Vorteil der Abmusterung (Weg 3). Umrüsten und Reparieren bleiben wie bisher an A und B,
+    gemessen am Ort des Schiffs. ⚑ Ein Small Craft, das als Beiboot in den Laderaum des aktiven
+    Schiffs kommt, verlangt nicht, dass das Schiff am selben Ort liegt (später klären).
 - **Laufende Kosten und Monatsabrechnung** (freigegeben am 17. November 2026, Kennzeichen 2026-11-17b;
   RAW in [`regeln-schiffe.md`](../regeln-schiffe.md) unter *Laufende Kosten* und
   *Hafengebühren und Handelsbräuche*).

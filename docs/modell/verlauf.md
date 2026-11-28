@@ -762,3 +762,10 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > (`leaderDown`, Owner). Für Tiere gilt die Moral nicht; sie fliehen nach ihrem Verhalten. Moral nach
 > Book 4 bleibt offen. Regeln in [`kampf.md`](kampf.md) unter *Moral*. Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-27e-moral-und-flucht.png`](../changes/2026-11-27e-moral-und-flucht.png).
+
+> Am 28. November 2026 freigegeben (Kennzeichen **2026-11-28**), ohne Änderung am Bild: **Schiffe nur
+> an einer Werft kaufen** (SR 29). Raumhafen A verkauft jeden Standardentwurf und jedes Small Craft,
+> B nur Small Craft, alle anderen und „kein Aufenthaltsort“ nichts; maßgeblich ist der Ort der
+> Gruppe. Der Ship-Vorteil der Abmusterung bleibt überall. Regeln in [`schiffe.md`](schiffe.md) unter
+> *Erwerb*, *Wo gekauft wird*. Zugleich freigegeben: die überarbeitete Werft als Oberfläche
+> ([`../konzept-werft.md`](../konzept-werft.md), GUI-Handbuch *Werft*).

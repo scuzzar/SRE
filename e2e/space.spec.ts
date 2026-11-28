@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expandTray, schwererLauf, openHomeGlobe, openTab, wuerfelgleich } from './layout';
+import { expandTray, schwererLauf, openHomeGlobe, openPeople, openTab, wuerfelgleich } from './layout';
 
 // Jeder Test lädt die App selbst (2026-11-26): Der letzte von ihnen würfelt fest und muss die
 // Zahlenfolge setzen, bevor die App zum ersten Mal lädt.
@@ -172,6 +172,30 @@ test('Werft und Raumkampf: der Beam Laser der Demo-Yacht, ein fremdes Schiff von
   await expect(card).toContainText('Raumrunde 2');
 });
 
+test('Werft: Bewaffnung sagt, wenn die Kasse nicht reicht, und baut mit Geld ein (2026-11-28)', async ({ page }) => {
+  await page.goto('/');
+  await openHomeGlobe(page);
+  await openTab(page, 'Schiff');
+  await page.getByRole('button', { name: 'Werft', exact: true }).click();
+  const yard = page.getByRole('region', { name: 'Werft' });
+  // Die Demo hat Cr 5.000; der billigste Turret kostet Cr 200.000.
+  await expect(yard).toContainText('In der Kasse: Cr 5.000. Für Turrets und Waffen reicht das nicht; das Billigste kostet Cr 200.000.');
+  const weapon = yard.getByRole('combobox', { name: 'Waffe in Turret 1 einbauen' });
+  await expect(weapon.locator('option', { hasText: 'Pulse Laser · MCr 0,50 · Kasse zu klein' })).toBeDisabled();
+  await page.keyboard.press('Escape');
+
+  await openPeople(page, 'Kasse');
+  await page.getByRole('spinbutton').first().fill('1000000');
+  await page.getByRole('button', { name: 'Einnahme buchen' }).click();
+  await openTab(page, 'Schiff');
+  await page.getByRole('button', { name: 'Werft', exact: true }).click();
+  await expect(yard).toContainText('In der Kasse: Cr 1.005.000. Ausgegraut ist, was die Kasse nicht hergibt.');
+  await yard.getByRole('combobox', { name: 'Waffe in Turret 1 einbauen' }).selectOption('pulse-laser');
+  await expect(yard.getByRole('button', { name: 'Pulse Laser ✕' })).toBeVisible();
+  await expect(yard).toContainText('Double Turret (2/2)');
+  await expect(yard).toContainText('In der Kasse: Cr 505.000.');
+});
+
 test('Schadenskontrolle: der Engineer flickt im Raumkampf einen Treffer, einmal je Raumrunde (2026-11-22d)', async ({ page }) => {
   await wuerfelgleich(page, 20261127);
   await page.goto('/');
@@ -246,7 +270,7 @@ test('Detailseite Schaden: nach dem Kampf Treffer auswählen und in der Werft re
   await hit.click();
   await expect(hit).toHaveAttribute('aria-pressed', 'true');
   const yard = page.getByRole('button', { name: /^Werft · .*MCr/ });
-  await expect(yard).toContainText('0,10 MCr');
+  await expect(yard).toContainText('MCr 0,10');
   await expect(yard).toBeDisabled();
   // Selbst reparieren braucht Engineering-1; Kira Vant hat es nicht.
   await expandTray(page);

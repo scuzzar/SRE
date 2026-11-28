@@ -2,7 +2,8 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
 import { CloudChanged, CloudExpired, CloudOffline } from '../model';
-import { oneDrive, type Tokens } from './onedrive';
+import { InteractionRequiredAuthError, type AccountInfo, type AuthenticationResult } from '@azure/msal-browser';
+import { msalSession, oneDrive, type Msal, type Tokens } from './onedrive';
 import { probeCloud } from './probe-cloud';
 import { DexieCampaignRepository, MemoryCampaignRepository } from './repository';
 
@@ -110,6 +111,71 @@ describe('OneDrive über Microsoft Graph', () => {
     await expect(graph(new TypeError('Failed to fetch')).cloud.list()).rejects.toBeInstanceOf(CloudOffline);
     await expect(graph(json({}, 401)).cloud.list()).rejects.toBeInstanceOf(CloudExpired);
     await expect(graph(json({ error: { message: 'Zu viele Anfragen' } }, 429)).cloud.list()).rejects.toThrow('429 Zu viele Anfragen');
+  });
+});
+
+/** Ein nachgestelltes MSAL: ein bekanntes Konto; das stille Erneuern klappt oder verlangt eine Anmeldung. */
+function msal(silent: 'ok' | 'interaction', known = true) {
+  const account = { username: 'kira@example.com' } as AccountInfo;
+  const redirects: { kind: string; request: Record<string, unknown> }[] = [];
+  const app = {
+    getAllAccounts: () => (known ? [account] : []),
+    loginRedirect: async (request?: object) => void redirects.push({ kind: 'login', request: { ...request } }),
+    acquireTokenRedirect: async (request: object) => void redirects.push({ kind: 'token', request: { ...request } }),
+    acquireTokenSilent: async () => {
+      if (silent === 'interaction') throw new InteractionRequiredAuthError('interaction_required');
+      return { accessToken: 'frisch' } as AuthenticationResult;
+    },
+    clearCache: async () => {},
+  } as unknown as Msal;
+  const data = new Map<string, string>();
+  const memo = { getItem: (k: string) => data.get(k) ?? null, setItem: (k: string, v: string) => void data.set(k, v), removeItem: (k: string) => void data.delete(k) };
+  return { app, redirects, memo, data };
+}
+const pending = (promise: Promise<unknown>) => Promise.race([promise.then(() => 'fertig'), new Promise((r) => setTimeout(() => r('wartet'), 10))]);
+
+describe('Anmeldung über MSAL', () => {
+  it('ist das Token abgelaufen, erneuert der erste Abgleich nach dem Start es unsichtbar über eine Umleitung', async () => {
+    const { app, redirects, memo } = msal('interaction');
+    const tokens = msalSession(app, null, memo);
+    expect(await pending(tokens.token())).toBe('wartet');
+    expect(redirects).toEqual([{ kind: 'token', request: expect.objectContaining({ prompt: 'none' }) }]);
+  });
+
+  it('kommt die unsichtbare Erneuerung ohne Anmeldung zurück, gilt sie als abgelaufen, ohne zweite Umleitung', async () => {
+    const { app, redirects, memo } = msal('interaction');
+    await pending(msalSession(app, null, memo).token());
+    const afterReturn = msalSession(app, null, memo);
+    await expect(afterReturn.token()).rejects.toBeInstanceOf(CloudExpired);
+    expect(redirects).toHaveLength(1);
+  });
+
+  it('mitten im Spiel verlässt die App die Seite nie: nur der erste Abgleich darf umleiten', async () => {
+    const { app, redirects, memo } = msal('interaction');
+    const tokens = msalSession(app, null, memo);
+    memo.setItem('sre-onedrive-erneuert', '1');
+    await expect(tokens.token()).rejects.toBeInstanceOf(CloudExpired);
+    memo.removeItem('sre-onedrive-erneuert');
+    await expect(tokens.token()).rejects.toBeInstanceOf(CloudExpired);
+    expect(redirects).toEqual([]);
+  });
+
+  it('nach einer geglückten Anmeldung darf die nächste Sitzung wieder unsichtbar erneuern', async () => {
+    const { app, memo, data } = msal('ok');
+    memo.setItem('sre-onedrive-erneuert', '1');
+    msalSession(app, { account: { username: 'kira@example.com' } } as AuthenticationResult, memo);
+    expect(data.size).toBe(0);
+    expect(await msalSession(app, null, memo).token()).toBe('frisch');
+  });
+
+  it('„Neu anmelden“ nimmt das bekannte Konto ohne Kontowahl; ohne Konto gibt es die Kontowahl', async () => {
+    const known = msal('ok');
+    await msalSession(known.app, null, known.memo).signIn();
+    expect(known.redirects[0]!.request).toMatchObject({ loginHint: 'kira@example.com' });
+    expect(known.redirects[0]!.request.prompt).toBeUndefined();
+    const fresh = msal('ok', false);
+    await msalSession(fresh.app, null, fresh.memo).signIn();
+    expect(fresh.redirects[0]!.request).toMatchObject({ prompt: 'select_account' });
   });
 });
 

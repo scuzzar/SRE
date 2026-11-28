@@ -40,6 +40,9 @@ Umschalter, Reihe, großes und kleines Blatt, Würfelfenster und Hinweis).
 | Markt | (View, Detailseite) | (2026-11-27) die Detailseite für den spekulativen Handel, geöffnet mit „Markt“ am Feld einer Stadt auf dem Globus; oben der Kapazitätskopf, darunter *Zu kaufen* und *Zu verkaufen* |
 | Aufträge | (View, Detailseite) | (2026-11-27) die Detailseiten **Fracht**, **Passagiere** und **Post** zu einer Zielwelt, geöffnet an der Welt im Subsektor; oben der Kapazitätskopf, darunter die Ankreuzliste der Lose |
 | Kapazitätskopf | (View) | (2026-11-27) die Kacheln oben auf Markt und Aufträgen mit dem, was noch frei ist (Kasse, Laderaum, Kabinen, Niedrigbetten); sie rechnen sofort mit, was gerade angekreuzt oder als Menge eingestellt ist |
+| Werft | (View, Detailseite `YardSheet`) | (2026-11-28) die Detailseite im Bereich Schiff zum Umrüsten, Reparieren und Kaufen: oben der Kapazitätskopf mit der Kasse, darunter die Unterreiter *Mein Schiff · Schiffe · Small Craft* |
+| Hardpoint-Karte | (View) | (2026-11-28) eine Karte je Hardpoint in der Werft: Kopf mit Nummer, Belegung und Turmart als Chip, darunter je Waffe ein goldener Chip und je freiem Platz ein gestrichelter „+ Waffe“; ein Tipp öffnet den passenden Kurzdialog |
+| Sperrhinweis | (View) | (2026-11-28) der eine Satz oben in einem Reiter, warum dort gerade nichts geht (keine Werft, kein Ort); was er sperrt, bleibt stehen und ist auf 35 % gedimmt |
 | Ankreuzliste | (View) | (2026-11-27) eine scrollende, gruppierte Liste mit einem Kästchen je Zeile, um mehrere Dinge auf einmal zu wählen; übernommen wird mit dem Knopf in der Aktionsleiste |
 | Wartenscheibe | `NpcRunDisc` | Die kleine Scheibe in der Mitte, solange die App ohne Animation rechnet |
 | Weltsymbol | (View, aus `Hex`) | Das kleine 3D-Bild einer fertigen Welt aus Größe, Atmosphäre, Wasser, Bevölkerung, TL, Temperatur und Leben; auf der Sektorkarte, im Feldkopf und oben auf dem Globus; auf der Weltkarte nicht, dort steht es schon auf der Karte daneben. Nur Darstellung, nichts davon wird gespeichert |
@@ -373,6 +376,46 @@ als fünf, als zweite Aktionsleiste darüber).
   „Abrechnung in …“ mit Fracht, Passagen, Botschaften, Postvertrag des Sprungs, ausgezahltem Topf der
   Low Lottery und nicht aufgewachten Low-Fahrgästen, darunter die Summe, und „Weiter“. Braucht die Welt
   keinen Landeplatz, steht derselbe Abschnitt im Ergebnis der Reise.
+
+### Werft
+
+*Freigegeben vom Owner am 28. November 2026* (Kennzeichen 2026-11-28): Unterreiter und Sperren nach SR 29
+(eine Kredit-Kachel braucht der Owner nicht). **Noch nicht gebaut.** Bauanleitung mit allen Texten:
+[`konzept-werft.md`](konzept-werft.md), Entwurf: [`mock/werft.html`](mock/werft.html). Regeln zum
+Kauf in [`modell/schiffe.md`](modell/schiffe.md) unter *Erwerb*.
+
+```
+┌──────────────────────────────────────────┐
+│ Werft            Kessra · Raumhafen A  ✕ │
+│ ┌ KASSE ──────────┐                      │  ← Kapazitätskopf
+│ │ MCr 1,05        │                      │
+│ └─────────────────┘                      │
+│ [ Mein Schiff | Schiffe | Small Craft ]  │  ← Unterreiter
+│ ▌Hier gibt es keine Werft. …             │  ← Sperrhinweis, nur wenn gesperrt
+│ Schaden · 2 Treffer                  ›   │
+│ BEWAFFNUNG VON KESTREL · 1 HARDPOINT     │
+│ ┌ Hardpoint 1  1/2  [Double Turret ▾] ┐  │  ← Hardpoint-Karte
+│ │ (Beam Laser ✕)  (+ Waffe)           │  │
+│ └─────────────────────────────────────┘  │
+│ Einbauen bucht den Preis …           ✕   │  ← Hinweis mit ✕
+└──────────────────────────────────────────┘
+```
+
+- **Kapazitätskopf** mit einer Kachel **Kasse**, in allen Reitern gleich; rot, wenn im Reiter nichts
+  bezahlbar ist. Er rechnet nicht vorher → nachher wie im Handel, weil hier jeder Kauf sofort gilt.
+- **Unterreiter** wie bei Crew und Computer: *Mein Schiff* (Standard mit Schiff), *Schiffe*,
+  *Small Craft* (Standard ohne Schiff *Schiffe*).
+- **Hardpoint-Karte** statt Auswahlfeldern: In der Werft gibt es kein `select` mehr. Eingebaut,
+  getauscht und ausgebaut wird in **Kurzdialogen** nach dem Muster oben: erst eine Radio-Zeile wählen,
+  dann rechts die Hauptaktion mit dem Preis darauf („Einbauen · Cr 500.000“); Ausbauen fragt in einem
+  eigenen Kurzdialog nach (Hauptaktion rot). Ein Fehltipp kostet nie Geld.
+- **Sperrhinweis**: Geht in einem Reiter gerade nichts, steht der Grund einmal oben in voller
+  Schriftgröße (Fläche `--panel`, links ein Strich in `--accent`), nicht klein und grau und nicht in
+  jeder Zeile. Alles darunter bleibt stehen, ist auf **35 %** gedimmt und gesperrt. Das ergänzt
+  „Ausgegraut mit Grund“ (*Zustände und Sicherheit*) für einen ganzen Reiter.
+- **Gesperrte Preise** in der Werft grau, **nicht durchgestrichen**; der Grund steht als Zeile unter
+  dem Entwurf („Anzahlung MCr 5,89 · Kasse zu klein“).
+- Erklärtexte (Kauf über die Bank, Ausbauen ohne Erlös) als **Hinweis mit ✕** am Ende des Reiters.
 
 ### Meldung und Hinweis
 

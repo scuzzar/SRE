@@ -522,6 +522,9 @@ des Bereichs (siehe die Tabelle oben). Hier stehen nur die, die für alle Bereic
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
+- **Kauf nur an einer Werft** (2026-11-28, [`modell/schiffe.md`](modell/schiffe.md), *Erwerb*,
+  *Wo gekauft wird*) ist noch nicht gebaut: `buyShip` verkauft heute an jedem Ort. Die Bauanleitung
+  mit der überarbeiteten Werft steht in [`konzept-werft.md`](konzept-werft.md).
 - **Handel** (2026-11-27, 2026-11-27b, 2026-11-27c, [`modell/handel.md`](modell/handel.md)) ist
   gebaut (`model/trade.ts`, Tabellen in `src/data/trade.json`, Markt und Aufträge in
   `view/trade/TradeScreen.tsx`, Laderaum in `view/ship/HoldTab.tsx`). Abweichungen:

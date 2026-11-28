@@ -110,6 +110,11 @@ im Modell.
   nicht geortete Einheiten am zuletzt bekannten Ort. Mit ihr entscheiden: *Wer schubt, leuchtet*
   als Hausregel?
 - [ ] **Dekompression** bei Hull-Treffern (heute ohne Folgen, siehe `modell/schiffe.md`).
+- [ ] **Werft umbauen und Schiffskauf nur an einer Werft** (freigegeben 2026-11-28): Kapazitätskopf
+  mit der Kasse, Unterreiter *Mein Schiff · Schiffe · Small Craft*, Hardpoint-Karten mit
+  Kurzdialogen statt Auswahlfeldern, Sperrhinweis; Kauf nur an Raumhafen A (Small Craft auch B).
+  Bauanleitung mit Texten, Tests und Reihenfolge: `docs/konzept-werft.md`, Entwurf
+  `docs/mock/werft.html`.
 - [ ] **Danach**, ohne eigene Stufe: Raketen aus Bauteilen nach Supplement 3, Minen, Zoll und
   Patrouille mit dem Handel, Bergung von Wracks.
 
