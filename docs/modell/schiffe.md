@@ -568,7 +568,9 @@ tragen ⚑.
   Andockflug auf) und dockt an, wenn sie dort näher als 100 km steht. Reichte der Schub nicht,
   fliegt sie dem Mutterschiff nach und behält den Andockflug für die nächste Bewegung. Angedockt:
   Die Einheit entfällt, `aboard` wird gesetzt, und war die Gruppe darin, sitzt sie jetzt im
-  Mutterschiff. Andocken geht in beiden Phasen der Raumrunde. ⚑ „Andocken“ heißt nie „Landen“: **Landen** bleibt das Aufsetzen auf einer
+  Mutterschiff. Andocken geht in beiden Phasen der Raumrunde. Am **Highport** dockt jede Einheit
+  nach derselben Regel an, ohne Platzbedingung (2026-11-28b, wartet auf Freigabe;
+  [Oberfläche](oberflaeche.md#highport), *Im Systemflug*). ⚑ „Andocken“ heißt nie „Landen“: **Landen** bleibt das Aufsetzen auf einer
   Welt.
 - **Landen** geht wie bisher (Landeautomatik eingeschlossen), aber nur mit der Einheit der Gruppe
   (Owner, 21. November 2026: nur mit Gruppe). Erreicht eine andere Einheit die Oberfläche, schlägt

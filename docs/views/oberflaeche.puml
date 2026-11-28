@@ -86,6 +86,7 @@ hide <<browser>> stereotype
 ' Handel (Regeln: docs/regeln-handel.md)
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SpaceUnit $raum
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -99,6 +100,7 @@ hide <<browser>> stereotype
   abstract class LogEntry $probe
 
 ' Zeit und Reisen
+  class ShuttleRide $reise $newClass("2026-11-28b")
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Terrain <<reference>> $begegnung
@@ -170,8 +172,10 @@ Ship "1" *-- "0..1" Place : place
 ' Handel
 
 ' Raumkarte und Systemflug
+SpaceUnit "*" -$newArrow("2026-11-28b")-> "0..1" City : dockAt
 
 ' Zeit und Reisen
+ShuttleRide "1" *-$newArrow("2026-11-28b")- "1" Place : from
 
 ' Charaktererschaffung und Lebenslauf
 Character "1" *-- "0..1" Place : place

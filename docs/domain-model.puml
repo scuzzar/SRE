@@ -788,6 +788,10 @@ hide <<browser>> stereotype
     days: number
     /left: number
   }
+  class ShuttleRide $reise $newClass("2026-11-28b") {
+    hours: number
+    fare: number
+  }
   class SystemJourney $reise {
     hours: number
     /days: number
@@ -1557,6 +1561,7 @@ SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SystemFlight --> BattlePhase : phase
 SpaceUnit "*" --> "0..1" Ship : ship
+SpaceUnit "*" -$newArrow("2026-11-28b")-> "0..1" City : dockAt
 SpaceUnit "*" --> "0..1" ShipDesign : design
 SpaceUnit "1" *-- "0..1" ShipDamage : damage
 Ship "1" *-- "0..1" ShipDamage : damage
@@ -1624,6 +1629,9 @@ MonthEnd "*" --> "*" Booking : costs {ordered}
 Booking --> ShipCost
 Booking "*" --> "0..1" Journey : won
 LogEntry <|-- SystemJourney
+LogEntry <|-$newArrow("2026-11-28b")- ShuttleRide
+ShuttleRide "1" *-$newArrow("2026-11-28b")- "1" Place : from
+ShuttleRide "*" -$newArrow("2026-11-28b")-> "*" Character : travellers
 SystemJourney "*" --> "1" World : from
 SystemJourney "*" --> "1" World : to
 SystemJourney "*" --> "*" Character : travellers

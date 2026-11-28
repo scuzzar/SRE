@@ -152,6 +152,7 @@ hide <<browser>> stereotype
 
 ' Zeit und Reisen
   class Passenger <<value>> $reise
+  class ShuttleRide $reise $newClass("2026-11-28b")
   class SystemJourney $reise
   class LowBerth <<value>> $reise
 
@@ -210,6 +211,7 @@ ShipRepair "*" --> "1" Character : by
 ' Zeit und Reisen
 Passenger "*" --> "1" Character : for
 LowBerth "*" --> "0..1" Character : for
+ShuttleRide "*" -$newArrow("2026-11-28b")-> "*" Character : travellers
 SystemJourney "*" --> "*" Character : travellers
 
 ' Charaktererschaffung und Lebenslauf

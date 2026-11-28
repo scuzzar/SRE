@@ -773,6 +773,7 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > Am 28. November 2026 vorgeschlagen, **wartet auf Freigabe** (Kennzeichen **2026-11-28b**):
 > **Highport.** Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als
 > Highport (`SurfaceMap.highport`), die den Raumhafen der Welt trägt; dort dockt man an, handelt,
-> kauft ein, tankt und nutzt die Werft. Anlass: Echo (B537100-8) ohne Städte. Regeln in
+> kauft ein, tankt und nutzt die Werft. Neu `ShuttleRide` (Logeintrag mit Fahrpreis und Dauer) und
+> `SpaceUnit.dockAt` (Andocken am Highport im Systemflug). Anlass: Echo (B537100-8) ohne Städte. Regeln in
 > [`oberflaeche.md`](oberflaeche.md#highport). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-28b-highport.png`](../changes/2026-11-28b-highport.png).

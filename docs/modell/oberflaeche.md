@@ -131,7 +131,7 @@ Feld und Stadt gehören zur Oberflächenkarte derselben Welt; eine Orbitalstadt 
 
 ## Highport
 
-*Änderung 2026-11-28b, wartet auf Freigabe.* Anlass: Echo (B537100-8) hat Raumhafen B, aber bei
+*Änderung 2026-11-28b, wartet auf Freigabe* (Antworten des Owners vom 28. November 2026 eingearbeitet). Anlass: Echo (B537100-8) hat Raumhafen B, aber bei
 Bevölkerung 1 keine Stadt; der Hafen hing an keiner Stadt, und Werft, Markt und Landeplatz waren
 nicht zu erreichen. Der Owner will den Highport als eigenen Ort, an dem man andockt und handelt,
 statt einer Ausnahme für diesen Fall.
@@ -148,17 +148,21 @@ statt einer Ausnahme für diesen Fall.
 - **Name**: „<Weltname> Highport“ (ohne Weltname „Highport“), umbenennbar wie jede Stadt.
 - **Beim Erzeugen der Karte**, nach den Orbitalstädten (Konzept 10d):
   1. Gibt es schon eine Orbitalstadt, wird die größte der Highport; ihr Hafen wird der Starport.
-  2. Sonst wird wie bisher die kleinste Nebenstadt in den Orbit verlegt und Highport.
-  3. Gibt es keine Stadt, die sich verlegen lässt, und gar keine Stadt (dünn besiedelt, wie Echo),
-     entsteht der Highport mit der **ganzen Bevölkerung** der Welt (`population` = Bevölkerung des
-     UWP, `multiplier` = `populationMultiplier`, Rang Hauptstadt). ⚑
-  4. Gibt es Städte, aber keine verlegbare (nur Hauptstädte), entsteht der Highport als **Station
-     ohne eigene Einwohner** (`population` 0, `multiplier` 1, gelesen als Personal der Station). ⚑
-     Bei Bevölkerung 0 der Welt ebenso.
-- **Bestehende Karten** bekommen ihren Highport beim Laden, ohne neu zu würfeln: Ist eine
-  Orbitalstadt da, wird die größte der Highport (Schritt 1). Sonst kommt eine neue Orbitalstadt
-  **ans Ende** der Städteliste (Schritt 3 bzw. 4), damit die Nummern der Städte und alle Orte,
-  die auf sie zeigen, gültig bleiben. Die Einwohner der übrigen Städte ändern sich nicht.
+  2. Sonst zieht nach dem Buch eine Siedlung in den Orbit und wird Highport (Owner: „komplett,
+     aber nur bei neuen Planeten“): die kleinste Nebenstadt; gibt es keine, eine **Kleinstadt**
+     (sie verlässt ihr Feld, der Highport bekommt die Bevölkerungsziffer der Kleinstädte und
+     Multiplikator 1).
+  3. Gibt es gar keine Siedlung (dünn besiedelt, wie Echo), entsteht der Highport mit der **ganzen
+     Bevölkerung** der Welt (`population` = Bevölkerung des UWP, `multiplier` =
+     `populationMultiplier`, Rang Hauptstadt). ⚑
+  4. Bei Bevölkerung 0 entsteht er als **Station ohne eigene Einwohner** (`population` 0,
+     `multiplier` 1, gelesen als Personal der Station). ⚑
+- **Bestehende Karten** (Owner: nur neue Planeten werden nach dem Buch umgebaut) bekommen ihren
+  Highport beim Laden, ohne neu zu würfeln und ohne dass eine Stadt oder Kleinstadt umzieht: Ist
+  eine Orbitalstadt da, wird die größte der Highport (Schritt 1). Hat die Welt gar keine Siedlung
+  (Echo), entsteht er wie in Schritt 3. Sonst entsteht er als Station ohne eigene Einwohner wie in
+  Schritt 4. Neue Orbitalstädte kommen **ans Ende** der Städteliste, damit die Nummern der Städte
+  und alle Orte, die auf sie zeigen, gültig bleiben.
 - **Was dort geht.** Der Highport ist eine Stadt mit Hafen; alles, was an einer Stadt mit Hafen
   geht, geht dort:
   - *Landeplatz* ([Reise](reise.md), *Landeplatz*): Er steht in der Auswahl wie jede Stadt mit
@@ -171,9 +175,32 @@ statt einer Ausnahme für diesen Fall.
     Small Craft auch an B) wie an jeder Stadt mit diesem Hafen.
   - *Begegnungen* wie in einer Stadt. ⚑
   - *Nicht*: Fahrten über die Oberfläche beginnen oder enden dort nicht; der Highport hat kein Feld.
-- **Zwischen Highport und Oberfläche** pendelt ein Shuttle (offene Frage: Preis und Dauer). Mit
-  eigenem Schiff legt man ab und wählt einen neuen Landeplatz, wie nach einer Reise im System.
-- **Auf dem Globus und der Raumkarte** erscheint der Highport wie die übrigen Orbitalstädte als
-  Licht auf einer Umlaufbahn und in der Liste *Orte*, als Highport gekennzeichnet. Andocken aus
-  dem Systemflug ist offen (siehe [Konzept Raumkampf](../konzept-raumkampf.md), *Anflug und
-  Andocken*).
+- **Shuttle** (`ShuttleRide`, Logeintrag; Owner: mit Fahrpreis und Zeit). Ohne eigenes Schiff
+  wechselt die Gruppe zwischen dem Highport und einer Stadt mit Hafen derselben Welt (in beide
+  Richtungen) mit dem Shuttle. ⚑ Hausregel, das Buch nennt keine Zahlen: **Cr 100 je Person** und
+  **4 Stunden**. Gebucht wird der Fahrpreis aus der Kasse (Buchung der Art `fare`); reicht sie nicht,
+  geht es nicht. Der Logeintrag hält fest, wer fuhr (`travellers`, die lebenden, nicht
+  ausgeblendeten SC wie bei der Reise), von wo (`from`), den Fahrpreis zusammen (`fare`) und die
+  Dauer (`hours`); sein Ort ist das Ziel. Die Spielzeit rückt um die Dauer vor. Nicht löschbar wie
+  die Reise.
+- **Mit eigenem Schiff** legt man ab und wählt einen neuen Landeplatz (wie nach einer Reise im
+  System) oder fliegt im Systemflug.
+- **Auf dem Globus** erscheint der Highport wie die übrigen Orbitalstädte als Licht auf einer
+  Umlaufbahn und in der Liste *Orte*, als Highport gekennzeichnet.
+- **Im Systemflug** (Owner: gleich mit der Raumkarte; Bereich [Raum](raum.md)):
+  - *Wo*: Der Highport steht auf der Raumkarte als **Station** auf einer Kreisbahn um seine Welt. ⚑
+    Bahnradius das Dreifache des Weltradius (wie das Mutterschiff beim Beginnen), Richtung beim
+    Beginnen des Systemflugs aus dem Schlüssel der Welt, Geschwindigkeit die der Kreisbahn mit der
+    echten Schwerkraft. Nichts davon wird gespeichert; er ist keine Einheit und wird nicht
+    beschossen.
+  - *Andocken* (`SpaceUnit.dockAt`): Wie beim Andocken eines Small Craft am Mutterschiff (siehe
+    [Schiffe](schiffe.md), *Andocken*, *Andockflug*), nur mit dem Highport als Ziel und **ohne**
+    Platzbedingung: Erreicht die Einheit den Ort des Highports nach der nächsten Bewegung mit ihrem
+    Schub, bietet die Karte „Andocken“ an; näher als 100 km dockt sie sofort an, sonst beginnt der
+    Andockflug (`docking` gesetzt, `dockAt` der Highport). Jede Einheit darf andocken, Schiff wie
+    Small Craft.
+  - *Angedockt*: Die Einheit entfällt, ihr Schiff steht am Highport (`Ship.place` mit dieser Stadt,
+    nicht `inOrbit`). War die Gruppe darin, steht auch sie dort, und der Systemflug endet wie nach
+    einer Landung der Gruppe (übrige Einheiten nach der Regel *Umlaufbahn*).
+  - *Ablegen*: Beginnt der Systemflug mit einem Schiff am Highport, startet seine Einheit am Ort
+    der Station mit deren Geschwindigkeit.
