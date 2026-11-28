@@ -34,7 +34,7 @@ import { vehicleOfItem } from './vehicle';
 import { settleStash } from './stash';
 import type { City, SurfaceMap } from './surface-map';
 import { checkPlace, type Place } from './place';
-import { hexFromFlat, hexFromRolls, temperatureIds, travelZones, uwpKinds, validateHexes, worldById, worldOf, type Hex, type LegacyWorldRoll, type World } from './sector';
+import { hexFromFlat, hexFromRolls, temperatureIds, travelZones, uwpKinds, validateHexes, withHighports, worldById, worldOf, type Hex, type LegacyWorldRoll, type World } from './sector';
 import { checkStarSystems } from './star-system';
 
 /**
@@ -208,6 +208,7 @@ const MapSchema = z
         }),
       )
       .optional(),
+    highport: z.number().int().optional(),
   });
 
 const position = { column: z.number().int(), row: z.number().int(), name: z.string().optional() };
@@ -331,7 +332,7 @@ const StashPossessionSchema = PossessionSchema.extend({ parked: PlaceSchema.opti
 /** Die Fahrt der Gruppe (2026-11-15). */
 const TripSchema = z.object({
   hours: z.number().min(0),
-  legs: z.array(z.object({ by: z.string().min(1), rented: z.boolean(), cells: z.array(z.number().int().min(0)).min(2) })).min(1),
+  legs: z.array(z.object({ by: z.string().min(1), rented: z.boolean(), cells: z.array(z.number().int().min(0)).min(1), highport: z.enum(['start', 'end']).optional() })).min(1),
 });
 /** Ein Vektor in der Ebene (2026-11-18). */
 const VecSchema = z.object({ x: z.number().finite(), y: z.number().finite() });
@@ -363,6 +364,7 @@ const FlightSchema = z.object({
         returned: z.boolean().optional(),
         /** Der Andockflug: die Einheit steuert in der nächsten Bewegung ihr Mutterschiff an (2026-11-23c). */
         docking: z.boolean().optional(),
+        dockAt: z.number().int().min(0).optional(),
         position: VecSchema,
         velocity: VecSchema,
         thrust: VecSchema.optional(),
@@ -655,7 +657,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       name: validName(file.name),
       characters,
       log: file.log.map(logEntry),
-      hexes: file.hexes.map(hexOf),
+      hexes: withHighports(file.hexes.map(hexOf)),
       ...(file.generation ? { generation: { career: careerOf(file.generation.career) } } : {}),
       ...(file.focus === undefined ? {} : { focus: file.focus }),
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
@@ -669,7 +671,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       }),
       ...(file.markets === undefined || file.markets.length === 0 ? {} : { markets: file.markets.map((m) => ({ ...m, goods: [...m.goods], purchases: [...m.purchases], sales: [...m.sales], bought: m.bought.map((b) => ({ ...b })), freight: m.freight.map((f) => ({ to: f.to, dice: f.dice.map((d) => (d === null ? null : [...d])), dm: f.dm, lots: f.lots.map((l) => ({ ...l })) })), passengers: m.passengers.map((p) => ({ ...p, highDice: [...p.highDice], middleDice: [...p.middleDice], lowDice: [...p.lowDice] })), messages: m.messages.map((x) => ({ to: x.to, dice: [x.dice[0], x.dice[1]] as const, die: x.die, taken: x.taken })) })) as Market[] }),
       stash: file.stash.map((p) => stripped({ ...p, ...(p.parked === undefined ? {} : { parked: placeFromFile(p.parked) }) }) as Possession),
-      ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells] })) } }),
+      ...(file.trip === undefined ? {} : { trip: { hours: file.trip.hours, legs: file.trip.legs.map((l) => ({ by: l.by, rented: l.rented, cells: [...l.cells], ...(l.highport === undefined ? {} : { highport: l.highport }) })) } }),
       ...(file.flight === undefined ? {} : { flight: flightFromFile(file.flight) }),
       ...(file.voyage === undefined ? {} : { voyage: { entry: file.voyage.entry, days: file.voyage.days } }),
       // NSC aus Dateien von vor 2026-11-08c bleiben, wie sie sind; upgradeNpcs macht Charaktere aus ihnen.
@@ -732,6 +734,7 @@ function mapOf(map: z.infer<typeof MapSchema>): SurfaceMap {
     ...(map.roads ? { roads: map.roads.map((r) => [...r]) } : {}),
     // Karten von vor den Städtenamen (2026-11-14k): „Stadt 1“, „Stadt 2“ …
     ...(map.cities ? { cities: map.cities.map((c, i) => ({ ...(stripped(c) as City), name: c.name ?? `Stadt ${i + 1}` })) } : {}),
+    ...(map.highport === undefined ? {} : { highport: map.highport }),
   };
 }
 
@@ -808,6 +811,7 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
       ...(u.firedTurrets === undefined ? {} : { firedTurrets: [...u.firedTurrets] }),
       ...(u.returned === undefined ? {} : { returned: u.returned }),
       ...(u.docking === undefined ? {} : { docking: u.docking }),
+      ...(u.dockAt === undefined ? {} : { dockAt: u.dockAt }),
       position: vec(u.position),
       velocity: vec(u.velocity),
       ...(u.thrust === undefined ? {} : { thrust: vec(u.thrust) }),

@@ -1595,7 +1595,7 @@ export interface ControllerState {
   /** Die Reise im System in Vorbereitung bzw. ihr Ergebnis (2026-11-20d). */
   readonly systemJourney: SystemJourneyDraft | undefined;
   /** Die Planung einer Fahrt auf dem Globus: Zielfeld, ob gemietet werden darf, der Vorschlag oder warum es keinen gibt. */
-  readonly tripPlan: { readonly target: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined } | undefined;
+  readonly tripPlan: { readonly target: number | undefined; /** Ziel ist eine Orbitalstadt, der Highport (2026-11-28b). */ readonly orbit?: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined } | undefined;
   /** Was beim Fahren nicht ging. */
   readonly tripNote: string | undefined;
   /** Der Begegnungstest eines Reisetags am Boden, solange sein Würfeldialog offen ist. */
@@ -1667,7 +1667,7 @@ export interface ControllerState {
   /** Zählt jede Landung (2026-11-21); die View spielt bei einem neuen Wert die Landeanimation. */
   readonly touchdown?: number | undefined;
   /** Der offene Globus: das angetippte Feld oder (`card`) die Weltkarte im Blatt statt eines Feldes (Owner, 21. November 2026). */
-  readonly globe: { readonly picked: number | undefined; readonly card?: boolean } | undefined;
+  readonly globe: { readonly picked: number | undefined; readonly card?: boolean; /** Eine angetippte Orbitalstadt statt eines Felds (2026-11-28b). */ readonly orbit?: number } | undefined;
   /** Die offene Raumkarte (2026-11-18c). */
   readonly space: OpenSpace | undefined;
   /** Salven, deren Würfe gerade im Vordergrund rollen (2026-11-21i): ab dieser Stelle im Log; `delay` ms warten (die Bewegung spielt erst ab). */
@@ -3061,7 +3061,7 @@ export function buildSnapshot(state: ControllerState): Snapshot {
     worlds: worldList(campaign.hexes),
     world: state.world && { ...worldView(campaign.hexes, state.world.column, state.world.row, state.world.rolls, state.worldError, happenedAt(campaign, openWorldId(state.world)), state.world.id), ...worldPeople(campaign, openWorldId(state.world)) },
     worldCard: state.world !== undefined && state.globe?.card === true,
-    globe: state.world && state.globe ? globeView(campaign, openWorldId(state.world), state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace, state.landingPick === true, state.touchdown ?? 0) : undefined,
+    globe: state.world && state.globe ? globeView(campaign, openWorldId(state.world), state.globe.picked, state.tripPlan?.options[state.tripPlan.chosen], state.trace, state.landingPick === true, state.touchdown ?? 0, state.globe.orbit) : undefined,
     landing: landingView(campaign, state.landingPick === true),
     shipCheck: state.shipCheck && shipCheckView(campaign, state.shipCheck),
     shipEncounter: shipOf(campaign) === undefined ? undefined : { blocker: manualEncounterBlocker(campaign) ?? (campaign.flight ? encounterBlocker(campaign) : undefined) },

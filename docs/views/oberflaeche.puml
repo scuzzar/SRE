@@ -86,6 +86,7 @@ hide <<browser>> stereotype
 ' Handel (Regeln: docs/regeln-handel.md)
 
 ' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SpaceUnit $raum
 
 ' Charaktererschaffung und Lebenslauf
 
@@ -170,6 +171,7 @@ Ship "1" *-- "0..1" Place : place
 ' Handel
 
 ' Raumkarte und Systemflug
+SpaceUnit "*" --> "0..1" City : dockAt
 
 ' Zeit und Reisen
 
@@ -187,6 +189,7 @@ SurfaceCell "*" --> "0..1" Volcano : volcano
 SurfaceMap "1" *-- "*" River : rivers
 SurfaceMap "1" *-- "*" Road : roads
 SurfaceMap "1" *-- "*" City : cities
+SurfaceMap "1" --> "0..1" City : highport
 River "*" --> "2..*" SurfaceCell : cells {ordered}
 Road "*" --> "2..*" SurfaceCell : cells {ordered}
 City "*" --> "0..1" SurfaceCell : cell
@@ -199,8 +202,8 @@ City --> Port
 VehicleSpeed "*" --> "0..1" Landform : on
 Vehicle "*" --> "*" Landform : landsOn
 Vehicle "*" --> "*" Port : landsAt
-Leg "*" --> "2..*" SurfaceCell : cells {ordered}
-Trip "*" --> "1" SurfaceCell : /at
+Leg "*" --> "1..*" SurfaceCell : cells {ordered}
+Trip "*" --> "0..1" SurfaceCell : /at
 Possession "1" *-- "0..1" Place : parked
 
 ' Charakter

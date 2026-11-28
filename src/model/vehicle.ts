@@ -40,6 +40,11 @@ export function worksIn(vehicle: Vehicle, atmosphere: number): boolean {
   return vehicle.atmosphere === undefined || atmosphere >= vehicle.atmosphere;
 }
 
+/** Ein Fahrzeug, das nur zwischen Boden und Highport fliegt (das Shuttle, 2026-11-28b). */
+export function orbitOnly(vehicle: Vehicle): boolean {
+  return vehicle.orbit === true && vehicle.flight === undefined && vehicle.speeds.length === 0;
+}
+
 /** Ein Fluggerät: Es hat eine Fluggeschwindigkeit. */
 export function flies(vehicle: Vehicle): boolean {
   return vehicle.flight !== undefined;
@@ -115,7 +120,8 @@ export function waterOnly(vehicle: Vehicle): boolean {
 
 /** Ob ein Fluggerät auf einem Feld landen kann: auf seiner Geländeart oder in einer Stadt mit passendem Hafen. */
 export function landsAt(vehicle: Vehicle, map: SurfaceMap, ways: Ways, cell: number): boolean {
-  if (!flies(vehicle)) return false;
+  // Das Shuttle (2026-11-28b) fliegt nicht über die Oberfläche, landet aber an seinen Häfen.
+  if (!flies(vehicle) && vehicle.craft === undefined) return false;
   if (vehicle.landsOn.includes(landformAt(map, cell))) return true;
   const city = ways.cityAt.get(cell);
   const port = city === undefined ? undefined : map.cities?.[city]?.port;

@@ -318,6 +318,9 @@ stehen nicht hier, sondern im [GUI-Handbuch](gui-handbuch.md) unter „Begriffe 
 | Städtenamen | (Referenzdaten) | Die große Liste, aus der neue Städte ihren Namen bekommen |
 | Hauptstadt, Nebenstadt | `CityRank` | Die Städte mit den höchsten Bevölkerungsziffern (höchstens 10) bzw. eine Ziffer darunter |
 | Orbitalstadt | `City` ohne `cell` | Eine Stadt dauerhaft im Orbit |
+| Highport | `SurfaceMap.highport` | (2026-11-28b) Die Orbitalstadt einer Welt mit Raumhafen A oder B, die den Raumhafen der Welt trägt; dort dockt man an. Gegenstück: der **Downport**, der Hafen der ersten Hauptstadt am Boden |
+| Shuttle | `Vehicle` mit `orbit` und `craft` | (2026-11-28b) Linienverkehr zwischen einer Stadt mit Raumhafen A oder B und dem Highport derselben Welt, fliegt wie das Small Craft Shuttle; ein Abschnitt der Fahrt (`Leg.highport`). Eigene Grav-Fahrzeuge mit `orbit` kommen ebenso hoch |
+| Andockziel | `SpaceUnit.dockAt` | (2026-11-28b) Der Highport, an dem eine Einheit im Systemflug andockt; ohne Ziel dockt sie am Mutterschiff an |
 | Hafen einer Stadt | `City.port`, `Port` | Raumhafen A–E oder Landeplatz F–H der Stadt; Y (keiner) heißt: kein Wert |
 | Fahrzeug | `Vehicle`, `Item.vehicle` | Womit man sich über die Oberflächenkarte bewegt, mit seiner Tabelle der Geschwindigkeiten; zu einem Gegenstand der Art vehicle, außer *zu Fuß* |
 | Zu Fuß | `Vehicle` ohne Gegenstand | Das Fahrzeug, das die Gruppe immer hat: langsam, aber fast überall |

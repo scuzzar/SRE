@@ -578,9 +578,14 @@ export function GlobeScreen({
             ))}
             {globe.cities.map((c) =>
               c.cell === undefined ? (
-                <div key={c.index} className="globe-row static">
-                  <span className="globe-dot orbit">○</span> {c.label} · {c.detail}
-                </div>
+                // Orbitalstädte lassen sich antippen wie ein Feld (Highport, 2026-11-28b).
+                <button key={c.index} type="button" className={c.highport ? 'globe-row highport' : 'globe-row'} onClick={() => game.pickOrbit(c.index)}>
+                  <span className="globe-dot orbit">{globe.partyOrbit === c.index ? 'G' : '○'}</span>
+                  <span className="globe-row-text">
+                    {c.label}
+                    <small>{c.detail}</small>
+                  </span>
+                </button>
               ) : (
                 <button key={c.index} type="button" className="globe-row" onClick={() => flyTo(c.cell!)}>
                   <span className={c.index === 0 ? 'globe-dot capital' : 'globe-dot city'}>●</span>
@@ -735,9 +740,7 @@ export function FieldCard({
           <CloseIcon />
         </button>
       </div>
-      <p className="globe-sheet-sub">
-        {picked.landform} · {picked.position} · {picked.temperature}
-      </p>
+      <p className="globe-sheet-sub">{picked.orbit ? `${picked.landform} · ${picked.position}` : `${picked.landform} · ${picked.position} · ${picked.temperature}`}</p>
       <ul className="globe-facts">
         {picked.cities.map((c, i) => (
           <li key={c.index}>{i === 0 ? c.detail : `${c.name}: ${c.detail}`}</li>
@@ -746,9 +749,9 @@ export function FieldCard({
         {picked.volcano && <li>{picked.volcano}</li>}
         {picked.river && <li>Fluss</li>}
         {picked.road && <li>Straße</li>}
-        {globe.partyCell === picked.cell && <li>Die Gruppe ist hier</li>}
-        {globe.shipCell === picked.cell && <li>Das Schiff steht hier</li>}
-        {globe.vehicles.some((v) => v.cell === picked.cell) && <li>Eigene Fahrzeuge stehen hier</li>}
+        {(picked.orbit ? globe.partyOrbit === picked.city : globe.partyCell === picked.cell) && <li>Die Gruppe ist hier</li>}
+        {picked.orbit ? globe.shipOrbit === picked.city && <li>Das Schiff ist hier angedockt</li> : globe.shipCell === picked.cell && <li>Das Schiff steht hier</li>}
+        {!picked.orbit && globe.vehicles.some((v) => v.cell === picked.cell) && <li>Eigene Fahrzeuge stehen hier</li>}
         {picked.npcs.map((n) => (
           <li key={n.id}>
             <button type="button" className="link-button" aria-label={`NSC ${n.name} (${roleText[n.role]}) öffnen`} onClick={() => game.editCharacter(n.id)}>

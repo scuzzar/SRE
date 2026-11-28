@@ -1,0 +1,278 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-28b"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-28b: Highport: Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als Highport (SurfaceMap.highport), die den Raumhafen der Welt trägt; andocken auch aus dem Systemflug (SpaceUnit.dockAt); zur Oberfläche mit dem Shuttle als Linienverkehr der Fahrt (Vehicle.orbit, Vehicle.craft, Leg.highport); eigene Grav-Fahrzeuge kommen auch hoch, mit echter Flugzeit. Dort geht alles, was an einer Stadt mit Hafen geht
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+
+' Schiffe
+  class Ship $schiffe
+  class DesignTurret <<reference>> $schiffe
+  class ShipDesign <<reference>> $schiffe {
+    code: string
+    kind: ShipKind
+    /jumpFuel: number
+    name: string
+    hull: number
+    jump: number
+    maneuver: number
+    fuel: number
+    staterooms: number
+    lowBerths: number
+    hardpoints: number
+    cargo: number
+    crew: string
+    basePrice: number
+    months: number [0..1]
+    streamlined: boolean
+    lasers: number [0..1]
+    maneuverDrive: string [0..1]
+    jumpDrive: string [0..1]
+    powerPlant: string [0..1]
+  }
+  enum ShipKind <<value>> $schiffe
+  class ComputerModel <<reference>> $schiffe
+  class DeckPlan <<browser>> $schiffe
+
+' Handel (Regeln: docs/regeln-handel.md)
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+  class SystemFlight $raum
+  class ShipDamage <<value>> $raum
+  enum Intent <<value>> $raum
+  class SpaceUnit $raum {
+    position: Vec
+    velocity: Vec
+    thrust: Vec [0..1]
+    crashed: boolean
+    name: string [0..1]
+    intent: Intent [0..1]
+    firedTurrets: number [0..*]
+    returned: boolean
+    docking: boolean
+    /maxG: number
+    /evading: boolean
+  }
+  class TrackPoint <<value>> $raum
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class World $sektor
+
+' Missionen
+
+' Verlauf
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+  class SurfaceMap $oberflaeche {
+    /cells: number
+  }
+  class SurfaceCell <<value>> $oberflaeche {
+    towns: number
+  }
+  enum Landform <<value>> $oberflaeche
+  class River <<value>> $oberflaeche
+  class Road <<value>> $oberflaeche
+  enum Volcano <<value>> $oberflaeche
+  class City $oberflaeche {
+    name: string
+    population: number
+    multiplier: number
+    rank: CityRank
+    port: Port [0..1]
+  }
+  enum CityRank <<value>> $oberflaeche
+  enum Port <<value>> $oberflaeche
+  class Place <<value>> $oberflaeche
+' Fahrzeuge und Wege auf der Oberfläche
+  class Vehicle <<reference>> $logistik {
+    name: string
+    flight: number [0..1]
+    atmosphere: number [0..1]
+    tl: number [0..1]
+    fare: number [0..1]
+    $new("2026-11-28b", "orbit: boolean")
+  }
+  class VehicleSpeed <<value>> $logistik
+  class Trip $logistik {
+    hours: number
+    /totalHours: number
+    /days: number
+  }
+  class Leg <<value>> $logistik {
+    rented: boolean
+    /hours: number
+    /rent: number
+    /fare: number
+    $new("2026-11-28b", "highport: LegEnd [0..1]")
+  }
+  enum LegEnd <<value>> $logistik $newClass("2026-11-28b") {
+    start
+    end
+  }
+  ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
+
+' Kampagne
+
+' Schiffe
+Ship "*" --> "1" ShipDesign : design
+ShipDesign "1" *-- "0..*" DesignTurret : turrets {ordered}
+ShipDesign "*" --> "0..1" ComputerModel : computer
+ShipDesign --> ShipKind
+ShipDesign "*" --> "*" ShipDesign : craft {ordered}
+
+' Handel
+
+' Raumkarte und Systemflug
+SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
+SpaceUnit "*" --> "0..1" Ship : ship
+SpaceUnit "*" -$newArrow("2026-11-28b")-> "0..1" City : dockAt
+SpaceUnit "*" --> "0..1" ShipDesign : design
+SpaceUnit "1" *-- "0..1" ShipDamage : damage
+SpaceUnit --> Intent
+SystemFlight "*" --> "1" SpaceUnit : party
+SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
+DeckPlan "*" --> "1" ShipDesign : design
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+World "1" *-- "0..1" SurfaceMap : map
+SurfaceMap "1" *-- "/cells" SurfaceCell : cells {ordered}
+SurfaceCell "*" --> "1" Landform : landform
+SurfaceCell "*" --> "0..1" Volcano : volcano
+SurfaceMap "1" *-- "*" River : rivers
+SurfaceMap "1" *-- "*" Road : roads
+SurfaceMap "1" *-- "*" City : cities
+SurfaceMap "1" -$newArrow("2026-11-28b")-> "0..1" City : highport
+River "*" --> "2..*" SurfaceCell : cells {ordered}
+Road "*" --> "2..*" SurfaceCell : cells {ordered}
+City "*" --> "0..1" SurfaceCell : cell
+Place "*" --> "0..1" SurfaceCell : cell
+Place "*" --> "0..1" City : city
+City --> CityRank
+City --> Port
+Vehicle "1" *-- "*" VehicleSpeed : speeds
+Vehicle "*" -$newArrow("2026-11-28b")-> "0..1" ShipDesign : craft
+Vehicle "*" --> "*" Landform : landsOn
+Vehicle "*" --> "*" Port : landsAt
+Trip "1" *-- "1..*" Leg : legs {ordered}
+Leg "*" --> "1" Vehicle : by
+Leg "*" -$goneArrow("2026-11-28b")-> "2..*" SurfaceCell : cells {ordered}
+Leg "*" -$newArrow("2026-11-28b")-> "1..*" SurfaceCell : cells {ordered}
+Leg -$newArrow("2026-11-28b")-> LegEnd
+Trip "*" -$goneArrow("2026-11-28b")-> "1" SurfaceCell : /at
+Trip "*" -$newArrow("2026-11-28b")-> "0..1" SurfaceCell : /at
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+class Vehicle #line:d0021b;line.bold
+class Leg #line:d0021b;line.bold
+@enduml

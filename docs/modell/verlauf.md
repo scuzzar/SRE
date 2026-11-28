@@ -769,3 +769,14 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > Gruppe. Der Ship-Vorteil der Abmusterung bleibt überall. Regeln in [`schiffe.md`](schiffe.md) unter
 > *Erwerb*, *Wo gekauft wird*. Zugleich freigegeben: die überarbeitete Werft als Oberfläche
 > ([`../konzept-werft.md`](../konzept-werft.md), GUI-Handbuch *Werft*).
+
+> Am 28. November 2026 freigegeben (Kennzeichen **2026-11-28b**; Owner: „Bau es selbst“):
+> **Highport.** Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als
+> Highport (`SurfaceMap.highport`), die den Raumhafen der Welt trägt; dort dockt man an, handelt,
+> kauft ein, tankt und nutzt die Werft. Das Shuttle ist ein Linienverkehr der Fahrt (`Vehicle.orbit`,
+> `Vehicle.craft`, `Leg.highport`; Air/Raft, GCarrier und Speeder kommen auch hoch, mit echter
+> Flugzeit; ein Abschnitt braucht nur noch ein Feld, `Trip./at` kann leer sein); dazu
+> `SpaceUnit.dockAt` (Andocken am Highport im Systemflug). Der Highport steht geostationär (⚑ Welttag 24 Stunden, etwa
+> 6,6 Weltradien). Anlass: Echo (B537100-8) ohne Städte. Regeln in
+> [`oberflaeche.md`](oberflaeche.md#highport). Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-28b-highport.png`](../changes/2026-11-28b-highport.png).

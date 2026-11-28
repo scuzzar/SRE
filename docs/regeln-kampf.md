@@ -1898,6 +1898,12 @@ auf jeder Geländeart an Land; Air/Raft, GCarrier, Grav Belt 100 und Speeder 100
 auch auf Wasser (sie schweben). Biplane, Fixed Wing, Helicopter und Hovercraft nur bei Atmosphäre
 4+. Reichweite und Tanken nimmt die App nicht auf (○).
 
+**Zum Highport** ✔ ✱ (2026-11-28b): Air/Raft (laut Tabelle „bis in den Orbit“), ✱ GCarrier und
+Speeder fliegen bis zum Highport, mit der echten Flugzeit (Höhe der geostationären Bahn durch die
+Fluggeschwindigkeit); dazu das **Shuttle** als Linienverkehr zwischen Städten mit Raumhafen A oder B
+und dem Highport, mit dem Schub des Small Craft Shuttle (3 G), Cr100 je Person und Flugstunde. Grav
+Belt nicht. Regeln in [`modell/logistik.md`](modell/logistik.md).
+
 **Das ATV aus *Mission on Mithril*** (ein Tracked ATV, Kettenfahrzeug mit Druckkabine, 9,5 t):
 
 | Gelände | Geschwindigkeit |

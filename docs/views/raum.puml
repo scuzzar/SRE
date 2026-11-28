@@ -271,6 +271,7 @@ hide <<browser>> stereotype
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
 
 ' Referenzdaten
+  class City $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
   ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
 
@@ -286,6 +287,7 @@ SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SystemFlight --> BattlePhase : phase
 SpaceUnit "*" --> "0..1" Ship : ship
+SpaceUnit "*" --> "0..1" City : dockAt
 SpaceUnit "*" --> "0..1" ShipDesign : design
 SpaceUnit "1" *-- "0..1" ShipDamage : damage
 Ship "1" *-- "0..1" ShipDamage : damage

@@ -31,8 +31,16 @@ import {
   coastOf,
   thrustToward,
   REACH_PER_G,
+  chooseLanding,
+  dockAtHighport,
+  highportDockBlocker,
+  portCities,
+  stationAt,
+  stationOf,
+  withSurfaceMapOf,
+  worldById,
 } from '.';
-import { fixedClock } from './testing';
+import { fixedClock, fixedRandom } from './testing';
 
 const clock = fixedClock();
 
@@ -370,5 +378,67 @@ describe('Zieleingabe vom Punkt „ohne Schub“ aus (Owner, 22. November 2026)'
     // Zu weit: voller Schub in diese Richtung.
     expect(lengthOf(thrustToward(scene, unit, { x: coast.x + 50_000, y: coast.y }, t, 1)!)).toBeCloseTo(1, 6);
     expect(thrustToward(scene, unit, coast, t, 1)).toBeUndefined();
+  });
+});
+
+describe('Highport im Systemflug (2026-11-28b)', () => {
+  /** Die Demo mit Globus: Kessra (Raumhafen A) hat jetzt einen Highport; die Gruppe ist in der Hauptstadt gelandet. */
+  function withStation(): Campaign {
+    const c0 = demo();
+    const w = world(c0);
+    const c1 = { ...c0, hexes: withSurfaceMapOf(c0.hexes, w, fixedRandom()) };
+    const port = portCities(worldById(c1.hexes, w)).find((p) => !p.highport)!;
+    return chooseLanding(c1, { city: port.city });
+  }
+  const unitNear = (c: Campaign, km: number): Campaign => {
+    const flight = c.flight!;
+    const at = stationAt(stationOf(c)!, flightTime(c, flight));
+    return { ...c, flight: { ...flight, units: flight.units.map((u, i) => (i === 0 ? { ...u, position: { x: at.position.x + km, y: at.position.y }, velocity: at.velocity } : u)) } };
+  };
+
+  it('die Station kreist geostationär, gut sechseinhalb Weltradien um ihre Welt (auch als Mond)', () => {
+    const c = startFlight(withStation(), world(withStation()), clock);
+    const station = stationOf(c)!;
+    const scene = sceneOf(c.hexes, c.flight!.world);
+    const moon = scene.moons.find((m) => m.world === c.flight!.world);
+    const radius = (moon?.body ?? scene.body)!.radius;
+    expect(station.distance / radius).toBeCloseTo(6.6, 0);
+    expect(station.name).toMatch(/Highport/);
+  });
+
+  it('näher als 100 km dockt sofort an; mit der Gruppe endet der Flug am Highport', () => {
+    const c = unitNear(startFlight(withStation(), world(withStation()), clock), 50);
+    const id = c.flight!.party;
+    const done = dockAtHighport(c, id, clock);
+    const hp = worldById(done.hexes, world(withStation()))!.map!.highport!;
+    expect(done.flight).toBeUndefined();
+    expect(done.location).toEqual({ world: world(withStation()), city: hp });
+    expect(done.ships.find((s) => s.id === id)!.place).toEqual({ world: world(withStation()), city: hp });
+    expect(done.ships.find((s) => s.id === id)!.inOrbit).toBeUndefined();
+  });
+
+  it('weiter weg beginnt der Andockflug und dockt mit der nächsten Bewegung an; er übersteht Speichern und Laden', () => {
+    const c = unitNear(startFlight(withStation(), world(withStation()), clock), 3000);
+    const id = c.flight!.party;
+    expect(highportDockBlocker(c, id)).toBeUndefined();
+    const flying = dockAtHighport(c, id, clock);
+    expect(flying.flight!.units[0]).toMatchObject({ docking: true, dockAt: worldById(c.hexes, world(c))!.map!.highport });
+    expect(fromCampaignFile(toCampaignFile(flying), flying.id).flight).toEqual(flying.flight);
+    const run = runRound(flying, clock);
+    expect(run.campaign.flight).toBeUndefined();
+    expect(run.campaign.location?.city).toBe(worldById(c.hexes, world(c))!.map!.highport);
+  });
+
+  it('am Highport angedockt beginnt der nächste Systemflug an der Station', () => {
+    const near = unitNear(startFlight(withStation(), world(withStation()), clock), 50);
+    const docked = dockAtHighport(near, near.flight!.party, clock);
+    const again = startFlight(docked, world(docked), clock);
+    const at = stationAt(stationOf(again)!, flightTime(again, again.flight!));
+    expect(lengthOf({ x: again.flight!.units[0]!.position.x - at.position.x, y: again.flight!.units[0]!.position.y - at.position.y })).toBeLessThan(1);
+  });
+
+  it('zu weit für den Schub: der Grund nennt die fehlenden G', () => {
+    const c = unitNear(startFlight(withStation(), world(withStation()), clock), 200_000);
+    expect(highportDockBlocker(c, c.flight!.party)).toMatch(/Zu weit weg: .* G bis .*Highport/);
   });
 });

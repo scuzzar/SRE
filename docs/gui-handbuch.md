@@ -32,7 +32,7 @@ Umschalter, Reihe, großes und kleines Blatt, Würfelfenster und Hinweis).
 | Aktionsleiste | `…Dock` (`OracleDock`, `EncounterDock`, `FieldDock`) | Die drei bis fünf gleich breiten Knöpfe zum Handeln über der Navigationsleiste, im Daumenbereich. Im Log *Notiz, Tag, 2W6, Karte*, auf der Detailseite Probe *2W6, Leicht, Mittel, Schwer*, am angetippten Feld *Hierhin reisen, Gruppe setzen, NSC platzieren, Einkaufen* |
 | Charakterleiste | `CharacterStrip` | Oben im Kampf ohne Begegnung und im Shop (im Log nicht mehr, 2026-11-27): die Karte des Charakters oben (Name, Credits und UPP bzw. Waffen), Wischen wechselt ihn, ein Tipp auf den Namen klappt sie ein |
 | Detailseite | (View; `DetailPage`, `FieldDock`, `WorldSheet`) | Ein Inhalt, der an die Stelle des Bereichs tritt, ohne die App abzudunkeln: oben Titel und ✕, unten seine Aktionsleiste. Das Feld ist eine, ebenso Charakter- und Missions-Editor, die Probe (2026-11-27) und im Bereich Schiff Treibstoff, Bearbeiten, Werft, Posten und Programm (2026-11-26) |
-| Feld | (View; `FieldDock`, `WorldSheet`) | Die Detailseite des angetippten Felds des Globus bzw. des gewählten Felds im Subsektor; oben sein **Feldkopf** (Name und Werte), der auch eingeklappt stehen bleibt |
+| Feld | (View; `FieldDock`, `WorldSheet`) | Die Detailseite des angetippten Felds des Globus bzw. des gewählten Felds im Subsektor; oben sein **Feldkopf** (Name und Werte), der auch eingeklappt stehen bleibt. Eine Orbitalstadt (etwa der Highport, 2026-11-28b) steht, in der Liste *Orte* angetippt, ebenso als Feld da |
 | Dialog | `Sheet` mit ✕ (`overlay`) | Groß, für vieles zum Ausfüllen: oben Titel und ✕, unten die Hauptaktion. Charakter-Editor, Erschaffung, Kauf … |
 | Kurzdialog | `Sheet` ohne ✕ (`overlay`) | Klein, für eine kurze Eingabe oder Entscheidung: unten „Abbrechen“ und die Hauptaktion. Notiz, Beute, Wahl der Begegnungsart … |
 | Würfelbühne | `DiceRoll`, `encounterRoll` | Jeder Wurf groß und kurz animiert: Zielwert, Würfel, DMs, Urteil. Nach einem Begegnungswurf zeigt sie den Würfel des Tests, was herauskam und was danach geht („Als NSC“, Rettungswürfe); kam es zur Begegnung, folgt ihre Übersicht. Ohne Würfel nur ein Satz, etwa dass der Test schon gemacht ist |
@@ -416,6 +416,22 @@ Kauf in [`modell/schiffe.md`](modell/schiffe.md) unter *Erwerb*.
 - **Gesperrte Preise** in der Werft grau, **nicht durchgestrichen**; der Grund steht als Zeile unter
   dem Entwurf („Anzahlung MCr 5,89 · Kasse zu klein“).
 - Erklärtexte (Kauf über die Bank, Ausbauen ohne Erlös) als **Hinweis mit ✕** am Ende des Reiters.
+
+### Highport
+
+*Gebaut am 28. November 2026* (Kennzeichen 2026-11-28b; Regeln in
+[`modell/oberflaeche.md`](modell/oberflaeche.md#highport)). Keine neuen Bausteine, nur bestehende:
+
+- **Liste *Orte*** neben dem Globus: Orbitalstädte sind antippbar wie Städte (vorher nur Text); der
+  Highport steht als „Highport“ in der Zeile. Ein Tipp öffnet sie als **Feld** mit Feldkopf „Highport ·
+  im Orbit“ und der Aktionsleiste des Felds: *Hierhin reisen* (Route mit dem Shuttle oder einem
+  eigenen Grav-Fahrzeug), *Gruppe setzen*, *Einkaufen*, *Markt*. *NSC platzieren* ist dort gesperrt
+  (nur auf der Oberfläche). Steht die Gruppe dort, zeigt die Zeile „G“ statt „○“.
+- **Dialog Landeplatz**: Der Highport steht wie jede Stadt mit Hafen in der Auswahl, mit
+  „Andocken · Hafen A“ statt „Hafen A“.
+- **Systemflug**: Der Highport kreist auf der Raumkarte als kleiner Körper auf seiner Bahn. Im Blatt
+  steht der Chip **„Am … andocken“** (wie „… andocken“ bei den Beibooten), gesperrt mit Grund
+  darunter („Zu weit weg: 5,6 G bis …“); läuft der Andockflug, „Andockflug zum … ✓“, ein Tipp hebt ihn auf.
 
 ### Meldung und Hinweis
 

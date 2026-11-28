@@ -2,6 +2,11 @@ import {
   dockBlocker,
   dockPlan,
   dockableCraft,
+  highportDockBlocker,
+  highportPlan,
+  stationAt,
+  stationAtWorld,
+  stationOf,
   launchableCraft,
   flightStartBlocker,
   LANDING_KMS,
@@ -238,6 +243,11 @@ export interface SpaceView {
         readonly dockable: readonly { readonly id: string; readonly name: string; readonly armed: boolean }[];
         /** Sitzt die Gruppe in einem Small Craft, das noch nicht andocken kann: warum nicht. */
         readonly dockHint: string | undefined;
+        /**
+         * Andocken am Highport (2026-11-28b) mit der Einheit der Gruppe: sein Name, warum es jetzt nicht
+         * geht, ob die Einheit schon näher als 100 km ist und ob der Andockflug schon läuft; ohne Highport keins.
+         */
+        readonly highport: { readonly id: string; readonly name: string; readonly blocker: string | undefined; readonly now: boolean; readonly armed: boolean } | undefined;
         /** Die Orte der Einheiten während der letzten Raumrunde, von der Welt aus gesehen. */
         readonly run: { readonly round: number; readonly frames: readonly (readonly Vec[])[] } | undefined;
       }
@@ -299,6 +309,12 @@ function bodiesOf(hex: Hex, scene: Scene, worldId: string, t: number, run: OpenS
       orbit: undefined,
       frames: frameTimes?.map((ft) => sub({ x: 0, y: 0 }, originAt(scene, worldId, ft).position)),
     });
+  }
+  // Der Highport (2026-11-28b): ein kleiner Körper auf seiner geostationären Bahn um die Welt.
+  const station = stationAtWorld([hex], worldId);
+  if (station) {
+    const rel = (ft: number) => sub(stationAt(station, ft).position, originAt(scene, worldId, ft).position);
+    result.push({ id: 'highport', name: station.name, look: undefined, radius: 0, position: rel(t), orbit: { around: { x: 0, y: 0 }, distance: station.distance }, frames: frameTimes?.map(rel) });
   }
   for (const moon of scene.moons) {
     if (moon.world === worldId) continue;
@@ -405,6 +421,12 @@ export function spaceView(campaign: Campaign, space: OpenSpace): SpaceView | und
           return `Andockflug: mit der nächsten Bewegung an ${mother?.name ?? 'Mutterschiff'} andocken; ein eigener Schub hebt ihn auf.`;
         }
         return dockableCraft(campaign).some((c) => c.id === ship.id) ? undefined : dockBlocker(campaign, ship.id);
+      })(),
+      highport: (() => {
+        const station = stationOf(campaign);
+        if (station === undefined) return undefined;
+        const unit = flight.units.find((u) => u.ship === flight.party);
+        return { id: flight.party, name: station.name, blocker: highportDockBlocker(campaign, flight.party), now: highportPlan(campaign, flight.party)?.now === true, armed: unit?.docking === true && unit.dockAt !== undefined };
       })(),
       elapsed: duration(elapsedOf(flight)),
       run: run && { round: run.round, frames: run.frames.map((frame, k) => frame.map((p) => sub(p, originAt(scene, space.world, run.t + k * run.every * STEP_SECONDS).position))) },

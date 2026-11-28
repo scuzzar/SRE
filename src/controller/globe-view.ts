@@ -3,6 +3,7 @@ import {
   happenedAt,
   missionCells,
   missionsAt,
+  openMissions,
   landformAt,
   mapLocked,
   placeCell,
@@ -51,6 +52,8 @@ export interface GlobeCity {
   /** Das Feld; fehlt bei einer Orbitalstadt. */
   readonly cell: number | undefined;
   readonly rank: 'primary' | 'secondary';
+  /** Der Highport der Welt (2026-11-28b). */
+  readonly highport: boolean;
   readonly label: string;
   /** z. B. „3 Mrd. Einwohner · Raumhafen A“ */
   readonly detail: string;
@@ -63,7 +66,10 @@ export interface GlobeVolcano {
 
 /** Was im angetippten Feld ist. */
 export interface PickedCell {
-  readonly cell: number;
+  /** Das Feld; fehlt bei einer angetippten Orbitalstadt (Highport, 2026-11-28b). */
+  readonly cell: number | undefined;
+  /** Eine Orbitalstadt statt eines Felds. */
+  readonly orbit: boolean;
   readonly landform: string;
   readonly temperature: string;
   readonly position: string;
@@ -106,6 +112,10 @@ export interface GlobeView {
   /** Die Gruppe ist auf dieser Welt; `partyCell` ist ihr Feld, wenn sie eins hat. */
   readonly partyHere: boolean;
   readonly partyCell: number | undefined;
+  /** Die Orbitalstadt, in der die Gruppe steht (etwa am Highport, 2026-11-28b); fehlt sonst. */
+  readonly partyOrbit: number | undefined;
+  /** Die Orbitalstadt, an der das Schiff der Gruppe angedockt ist; fehlt sonst. */
+  readonly shipOrbit: number | undefined;
   /** Das Feld, auf dem das Schiff der Gruppe auf dieser Welt steht (2026-11-21); fehlt sonst. */
   readonly shipCell: number | undefined;
   /** Der Name des Schiffs der Gruppe, für die Liste der Orte. */
@@ -154,8 +164,8 @@ function portText(port: City['port']): string {
   return port <= 'E' ? `Raumhafen ${port}` : `Landeplatz ${port}`;
 }
 
-function cityKind(city: City, index: number): string {
-  return city.cell === undefined ? 'Orbitalstadt' : city.rank === 'primary' ? (index === 0 ? 'Hauptstadt' : 'Großstadt') : 'Stadt';
+function cityKind(city: City, index: number, highport = false): string {
+  return city.cell === undefined ? (highport ? 'Highport' : 'Orbitalstadt') : city.rank === 'primary' ? (index === 0 ? 'Hauptstadt' : 'Großstadt') : 'Stadt';
 }
 
 /** Die Lage eines Felds in Worten, z. B. „12° N, 40° O“. */
@@ -166,7 +176,7 @@ export function position(grid: SurfaceGrid, cell: number): string {
 }
 
 /** Der Globus der Welt `worldId` (Hauptwelt oder Nebenwelt, 2026-11-20d); `undefined`, solange sie keine Oberflächenkarte hat. */
-export function globeView(campaign: Campaign, worldId: string, picked: number | undefined, plan?: Trip, trace = false, landing = false, touchdown = 0): GlobeView | undefined {
+export function globeView(campaign: Campaign, worldId: string, picked: number | undefined, plan?: Trip, trace = false, landing = false, touchdown = 0, orbit?: number): GlobeView | undefined {
   const hexes = campaign.hexes;
   const hex = hexById(hexes, hexIdOfWorld(worldId));
   const found = worldById(hexes, worldId);
@@ -180,8 +190,9 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
       index,
       cell: city.cell,
       rank: city.rank,
+      highport: index === map.highport,
       label: city.name,
-      detail: `${cityKind(city, index)} · ${peopleText(city.multiplier, city.population)} Einwohner · ${portText(city.port)}`,
+      detail: `${cityKind(city, index, index === map.highport)} · ${city.population === 0 ? 'nur Personal' : `${peopleText(city.multiplier, city.population)} Einwohner`} · ${portText(city.port)}`,
     }),
   );
   const volcanoes = (map.volcanoes ?? []).map(([cell, kind]): GlobeVolcano => ({ cell, label: kind === 'major' ? 'Großer Vulkan' : 'Vulkanfeld' }));
@@ -201,6 +212,7 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
     const volcano = volcanoes.find((v) => v.cell === picked);
     pickedCell = {
       cell: picked,
+      orbit: false,
       landform: LANDFORM_NAMES[landformAt(map, picked)],
       temperature: `${Math.round(cellTemperature(size, found.temperature, grid.lat[picked]!))} °C im Jahresmittel`,
       position: position(grid, picked),
@@ -215,6 +227,30 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
       missions: missionsAt(campaign, id, picked).map(({ mission, places }) => ({ id: mission.id, title: mission.title, labels: places.flatMap((p) => (p.label === undefined ? [] : [p.label])) })),
     };
   }
+  const station = orbit === undefined ? undefined : map.cities?.[orbit];
+  if (station !== undefined && station.cell === undefined) {
+    const own = cities[orbit!]!;
+    const atCity = (p: { readonly world: string; readonly city?: number } | undefined) => p?.world === id && p.city === orbit;
+    pickedCell = {
+      cell: undefined,
+      orbit: true,
+      landform: orbit === map.highport ? 'Highport' : 'Orbitalstadt',
+      temperature: '',
+      position: 'im Orbit',
+      cities: [{ index: own.index, name: own.label, detail: own.detail }],
+      towns: 0,
+      volcano: undefined,
+      river: false,
+      road: false,
+      city: orbit,
+      npcs: campaign.characters.filter((c) => c.npc && !c.dead && atCity(c.place)).map((c) => npcs.find((n) => n.id === c.id)!),
+      happened: campaign.log.flatMap((e, i) => (atCity(e.place) && shown(i) ? [i] : [])),
+      missions: openMissions(campaign).flatMap((m) => {
+        const places = m.places.filter((p) => atCity(p.place));
+        return places.length ? [{ id: m.id, title: m.title, labels: places.flatMap((p) => (p.label === undefined ? [] : [p.label])) }] : [];
+      }),
+    };
+  }
   return {
     id: worldId,
     name: world.name,
@@ -227,6 +263,12 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
     picked: pickedCell,
     partyHere,
     partyCell: partyHere ? placeCell(hexes, campaign.location) : undefined,
+    partyOrbit: partyHere && campaign.location?.city !== undefined && map.cities?.[campaign.location.city]?.cell === undefined ? campaign.location.city : undefined,
+    shipOrbit: (() => {
+      const ship = shipOf(campaign);
+      const place = ship?.place ?? (ship ? campaign.location : undefined);
+      return place?.world === worldId && place.city !== undefined && map.cities?.[place.city]?.cell === undefined ? place.city : undefined;
+    })(),
     shipCell: (() => {
       // Ein Schiff ohne eigenen Ort steht dort, wo die Gruppe ist (2026-11-21, *Schiffe ohne Ort*).
       const ship = shipOf(campaign);

@@ -127,7 +127,9 @@ mit dem **eigenen Schiff** (2026-11-16d, siehe *Eigenes Schiff*), je nachdem, wa
   - *Was*: Infrage kommt jede Stadt der Welt mit Hafen (A–E Starport, F–H Spaceport, Owner:
     alle Häfen) und, wenn die Gruppe mit dem eigenen Schiff kam, **ein anderer Ort**: ein beliebiges
     Feld des Globus. ⚑ Hat eine Welt keine Stadt mit Hafen (selten, etwa dünn besiedelt), geht ein
-    anderer Ort auch ohne eigenes Schiff.
+    anderer Ort auch ohne eigenes Schiff. Der **Highport** (2026-11-28b;
+    [Oberfläche](oberflaeche.md#highport)) steht als Stadt mit Hafen in der Auswahl, mit
+    „Andocken“ statt „Landen“.
   - *Folge*: Die Gruppe steht in dieser Stadt bzw. auf diesem Feld (`Campaign.location`). Kam sie mit
     dem eigenen Schiff (Reise mit eigenem Schiff, Reise im System mit eigenem Schiff, Landung aus
     dem Systemflug), steht auch das Schiff dort (`Ship.place`).

@@ -18,9 +18,9 @@ export function LandingSheet({ landing }: { landing: LandingView }) {
         <p className="journey-facts">Wo landet die Gruppe? {landing.free ? 'An einem Hafen oder, mit dem eigenen Schiff, an einem beliebigen Ort.' : 'Ein fremdes Schiff landet an einem Hafen.'}</p>
         <div className="landing-ports" role="group" aria-label="Häfen">
           {landing.ports.map((p) => (
-            <button key={p.city} type="button" className="ghost landing-port" onClick={() => game.landAtPort(p.city)}>
+            <button key={p.city} type="button" className="ghost landing-port" aria-label={`${p.highport ? 'Andocken am' : 'Landen in'} ${p.name}`} onClick={() => game.landAtPort(p.city)}>
               <span>{p.name}</span>
-              <span className="mono">Hafen {p.port}</span>
+              <span className="mono">{p.highport ? `Andocken · Hafen ${p.port}` : `Hafen ${p.port}`}</span>
             </button>
           ))}
         </div>

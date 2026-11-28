@@ -98,6 +98,20 @@ export function SpaceCard({ space }: { space: SpaceView }) {
             </p>
           )}
           {flight.dockHint && <p className="combat-hint">{flight.dockHint}</p>}
+          {flight.highport && (
+            // Andocken am Highport (2026-11-28b): wie ein Beiboot am Mutterschiff, ein Chip mit Grund.
+            <div className="chips space-craft" role="group" aria-label="Highport">
+              <button
+                type="button"
+                disabled={!flight.highport.armed && flight.highport.blocker !== undefined}
+                title={flight.highport.armed ? 'Andockflug aufheben' : flight.highport.blocker ?? (flight.highport.now ? `Am ${flight.highport.name} andocken` : `Andockflug: mit der nächsten Bewegung am ${flight.highport.name} andocken`)}
+                onClick={() => (flight.highport!.armed ? game.cancelHighportDock() : game.dockAtHighport())}
+              >
+                {flight.highport.armed ? `Andockflug zum ${flight.highport.name} ✓` : `Am ${flight.highport.name} andocken`}
+              </button>
+            </div>
+          )}
+          {flight.highport && !flight.highport.armed && flight.highport.blocker && <p className="combat-hint">{flight.highport.blocker}</p>}
           {(flight.launchable.length > 0 || flight.dockable.some((c) => c.id !== flight.dock?.id)) && (
             <div className="chips space-craft" role="group" aria-label="Beiboote">
               {flight.launchable.map((c) => (

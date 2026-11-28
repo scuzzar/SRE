@@ -29,6 +29,8 @@ import {
   toCampaignFile,
   totalHours,
   tripSurface,
+  highportAltitudeKm,
+  orbitHours,
   terrainOfPlace,
   type Campaign,
   hexFromFlat,
@@ -379,3 +381,67 @@ describe('Wo ich war', () => {
   });
 });
 
+
+describe('Highport (2026-11-28b)', () => {
+  const port = line[3]!;
+  const stationMap = mapWith({}, {
+    cities: [
+      { cell: port, name: 'Unten', population: 6, multiplier: 2, rank: 'primary', port: 'B' },
+      { name: 'Mora Highport', population: 0, multiplier: 1, rank: 'secondary', port: 'B' },
+    ],
+    highport: 1,
+  });
+  function onStation(cell: number | 'highport', funds = 100000): Campaign {
+    const hex = world(stationMap);
+    const withB: Hex = { ...hex, worlds: hex.worlds.map((w) => ({ ...w, uwp: { ...w.uwp, starport: 11 } })) };
+    let c = setLocation(setHexes(createCampaign(), [withB]), '0101');
+    c = moveParty(c, cell === 'highport' ? { world: '0101', city: 1 } : { world: '0101', cell });
+    return book(c, 'income', funds, clock);
+  }
+
+  it('geostationär: Höhe gut fünfeinhalb Weltradien, das Shuttle braucht Minuten', () => {
+    const surface = tripSurface(onStation(line[0]!))!;
+    expect(highportAltitudeKm(surface) / 1600).toBeCloseTo(5.6, 1);
+    expect(orbitHours(surface, { id: 's', name: 'S', craft: 'shuttle', orbit: true, speeds: [], landsOn: [], landsAt: [] }) * 60).toBeLessThan(30);
+  });
+
+  it('hinauf: zum Hafen fahren, dann mit dem Shuttle; am Ende steht die Gruppe am Highport', () => {
+    let c = onStation(line[0]!);
+    const options = planOptions(c, 'highport');
+    const trip = options.find((t) => t.legs.at(-1)!.by === 'shuttle')!;
+    expect(trip.legs.at(-1)).toEqual({ by: 'shuttle', rented: false, cells: [port], highport: 'end' });
+    expect(trip.legs[0]!.cells[0]).toBe(line[0]);
+    const before = fundsOf(c);
+    c = startTrip(c, trip);
+    for (let day = 0; day < 200 && c.trip; day++) c = driveDay(c, clock);
+    expect(c.trip).toBeUndefined();
+    expect(c.location).toEqual({ world: '0101', city: 1 });
+    expect(fundsOf(c)).toBeLessThan(before);
+  });
+
+  it('hinunter: zuerst das Shuttle zum Hafen, dann weiter am Boden', () => {
+    let c = onStation('highport');
+    const trip = planOptions(c, line[5]!)[0]!;
+    expect(trip.legs[0]).toEqual({ by: 'shuttle', rented: false, cells: [port], highport: 'start' });
+    expect(trip.legs.at(-1)!.cells.at(-1)).toBe(line[5]);
+    c = startTrip(c, trip);
+    for (let day = 0; day < 200 && c.trip; day++) c = driveDay(c, clock);
+    expect(c.location).toEqual({ world: '0101', cell: line[5] });
+  });
+
+  it('mit dem eigenen Air/Raft direkt hinauf, mit der echten Flugzeit; die Fahrt übersteht Speichern und Laden', () => {
+    const c0 = { ...onStation(line[0]!), stash: [{ of: 'vehicle-air-raft', count: 1 }] };
+    const trip = planOptions(c0, 'highport').find((t) => t.legs.length === 1 && t.legs[0]!.by === 'air-raft')!;
+    expect(trip.legs).toEqual([{ by: 'air-raft', rented: false, cells: [line[0]], highport: 'end' }]);
+    const surface = tripSurface(c0)!;
+    expect(legHours(surface, trip.legs[0]!)).toBeCloseTo(highportAltitudeKm(surface) / 100, 5);
+    const c = startTrip(c0, trip);
+    expect(fromCampaignFile(toCampaignFile(c), c.id).trip).toEqual(c.trip);
+  });
+
+  it('am Highport ohne Shuttle-Hafen gibt es keinen Weg; ohne Orbit-Fahrzeug kein Abschnitt dorthin', () => {
+    const c = onStation(line[0]!);
+    expect(() => startTrip(c, { hours: 0, legs: [{ by: 'walk', rented: false, cells: [line[0]!], highport: 'end' }] })).toThrow('erreicht den Orbit nicht');
+    expect(() => startTrip(c, { hours: 0, legs: [{ by: 'shuttle', rented: false, cells: [line[0]!], highport: 'end' }] })).toThrow('landet nur an seinen Häfen');
+  });
+});

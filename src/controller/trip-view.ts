@@ -113,6 +113,11 @@ export function cellLabel(surface: TripSurface, cell: number): string {
   return `${LANDFORM_NAMES[landformAt(surface.map, cell)]} (Feld ${cell})`;
 }
 
+/** Der Name des Highports der Welt (2026-11-28b). */
+function highportLabel(surface: TripSurface): string {
+  return surface.map.highport === undefined ? 'Highport' : (surface.map.cities?.[surface.map.highport]?.name ?? 'Highport');
+}
+
 export function tripView(campaign: Campaign, surface: TripSurface, trip: Trip, persons: number): TripView {
   let t = 0;
   const legs = trip.legs.map((leg): LegView => {
@@ -123,8 +128,8 @@ export function tripView(campaign: Campaign, surface: TripSurface, trip: Trip, p
       vehicle: vehicle.name,
       rented: leg.rented,
       flight: flies(vehicle),
-      from: cellLabel(surface, leg.cells[0]!),
-      to: cellLabel(surface, leg.cells.at(-1)!),
+      from: leg.highport === 'start' ? highportLabel(surface) : cellLabel(surface, leg.cells[0]!),
+      to: leg.highport === 'end' ? highportLabel(surface) : cellLabel(surface, leg.cells.at(-1)!),
       hours: round1(hours),
       rentPerDay: legRent(leg),
       fare: legFare(surface, leg, persons),
@@ -134,7 +139,7 @@ export function tripView(campaign: Campaign, surface: TripSurface, trip: Trip, p
   const cells = trip.legs.flatMap((leg, i) => (i === 0 ? leg.cells : leg.cells.slice(1)));
   return {
     legs,
-    to: cellLabel(surface, trip.legs.at(-1)!.cells.at(-1)!),
+    to: trip.legs.at(-1)!.highport === 'end' ? highportLabel(surface) : cellLabel(surface, trip.legs.at(-1)!.cells.at(-1)!),
     totalHours: round1(totalHours(surface, trip)),
     hoursDone: round1(trip.hours),
     days: tripDays(surface, trip),
@@ -168,7 +173,7 @@ export function tripDayItem(campaign: Campaign, entry: TripDay): TripDayItem {
 }
 
 /** Die Planung mit ihren Varianten in Worten. */
-export function tripPlanOf(campaign: Campaign, surface: TripSurface, draft: { readonly target: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined }, funds: number, persons: number): TripPlanView {
+export function tripPlanOf(campaign: Campaign, surface: TripSurface, draft: { readonly target: number | undefined; readonly orbit?: number; readonly options: readonly Trip[]; readonly chosen: number; readonly error: string | undefined }, funds: number, persons: number): TripPlanView {
   const views = draft.options.map((trip) => tripView(campaign, surface, trip, persons));
   const fastest = views.length > 0 ? Math.min(...views.map((v) => v.totalHours)) : 0;
   const cheapest = views.length > 0 ? Math.min(...views.map((v) => v.cost)) : 0;
@@ -190,5 +195,6 @@ export function tripPlanOf(campaign: Campaign, surface: TripSurface, draft: { re
     const tags = [...(view.totalHours === fastest ? ['Schnellste'] : []), ...(view.cost === cheapest && views.length > 1 ? ['Günstigste'] : [])];
     return { title, vehicle: main, chain, tags, trip: view, short: view.cost > funds ? funds : undefined };
   });
-  return { target: cellLabel(surface, draft.target), options, chosen: draft.chosen, error: draft.error };
+  const target = draft.orbit !== undefined ? (surface.map.cities?.[draft.orbit]?.name ?? 'Highport') : cellLabel(surface, draft.target!);
+  return { target, options, chosen: draft.chosen, error: draft.error };
 }

@@ -88,13 +88,13 @@ Diese README sagt, **was die App können soll**. Wie es im Modell aussieht, mit 
 ### Subsektor und Welten
 
 - Ein Subsektor aus 8 × 10 Feldern: **Vorkommen würfeln**, dann die **Weltenerschaffung** Wurf für Wurf (UWP, Basen, Gasriese, Temperatur, Handelscodes), dargestellt mit Weltsymbol.
-- Jede Welt hat eine **Oberfläche** nach dem World Builder's Handbook und einen **Globus** mit Gelände, Städten und Wegen, dazu eine Notiz.
+- Jede Welt hat eine **Oberfläche** nach dem World Builder's Handbook und einen **Globus** mit Gelände, Städten und Wegen, dazu eine Notiz. Welten mit Raumhafen A oder B haben einen **Highport** im Orbit: andocken, handeln, einkaufen, mit dem Shuttle oder eigenem Grav-Fahrzeug hinauf und hinunter.
 
 ### Schiff
 
 - Die **Werft** verkauft die neun Standardentwürfe bar oder mit Bankkredit; die Monatsrate geht von selbst von der Kasse ab.
 - Das Schiff zeigt Treibstoff, Fracht, Kabinen, Antrieb, Hardpoints, Computer und Restschuld, dazu **Deckpläne** (eigene Bilder je Entwurf), **Crew** mit Posten und **Computer** mit Programmen.
-- **Systemflug** auf der Raumkarte mit Vektorbewegung nach Mayday, Treibstoff schöpfen am Gasriesen, Landen.
+- **Systemflug** auf der Raumkarte mit Vektorbewegung nach Mayday, Treibstoff schöpfen am Gasriesen, Landen, Andocken am Highport.
 - **Raumkampf** gegen ein fremdes Schiff mit Lasern, Trefferzonen und Schaden, Crew und Programmen, Antriebsschaden nach Buchstaben und Schadenskontrolle; Reparatur auf der Detailseite Schaden (unterwegs flicken, in der Werft auswählen oder selbst reparieren); Beiboote mit Launch und Andocken. Regeln und Stand: [docs/regeln-schiffe.md](docs/regeln-schiffe.md).
 
 ### Handel

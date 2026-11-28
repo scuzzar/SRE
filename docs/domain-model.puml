@@ -1332,6 +1332,7 @@ hide <<browser>> stereotype
     atmosphere: number [0..1]
     tl: number [0..1]
     fare: number [0..1]
+    orbit: boolean
   }
   class VehicleSpeed <<value>> $logistik {
     kmh: number
@@ -1346,6 +1347,11 @@ hide <<browser>> stereotype
     /hours: number
     /rent: number
     /fare: number
+    highport: LegEnd [0..1]
+  }
+  enum LegEnd <<value>> $logistik {
+    start
+    end
   }
   class TripDay $logistik {
     hours: number
@@ -1557,6 +1563,7 @@ SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SystemFlight --> BattlePhase : phase
 SpaceUnit "*" --> "0..1" Ship : ship
+SpaceUnit "*" --> "0..1" City : dockAt
 SpaceUnit "*" --> "0..1" ShipDesign : design
 SpaceUnit "1" *-- "0..1" ShipDamage : damage
 Ship "1" *-- "0..1" ShipDamage : damage
@@ -1703,6 +1710,7 @@ SurfaceCell "*" --> "0..1" Volcano : volcano
 SurfaceMap "1" *-- "*" River : rivers
 SurfaceMap "1" *-- "*" Road : roads
 SurfaceMap "1" *-- "*" City : cities
+SurfaceMap "1" --> "0..1" City : highport
 River "*" --> "2..*" SurfaceCell : cells {ordered}
 Road "*" --> "2..*" SurfaceCell : cells {ordered}
 City "*" --> "0..1" SurfaceCell : cell
@@ -1714,6 +1722,7 @@ City --> CityRank
 City --> Port
 Item "0..1" --> "0..1" Vehicle : vehicle
 Vehicle "1" *-- "*" VehicleSpeed : speeds
+Vehicle "*" --> "0..1" ShipDesign : craft
 VehicleSpeed "*" --> "0..1" Landform : on
 VehicleSpeed "*" --> "0..1" Way : along
 Vehicle "*" --> "*" Landform : landsOn
@@ -1721,8 +1730,9 @@ Vehicle "*" --> "*" Port : landsAt
 Campaign "1" *-- "0..1" Trip : trip
 Trip "1" *-- "1..*" Leg : legs {ordered}
 Leg "*" --> "1" Vehicle : by
-Leg "*" --> "2..*" SurfaceCell : cells {ordered}
-Trip "*" --> "1" SurfaceCell : /at
+Leg "*" --> "1..*" SurfaceCell : cells {ordered}
+Leg --> LegEnd
+Trip "*" --> "0..1" SurfaceCell : /at
 LogEntry <|-- TripDay
 Booking "*" --> "0..1" TripDay : rentFor
 Possession "1" *-- "0..1" Place : parked
