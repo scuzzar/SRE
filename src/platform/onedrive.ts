@@ -1,4 +1,11 @@
-import { BrowserAuthError, InteractionRequiredAuthError, PublicClientApplication, type AccountInfo } from '@azure/msal-browser';
+import {
+  BrowserAuthError,
+  InteractionRequiredAuthError,
+  PublicClientApplication,
+  type AccountInfo,
+  type AuthenticationResult,
+  type IPublicClientApplication,
+} from '@azure/msal-browser';
 import { CloudChanged, CloudExpired, CloudOffline, type Cloud, type CloudFile, type DeckFile } from '../model';
 
 /** Die App darf nur ihren eigenen Ordner lesen und schreiben (`Apps/<Name der Registrierung>`). */
@@ -23,30 +30,82 @@ export async function msalTokens(clientId: string, authority: string, redirectUr
   await app.initialize();
   // Kommt die Seite gerade von der Anmeldung zurück, steht die Antwort in der Adresse.
   const back = await app.handleRedirectPromise().catch(() => null);
+  return msalSession(app, back, safeStorage(() => sessionStorage));
+}
+
+/** Was `msalSession` von MSAL braucht; in den Tests nachgestellt. */
+export type Msal = Pick<IPublicClientApplication, 'getAllAccounts' | 'loginRedirect' | 'acquireTokenRedirect' | 'acquireTokenSilent' | 'clearCache'>;
+type Memo = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+
+/** Merkt, dass in dieser Sitzung des Browsers schon einmal still erneuert wurde. */
+const RENEW_TRIED = 'sre-onedrive-erneuert';
+
+/**
+ * Die Anmeldung über eine eingerichtete MSAL-Anwendung. Microsoft lässt eine Web-App ohne eigenen
+ * Server das Token nur einen Tag lang still erneuern; danach braucht es eine Umleitung. Die erste
+ * Erneuerung nach dem Start versucht sie unsichtbar (`prompt: 'none'`): Ist man bei Microsoft im
+ * Browser noch angemeldet, kommt die App ohne jeden Klick angemeldet zurück. Geht das nicht, gilt
+ * die Anmeldung als abgelaufen, und „Neu anmelden“ führt mit dem bekannten Konto ohne Kontowahl hin.
+ * Die unsichtbare Umleitung gibt es je Sitzung des Browsers nur einmal, damit sie keine Schleife wird.
+ */
+export function msalSession(app: Msal, back: AuthenticationResult | null, memo: Memo): Tokens {
+  if (back) memo.removeItem(RENEW_TRIED);
   const current = (): AccountInfo | undefined => back?.account ?? app.getAllAccounts()[0];
+  // Nur der erste Abgleich nach dem Start darf die Seite verlassen; mitten im Spiel nie.
+  let atStart = true;
   return {
     async account() {
       const account = current();
       return account && (account.username || account.name || 'angemeldet');
     },
     async signIn() {
-      await app.loginRedirect({ scopes: SCOPES, prompt: 'select_account' });
+      const account = current();
+      if (account?.username) await app.loginRedirect({ scopes: SCOPES, loginHint: account.username });
+      else await app.loginRedirect({ scopes: SCOPES, prompt: 'select_account' });
     },
     async signOut() {
       // Nur hier abmelden: Die Anmeldung bei Microsoft im Browser bleibt.
       await app.clearCache({ account: current() ?? null });
     },
     async token() {
+      const first = atStart;
+      atStart = false;
       const account = current();
       if (!account) throw new CloudExpired('Niemand ist angemeldet.');
       try {
-        return (await app.acquireTokenSilent({ scopes: SCOPES, account })).accessToken;
+        const { accessToken } = await app.acquireTokenSilent({ scopes: SCOPES, account });
+        memo.removeItem(RENEW_TRIED);
+        return accessToken;
       } catch (error) {
-        if (error instanceof InteractionRequiredAuthError) throw new CloudExpired(error.message);
+        if (error instanceof InteractionRequiredAuthError) {
+          if (first && memo.getItem(RENEW_TRIED) === null) {
+            memo.setItem(RENEW_TRIED, '1');
+            await app.acquireTokenRedirect({ scopes: SCOPES, account, prompt: 'none' });
+            // Die Seite geht gleich zu Microsoft und kommt angemeldet oder abgelaufen zurück.
+            return new Promise<string>(() => {});
+          }
+          throw new CloudExpired(error.message);
+        }
         if (error instanceof BrowserAuthError && ['no_network_connectivity', 'post_request_failed', 'get_request_failed'].includes(error.errorCode)) throw new CloudOffline(error.message);
         throw error;
       }
     },
+  };
+}
+
+/** Der Sitzungsspeicher, oder einer, der nichts behält, wo der Browser keinen hergibt. */
+function safeStorage(open: () => Storage): Memo {
+  const run = <T>(f: (s: Storage) => T, fallback: T): T => {
+    try {
+      return f(open());
+    } catch {
+      return fallback;
+    }
+  };
+  return {
+    getItem: (key) => run((s) => s.getItem(key), null),
+    setItem: (key, value) => run((s) => s.setItem(key, value), undefined),
+    removeItem: (key) => run((s) => s.removeItem(key), undefined),
   };
 }
 
