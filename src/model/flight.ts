@@ -474,7 +474,7 @@ export function startFlight(campaign: Campaign, world: string, clock: Clock): Ca
   // Ablegen am Highport (2026-11-28b): Die Einheit beginnt am Ort der Station, mit ihrer Geschwindigkeit.
   const hp = worldById(campaign.hexes, world)?.map?.highport;
   const where = vessel.place ?? campaign.location;
-  const station = hp !== undefined && where?.world === world && where.city === hp ? stationOf({ ...campaign, flight: { world, startedAt: clock.now(), round: 1, party: vessel.id, units: [] } }) : undefined;
+  const station = hp !== undefined && where?.world === world && where.city === hp ? stationAtWorld(campaign.hexes, world) : undefined;
   const start = station ? stationAt(station, t) : startOrbit(campaign.hexes, world, t);
   const units: SpaceUnit[] = [{ ship: vessel.id, ...start, crashed: false, track: [] }];
   vesselsOf(campaign)
@@ -581,6 +581,8 @@ export interface RoundRun {
   readonly skimmed?: boolean;
   /** Ein Small Craft ist mit dieser Bewegung angekommen und hat angedockt (2026-11-23c). */
   readonly docked?: string;
+  /** Eine Einheit hat mit dieser Bewegung am Highport angedockt (2026-11-28b): sein Name. */
+  readonly highport?: string;
   /** Das eigene Schiff ist im Raumkampf zerstört; der Systemflug ist zu Ende (2026-11-21h). */
   readonly lost?: boolean;
 }
@@ -652,7 +654,7 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
   const partyDocks = stationIds.includes(flight.party);
   for (const id of stationIds.filter((id) => id !== flight.party)) result = finishHighportDock(result, id, clock);
   const dockedNames = [...homeIds, ...stationIds].map((id) => shipById(campaign, id).name);
-  const note = dockedNames.length === 0 ? {} : { docked: dockedNames[0]! };
+  const note = { ...(dockedNames.length === 0 ? {} : { docked: dockedNames[0]! }), ...(stationIds.length > 0 ? { highport: station!.name } : {}) };
   if (partyDocks) return { campaign: finishHighportDock(result, flight.party, clock), frames, landed: flight.world, ...note };
   // Gelandet: Der Systemflug endet, die Gruppe ist auf dieser Welt (Owner, 21. November 2026).
   const landed = runs.map((r) => r.at(-1)!).find((s) => s.landedOn !== undefined && !s.skims)?.landedOn;
@@ -843,12 +845,16 @@ export interface Station {
  * Beginnen aus dem Schlüssel der Welt. Gespeichert wird davon nichts.
  */
 export function stationOf(campaign: Campaign): Station | undefined {
-  const flight = campaign.flight;
-  if (flight === undefined) return undefined;
-  const world = worldById(campaign.hexes, flight.world);
+  return campaign.flight === undefined ? undefined : stationAtWorld(campaign.hexes, campaign.flight.world);
+}
+
+/** Der Highport der Welt `worldId` auf ihrer Raumkarte, auch ohne laufenden Flug. */
+export function stationAtWorld(hexes: readonly Hex[], worldId: string): Station | undefined {
+  const flight = { world: worldId };
+  const world = worldById(hexes, flight.world);
   const hp = world?.map?.highport;
   const city = hp === undefined ? undefined : world!.map!.cities?.[hp];
-  const scene = sceneOf(campaign.hexes, flight.world);
+  const scene = sceneOf(hexes, flight.world);
   const moon = scene.moons.find((m) => m.world === flight.world);
   const body = moon ? moon.body : scene.center === flight.world ? scene.body : undefined;
   if (hp === undefined || city === undefined || body === undefined) return undefined;
@@ -975,7 +981,7 @@ export function dockCraft(campaign: Campaign, id: string): Campaign {
 /** Hebt den Andockflug eines Small Craft auf; es fliegt wieder, wie ihm befohlen (2026-11-23c). */
 export function cancelDock(campaign: Campaign, id: string): Campaign {
   const flight = activeFlight(campaign);
-  return { ...campaign, flight: { ...flight, units: flight.units.map((u) => (u.ship === id ? without(u, 'docking') : u)) } };
+  return { ...campaign, flight: { ...flight, units: flight.units.map((u) => (u.ship === id ? without(u, 'docking', 'dockAt') : u)) } };
 }
 
 /** Macht den Andockflug zu Ende: die Einheit entfällt, sie ist an Bord, die Gruppe wechselt hinüber. */

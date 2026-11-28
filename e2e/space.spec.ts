@@ -196,6 +196,36 @@ test('Werft: Bewaffnung sagt, wenn die Kasse nicht reicht, und baut mit Geld ein
   await expect(yard).toContainText('In der Kasse: Cr 505.000.');
 });
 
+test('Highport (2026-11-28b): in der Liste Orte antippen, Route mit dem Shuttle, Gruppe hinsetzen', async ({ page }) => {
+  await page.goto('/');
+  await openHomeGlobe(page);
+  await page.locator('.globe-full').getByRole('button', { name: /^Orte/ }).click();
+  const orte = page.getByRole('region', { name: 'Orte' });
+  await orte.getByRole('button', { name: /Kessra Highport/ }).click();
+  const card = page.getByRole('region', { name: 'Angetipptes Feld' });
+  await expect(card).toContainText('Highport · im Orbit');
+  const actions = page.getByRole('region', { name: 'Am Feld' });
+  await actions.getByRole('button', { name: 'Hierhin reisen' }).click();
+  const route = page.getByRole('region', { name: 'Route' });
+  await expect(route).toContainText('Route nach Kessra Highport');
+  await expect(route).toContainText('Shuttle');
+  await actions.getByRole('button', { name: 'Abbrechen' }).click();
+  // Ohne Fahrt hinsetzen: Die Gruppe steht am Highport, Einkaufen geht dort.
+  await actions.getByRole('button', { name: 'Gruppe in diese Stadt setzen' }).click();
+  await expect(card).toContainText('Die Gruppe ist hier');
+  await expect(actions.getByRole('button', { name: 'Einkaufen' })).toBeEnabled();
+});
+
+test('Highport im Systemflug (2026-11-28b): die Station kreist auf der Raumkarte, andocken geht erst aus der Nähe', async ({ page }) => {
+  await page.goto('/');
+  await openHomeGlobe(page);
+  await page.getByRole('button', { name: 'Raumkarte' }).click();
+  await page.getByRole('button', { name: 'Systemflug beginnen' }).click();
+  const chip = page.getByRole('group', { name: 'Highport' }).getByRole('button', { name: 'Am Kessra Highport andocken' });
+  await expect(chip).toBeDisabled();
+  await expect(chip).toHaveAttribute('title', /Zu weit weg: .* G bis Kessra Highport/);
+});
+
 test('Schadenskontrolle: der Engineer flickt im Raumkampf einen Treffer, einmal je Raumrunde (2026-11-22d)', async ({ page }) => {
   await wuerfelgleich(page, 20261127);
   await page.goto('/');

@@ -145,6 +145,9 @@ import {
   dockCraft,
   docksNow,
   cancelDock,
+  dockAtHighport,
+  highportPlan,
+  stationOf,
   snapThrust,
   startFlight,
   flightStartBlocker,
@@ -3068,10 +3071,10 @@ export class GameController {
     if (run.lost) return this.change(run.campaign, { space: { world: space.world }, ...volley, notice: `${ship} ist im Raumkampf zerstört worden. Was aus der Gruppe wird, entscheidet das Spiel.` });
     // Gelandet: Der Flug ist zu Ende, die Gruppe auf dieser Welt; die Raumkarte bleibt offen (Owner, 21. November 2026).
     // Auch auf der Startwelt: Die Landung ist eine Ankunft, Oberfläche und Globus entstehen, falls sie fehlen.
-    if (run.landed !== undefined) return this.change({ ...run.campaign, hexes: readyForParty(run.campaign.hexes, run.landed, this.deps.random) }, { space: { world: space.world }, notice: `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
+    if (run.landed !== undefined) return this.change({ ...run.campaign, hexes: readyForParty(run.campaign.hexes, run.landed, this.deps.random) }, { space: { world: space.world }, notice: run.highport !== undefined ? `${ship} hat am ${run.highport} angedockt. Die Gruppe ist jetzt dort.` : `${ship} ist auf ${worldOf(run.campaign.hexes, run.landed).name} gelandet. Die Gruppe ist jetzt dort.` });
     // Geschöpft (2026-11-21f): Der Flug läuft weiter, das Schiff steht wieder auf der Kreisbahn.
     // Angekommen (2026-11-23c): Der Andockflug ist zu Ende, das Small Craft ist an Bord.
-    const home = run.docked === undefined ? {} : { notice: `${run.docked} ist heimgeflogen und hat an ${shipById(run.campaign, activeFlight(run.campaign).party).name} angedockt.` };
+    const home = run.docked === undefined ? {} : { notice: run.highport !== undefined ? `${run.docked} hat am ${run.highport} angedockt.` : `${run.docked} ist heimgeflogen und hat an ${shipById(run.campaign, activeFlight(run.campaign).party).name} angedockt.` };
     const skimmed = run.skimmed ? { notice: `${ship} hat Treibstoff geschöpft und steht wieder auf der Umlaufbahn.` } : {};
     this.change(run.campaign, { space: { world: space.world, run: { round: activeFlight(run.campaign).round, t, every: 2, frames: run.frames } }, ...skimmed, ...home, ...volley });
   }
@@ -3093,6 +3096,25 @@ export class GameController {
     const now = docksNow(this.campaign, id);
     const mother = shipById(this.campaign, craft.mother!).name;
     this.change(dockCraft(this.campaign, id), { space: without(space, 'aim'), notice: now ? `${craft.name} hat angedockt.` : `${craft.name} fliegt heim: Mit der nächsten Bewegung dockt es an ${mother} an.` });
+  }
+
+  /** Dockt die Einheit der Gruppe am Highport an oder schickt sie auf den Andockflug dorthin (2026-11-28b). */
+  dockAtHighport(): void {
+    const space = this.openSpaceState();
+    const flight = activeFlight(this.campaign);
+    const station = stationOf(this.campaign);
+    if (station === undefined) return;
+    const ship = shipById(this.campaign, flight.party).name;
+    const now = highportPlan(this.campaign, flight.party)?.now === true;
+    const after = dockAtHighport(this.campaign, flight.party, this.deps.clock);
+    this.change(after, { space: without(space, 'aim'), notice: now ? `${ship} hat am ${station.name} angedockt. Die Gruppe ist jetzt dort.` : `${ship} fliegt zum ${station.name}: Mit der nächsten Bewegung dockt es an.` });
+  }
+
+  /** Hebt den Andockflug zum Highport auf (2026-11-28b). */
+  cancelHighportDock(): void {
+    const space = this.openSpaceState();
+    const flight = activeFlight(this.campaign);
+    this.change(cancelDock(this.campaign, flight.party), { space: without(space, 'aim'), notice: `${shipById(this.campaign, flight.party).name} fliegt wieder selbst.` });
   }
 
   /** Hebt den Andockflug eines Small Craft auf; es fliegt wieder, wie ihm befohlen (2026-11-23c). */
