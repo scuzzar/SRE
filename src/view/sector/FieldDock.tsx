@@ -23,27 +23,31 @@ export function FieldDock({ globe, trip, tripPlan, npcs, missionPicking, marketB
   const npcTotal = npcs.total;
   const picked = globe.picked;
   if (!picked) return null;
-  const partyHere = globe.partyHere && globe.partyCell === picked.cell;
+  // Eine angetippte Orbitalstadt (Highport, 2026-11-28b) zählt wie ein Feld; hin fährt man nur zum Highport.
+  const partyHere = globe.partyHere && (picked.orbit ? globe.partyOrbit === picked.city : globe.partyCell === picked.cell);
+  const highportPicked = picked.orbit && globe.cities.some((c) => c.index === picked.city && c.highport);
   const travelBlocker = !globe.partyHere
     ? 'Die Gruppe ist nicht auf dieser Welt'
-    : globe.partyCell === undefined
+    : globe.partyCell === undefined && globe.partyOrbit === undefined
       ? 'Die Gruppe hat noch kein Feld auf dieser Welt'
       : partyHere
         ? 'Die Gruppe ist schon hier'
-        : trip
-          ? 'Eine Fahrt läuft schon'
-          : undefined;
+        : picked.orbit && !highportPicked
+          ? 'Zu dieser Orbitalstadt fährt kein Shuttle'
+          : trip
+            ? 'Eine Fahrt läuft schon'
+            : undefined;
   const moveBlocker = !globe.partyHere ? 'Die Gruppe ist nicht auf dieser Welt' : partyHere ? 'Die Gruppe ist schon hier' : undefined;
   const moveLabel = picked.city === undefined ? 'Gruppe hierher setzen' : 'Gruppe in diese Stadt setzen';
   // Wer schon auf dem Feld steht, muss nicht hergeholt werden; geholt wird von jeder Welt.
-  const npcBlocker = npcTotal === 0 ? 'Noch keine NSC' : npcTotal <= picked.npcs.length ? 'Alle NSC sind schon hier' : undefined;
+  const npcBlocker = picked.orbit ? 'NSC platzieren geht nur auf der Oberfläche' : npcTotal === 0 ? 'Noch keine NSC' : npcTotal <= picked.npcs.length ? 'Alle NSC sind schon hier' : undefined;
   const shopBlocker = !globe.partyHere ? 'Einkaufen geht nur auf der Welt der Gruppe' : picked.city === undefined ? 'Einkaufen geht nur in einer Stadt' : undefined;
   const placeName = picked.cities[0] === undefined ? 'auf diesem Feld' : `in ${picked.cities[0].name}`;
   // Warum man nicht hinreisen kann, steht auf dem Handy (ohne Titel beim Zeigen) über der Aktionsleiste, wenn
   // es nicht schon das Feld selbst zeigt (Gruppe hier, Route oder Fahrt im Blatt).
   const hint = !globe.partyHere
     ? 'Die Gruppe ist nicht auf dieser Welt; hinreisen geht nur auf ihrer Welt.'
-    : globe.partyCell === undefined
+    : globe.partyCell === undefined && globe.partyOrbit === undefined
       ? 'Die Gruppe hat noch kein Feld auf dieser Welt. „Gruppe setzen“ gibt ihr eins, dann geht „Hierhin reisen“.'
       : undefined;
   // Beim Ort wählen einer Mission: „OK“ nimmt dieses Feld (bzw. die Stadt darauf) als Ort.

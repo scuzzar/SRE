@@ -14,11 +14,13 @@ export interface PortCity {
   readonly city: number;
   readonly name: string;
   readonly port: string;
+  /** Der Highport (2026-11-28b): dort dockt man an, statt zu landen. */
+  readonly highport: boolean;
 }
 
 /** Die Städte einer Welt mit Hafen, in der Reihenfolge der Karte. */
 export function portCities(world: World | undefined): readonly PortCity[] {
-  return (world?.map?.cities ?? []).flatMap((c, i) => (c.port === undefined ? [] : [{ city: i, name: c.name, port: c.port }]));
+  return (world?.map?.cities ?? []).flatMap((c, i) => (c.port === undefined ? [] : [{ city: i, name: c.name, port: c.port, highport: i === world?.map?.highport }]));
 }
 
 /**

@@ -2,12 +2,12 @@ import type { Campaign } from './campaign';
 import { DomainError } from './errors';
 import type { Clock } from './ports';
 import { shipDesignOf } from './reference';
-import { hexById, hexIdOfWorld, worldOf, type Hex, type World } from './sector';
+import { hexById, hexIdOfWorld, worldById, worldOf, type Hex, type World } from './sector';
 import { gravityOf, radiusOf } from './star-system';
 import { changeShip, craftOf, freeCargoOf, shipById, shipOf, vesselsOf, without, type Ship } from './ship';
 import { passTime, START_DAY } from './time';
 import { placeGroup } from './upkeep';
-import { needsLanding, shipArrives, shipDepartureBlocker } from './landing';
+import { chooseLanding, needsLanding, shipArrives, shipDepartureBlocker } from './landing';
 import type { Random } from './ports';
 import { battleRunning, breakOffBattle, checkDamage, foesControlDamage, foesFire, foesWillFire, planFoe, settleBattle, unitMaxG, type Intent, type ShipDamage } from './space-combat';
 import { worldPlace } from './place';
@@ -57,6 +57,8 @@ export interface SpaceUnit {
    * selbst gesetzter Schub hebt ihn auf; reichte der Schub nicht, bleibt der Flug bestehen.
    */
   readonly docking?: boolean;
+  /** Der Andockflug geht zum Highport, nicht zum Mutterschiff (`SpaceUnit.dockAt`, 2026-11-28b): die Nummer seiner Stadt. */
+  readonly dockAt?: number;
   /** Unter die Oberfläche geraten: bewegt sich nicht mehr. */
   readonly crashed: boolean;
   /** Ort und Geschwindigkeit am Ende jeder vergangenen Raumrunde. */
@@ -469,7 +471,12 @@ export function startFlight(campaign: Campaign, world: string, clock: Clock): Ca
   if (blocker) throw new DomainError(blocker);
   const vessel = groupVessel(campaign)!;
   const t = dayStart(campaign.day);
-  const units: SpaceUnit[] = [{ ship: vessel.id, ...startOrbit(campaign.hexes, world, t), crashed: false, track: [] }];
+  // Ablegen am Highport (2026-11-28b): Die Einheit beginnt am Ort der Station, mit ihrer Geschwindigkeit.
+  const hp = worldById(campaign.hexes, world)?.map?.highport;
+  const where = vessel.place ?? campaign.location;
+  const station = hp !== undefined && where?.world === world && where.city === hp ? stationOf({ ...campaign, flight: { world, startedAt: clock.now(), round: 1, party: vessel.id, units: [] } }) : undefined;
+  const start = station ? stationAt(station, t) : startOrbit(campaign.hexes, world, t);
+  const units: SpaceUnit[] = [{ ship: vessel.id, ...start, crashed: false, track: [] }];
   vesselsOf(campaign)
     .filter((v) => v.inOrbit && v.place?.world === world)
     .forEach((v, i) => units.push({ ship: v.id, ...startOrbit(campaign.hexes, world, t, 3 + i / 2), crashed: false, track: [] }));
@@ -559,7 +566,7 @@ export function setThrust(campaign: Campaign, index: number, thrust: Vec | undef
   if (unit.crashed && thrust !== undefined) throw new DomainError('Eine aufgeschlagene Einheit gibt keinen Schub.');
   const normal = normalThrust(thrust, maxGOf(campaign, unit));
   // Wer selbst steuert, gibt den Andockflug auf (2026-11-23c).
-  const rest = without(unit, 'thrust', 'docking');
+  const rest = without(unit, 'thrust', 'docking', 'dockAt');
   const next: SpaceUnit = normal === undefined ? rest : { ...rest, thrust: normal };
   return { ...campaign, flight: { ...flight, units: flight.units.map((u, i) => (i === index ? next : u)) } };
 }
@@ -598,9 +605,18 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
   // Andockflug (2026-11-23c): Eine Einheit mit `docking` steuert den Ort an, an dem ihr Mutterschiff
   // nach dieser Bewegung steht, und dockt dort an; ihr eigener Schubpunkt ist ihr dabei gleich.
   const homes = flight.units.flatMap((u, i) => {
-    const mother = u.docking === true ? flight.units.findIndex((m) => m.ship === campaign.ships.find((s) => s.id === u.ship)?.mother) : -1;
+    const mother = u.docking === true && u.dockAt === undefined ? flight.units.findIndex((m) => m.ship === campaign.ships.find((s) => s.id === u.ship)?.mother) : -1;
     return mother < 0 ? [] : [{ index: i, mother }];
   });
+  // Andockflug zum Highport (2026-11-28b): Ziel ist der Ort der Station nach dieser Bewegung.
+  const station = stationOf(campaign);
+  const stationEnd = station === undefined ? undefined : stationAt(station, t + ROUND_SECONDS).position;
+  const toStation = stationEnd === undefined ? [] : flight.units.flatMap((u, i) => (u.docking === true && u.dockAt !== undefined ? [i] : []));
+  for (const index of toStation) {
+    const unit = flight.units[index]!;
+    const maxG = maxGOf(campaign, unit);
+    runs = runs.map((r, k) => (k === index ? propagate(scene, unit, thrustToward(scene, unit, stationEnd!, t, maxG), ROUND_STEPS, ROUND_STEPS, t, maxG, unit.ship === flight.party, streamlinedOf(campaign, unit)) : r));
+  }
   for (const home of homes) {
     const unit = flight.units[home.index]!;
     const target = runs[home.mother]!.at(-1)!.position;
@@ -631,7 +647,13 @@ export function runRound(campaign: Campaign, clock: Clock, random?: Random, ever
   // Am Ziel angekommen: Der Andockflug ist zu Ende, das Small Craft ist an Bord (2026-11-23c).
   const homeIds = homes.flatMap((home) => (lengthOf(sub(units[home.index]!.position, units[home.mother]!.position)) <= DOCK_KM ? [flight.units[home.index]!.ship!] : []));
   for (const id of homeIds) result = finishDock(result, id);
-  const note = homeIds.length === 0 ? {} : { docked: shipById(campaign, homeIds[0]!).name };
+  // Am Highport angekommen (2026-11-28b): Die Einheit dockt an; war es die der Gruppe, endet der Flug.
+  const stationIds = toStation.flatMap((i) => (lengthOf(sub(units[i]!.position, stationEnd!)) <= DOCK_KM ? [flight.units[i]!.ship!] : []));
+  const partyDocks = stationIds.includes(flight.party);
+  for (const id of stationIds.filter((id) => id !== flight.party)) result = finishHighportDock(result, id, clock);
+  const dockedNames = [...homeIds, ...stationIds].map((id) => shipById(campaign, id).name);
+  const note = dockedNames.length === 0 ? {} : { docked: dockedNames[0]! };
+  if (partyDocks) return { campaign: finishHighportDock(result, flight.party, clock), frames, landed: flight.world, ...note };
   // Gelandet: Der Systemflug endet, die Gruppe ist auf dieser Welt (Owner, 21. November 2026).
   const landed = runs.map((r) => r.at(-1)!).find((s) => s.landedOn !== undefined && !s.skims)?.landedOn;
   if (landed !== undefined) return { campaign: placeGroup(shipArrives(endFlight(result, clock), landed, flight.party), landed, clock, flight.party), frames, landed, ...note };
@@ -799,6 +821,102 @@ export function dockBlocker(campaign: Campaign, id: string): string | undefined 
   const plan = dockPlan(campaign, id)!;
   if (plan.now || plan.g <= plan.maxG) return undefined;
   return `Zu weit weg: ${gText(plan.g)} G bis ${motherShip.name}, ${ship.name} hat ${gText(plan.maxG)} G.`;
+}
+
+/** Ein Welttag in Sekunden (Hausregel 2026-11-28b: jede Welt dreht sich in 24 Stunden). */
+const WORLD_DAY_S = 86_400;
+
+/** Der Highport auf der Raumkarte (2026-11-28b): seine Stadt, sein Name und seine geostationäre Kreisbahn. */
+export interface Station {
+  readonly city: number;
+  readonly name: string;
+  readonly distance: number;
+  readonly angle: number;
+  readonly omega: number;
+  /** Ist die Welt ein Mond, läuft die Station mit ihm. */
+  readonly moon?: MoonBody;
+}
+
+/**
+ * Der Highport der Welt des Systemflugs, wenn sie einen hat und selbst die Mitte der Raumkarte ist:
+ * auf der geostationären Bahn `∛(GM × T² / 4π²)` mit einem Welttag von 24 Stunden, die Richtung beim
+ * Beginnen aus dem Schlüssel der Welt. Gespeichert wird davon nichts.
+ */
+export function stationOf(campaign: Campaign): Station | undefined {
+  const flight = campaign.flight;
+  if (flight === undefined) return undefined;
+  const world = worldById(campaign.hexes, flight.world);
+  const hp = world?.map?.highport;
+  const city = hp === undefined ? undefined : world!.map!.cities?.[hp];
+  const scene = sceneOf(campaign.hexes, flight.world);
+  const moon = scene.moons.find((m) => m.world === flight.world);
+  const body = moon ? moon.body : scene.center === flight.world ? scene.body : undefined;
+  if (hp === undefined || city === undefined || body === undefined) return undefined;
+  const distance = Math.cbrt((body.gm * WORLD_DAY_S * WORLD_DAY_S) / (4 * Math.PI * Math.PI));
+  let hash = 0;
+  for (const ch of flight.world) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return { city: hp, name: city.name, distance, angle: ((hash % 360) * Math.PI) / 180, omega: (2 * Math.PI) / WORLD_DAY_S, ...(moon ? { moon } : {}) };
+}
+
+/** Wo der Highport zur Zeit `t` steht und wie schnell er sich bewegt (bei einem Mond mit ihm). */
+export function stationAt(station: Station, t: number): { readonly position: Vec; readonly velocity: Vec } {
+  const own = moonAt({ world: '', body: undefined, distance: station.distance, angle: station.angle, omega: station.omega }, t);
+  if (station.moon === undefined) return own;
+  const base = moonAt(station.moon, t);
+  return { position: add(base.position, own.position), velocity: add(base.velocity, own.velocity) };
+}
+
+/** Was eine Einheit zum Andocken am Highport braucht: G zum Andockpunkt, ihr Schub und ob sie schon näher als 100 km ist. */
+export function highportPlan(campaign: Campaign, id: string): { readonly g: number; readonly maxG: number; readonly now: boolean } | undefined {
+  const flight = campaign.flight;
+  const station = stationOf(campaign);
+  const unit = flight?.units.find((u) => u.ship === id);
+  if (flight === undefined || station === undefined || unit === undefined) return undefined;
+  const scene = sceneOf(campaign.hexes, flight.world);
+  const t = flightTime(campaign, flight);
+  const point = stationAt(station, t + ROUND_SECONDS).position;
+  return { g: lengthOf(sub(point, coastOf(scene, unit, t))) / REACH_PER_G, maxG: maxGOf(campaign, unit), now: lengthOf(sub(unit.position, stationAt(station, t).position)) <= DOCK_KM };
+}
+
+/** Warum eine eigene Einheit jetzt nicht am Highport andocken kann; `undefined`, wenn sie kann (2026-11-28b, ohne Platzbedingung). */
+export function highportDockBlocker(campaign: Campaign, id: string): string | undefined {
+  const station = stationOf(campaign);
+  if (station === undefined) return 'Hier gibt es keinen Highport.';
+  const unit = campaign.flight!.units.find((u) => u.ship === id);
+  if (unit === undefined) return 'Diese Einheit fliegt nicht mit.';
+  if (unit.crashed) return 'Eine aufgeschlagene Einheit dockt nicht an.';
+  const plan = highportPlan(campaign, id)!;
+  if (plan.now || plan.g <= plan.maxG) return undefined;
+  return `Zu weit weg: ${gText(plan.g)} G bis ${station.name}, ${shipById(campaign, id).name} hat ${gText(plan.maxG)} G.`;
+}
+
+/**
+ * Dockt eine eigene Einheit am Highport an oder schickt sie auf den Andockflug dorthin (2026-11-28b),
+ * wie ein Small Craft am Mutterschiff.
+ */
+export function dockAtHighport(campaign: Campaign, id: string, clock: Clock): Campaign {
+  const flight = activeFlight(campaign);
+  const blocker = highportDockBlocker(campaign, id);
+  if (blocker) throw new DomainError(blocker);
+  const station = stationOf(campaign)!;
+  if (!highportPlan(campaign, id)!.now) return { ...campaign, flight: { ...flight, units: flight.units.map((u) => (u.ship === id ? { ...u, docking: true, dockAt: station.city } : u)) } };
+  return finishHighportDock(campaign, id, clock);
+}
+
+/**
+ * Angedockt am Highport: Die Einheit entfällt, ihr Schiff steht am Highport (nicht in der Umlaufbahn).
+ * War die Gruppe darin, endet der Systemflug wie nach einer Landung, und die Gruppe ist am Highport.
+ */
+function finishHighportDock(campaign: Campaign, id: string, clock: Clock): Campaign {
+  const flight = activeFlight(campaign);
+  const station = stationOf(campaign)!;
+  const place = { world: flight.world, city: station.city };
+  if (flight.party === id) {
+    const landed = placeGroup(shipArrives(endFlight(campaign, clock), flight.world, id), flight.world, clock, id);
+    return needsLanding(landed) ? chooseLanding(landed, { city: station.city }) : changeShip({ ...landed, location: place }, id, (s) => ({ ...without(s, 'aboard', 'inOrbit'), place }));
+  }
+  const docked = changeShip(campaign, id, (s) => ({ ...without(s, 'aboard', 'inOrbit'), place }));
+  return { ...docked, flight: { ...flight, units: flight.units.filter((u) => u.ship !== id) } };
 }
 
 /** G so auf 0,1 gerundet, wie die App Schub anzeigt. */

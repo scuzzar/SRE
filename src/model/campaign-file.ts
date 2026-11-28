@@ -364,6 +364,7 @@ const FlightSchema = z.object({
         returned: z.boolean().optional(),
         /** Der Andockflug: die Einheit steuert in der nächsten Bewegung ihr Mutterschiff an (2026-11-23c). */
         docking: z.boolean().optional(),
+        dockAt: z.number().int().min(0).optional(),
         position: VecSchema,
         velocity: VecSchema,
         thrust: VecSchema.optional(),
@@ -810,6 +811,7 @@ function flightFromFile(flight: z.infer<typeof FlightSchema>): SystemFlight {
       ...(u.firedTurrets === undefined ? {} : { firedTurrets: [...u.firedTurrets] }),
       ...(u.returned === undefined ? {} : { returned: u.returned }),
       ...(u.docking === undefined ? {} : { docking: u.docking }),
+      ...(u.dockAt === undefined ? {} : { dockAt: u.dockAt }),
       position: vec(u.position),
       velocity: vec(u.velocity),
       ...(u.thrust === undefined ? {} : { thrust: vec(u.thrust) }),
