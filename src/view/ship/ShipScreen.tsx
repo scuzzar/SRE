@@ -375,7 +375,9 @@ function ArmamentSection({ ship, boat }: { ship: ShipView; boat: Boat }) {
   const [asking, setAsking] = useState<string | undefined>(undefined);
   const blocked = boat.armamentBlocker !== undefined;
   const free = boat.hardpoints - boat.turrets.length;
-  const price = (o: { name: string; price: number }) => `${o.name} · ${mcr(o.price)} MCr`;
+  // Was die Kasse nicht hergibt, ist ausgegraut und sagt es (GUI-Handbuch: Nichts passiert still).
+  const price = (o: { name: string; price: number; affordable: boolean }) => `${o.name} · ${mcr(o.price)}${o.affordable ? '' : ' · Kasse zu klein'}`;
+  const cheapest = Math.min(...ship.turretTypes.map((k) => k.price), ...ship.shipWeapons.map((w) => w.price));
   const remove = (key: string, act: () => void) => {
     if (asking !== key) return setAsking(key);
     setAsking(undefined);
@@ -388,6 +390,11 @@ function ArmamentSection({ ship, boat }: { ship: ShipView; boat: Boat }) {
         Bewaffnung von {boat.name} <span className="muted">({boat.hardpoints} Hardpoints)</span>
       </h2>
       {boat.armamentBlocker && <p className="combat-hint">{boat.armamentBlocker}</p>}
+      {!blocked && boat.hardpoints > 0 && (
+        <p className={ship.funds < cheapest ? 'combat-hint' : 'shop-hint muted'}>
+          In der Kasse: {credits(ship.funds)}.{ship.funds < cheapest ? ` Für Turrets und Waffen reicht das nicht; das Billigste kostet ${credits(cheapest)}.` : ' Ausgegraut ist, was die Kasse nicht hergibt.'}
+        </p>
+      )}
       {boat.hardpoints === 0 && <p className="shop-hint muted">{boat.designName} hat keine Hardpoints.</p>}
       <ol className="turret-list">
         {boat.turrets.map((t, i) => (
@@ -527,7 +534,7 @@ function DamageSheet({ boat, funds, error, onClose }: { boat: Boat; funds: numbe
                 setPicked([]);
               }}
             >
-              Werft · {chosen.length === 0 ? 'auswählen' : `${mcr(yardCost)} MCr`}
+              Werft · {chosen.length === 0 ? 'auswählen' : mcr(yardCost)}
             </button>
           )}
         </>

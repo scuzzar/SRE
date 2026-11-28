@@ -110,6 +110,10 @@ im Modell.
   nicht geortete Einheiten am zuletzt bekannten Ort. Mit ihr entscheiden: *Wer schubt, leuchtet*
   als Hausregel?
 - [ ] **Dekompression** bei Hull-Treffern (heute ohne Folgen, siehe `modell/schiffe.md`).
+- [ ] **Schiffskauf nur an einer Werft** (SR 29, `regeln-schiffe.md`): Die Werft verkauft heute
+  Standardentwürfe überall, auch an Raumhafen C (gesehen auf Miirasha), umrüsten und reparieren aber
+  nur an A oder B. Regel: A baut jedes Schiff, B nur Schiffe und Small Craft ohne Jump Drive.
+  Erst mit dem Owner klären, dann ins Modell.
 - [ ] **Danach**, ohne eigene Stufe: Raketen aus Bauteilen nach Supplement 3, Minen, Zoll und
   Patrouille mit dem Handel, Bergung von Wracks.
 
