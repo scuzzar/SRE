@@ -59,6 +59,10 @@
   ausdrücklicher Weisung im laufenden Gespräch. Grüne Tests, eine geschickte Vorschau und ein
   „umsetzen“ sind **keine** Freigabe für `main`. Weicht `origin/main` von `main` ab (andere
   Sitzung, anderer Zweig), zuerst fragen – nie einfach zusammenführen und pushen.
+- **Versionsnummer erhöhen vor jedem Merge nach `main`** (in `package.json` und `package-lock.json`),
+  bis Version 1 nach **0.Funktion.Fehler**: Bringt der Merge Neues, steigt die mittlere Zahl
+  (0.2.0 → 0.3.0), behebt er nur Fehler, die hintere (0.3.0 → 0.3.1). Reine Doku- und
+  Modelländerungen lassen sie stehen. Einzelheiten in `ARCHITECTURE.md` unter *Versionsnummer*.
 - **Nach jeder Änderung an der App eine Vorschau schicken**: mit `npm run build:single` die ganze
   App als eine HTML-Datei bauen (`dist-single/index.html`), in den Scratchpad kopieren und dem
   Owner zum direkten Öffnen schicken. Dazu kurz sagen, was man zum Ausprobieren antippen muss.
