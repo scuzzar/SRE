@@ -40,7 +40,7 @@ Umschalter, Reihe, großes und kleines Blatt, Würfelfenster und Hinweis).
 | Markt | (View, Detailseite) | (2026-11-27) die Detailseite für den spekulativen Handel, geöffnet mit „Markt“ am Feld einer Stadt auf dem Globus; oben der Kapazitätskopf, darunter *Zu kaufen* und *Zu verkaufen* |
 | Aufträge | (View, Detailseite) | (2026-11-27) die Detailseiten **Fracht**, **Passagiere** und **Post** zu einer Zielwelt, geöffnet an der Welt im Subsektor; oben der Kapazitätskopf, darunter die Ankreuzliste der Lose |
 | Kapazitätskopf | (View) | (2026-11-27) die Kacheln oben auf Markt und Aufträgen mit dem, was noch frei ist (Kasse, Laderaum, Kabinen, Niedrigbetten); sie rechnen sofort mit, was gerade angekreuzt oder als Menge eingestellt ist |
-| Werft | (View, Detailseite `YardSheet`) | (2026-11-28) die Detailseite im Bereich Schiff zum Umrüsten, Reparieren und Kaufen: oben der Kapazitätskopf *Kasse · Kredit*, darunter die Unterreiter *Mein Schiff · Schiffe · Small Craft* |
+| Werft | (View, Detailseite `YardSheet`) | (2026-11-28) die Detailseite im Bereich Schiff zum Umrüsten, Reparieren und Kaufen: oben der Kapazitätskopf mit der Kasse, darunter die Unterreiter *Mein Schiff · Schiffe · Small Craft* |
 | Hardpoint-Karte | (View) | (2026-11-28) eine Karte je Hardpoint in der Werft: Kopf mit Nummer, Belegung und Turmart als Chip, darunter je Waffe ein goldener Chip und je freiem Platz ein gestrichelter „+ Waffe“; ein Tipp öffnet den passenden Kurzdialog |
 | Sperrhinweis | (View) | (2026-11-28) der eine Satz oben in einem Reiter, warum dort gerade nichts geht (keine Werft, kein Ort); was er sperrt, bleibt stehen und ist auf 35 % gedimmt |
 | Ankreuzliste | (View) | (2026-11-27) eine scrollende, gruppierte Liste mit einem Kästchen je Zeile, um mehrere Dinge auf einmal zu wählen; übernommen wird mit dem Knopf in der Aktionsleiste |
@@ -379,18 +379,17 @@ als fünf, als zweite Aktionsleiste darüber).
 
 ### Werft
 
-*Freigegeben vom Owner am 28. November 2026* (Kennzeichen 2026-11-28): Unterreiter, Sperren nach SR 29
-und die Kredit-Kachel. **Noch nicht gebaut.** Bauanleitung mit allen Texten:
+*Freigegeben vom Owner am 28. November 2026* (Kennzeichen 2026-11-28): Unterreiter und Sperren nach SR 29
+(eine Kredit-Kachel braucht der Owner nicht). **Noch nicht gebaut.** Bauanleitung mit allen Texten:
 [`konzept-werft.md`](konzept-werft.md), Entwurf: [`mock/werft.html`](mock/werft.html). Regeln zum
 Kauf in [`modell/schiffe.md`](modell/schiffe.md) unter *Erwerb*.
 
 ```
 ┌──────────────────────────────────────────┐
 │ Werft            Kessra · Raumhafen A  ✕ │
-│ ┌ KASSE ──────────┐ ┌ KREDIT ─────────┐  │  ← Kapazitätskopf
-│ │ MCr 1,05        │ │ MCr 101,69      │  │
-│ │                 │ │ Cr 212.750/Mon. │  │
-│ └─────────────────┘ └─────────────────┘  │
+│ ┌ KASSE ──────────┐                      │  ← Kapazitätskopf
+│ │ MCr 1,05        │                      │
+│ └─────────────────┘                      │
 │ [ Mein Schiff | Schiffe | Small Craft ]  │  ← Unterreiter
 │ ▌Hier gibt es keine Werft. …             │  ← Sperrhinweis, nur wenn gesperrt
 │ Schaden · 2 Treffer                  ›   │
@@ -402,10 +401,8 @@ Kauf in [`modell/schiffe.md`](modell/schiffe.md) unter *Erwerb*.
 └──────────────────────────────────────────┘
 ```
 
-- **Kapazitätskopf** mit genau zwei Kacheln, in allen Reitern gleich: **Kasse** und **Kredit**
-  (Restschuld aller Schiffe mit Rate oder „schuldenfrei“; darunter in *Mein Schiff* die Monatsrate,
-  in *Schiffe* und *Small Craft* „neu bis …“, der höchste Preis, dessen Anzahlung die Kasse trägt).
-  Er rechnet nicht vorher → nachher wie im Handel, weil hier jeder Kauf sofort gilt.
+- **Kapazitätskopf** mit einer Kachel **Kasse**, in allen Reitern gleich; rot, wenn im Reiter nichts
+  bezahlbar ist. Er rechnet nicht vorher → nachher wie im Handel, weil hier jeder Kauf sofort gilt.
 - **Unterreiter** wie bei Crew und Computer: *Mein Schiff* (Standard mit Schiff), *Schiffe*,
   *Small Craft* (Standard ohne Schiff *Schiffe*).
 - **Hardpoint-Karte** statt Auswahlfeldern: In der Werft gibt es kein `select` mehr. Eingebaut,

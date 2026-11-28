@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   UI-Mock: die Werft als Detailseite, überarbeitet (Owner, 28. November 2026: Unterreiter und
-  Sperren freigegeben, Kredit-Kachel ausdrücklich gewünscht). Bauanleitung: docs/konzept-werft.md.
+  Sperren freigegeben; eine Kredit-Kachel braucht er nicht). Bauanleitung: docs/konzept-werft.md.
   Fünf Handy-Ansichten mit Beispielwerten; nichts ist klickbar, kein App-Code. Farben und Maße
   folgen styles.css (:root), die Bausteine dem GUI-Handbuch (Kapazitätskopf, Unterreiter, Chips,
   Kurzdialog, Sperrhinweis).
@@ -117,9 +117,9 @@ figcaption b { color: var(--gold); font-weight: 600; }
 <div class="intro">
   <h1>Werft · Entwurf, überarbeitet</h1>
   <p>Freigegeben (Owner, 28. November 2026): <b>Unterreiter</b> Mein Schiff · Schiffe · Small Craft,
-  <b>Sperren</b> nach SR 29 und die <b>Kredit-Kachel</b>. Die Bauanleitung steht in
+  <b>Sperren</b> nach SR 29. Eine Kredit-Kachel gibt es nicht. Die Bauanleitung steht in
   <code>docs/konzept-werft.md</code>.</p>
-  <p>Gegenüber dem ersten Entwurf: Kapazitätskopf mit zwei Kacheln (Kasse, Kredit) statt drei, keine goldene
+  <p>Gegenüber dem ersten Entwurf: Kapazitätskopf nur mit der Kasse statt drei Kacheln, keine goldene
   Schiffskarte, keine Platzpunkte, der Grund einer Sperre deutlich statt rot-alarmierend, Einbauen im Kurzdialog
   erst nach Wahl und mit Preis auf dem Knopf, Erklärtexte als Hinweis mit ✕ statt ⓘ.</p>
 </div>
@@ -134,7 +134,6 @@ figcaption b { color: var(--gold); font-weight: 600; }
     <div class="head"><h2>Werft</h2><span class="aside">Kessra · Raumhafen A</span><span class="x">✕</span></div>
     <div class="tiles">
       <div class="tile"><small>Kasse</small><b>MCr 1,05</b></div>
-      <div class="tile"><small>Kredit</small><b class="gold">MCr 101,69</b><i>Cr 212.750 im Monat</i></div>
     </div>
     <div class="seg"><span class="on">Mein Schiff</span><span>Schiffe</span><span>Small Craft</span></div>
     <div class="row warn"><span class="t">Schaden · 2 Treffer<small>Manöver, Turret 1 · Werft MCr 0,20</small></span><span class="chev">›</span></div>
@@ -161,7 +160,6 @@ figcaption b { color: var(--gold); font-weight: 600; }
     <div class="head"><h2>Werft</h2><span class="aside">Kessra · Raumhafen A</span><span class="x">✕</span></div>
     <div class="tiles">
       <div class="tile"><small>Kasse</small><b>Cr 600.000</b></div>
-      <div class="tile"><small>Kredit</small><b>schuldenfrei</b><i>&nbsp;</i></div>
     </div>
     <div class="seg"><span class="on">Mein Schiff</span><span>Schiffe</span><span>Small Craft</span></div>
   </div>
@@ -188,7 +186,6 @@ figcaption b { color: var(--gold); font-weight: 600; }
     <div class="head"><h2>Werft</h2><span class="aside">Kessra · Raumhafen A</span><span class="x">✕</span></div>
     <div class="tiles">
       <div class="tile"><small>Kasse</small><b class="neg">Cr 5.000</b></div>
-      <div class="tile"><small>Kredit</small><b>schuldenfrei</b><i>neu bis Cr 25.000</i></div>
     </div>
     <div class="seg"><span>Mein Schiff</span><span class="on">Schiffe</span><span>Small Craft</span></div>
     <div class="list">
@@ -201,7 +198,7 @@ figcaption b { color: var(--gold); font-weight: 600; }
   </div>
   <div class="nav"><span>Log</span><span>Begegnung</span><span>Charaktere</span><span class="on">Schiff</span><span>Missionen</span></div>
 </div>
-<figcaption><b>3 · Schiffe.</b> Nach Preis. Grau statt durchgestrichen, der Grund steht in der Zeile. Die Kredit-Kachel sagt hier, bis zu welchem Preis die Kasse die Anzahlung trägt (Kasse × 5). Geht es, steht im Preisknopf „bar“ oder „Anzahlung …“ wie heute.</figcaption>
+<figcaption><b>3 · Schiffe.</b> Nach Preis. Grau statt durchgestrichen, der Grund steht in der Zeile. Geht es, steht im Preisknopf „bar“ oder „Anzahlung …“ wie heute.</figcaption>
 </figure>
 
 <!-- 4: Small Craft an Raumhafen B -->
@@ -212,7 +209,6 @@ figcaption b { color: var(--gold); font-weight: 600; }
     <div class="head"><h2>Werft</h2><span class="aside">Tobia · Raumhafen B</span><span class="x">✕</span></div>
     <div class="tiles">
       <div class="tile"><small>Kasse</small><b>MCr 24,00</b></div>
-      <div class="tile"><small>Kredit</small><b class="gold">MCr 72,62</b><i>Cr 154.500 im Monat</i></div>
     </div>
     <div class="seg"><span>Mein Schiff</span><span>Schiffe</span><span class="on">Small Craft</span></div>
     <div class="group">Laderaum von Kestrel: 52 t frei</div>
@@ -236,7 +232,6 @@ figcaption b { color: var(--gold); font-weight: 600; }
     <div class="head"><h2>Werft</h2><span class="aside">Miirasha · Raumhafen C</span><span class="x">✕</span></div>
     <div class="tiles">
       <div class="tile"><small>Kasse</small><b>MCr 2,40</b></div>
-      <div class="tile"><small>Kredit</small><b>schuldenfrei</b><i>hier keine Werft</i></div>
     </div>
     <div class="seg"><span class="on">Mein Schiff</span><span>Schiffe</span><span>Small Craft</span></div>
     <div class="lock"><b>Hier gibt es keine Werft.</b> Umrüsten, Reparieren und Kaufen nur an Raumhafen A (Schiffe und Small Craft) oder B (nur Small Craft).</div>

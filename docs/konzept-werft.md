@@ -1,7 +1,7 @@
 # Konzept: Werft, überarbeitet
 
 > **Stand: freigegeben** (Owner, 28. November 2026), Kennzeichen **2026-11-28**. Freigegeben sind die
-> drei Unterreiter, die Sperren nach SR 29 und die Kredit-Kachel („brauche ich unbedingt“). Der
+> drei Unterreiter und die Sperren nach SR 29; eine Kredit-Kachel braucht der Owner nicht. Der
 > Entwurf liegt unter [`mock/werft.html`](mock/werft.html) (im Browser öffnen, fünf Handy-Ansichten).
 > Die neuen Muster stehen im [GUI-Handbuch](gui-handbuch.md) unter *Werft*, die neue Regel zum
 > Kauf in [`modell/schiffe.md`](modell/schiffe.md) unter *Erwerb*, *Wo gekauft wird*.
@@ -22,7 +22,7 @@ Raumhafen, obwohl SR 29 das nur an A (und Small Craft auch an B) erlaubt.
 
 Nach dem Umbau hat die Werft:
 
-1. oben einen **Kapazitätskopf** mit den Kacheln **Kasse** und **Kredit**,
+1. oben einen **Kapazitätskopf** mit der Kachel **Kasse**,
 2. darunter drei **Unterreiter**: **Mein Schiff** · **Schiffe** · **Small Craft**,
 3. im Reiter Mein Schiff je Hardpoint eine **Hardpoint-Karte** mit Chips statt Auswahlfeldern;
    gewählt und eingebaut wird im **Kurzdialog**,
@@ -36,8 +36,8 @@ Der erste Entwurf (dem Owner am 28. November 2026 gezeigt) wurde vor dem Ablegen
 
 | Erster Entwurf | Problem | Jetzt |
 |---|---|---|
-| Drei Kacheln: Kasse, Laderaum, Hardpoints | Handbuch: Kacheln stehen zu zweit. Hardpoints stehen doppelt (Kachel und Karten), der Laderaum zählt nur bei Small Craft | Zwei Kacheln **Kasse** und **Kredit** in allen Reitern; der freie Laderaum steht als Zeile über der Liste im Reiter Small Craft, die Zahl der Hardpoints in der Überschrift der Bewaffnung |
-| Kredit-Kachel „möglich“ | sagt nichts | Restschuld, Monatsrate bzw. „neu bis …“ (siehe unten) |
+| Drei Kacheln: Kasse, Laderaum, Hardpoints | Handbuch: Kacheln stehen zu zweit. Hardpoints stehen doppelt (Kachel und Karten), der Laderaum zählt nur bei Small Craft | Eine Kachel **Kasse** in allen Reitern; der freie Laderaum steht als Zeile über der Liste im Reiter Small Craft, die Zahl der Hardpoints in der Überschrift der Bewaffnung |
+| Kredit-Kachel „möglich“ | sagt nichts | entfällt (Owner); die Anzahlung steht am Preisknopf |
 | Goldene Karte mit dem Schiffsnamen | Gold heißt „ausgewählt“; die Karte nimmt Platz, ohne etwas zu können | Der Name steht in der Überschrift „Bewaffnung von Kestrel · 1 Hardpoint“ |
 | Platzpunkte am Hardpoint | doppelt zu den Chips | „1/2“ als Zahl wie heute |
 | Roter Balken „Hier gibt es keine Werft“ | Rot heißt Gefahr bzw. die andere Seite; eine Sperre ist keins von beiden | **Sperrhinweis**: neutrale Fläche, roter Strich nur am linken Rand (wie „knapp“ im Kapazitätskopf), Text in voller Größe und `--text` |
@@ -90,27 +90,17 @@ bzw. Welt des Aufenthaltsorts; ohne Ort „kein Ort“). Das bisherige `aside` �
 SR 33–37“ fällt weg. Keine eigene Aktionsleiste: Gehandelt wird an den Zeilen und in den
 Kurzdialogen (wie heute).
 
-### Kapazitätskopf: Kasse und Kredit
+### Kapazitätskopf: Kasse
 
-Zwei Kacheln nebeneinander, in allen drei Reitern gleich an derselben Stelle. Die bestehende
-`Capacity`-Kachel aus `src/view/trade/TradeScreen.tsx` lässt sich nicht einfach übernehmen, weil
-die Kredit-Kachel eine zweite Zeile braucht: Entweder `Capacity` in eine eigene Datei
-(`src/view/Capacity.tsx`) ziehen und um eine optionale Unterzeile (`tile-sub`, gibt es schon in der
-Kachel *Restschuld* im Bereich Schiff) erweitern, oder dieselben Klassen (`card-grid cols-2`,
-`tile`, `tile-label`, `tile-text mono`, `tile-sub`) direkt nutzen. Die erste Lösung ist besser.
+Eine Kachel **Kasse**, in allen drei Reitern an derselben Stelle (links, halbe Breite wie die
+Kacheln im Handel). Eine Kredit-Kachel gibt es nicht (Owner, 28. November 2026: „brauche ich nicht
+unbedingt“); was ein Kauf über die Bank kostet, sagt weiter der Preisknopf („Anzahlung MCr …“) und
+die Bestellung (`BuySheet`). Die bestehende `Capacity` aus `src/view/trade/TradeScreen.tsx` in eine
+eigene Datei (`src/view/Capacity.tsx`) ziehen und hier wiederverwenden.
 
 - **Kasse**: der Kassenstand. Unter Cr 200.000 in Cr, sonst in MCr mit zwei Stellen (dieselbe Regel
   wie `softwarePrice` in `src/view/format.ts`; diese Funktion dafür umbenennen oder verallgemeinern,
-  etwa `price(cr)`). Rot (`negative`), wenn im offenen Reiter nichts bezahlbar ist.
-- **Kredit**: die **Restschuld** aller Schiffe, deren Rate am Monatsende gebucht wird (in
-  `src/model/upkeep.ts`: nicht ausgeblendet, `loanBalance > 0`), summiert; Gold wie die Kachel
-  *Restschuld* im Bereich Schiff. Ohne Restschuld **„schuldenfrei“**. Die Unterzeile:
-  - im Reiter **Mein Schiff**: die Monatsrate aller dieser Schiffe zusammen, **„Cr 212.750 im
-    Monat“**; schuldenfrei leer;
-  - in **Schiffe** und **Small Craft**: **„neu bis Cr 25.000“** bzw. **„neu bis MCr 5,25“**, der
-    höchste Preis, dessen Anzahlung (20 %, `DOWN_PAYMENT` in `src/model/ship.ts`, heute nicht
-    exportiert) die Kasse trägt, also Kasse ÷ 0,2;
-  - ist der Kauf hier gesperrt (Sperrhinweis im Reiter): **„hier keine Werft“**.
+  etwa `price(cr)`). Rot (`short`/`negative`), wenn im offenen Reiter nichts bezahlbar ist.
 
 ### Unterreiter
 
@@ -217,7 +207,6 @@ Genau so (Begriffe aus dem Domänenmodell; Gründe als ein Satz):
 | Sperrhinweis Mein Schiff, Systemflug | „Während eines Systemflugs wird nicht umgerüstet.“ (heute) |
 | Zeile, zu teuer (bar und Anzahlung) | Anzahlung MCr 5,89 · Kasse zu klein |
 | Dialog, zu teuer | Kasse zu klein |
-| Kredit-Kachel | schuldenfrei · Cr 212.750 im Monat · neu bis Cr 25.000 · hier keine Werft |
 
 Die Gründe für den Kauf kommen aus dem Model (`purchaseBlocker`), damit Model, Controller und View
 denselben Satz sagen; die View setzt nur die Sätze der Kacheln und Hinweise.
@@ -229,16 +218,11 @@ denselben Satz sagen; die View setzt nur die Sätze der Kacheln und Hinweise.
 Vorschlag):
 
 - `yardPlace: { name: string; port: string | undefined }` für das `aside`;
-- `loans: { balance: number; monthly: number }` (Summe der Schiffe mit Rate; 0/0 = schuldenfrei);
 - `shipsBlocker: string | undefined` und `craftBlocker: string | undefined` – der Grund für den
   Sperrhinweis der Reiter Schiffe und Small Craft, wenn **alle** Zeilen dort aus diesem Grund
   gesperrt sind (aus `purchaseBlocker`);
-- `newLoanUpTo: number` für „neu bis“;
 - `freeCargo: number | undefined` für die Laderaum-Zeile (gibt es indirekt schon in
   `craftPurchaseBlocker`; als Wert herausgeben).
-
-Die View rechnet nichts Fachliches: Der Controller liefert dafür `newLoanUpTo` (Kasse ÷ 0,2; die
-Regel gehört ins Model neben `DOWN_PAYMENT`).
 
 ## Zugänglichkeit und Testnamen
 
@@ -253,8 +237,8 @@ Die GUI-Tests greifen über Rollen und Namen zu. Neu:
 
 ## Tests
 
-- **Unit** (`npm run check`): `purchaseBlocker` (siehe oben), Kredit-Summen und Sperrgründe im
-  Controller (`src/controller/ship.test.ts`, dort wird `ShipView` schon geprüft).
+- **Unit** (`npm run check`): `purchaseBlocker` (siehe oben), Sperrgründe im Controller
+  (`src/controller/ship.test.ts`, dort wird `ShipView` schon geprüft).
 - **GUI** (`e2e/`), anpassen statt löschen:
   - `space.spec.ts`: „Werft: Bewaffnung sagt, wenn die Kasse nicht reicht …“ (Kasse in der Kachel,
     Waffe über den Kurzdialog einbauen), „Werft und Raumkampf …“ (Ausbauen fragt im Kurzdialog),
@@ -262,8 +246,7 @@ Die GUI-Tests greifen über Rollen und Namen zu. Neu:
   - `ship.spec.ts`: `buyScout` und die Werft-Tests – der Scout liegt jetzt im Reiter **Schiffe**
     (die Demo hat ein Schiff, die Werft öffnet in Mein Schiff).
   - Neu: Sperrhinweis an einem Raumhafen C (Gruppe von Hand auf eine Welt mit C setzen) und an B
-    (Schiffe gesperrt, Small Craft kaufbar); Kredit-Kachel nach einem Bankkauf mit Restschuld und
-    Rate.
+    (Schiffe gesperrt, Small Craft kaufbar).
 - Vor dem Push vollständig: `npm run test:e2e` (bzw. `CI=1 npx playwright test --trace off`).
 
 ## Reihenfolge
