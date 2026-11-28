@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Table } from 'dexie';
 import { cryptoKeys } from './keys';
-import { hexFromFlat, hexFromRolls, keepFocus, type FlatHex, START_DAY, settleStash, storedTurrets, legacyHold, firstWorldOf, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckMark, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type Ship, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
+import { hexFromFlat, hexFromRolls, keepFocus, withHighports, type FlatHex, START_DAY, settleStash, storedTurrets, legacyHold, firstWorldOf, upgradeDistances, upgradeNpcs, upgradeOracle, type Campaign, type CampaignId, type CampaignRepository, type DeckMark, type DeckPlan, type Encounter, type Hex, type LegacyWorldRoll, type Ship, type SyncMark, type TrayStop, TRAY_STOPS } from '../model';
 
 /** Eine Kampagne liegt unter ihrer Id. */
 interface StoredCampaign {
@@ -199,7 +199,8 @@ export function upgraded(stored: Campaign): Campaign {
     possessions: c.possessions ?? [],
     ...(c.primary === undefined && c.secondary === undefined && c.wields !== undefined ? { primary: c.wields } : {}),
   }));
-  const hexes = (campaign.hexes ?? []).map((stored): Hex => {
+  // Highports (2026-11-28b): Hauptwelten mit Globus und Raumhafen A oder B bekommen ihn nachgerüstet.
+  const hexes = withHighports((campaign.hexes ?? []).map((stored): Hex => {
     const old = stored as Hex & { readonly rolls?: readonly LegacyWorldRoll[]; readonly name?: string };
     if (old.rolls) return hexFromRolls({ column: old.column, row: old.row, ...(old.name === undefined ? {} : { name: old.name }), rolls: old.rolls });
     // Vor 2026-11-20b hingen die Werte der Welt am Hexfeld; sie werden die Hauptwelt.
@@ -211,7 +212,7 @@ export function upgraded(stored: Campaign): Campaign {
         return cities?.some((c) => !c.name) ? { ...w, map: { ...w.map!, cities: cities.map((c, i) => (c.name ? c : { ...c, name: `Stadt ${i + 1}` })) } } : w;
       }),
     };
-  });
+  }));
   const location = typeof (campaign.location as unknown) === 'string' ? { location: { world: campaign.location as unknown as string } } : {};
   // Schiffe von vor den Turrets am Schiff (2026-11-21g), dem unraffinierten Treibstoff (2026-11-21f) und der Software: die Turrets des Entwurfs, kein unraffinierter Treibstoff, keine Software; ausgeblendet war keins.
   const ships = (campaign.ships ?? []).map((s) => {
