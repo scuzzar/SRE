@@ -100,7 +100,6 @@ hide <<browser>> stereotype
   abstract class LogEntry $probe
 
 ' Zeit und Reisen
-  class ShuttleRide $reise $newClass("2026-11-28b")
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
   class Terrain <<reference>> $begegnung
@@ -175,7 +174,6 @@ Ship "1" *-- "0..1" Place : place
 SpaceUnit "*" -$newArrow("2026-11-28b")-> "0..1" City : dockAt
 
 ' Zeit und Reisen
-ShuttleRide "1" *-$newArrow("2026-11-28b")- "1" Place : from
 
 ' Charaktererschaffung und Lebenslauf
 Character "1" *-- "0..1" Place : place
@@ -204,8 +202,10 @@ City --> Port
 VehicleSpeed "*" --> "0..1" Landform : on
 Vehicle "*" --> "*" Landform : landsOn
 Vehicle "*" --> "*" Port : landsAt
-Leg "*" --> "2..*" SurfaceCell : cells {ordered}
-Trip "*" --> "1" SurfaceCell : /at
+Leg "*" -$goneArrow("2026-11-28b")-> "2..*" SurfaceCell : cells {ordered}
+Leg "*" -$newArrow("2026-11-28b")-> "1..*" SurfaceCell : cells {ordered}
+Trip "*" -$goneArrow("2026-11-28b")-> "1" SurfaceCell : /at
+Trip "*" -$newArrow("2026-11-28b")-> "0..1" SurfaceCell : /at
 Possession "1" *-- "0..1" Place : parked
 
 ' Charakter
@@ -231,4 +231,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Vehicle #line:d0021b;line.bold
+class Leg #line:d0021b;line.bold
 @enduml

@@ -125,7 +125,6 @@ hide <<browser>> stereotype
   class MonthEnd $reise
   class CheckRoll $reise
   class Journey $reise
-  class ShuttleRide $reise $newClass("2026-11-28b")
   class SystemJourney $reise
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
@@ -181,7 +180,6 @@ LogEntry <|-- CheckRoll
 LogEntry <|-- Journey
 LogEntry <|-- MonthEnd
 LogEntry <|-- SystemJourney
-LogEntry <|-$newArrow("2026-11-28b")- ShuttleRide
 
 ' Charaktererschaffung und Lebenslauf
 

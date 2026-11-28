@@ -175,14 +175,12 @@ statt einer Ausnahme für diesen Fall.
     Small Craft auch an B) wie an jeder Stadt mit diesem Hafen.
   - *Begegnungen* wie in einer Stadt. ⚑
   - *Nicht*: Fahrten über die Oberfläche beginnen oder enden dort nicht; der Highport hat kein Feld.
-- **Shuttle** (`ShuttleRide`, Logeintrag; Owner: mit Fahrpreis und Zeit). Ohne eigenes Schiff
-  wechselt die Gruppe zwischen dem Highport und einer Stadt mit Hafen derselben Welt (in beide
-  Richtungen) mit dem Shuttle. ⚑ Hausregel, das Buch nennt keine Zahlen: **Cr 100 je Person** und
-  **4 Stunden**. Gebucht wird der Fahrpreis aus der Kasse (Buchung der Art `fare`); reicht sie nicht,
-  geht es nicht. Der Logeintrag hält fest, wer fuhr (`travellers`, die lebenden, nicht
-  ausgeblendeten SC wie bei der Reise), von wo (`from`), den Fahrpreis zusammen (`fare`) und die
-  Dauer (`hours`); sein Ort ist das Ziel. Die Spielzeit rückt um die Dauer vor. Nicht löschbar wie
-  die Reise.
+- **Shuttle** (Owner: mit Fahrpreis und Zeit, über das normale System der Fahrt). Ohne eigenes
+  Schiff kommt die Gruppe mit dem **Shuttle** zwischen dem Highport und einer Stadt mit Raumhafen
+  A oder B derselben Welt hin und her. Das Shuttle ist ein **Linienverkehr** der Fahrt
+  ([Logistik](logistik.md), *Linienverkehr*, *Fahrt*): Man plant auf dem Globus eine Fahrt vom
+  Highport zu einem Ziel (oder umgekehrt), die App nimmt das Shuttle als einen Abschnitt, auch
+  gemischt mit Auto, Linienflug usw. Fahrpreis, Zeit, Reisetag und Log laufen wie bei jeder Fahrt.
 - **Mit eigenem Schiff** legt man ab und wählt einen neuen Landeplatz (wie nach einer Reise im
   System) oder fliegt im Systemflug.
 - **Auf dem Globus** erscheint der Highport wie die übrigen Orbitalstädte als Licht auf einer

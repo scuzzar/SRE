@@ -144,10 +144,6 @@ hide <<browser>> stereotype
     days: number
     /left: number
   }
-  class ShuttleRide $reise $newClass("2026-11-28b") {
-    hours: number
-    fare: number
-  }
   class SystemJourney $reise {
     hours: number
     /days: number
@@ -166,7 +162,6 @@ hide <<browser>> stereotype
 
 ' Referenzdaten
   class Item <<reference>> $shop
-  class Place <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
   ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
 
@@ -196,9 +191,6 @@ LogEntry <|-- MonthEnd
 MonthEnd "*" --> "*" Booking : costs {ordered}
 Booking "*" --> "0..1" Journey : won
 LogEntry <|-- SystemJourney
-LogEntry <|-$newArrow("2026-11-28b")- ShuttleRide
-ShuttleRide "1" *-$newArrow("2026-11-28b")- "1" Place : from
-ShuttleRide "*" -$newArrow("2026-11-28b")-> "*" Character : travellers
 SystemJourney "*" --> "1" World : from
 SystemJourney "*" --> "1" World : to
 SystemJourney "*" --> "*" Character : travellers

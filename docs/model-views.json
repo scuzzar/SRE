@@ -799,7 +799,7 @@
     {
       "id": "2026-11-28b",
       "file": "2026-11-28b-highport",
-      "title": "Highport: Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als Highport (SurfaceMap.highport), die den Raumhafen der Welt trägt; andocken auch aus dem Systemflug (SpaceUnit.dockAt), zur Oberfläche mit dem Shuttle (ShuttleRide, Fahrpreis und Dauer). Dort geht alles, was an einer Stadt mit Hafen geht",
+      "title": "Highport: Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als Highport (SurfaceMap.highport), die den Raumhafen der Welt trägt; andocken auch aus dem Systemflug (SpaceUnit.dockAt); zur Oberfläche mit dem Shuttle als Linienverkehr der Fahrt (Vehicle.orbitHours, Leg.highport). Dort geht alles, was an einer Stadt mit Hafen geht",
       "approved": false,
       "show": [
         "Place",

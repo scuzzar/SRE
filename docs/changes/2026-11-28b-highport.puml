@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-28b: Highport: Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als Highport (SurfaceMap.highport), die den Raumhafen der Welt trägt; andocken auch aus dem Systemflug (SpaceUnit.dockAt), zur Oberfläche mit dem Shuttle (ShuttleRide, Fahrpreis und Dauer). Dort geht alles, was an einer Stadt mit Hafen geht
+title Änderung 2026-11-28b: Highport: Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als Highport (SurfaceMap.highport), die den Raumhafen der Welt trägt; andocken auch aus dem Systemflug (SpaceUnit.dockAt); zur Oberfläche mit dem Shuttle als Linienverkehr der Fahrt (Vehicle.orbitHours, Leg.highport). Dort geht alles, was an einer Stadt mit Hafen geht
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -82,24 +82,6 @@ hide <<value>> stereotype
 hide <<browser>> stereotype
 
 ' Kampagne und Charaktere
-  class Character $charakter {
-    name: string
-    background: string
-    equipment: string
-    credits: number
-    note: string
-    dead: boolean
-    retired: boolean
-    npc: boolean
-    role: NpcRole [0..1]
-    /wounds: Wounds
-    /hurt: number [0..1]
-    /state: WoundState
-    /blows: number [0..1]
-  }
-  enum NpcRole <<value>> $charakter
-  class Upp <<value>> $charakter
-  class SkillLevel $charakter
 
 ' Schiffe
 
@@ -132,29 +114,22 @@ hide <<browser>> stereotype
 ' Missionen
 
 ' Verlauf
-  abstract class LogEntry $probe {
-    at: datetime
-    day: number [0..1]
-  }
-  class DiceRoll $probe
-  class Note $probe
 
 ' Zeit und Reisen
-  class ShuttleRide $reise $newClass("2026-11-28b") {
-    hours: number
-    fare: number
-  }
 
 ' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
-  class TaskResult $probe
 
 ' Referenzdaten
   class SurfaceMap $oberflaeche {
     /cells: number
   }
-  class SurfaceCell <<value>> $oberflaeche
+  class SurfaceCell <<value>> $oberflaeche {
+    towns: number
+  }
+  enum Landform <<value>> $oberflaeche
   class River <<value>> $oberflaeche
   class Road <<value>> $oberflaeche
+  enum Volcano <<value>> $oberflaeche
   class City $oberflaeche {
     name: string
     population: number
@@ -164,9 +139,33 @@ hide <<browser>> stereotype
   }
   enum CityRank <<value>> $oberflaeche
   enum Port <<value>> $oberflaeche
-  class Place <<value>> $oberflaeche {
-  }
+  class Place <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
+  class Vehicle <<reference>> $logistik {
+    name: string
+    flight: number [0..1]
+    atmosphere: number [0..1]
+    tl: number [0..1]
+    fare: number [0..1]
+    $new("2026-11-28b", "orbitHours: number [0..1]")
+  }
+  class VehicleSpeed <<value>> $logistik
+  class Trip $logistik {
+    hours: number
+    /totalHours: number
+    /days: number
+  }
+  class Leg <<value>> $logistik {
+    rented: boolean
+    /hours: number
+    /rent: number
+    /fare: number
+    $new("2026-11-28b", "highport: LegEnd [0..1]")
+  }
+  enum LegEnd <<value>> $logistik $newClass("2026-11-28b") {
+    start
+    end
+  }
   ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
 
 ' Kampagne
@@ -184,44 +183,43 @@ SystemFlight "*" --> "1" SpaceUnit : party
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
 
 ' Zeit und Reisen
-LogEntry <|-$newArrow("2026-11-28b")- ShuttleRide
-ShuttleRide "1" *-$newArrow("2026-11-28b")- "1" Place : from
-ShuttleRide "*" -$newArrow("2026-11-28b")-> "*" Character : travellers
 
 ' Charaktererschaffung und Lebenslauf
-Character "*" --> "0..1" World : homeworld
-Character "1" *-- "0..1" Place : place
-Character --> NpcRole
 
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
 World "1" *-- "0..1" SurfaceMap : map
 SurfaceMap "1" *-- "/cells" SurfaceCell : cells {ordered}
+SurfaceCell "*" --> "1" Landform : landform
+SurfaceCell "*" --> "0..1" Volcano : volcano
 SurfaceMap "1" *-- "*" River : rivers
 SurfaceMap "1" *-- "*" Road : roads
 SurfaceMap "1" *-- "*" City : cities
 SurfaceMap "1" -$newArrow("2026-11-28b")-> "0..1" City : highport
+River "*" --> "2..*" SurfaceCell : cells {ordered}
+Road "*" --> "2..*" SurfaceCell : cells {ordered}
 City "*" --> "0..1" SurfaceCell : cell
-LogEntry "1" *-- "0..1" Place : place
-Place "*" --> "1" World : world
 Place "*" --> "0..1" SurfaceCell : cell
 Place "*" --> "0..1" City : city
 City --> CityRank
 City --> Port
+Vehicle "1" *-- "*" VehicleSpeed : speeds
+Vehicle "*" --> "*" Landform : landsOn
+Vehicle "*" --> "*" Port : landsAt
+Trip "1" *-- "1..*" Leg : legs {ordered}
+Leg "*" --> "1" Vehicle : by
+Leg "*" -$goneArrow("2026-11-28b")-> "2..*" SurfaceCell : cells {ordered}
+Leg "*" -$newArrow("2026-11-28b")-> "1..*" SurfaceCell : cells {ordered}
+Leg -$newArrow("2026-11-28b")-> LegEnd
+Trip "*" -$goneArrow("2026-11-28b")-> "1" SurfaceCell : /at
+Trip "*" -$newArrow("2026-11-28b")-> "0..1" SurfaceCell : /at
 
 ' Charakter
-Character "1" *-- "1" Upp : upp
-Character "1" *-- "*" SkillLevel : skills
 
 ' Waffen (Referenzdaten)
 
 ' Verlauf
-LogEntry <|-- DiceRoll
-LogEntry <|-- TaskResult
-LogEntry <|-- Note
-Note "*" --> "0..1" LogEntry : interprets
-TaskResult "*" --> "1" Character : for
 
 ' Probe
 
@@ -239,4 +237,6 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Vehicle #line:d0021b;line.bold
+class Leg #line:d0021b;line.bold
 @enduml
