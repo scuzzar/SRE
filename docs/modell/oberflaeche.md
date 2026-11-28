@@ -182,17 +182,21 @@ statt einer Ausnahme für diesen Fall.
   Highport zu einem Ziel (oder umgekehrt), die App nimmt das Shuttle als einen Abschnitt, auch
   gemischt mit Auto, Linienflug usw. Fahrpreis, Zeit, Reisetag und Log laufen wie bei jeder Fahrt.
   Mit einem **eigenen Grav-Fahrzeug**, das den Orbit erreicht (Air/Raft, GCarrier, Speeder), geht
-  es ebenso, ohne Fahrpreis und mit der echten Flugzeit (Logistik, *Vom und zum Highport*).
+  es ebenso, ohne Fahrpreis und mit der echten Flugzeit (Logistik, *Vom und zum Highport*); das
+  dauert bis zur geostationären Bahn Tage.
 - **Mit eigenem Schiff** legt man ab und wählt einen neuen Landeplatz (wie nach einer Reise im
   System) oder fliegt im Systemflug.
 - **Auf dem Globus** erscheint der Highport wie die übrigen Orbitalstädte als Licht auf einer
   Umlaufbahn und in der Liste *Orte*, als Highport gekennzeichnet.
 - **Im Systemflug** (Owner: gleich mit der Raumkarte; Bereich [Raum](raum.md)):
-  - *Wo*: Der Highport steht auf der Raumkarte als **Station** auf einer Kreisbahn um seine Welt. ⚑
-    Bahnradius das Dreifache des Weltradius (wie das Mutterschiff beim Beginnen), Richtung beim
-    Beginnen des Systemflugs aus dem Schlüssel der Welt, Geschwindigkeit die der Kreisbahn mit der
-    echten Schwerkraft. Nichts davon wird gespeichert; er ist keine Einheit und wird nicht
-    beschossen.
+  - *Wo* (Owner: geostationär): Der Highport steht auf der Raumkarte als **Station** auf der
+    **geostationären Bahn** seiner Welt; er kreist in einem Welttag einmal herum und steht so immer
+    über derselben Stelle der Oberfläche. Bahnradius `∛(g × R² × T² / 4π²)` mit der Schwerkraft der
+    Welt (`/gravity`), ihrem Radius und ⚑ einem Welttag von **24 Stunden** für jede Welt (die App
+    kennt keine Tageslänge). Weil die Schwerkraft in Traveller mit der Größe wächst, sind das bei
+    jeder Welt etwa **6,6 Weltradien** (Echo, Größe 5: 26.500 km vom Mittelpunkt). Richtung beim
+    Beginnen des Systemflugs aus dem Schlüssel der Welt, Geschwindigkeit die der Kreisbahn. Nichts
+    davon wird gespeichert; er ist keine Einheit und wird nicht beschossen.
   - *Andocken* (`SpaceUnit.dockAt`): Wie beim Andocken eines Small Craft am Mutterschiff (siehe
     [Schiffe](schiffe.md), *Andocken*, *Andockflug*), nur mit dem Highport als Ziel und **ohne**
     Platzbedingung: Erreicht die Einheit den Ort des Highports nach der nächsten Bewegung mit ihrem

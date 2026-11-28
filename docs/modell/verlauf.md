@@ -776,6 +776,7 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > kauft ein, tankt und nutzt die Werft. Das Shuttle ist ein Linienverkehr der Fahrt (`Vehicle.orbit`,
 > `Vehicle.craft`, `Leg.highport`; Air/Raft, GCarrier und Speeder kommen auch hoch, mit echter
 > Flugzeit; ein Abschnitt braucht nur noch ein Feld, `Trip./at` kann leer sein); dazu
-> `SpaceUnit.dockAt` (Andocken am Highport im Systemflug). Anlass: Echo (B537100-8) ohne Städte. Regeln in
+> `SpaceUnit.dockAt` (Andocken am Highport im Systemflug). Der Highport steht geostationär (⚑ Welttag 24 Stunden, etwa
+> 6,6 Weltradien). Anlass: Echo (B537100-8) ohne Städte. Regeln in
 > [`oberflaeche.md`](oberflaeche.md#highport). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-28b-highport.png`](../changes/2026-11-28b-highport.png).

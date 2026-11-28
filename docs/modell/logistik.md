@@ -79,12 +79,13 @@ mehrere Tage läuft und dazwischen anderes passiert (Rasten, Begegnungen, Ausspi
   Fahrzeug, das den Orbit erreicht (`Vehicle.orbit`). Sein einziges Feld (`cells`, darum jetzt
   1..*) ist das Feld, an dem er vom Boden abhebt bzw. aufsetzt: beim Shuttle die Stadt mit Hafen,
   bei einem eigenen Grav-Fahrzeug ein beliebiges Feld, auf dem es landen kann.
-  - *Strecke*: die Höhe des Highports über dem Boden, **zwei Weltradien** (er kreist im dreifachen
-    Weltradius, siehe [Highport](oberflaeche.md#highport), *Im Systemflug*).
+  - *Strecke*: die Höhe des Highports über dem Boden, die geostationäre Bahn weniger den Weltradius,
+    etwa **5,6 Weltradien** (siehe [Highport](oberflaeche.md#highport), *Im Systemflug*).
   - *Dauer*: mit Schub (`craft`) beschleunigt das Fahrzeug die halbe Strecke und bremst die andere
     halbe, `2 × √(Strecke / Beschleunigung)`, ⚑ ohne Schwerkraft gerechnet; sonst Strecke durch
-    `flight`. Beispiele für Echo (Größe 5, 8.000 km): Shuttle etwa 17 Minuten, Speeder 8 Stunden,
-    Air/Raft und GCarrier 80 Stunden.
+    `flight`. Beispiele für Echo (Größe 5, 22.500 km Höhe): Shuttle etwa 29 Minuten, Speeder
+    22 Stunden, Air/Raft und GCarrier 225 Stunden (gut 9 Tage); auf einer Welt der Größe 8: 37
+    Minuten, 36 Stunden, 15 Tage.
   - Ein solcher Abschnitt wird wie jeder andere über Reisetage verteilt. ⚑ Unterwegs zum oder vom
     Highport gibt es keinen Begegnungstest; der Standort der Fahrt (`/at`) bleibt das Feld des
     Abschnitts, am Highport selbst ist er leer.
