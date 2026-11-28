@@ -3,7 +3,7 @@ import { EHEX, uwpKinds, type DiceExpr, type SurfaceRow, type SystemContents, ty
 import { DomainError } from './errors';
 import type { Random } from './ports';
 import { ref } from './reference';
-import { checkSurfaceMap, generateSurfaceMap, type SurfaceMap } from './surface-map';
+import { checkSurfaceMap, generateSurfaceMap, withHighport, type SurfaceMap } from './surface-map';
 
 export { EHEX, temperatureIds, uwpKinds, type DiceExpr, type SurfaceRow, type SurfaceTable, type SystemContents, type Temperature, type TemperatureId, type TradeCode, type UwpDigit, type UwpKind } from '../data';
 
@@ -604,6 +604,24 @@ export function withWorld(hexes: readonly Hex[], id: string, change: (world: Wor
   const hex = hexes.find((h) => h.worlds.some((w) => w.id === id));
   if (!hex) throw new DomainError(`Die Welt ${id} gibt es nicht.`);
   return hexes.map((h) => (h === hex ? { ...h, worlds: h.worlds.map((w) => (w.id === id ? change(w, h) : w)) } : h));
+}
+
+/**
+ * Rüstet die Hauptwelten mit Oberflächenkarte und Raumhafen A oder B mit ihrem Highport nach
+ * (2026-11-28b, beim Laden); Karten, die schon einen haben, bleiben, wie sie sind.
+ */
+export function withHighports(hexes: readonly Hex[]): readonly Hex[] {
+  let changed = false;
+  const next = hexes.map((hex) => {
+    const main = hex.worlds.find((w) => w.id === hex.main);
+    if (!main?.map || main.map.highport !== undefined) return hex;
+    const u = main.uwp;
+    const map = withHighport(main.map, { starport: u.starport ?? 31, population: u.population ?? 0, ...(main.populationMultiplier === undefined ? {} : { populationMultiplier: main.populationMultiplier }), ...(main.name === undefined ? {} : { name: main.name }) });
+    if (map === main.map) return hex;
+    changed = true;
+    return { ...hex, worlds: hex.worlds.map((w) => (w === main ? { ...w, map } : w)) };
+  });
+  return changed ? next : hexes;
 }
 
 /**

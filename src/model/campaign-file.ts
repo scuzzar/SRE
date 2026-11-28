@@ -34,7 +34,7 @@ import { vehicleOfItem } from './vehicle';
 import { settleStash } from './stash';
 import type { City, SurfaceMap } from './surface-map';
 import { checkPlace, type Place } from './place';
-import { hexFromFlat, hexFromRolls, temperatureIds, travelZones, uwpKinds, validateHexes, worldById, worldOf, type Hex, type LegacyWorldRoll, type World } from './sector';
+import { hexFromFlat, hexFromRolls, temperatureIds, travelZones, uwpKinds, validateHexes, withHighports, worldById, worldOf, type Hex, type LegacyWorldRoll, type World } from './sector';
 import { checkStarSystems } from './star-system';
 
 /**
@@ -208,6 +208,7 @@ const MapSchema = z
         }),
       )
       .optional(),
+    highport: z.number().int().optional(),
   });
 
 const position = { column: z.number().int(), row: z.number().int(), name: z.string().optional() };
@@ -655,7 +656,7 @@ function readCampaignFile(text: string, id: CampaignId, stampOf: (file: { readon
       name: validName(file.name),
       characters,
       log: file.log.map(logEntry),
-      hexes: file.hexes.map(hexOf),
+      hexes: withHighports(file.hexes.map(hexOf)),
       ...(file.generation ? { generation: { career: careerOf(file.generation.career) } } : {}),
       ...(file.focus === undefined ? {} : { focus: file.focus }),
       ...(file.location === undefined ? {} : { location: placeFromFile(file.location) }),
@@ -732,6 +733,7 @@ function mapOf(map: z.infer<typeof MapSchema>): SurfaceMap {
     ...(map.roads ? { roads: map.roads.map((r) => [...r]) } : {}),
     // Karten von vor den Städtenamen (2026-11-14k): „Stadt 1“, „Stadt 2“ …
     ...(map.cities ? { cities: map.cities.map((c, i) => ({ ...(stripped(c) as City), name: c.name ?? `Stadt ${i + 1}` })) } : {}),
+    ...(map.highport === undefined ? {} : { highport: map.highport }),
   };
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Random } from './ports';
 import { adjacent, cellCount, nearestCell, surfaceGrid } from './surface-grid';
-import { bookRow, cellTemperature, checkSurfaceMap, cityName, generateSurfaceMap, isWaterLandform, landformAt, rollDigit19, type MapWorld } from './surface-map';
+import { bookRow, cellTemperature, checkSurfaceMap, cityName, generateSurfaceMap, highportOf, isWaterLandform, landformAt, rollDigit19, withHighport, type MapWorld, type SurfaceMap } from './surface-map';
 
 /** Ein kleiner Zufallsgenerator mit festem Startwert, damit die Tests gleich ausgehen. */
 function seeded(seed: number): Random {
@@ -182,5 +182,54 @@ describe('Höchstens eine Siedlung je Feld', () => {
         expect(cityCells.includes(cell)).toBe(false);
       }
     }
+  });
+});
+
+describe('Highport (2026-11-28b)', () => {
+  const echo: MapWorld = { ...terra, size: 5, population: 1, tech: 8, starport: 11, populationMultiplier: 4, name: 'Echo' };
+
+  it('Raumhafen A: die größte Orbitalstadt ist der Highport und trägt den Raumhafen', () => {
+    const { map } = generateSurfaceMap({ ...terra, name: 'Terra' }, seeded(3));
+    const hp = highportOf(map)!;
+    expect(hp.cell).toBeUndefined();
+    expect(hp.port).toBe('A');
+    expect(hp.name).toBe('Terra Highport');
+    expect(map.cities?.[0]?.port).toBe('A');
+  });
+
+  it('ohne jede Siedlung (wie Echo) wohnt die ganze Bevölkerung im Highport', () => {
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const { map } = generateSurfaceMap(echo, seeded(seed));
+      const hp = highportOf(map)!;
+      expect(hp.port).toBe('B');
+      expect(hp.cell).toBeUndefined();
+      if ((map.cities?.length ?? 0) === 1 && !map.towns) expect(hp).toMatchObject({ population: 1, multiplier: 4, rank: 'primary', name: 'Echo Highport' });
+      expect(checkSurfaceMap(map, 5, 1)).toBeUndefined();
+    }
+  });
+
+  it('Raumhafen C und Nebenwelten haben keinen', () => {
+    expect(generateSurfaceMap({ ...terra, starport: 12 }, seeded(3)).map.highport).toBeUndefined();
+    expect(generateSurfaceMap({ ...terra, starport: 31, spaceport: 'F' }, seeded(3)).map.highport).toBeUndefined();
+  });
+
+  it('Bevölkerung 0: Station ohne Einwohner, die Prüfung lässt sie zu', () => {
+    const { map } = generateSurfaceMap({ ...echo, population: 0 }, seeded(2));
+    expect(highportOf(map)).toMatchObject({ population: 0, multiplier: 1 });
+    expect(checkSurfaceMap(map, 5, 0)).toBeUndefined();
+  });
+
+  it('bestehende Karten: Orbitalstadt wird Highport, sonst eine neue am Ende; niemand zieht um', () => {
+    const base: SurfaceMap = { landforms: 'o' };
+    const world = { starport: 11, population: 1, populationMultiplier: 4, name: 'Echo' };
+    expect(withHighport(base, world)).toMatchObject({ highport: 0, cities: [{ name: 'Echo Highport', population: 1, multiplier: 4, port: 'B' }] });
+    const withCity: SurfaceMap = { landforms: 'o', cities: [{ cell: 0, name: 'Unten', population: 6, multiplier: 2, rank: 'primary', port: 'B' }] };
+    const added = withHighport(withCity, { ...world, population: 6 });
+    expect(added.cities).toHaveLength(2);
+    expect(added.cities?.[0]).toEqual(withCity.cities![0]);
+    expect(highportOf(added)).toMatchObject({ population: 0, multiplier: 1, port: 'B' });
+    const orbit: SurfaceMap = { landforms: 'o', cities: [...withCity.cities!, { name: 'Oben', population: 4, multiplier: 3, rank: 'secondary' }] };
+    expect(withHighport(orbit, { ...world, population: 6 })).toMatchObject({ highport: 1, cities: [{}, { name: 'Oben', port: 'B' }] });
+    expect(withHighport(base, { ...world, starport: 12 })).toBe(base);
   });
 });

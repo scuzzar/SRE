@@ -155,7 +155,8 @@ statt einer Ausnahme für diesen Fall.
   3. Gibt es gar keine Siedlung (dünn besiedelt, wie Echo), entsteht der Highport mit der **ganzen
      Bevölkerung** der Welt (`population` = Bevölkerung des UWP, `multiplier` =
      `populationMultiplier`, Rang Hauptstadt). ⚑
-  4. Bei Bevölkerung 0 entsteht er als **Station ohne eigene Einwohner** (`population` 0,
+  4. Bei Bevölkerung 0, oder wenn es nur Hauptstädte gibt (keine Nebenstadt, keine Kleinstadt),
+     entsteht er als **Station ohne eigene Einwohner** (`population` 0,
      `multiplier` 1, gelesen als Personal der Station). ⚑
 - **Bestehende Karten** (Owner: nur neue Planeten werden nach dem Buch umgebaut) bekommen ihren
   Highport beim Laden, ohne neu zu würfeln und ohne dass eine Stadt oder Kleinstadt umzieht: Ist

@@ -56,6 +56,49 @@ export interface SurfaceMap {
   readonly roads?: readonly (readonly number[])[];
   /** Haupt- und Nebenstädte; ihre Nummer ist die Stelle in dieser Liste. */
   readonly cities?: readonly City[];
+  /** Die Nummer der Orbitalstadt, die der Highport ist (2026-11-28b). */
+  readonly highport?: number;
+}
+
+/** Ob eine Welt einen Highport hat (2026-11-28b): Hauptwelt (kein Spaceport) mit Raumhafen A oder B. */
+export function wantsHighport(world: Pick<MapWorld, 'starport' | 'spaceport'>): boolean {
+  if (world.spaceport !== undefined) return false;
+  const letter = starportLetter(world.starport);
+  return letter === 'A' || letter === 'B';
+}
+
+/** Der Name eines neuen Highports: „<Welt> Highport“, ohne Weltname „Highport“. */
+export function highportName(worldName: string | undefined): string {
+  return worldName ? `${worldName} Highport` : 'Highport';
+}
+
+/** Der Highport einer Karte, wenn sie einen hat. */
+export function highportOf(map: SurfaceMap | undefined): City | undefined {
+  return map?.highport === undefined ? undefined : map.cities?.[map.highport];
+}
+
+/**
+ * Rüstet eine bestehende Karte mit dem Highport nach (2026-11-28b), ohne neu zu würfeln und ohne dass
+ * eine Stadt oder Kleinstadt umzieht: die größte Orbitalstadt, sonst eine neue Orbitalstadt am Ende der
+ * Liste – ohne jede Siedlung mit der ganzen Bevölkerung, sonst als Station ohne eigene Einwohner.
+ */
+export function withHighport(map: SurfaceMap, world: Pick<MapWorld, 'starport' | 'spaceport' | 'population' | 'populationMultiplier' | 'name'>): SurfaceMap {
+  if (map.highport !== undefined || !wantsHighport(world)) return map;
+  const port = starportLetter(world.starport) as Port;
+  const cities = map.cities ?? [];
+  let at = -1;
+  cities.forEach((c, i) => {
+    if (c.cell !== undefined) return;
+    const best = at < 0 ? undefined : cities[at]!;
+    if (!best || c.population > best.population || (c.population === best.population && c.multiplier > best.multiplier)) at = i;
+  });
+  if (at >= 0) return { ...map, cities: cities.map((c, i) => (i === at ? { ...c, port } : c)), highport: at };
+  const settled = cities.length > 0 || (map.towns?.length ?? 0) > 0;
+  const whole = !settled && world.population > 0;
+  const station: City = whole
+    ? { name: highportName(world.name), population: world.population, multiplier: world.populationMultiplier ?? 1, rank: 'primary', port }
+    : { name: highportName(world.name), population: 0, multiplier: 1, rank: 'secondary', port };
+  return { ...map, cities: [...cities, station], highport: cities.length };
 }
 
 /** Was das Erzeugen von der Welt braucht. */
@@ -270,7 +313,17 @@ class Generator {
     this.lifeTerrain();
     this.placeRivers();
     const multiplier = this.world.population > 0 ? (this.world.populationMultiplier ?? rollDigit19(this.random)) : undefined;
-    const { cities, towns } = this.civilization(multiplier);
+    const civil = this.civilization(multiplier);
+    const { towns } = civil;
+    let { cities, highport } = civil;
+    if (highport === undefined && wantsHighport(this.world)) {
+      // Keine Siedlung, die in den Orbit ziehen könnte: mit der ganzen Bevölkerung, sonst als Station.
+      const port = starportLetter(this.world.starport) as Port;
+      const whole = cities.length === 0 && towns.length === 0 && multiplier !== undefined;
+      cities = [...cities, whole ? { name: '', population: this.world.population, multiplier: multiplier!, rank: 'primary', port } : { name: '', population: 0, multiplier: 1, rank: 'secondary', port }];
+      highport = cities.length - 1;
+    }
+    if (highport !== undefined) cities = cities.map((c, i) => (i === highport ? { ...c, name: highportName(this.world.name) } : c));
     const map: SurfaceMap = {
       landforms: this.form.map((l) => LANDFORM_CODES[l]).join(''),
       ...(towns.length ? { towns } : {}),
@@ -278,6 +331,7 @@ class Generator {
       ...(this.rivers.length ? { rivers: this.rivers } : {}),
       ...(this.roads.length ? { roads: this.roads } : {}),
       ...(cities.length ? { cities } : {}),
+      ...(highport !== undefined ? { highport } : {}),
     };
     return this.world.populationMultiplier === undefined && multiplier !== undefined ? { map, populationMultiplier: multiplier } : { map };
   }
@@ -1095,7 +1149,7 @@ class Generator {
 
   // --- Abschnitt 10: Zivilisation ---
 
-  private civilization(multiplier: number | undefined): { cities: City[]; towns: [number, number][] } {
+  private civilization(multiplier: number | undefined): { cities: City[]; towns: [number, number][]; highport?: number } {
     const P = this.world.population;
     if (P <= 0 || multiplier === undefined) return { cities: [], towns: [] };
     const groups = this.cityGroups(P, multiplier);
@@ -1135,8 +1189,31 @@ class Generator {
     listed.push(...primaries.slice(0, MAX_PRIMARY), ...secondaries.slice(0, MAX_SECONDARY));
     this.assignPorts(listed);
     this.orbitalCities(listed, P, multiplier);
+    // Highport (2026-11-28b): die größte Orbitalstadt; sonst zieht nach dem Buch die kleinste Nebenstadt
+    // oder eine Kleinstadt in den Orbit.
+    let highport: number | undefined;
+    if (wantsHighport(this.world)) {
+      listed.forEach((c, i) => {
+        if (c.orbit && (highport === undefined || c.population > listed[highport]!.population || (c.population === listed[highport]!.population && c.multiplier > listed[highport]!.multiplier))) highport = i;
+      });
+      if (highport === undefined) {
+        for (let i = listed.length - 1; i >= 0; i--) {
+          if (listed[i]!.rank === 'secondary') {
+            listed[i]!.orbit = true;
+            highport = i;
+            break;
+          }
+        }
+      }
+      if (highport === undefined && townCount > 0) {
+        townCount--;
+        listed.push({ population: townDigit, multiplier: 1, rank: 'secondary', orbit: true });
+        highport = listed.length - 1;
+      }
+      if (highport !== undefined) listed[highport]!.port = starportLetter(this.world.starport) as Port;
+    }
     const placed = this.placeCities(listed, townCount, townDigit);
-    return { cities: this.nameCities(placed.cities), towns: placed.towns };
+    return { cities: this.nameCities(placed.cities), towns: placed.towns, ...(highport !== undefined ? { highport } : {}) };
   }
 
   /**
@@ -1459,6 +1536,12 @@ export function checkSurfaceMap(map: SurfaceMap, size: number, population: numbe
     if (typeof city.name !== 'string' || !city.name.trim()) return 'Eine Stadt der Oberflächenkarte hat keinen Namen.';
     if (!Number.isInteger(city.population) || city.population < 0 || !Number.isInteger(city.multiplier) || city.multiplier < 1 || city.multiplier > 9) return 'Eine Stadt der Oberflächenkarte hat ungültige Werte.';
   }
-  if (population < 1 && ((map.cities?.length ?? 0) > 0 || (map.towns?.length ?? 0) > 0)) return 'Eine Welt ohne Bevölkerung hat keine Städte.';
+  if (map.highport !== undefined) {
+    const station = map.cities?.[map.highport];
+    if (!Number.isInteger(map.highport) || station === undefined || station.cell !== undefined) return 'Der Highport der Oberflächenkarte ist keine Orbitalstadt.';
+  }
+  // Ein Highport ohne Einwohner (Station mit Personal, 2026-11-28b) zählt nicht als Stadt.
+  const settled = (map.cities ?? []).filter((c, i) => !(i === map.highport && c.population === 0));
+  if (population < 1 && (settled.length > 0 || (map.towns?.length ?? 0) > 0)) return 'Eine Welt ohne Bevölkerung hat keine Städte.';
   return undefined;
 }
