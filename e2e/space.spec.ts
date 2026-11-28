@@ -130,8 +130,8 @@ test('Raumkarte am Gasriesen: Kessra ist Mond eines Gasriesen; seine Raumkarte h
 test('Werft und Raumkampf: der Beam Laser der Demo-Yacht, ein fremdes Schiff von Hand, Feuer auf es (2026-11-21g/h)', async ({ page }) => {
   // Fest gewürfelt (2026-11-26): Der Schuss trifft immer gleich. Fiel das fremde Schiff mit echten
   // Würfeln schon nach dieser Salve aus, war danach „Kein Ziel“ übrig und der Hinweis „schon
-  // gefeuert“ fehlte. Mit diesem Anfang überlebt das fremde Schiff die Salve.
-  await wuerfelgleich(page);
+  // gefeuert“ fehlte. Mit diesem Anfang überlebt das fremde Schiff die Salve (neu seit dem Highport, 2026-11-28b: er verschiebt die Würfelfolge beim Erzeugen des Globus).
+  await wuerfelgleich(page, 20261128);
   await page.goto('/');
   await openHomeGlobe(page);
   await openTab(page, 'Schiff');
