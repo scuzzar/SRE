@@ -780,3 +780,8 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > 6,6 Weltradien). Anlass: Echo (B537100-8) ohne Städte. Regeln in
 > [`oberflaeche.md`](oberflaeche.md#highport). Der Ausschnitt dazu liegt unter
 > [`changes/2026-11-28b-highport.png`](../changes/2026-11-28b-highport.png).
+
+> Am 28. November 2026 auf Wunsch des Owners, ohne Änderung am Bild: **Shuttle ohne Hafen am Boden.**
+> Hat eine Welt mit Highport keine Stadt mit Raumhafen A oder B am Boden (wie Echo), landet das
+> Shuttle auf jedem Feld an Land, wie beim Landeplatz ohne Hafen. Regeln in
+> [`logistik.md`](logistik.md) unter *Linienverkehr*.

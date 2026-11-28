@@ -445,3 +445,28 @@ describe('Highport (2026-11-28b)', () => {
     expect(() => startTrip(c, { hours: 0, legs: [{ by: 'shuttle', rented: false, cells: [line[0]!], highport: 'end' }] })).toThrow('landet nur an seinen Häfen');
   });
 });
+
+describe('Shuttle ohne Hafen am Boden (Owner, 28. November 2026)', () => {
+  const bare = mapWith({ [line[2]!]: 'water' }, { cities: [{ name: 'Mora Highport', population: 1, multiplier: 4, rank: 'primary', port: 'B' }], highport: 0 });
+  function onBare(at: number | 'highport'): Campaign {
+    const hex = world(bare);
+    const withB: Hex = { ...hex, worlds: hex.worlds.map((w) => ({ ...w, uwp: { ...w.uwp, starport: 11 } })) };
+    let c = setLocation(setHexes(createCampaign(), [withB]), '0101');
+    c = moveParty(c, at === 'highport' ? { world: '0101', city: 0 } : { world: '0101', cell: at });
+    return book(c, 'income', 100000, clock);
+  }
+
+  it('hinunter: das Shuttle landet direkt auf dem Ziel, nicht auf Wasser', () => {
+    let c = onBare('highport');
+    expect(planOptions(c, line[4]!)[0]!.legs).toEqual([{ by: 'shuttle', rented: false, cells: [line[4]], highport: 'start' }]);
+    expect(() => planOptions(c, line[2]!)).toThrow('keinen Weg');
+    c = startTrip(c, planOptions(c, line[4]!)[0]!);
+    for (let day = 0; day < 5 && c.trip; day++) c = driveDay(c, clock);
+    expect(c.location).toEqual({ world: '0101', cell: line[4] });
+  });
+
+  it('hinauf: das Shuttle holt die Gruppe dort ab, wo sie steht', () => {
+    const c = onBare(line[0]!);
+    expect(planOptions(c, 'highport').some((t) => t.legs.length === 1 && t.legs[0]!.by === 'shuttle' && t.legs[0]!.cells[0] === line[0])).toBe(true);
+  });
+});
