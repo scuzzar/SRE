@@ -1,5 +1,7 @@
 /// <reference types="vitest/config" />
+import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative, resolve, sep } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
@@ -40,10 +42,27 @@ function serviceWorker(): Plugin {
   };
 }
 
+// Die Versionsnummer der App (aus package.json) und woraus sie gebaut ist: der kurze Commit und der
+// Tag des Builds. Ohne Git (etwa in einem entpackten Archiv) steht „unbekannt“ da.
+const version = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version;
+const commit = (() => {
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return 'unbekannt';
+  }
+})();
+const built = new Date().toISOString().slice(0, 10);
+
 // `--mode single` baut die App als eine einzige HTML-Datei (dist-single/index.html),
 // zum Ansehen ohne Server, ohne Service Worker. Der normale Build (dist/) ist für GitHub Pages.
 export default defineConfig(({ mode }) => ({
   base: './',
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+    __APP_COMMIT__: JSON.stringify(commit),
+    __APP_BUILT__: JSON.stringify(built),
+  },
   plugins: mode === 'single' ? [react(), viteSingleFile()] : [react(), serviceWorker()],
   build: {
     outDir: mode === 'single' ? 'dist-single' : 'dist',

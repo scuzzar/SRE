@@ -436,6 +436,12 @@ Kauf in [`modell/schiffe.md`](modell/schiffe.md) unter *Erwerb*.
   steht der Chip **„Am … andocken“** (wie „… andocken“ bei den Beibooten), gesperrt mit Grund
   darunter („Zu weit weg: 5,6 G bis …“); läuft der Andockflug, „Andockflug zum … ✓“, ein Tipp hebt ihn auf.
 
+### Versionsnummer
+
+Unten im Menü (☰) steht klein in Mono „Version 0.2.0 · Commit · Datum des Builds“, unter „Über die
+App“ unter dem Namen der App noch einmal. So liest man beim Melden eines Fehlers ab, welcher Stand
+läuft. Regel für die Nummer: [`ARCHITECTURE.md`](../ARCHITECTURE.md), *Versionsnummer*.
+
 ### Meldung und Hinweis
 
 - Ging etwas nach einem Tippen nicht, erscheint oben eine **Meldung** (`notice-toast`) mit dem Grund;

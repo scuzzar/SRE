@@ -159,9 +159,12 @@ test('Der Spielstand übersteht einen Neustart; eine Probe beginnt danach ohne g
   await expect(oracle(page).getByRole('button', { name: 'Probe Leicht 6+' })).toBeDisabled();
 });
 
-test('Über: Quellenangaben und Links zum Projekt', async ({ page }) => {
+test('Über: Versionsnummer, Quellenangaben und Links zum Projekt', async ({ page }) => {
   await page.getByRole('banner').getByRole('button', { name: 'Menü', exact: true }).click();
+  // Die Versionsnummer steht unten im Menü und unter „Über die App“ (2026-11-28).
+  await expect(page.getByRole('navigation', { name: 'Menü' })).toContainText(/Version \d+\.\d+\.\d+ · \S+ · \d{2}\.\d{2}\.\d{4}/);
   await page.getByRole('navigation', { name: 'Menü' }).getByRole('button', { name: 'Über die App' }).click();
+  await expect(page.getByText(/^Version \d+\.\d+\.\d+/)).toBeVisible();
   await expect(page.getByText(/Traveller ist ein Markenzeichen von Far Future Enterprises/)).toBeVisible();
   await expect(page.getByText(/Larcenous Designs/)).toBeVisible();
   await expect(page.getByRole('link', { name: 'Quellcode auf GitHub' })).toHaveAttribute('href', 'https://github.com/scuzzar/SRE');

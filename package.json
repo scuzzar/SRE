@@ -1,7 +1,7 @@
 {
   "name": "solo-rpg-engine",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Solo-Rollenspiel mit Classic Traveller: Regeln und Orakel in einer App",
   "scripts": {
