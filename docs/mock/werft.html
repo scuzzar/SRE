@@ -1,0 +1,269 @@
+<!doctype html>
+<!--
+  UI-Mock: die Werft als Detailseite, überarbeitet (Owner, 28. November 2026: Unterreiter und
+  Sperren freigegeben, Kredit-Kachel ausdrücklich gewünscht). Bauanleitung: docs/konzept-werft.md.
+  Fünf Handy-Ansichten mit Beispielwerten; nichts ist klickbar, kein App-Code. Farben und Maße
+  folgen styles.css (:root), die Bausteine dem GUI-Handbuch (Kapazitätskopf, Unterreiter, Chips,
+  Kurzdialog, Sperrhinweis).
+-->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI-Mock · Werft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #111111; --panel: #161616; --card: #0e0e0e; --line: #3a3a3a; --line-strong: #555;
+  --text: #eceae4; --muted: #a3a09a; --dim: #8c8a85; --accent: #c62f35; --accent-text: #ef5a5f;
+  --disabled: #333333; --gold: #d9b45f; --ink: #111111; --scrim: rgba(0,0,0,.6);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #000; color: var(--text); font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; }
+.intro { max-width: 760px; margin: 0 auto; padding: 24px 16px 8px; }
+.intro h1 { font-size: 22px; margin: 0 0 8px; }
+.intro p, .intro li { color: var(--muted); line-height: 1.45; }
+.intro b { color: var(--text); }
+.frames { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; padding: 16px 16px 48px; }
+figure { margin: 0; width: 360px; max-width: 100%; }
+figcaption { color: var(--muted); font-size: 13px; line-height: 1.4; margin-top: 10px; }
+figcaption b { color: var(--gold); font-weight: 600; }
+.phone { position: relative; height: 720px; border: 1px solid var(--line); border-radius: 22px; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
+.sheet { flex: 1; overflow: hidden; padding: 0 14px; display: flex; flex-direction: column; gap: 10px; }
+.grip { width: 44px; height: 4px; border-radius: 2px; background: var(--line-strong); margin: 10px auto 2px; }
+.head { display: flex; align-items: baseline; gap: 8px; }
+.head h2 { margin: 0; font-size: 20px; }
+.head .aside { flex: 1; color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.head .x { font-size: 20px; color: var(--muted); }
+/* Kapazitätskopf: zwei Kacheln nebeneinander (Handbuch: Kacheln zu zweit) */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tile { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; background: var(--card); display: grid; gap: 1px; }
+.tile small { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.tile b { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px; }
+.tile b.gold { color: var(--gold); }
+.tile b.neg { color: var(--accent-text); }
+.tile i { font-style: normal; color: var(--muted); font-size: 12px; }
+/* Unterreiter wie in Crew und Computer (.segmented) */
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line-strong); }
+.seg span { min-height: 40px; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+.seg span.on { background: var(--text); color: var(--ink); font-weight: 700; }
+/* Sperrhinweis (neu): steht oben im Reiter, einmal, deutlich */
+.lock { border: 1px solid var(--line-strong); border-left: 3px solid var(--accent); background: var(--panel); padding: 8px 10px; font-size: 14px; line-height: 1.4; }
+.lock b { font-weight: 600; }
+/* Hinweis mit ✕ (Handbuch: Meldung und Hinweis) */
+.hint { display: flex; gap: 8px; align-items: flex-start; color: var(--muted); font-size: 13px; line-height: 1.4; border-top: 1px solid var(--line); padding-top: 8px; }
+.hint > span:first-child { flex: 1; }
+.hint .x { color: var(--muted); }
+.sect { color: var(--muted); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; margin-top: 2px; }
+.sect em { font-style: normal; letter-spacing: 0; text-transform: none; color: var(--dim); }
+.row { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; min-height: 52px; }
+.row .t { flex: 1; }
+.row .t small { display: block; color: var(--muted); font-size: 12px; }
+.row.warn { border-color: var(--accent); }
+.chev { color: var(--muted); font-size: 18px; }
+/* Hardpoint-Karte (neu) */
+.hp { border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
+.hp.free { border-style: dashed; }
+.hp-head { display: flex; align-items: center; gap: 8px; }
+.hp-head b { font-size: 15px; }
+.hp-head .n { color: var(--muted); font-size: 13px; }
+.hp-head .turm { margin-left: auto; color: var(--text); font-size: 13px; border: 1px solid var(--line-strong); border-radius: 18px; min-height: 36px; padding: 0 12px; display: inline-flex; align-items: center; }
+.slots { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { min-height: 36px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 18px; font-size: 14px; }
+.chip.weapon { border-color: var(--gold); }
+.chip.weapon .x { color: var(--muted); }
+.chip.add { border-style: dashed; color: var(--gold); border-color: var(--gold); }
+.off { opacity: .35; }
+/* Liste der Werft: wie heute .shop-row, Preis als Knopf */
+.list { display: grid; }
+.li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.li .t { flex: 1; min-width: 0; }
+.li .t b { font-weight: 600; }
+.li .t b small { color: var(--muted); font-weight: 400; margin-left: 4px; }
+.li .t .m { color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.li .t .why { color: var(--dim); font-size: 12px; }
+.price { min-width: 108px; min-height: 48px; border: 1px solid var(--line-strong); padding: 4px 8px; text-align: right; font-family: 'IBM Plex Mono', monospace; position: relative; display: grid; align-content: center; }
+.price span { font-size: 14px; }
+.price small { color: var(--muted); font-size: 11px; }
+.price.no { color: var(--dim); border-color: var(--disabled); }
+.price .own { position: absolute; top: -9px; right: -9px; width: 20px; height: 20px; border-radius: 50%; background: var(--gold); color: var(--ink); font-size: 12px; display: grid; place-items: center; font-family: 'IBM Plex Sans'; }
+.group { color: var(--muted); font-size: 12px; padding-top: 2px; }
+.nav { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); padding: 8px 0 12px; font-size: 11px; color: var(--muted); text-align: center; background: var(--bg); }
+.nav .on { color: var(--text); font-weight: 700; }
+.nav.abs { position: absolute; left: 0; right: 0; bottom: 0; }
+/* Kurzdialog: Wahl, dann Hauptaktion */
+.scrim { position: absolute; inset: 0; background: var(--scrim); }
+.dialog { position: absolute; left: 10px; right: 10px; bottom: 70px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: 14px; padding: 12px; display: grid; gap: 8px; }
+.dialog h3 { margin: 0; font-size: 16px; }
+.dialog .sub { color: var(--muted); font-size: 13px; margin-top: -4px; }
+.opt { display: flex; align-items: center; gap: 10px; min-height: 48px; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; }
+.opt .r { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line-strong); }
+.opt.on { border-color: var(--gold); }
+.opt.on .r { border-color: var(--gold); background: radial-gradient(var(--gold) 45%, transparent 50%); }
+.opt .t { flex: 1; }
+.opt .t small { display: block; color: var(--muted); font-size: 12px; }
+.opt .p { font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+.opt.no { opacity: .4; }
+.btns { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 4px; }
+.btns span { min-height: 50px; display: grid; place-items: center; border: 1px solid var(--line-strong); font-size: 14px; }
+.btns .primary { background: var(--text); color: var(--ink); font-weight: 700; border-color: var(--text); }
+.note { max-width: 760px; margin: 0 auto; padding: 0 16px 40px; color: var(--muted); line-height: 1.45; }
+.note h2 { color: var(--text); font-size: 17px; }
+.note b { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="intro">
+  <h1>Werft · Entwurf, überarbeitet</h1>
+  <p>Freigegeben (Owner, 28. November 2026): <b>Unterreiter</b> Mein Schiff · Schiffe · Small Craft,
+  <b>Sperren</b> nach SR 29 und die <b>Kredit-Kachel</b>. Die Bauanleitung steht in
+  <code>docs/konzept-werft.md</code>.</p>
+  <p>Gegenüber dem ersten Entwurf: Kapazitätskopf mit zwei Kacheln (Kasse, Kredit) statt drei, keine goldene
+  Schiffskarte, keine Platzpunkte, der Grund einer Sperre deutlich statt rot-alarmierend, Einbauen im Kurzdialog
+  erst nach Wahl und mit Preis auf dem Knopf, Erklärtexte als Hinweis mit ✕ statt ⓘ.</p>
+</div>
+
+<div class="frames">
+
+<!-- 1: Mein Schiff -->
+<figure>
+<div class="phone">
+  <div class="sheet">
+    <div class="grip"></div>
+    <div class="head"><h2>Werft</h2><span class="aside">Kessra · Raumhafen A</span><span class="x">✕</span></div>
+    <div class="tiles">
+      <div class="tile"><small>Kasse</small><b>MCr 1,05</b></div>
+      <div class="tile"><small>Kredit</small><b class="gold">MCr 101,69</b><i>Cr 212.750 im Monat</i></div>
+    </div>
+    <div class="seg"><span class="on">Mein Schiff</span><span>Schiffe</span><span>Small Craft</span></div>
+    <div class="row warn"><span class="t">Schaden · 2 Treffer<small>Manöver, Turret 1 · Werft MCr 0,20</small></span><span class="chev">›</span></div>
+    <div class="sect">Bewaffnung von Kestrel <em>· 1 Hardpoint</em></div>
+    <div class="hp">
+      <div class="hp-head"><b>Hardpoint 1</b><span class="n">1/2</span><span class="turm">Double Turret ▾</span></div>
+      <div class="slots">
+        <span class="chip weapon">Beam Laser <span class="x">✕</span></span>
+        <span class="chip add">+ Waffe</span>
+      </div>
+    </div>
+    <div class="hint"><span>Einbauen bucht den Preis aus der Kasse, ohne Kredit. Ausbauen bringt nichts zurück. Preise nach SE 10.</span><span class="x">✕</span></div>
+  </div>
+  <div class="nav"><span>Log</span><span>Begegnung</span><span>Charaktere</span><span class="on">Schiff</span><span>Missionen</span></div>
+</div>
+<figcaption><b>1 · Mein Schiff</b> (Standard, wenn es ein Schiff gibt). Schaden als Zeile zur Detailseite Schaden, nur wenn es Treffer gibt. „Double Turret ▾“ öffnet den Kurzdialog Turmart, dort auch „Turret ausbauen“. „✕“ an der Waffe fragt im Kurzdialog nach.</figcaption>
+</figure>
+
+<!-- 2: Kurzdialog Waffe -->
+<figure>
+<div class="phone">
+  <div class="sheet">
+    <div class="grip"></div>
+    <div class="head"><h2>Werft</h2><span class="aside">Kessra · Raumhafen A</span><span class="x">✕</span></div>
+    <div class="tiles">
+      <div class="tile"><small>Kasse</small><b>Cr 600.000</b></div>
+      <div class="tile"><small>Kredit</small><b>schuldenfrei</b><i>&nbsp;</i></div>
+    </div>
+    <div class="seg"><span class="on">Mein Schiff</span><span>Schiffe</span><span>Small Craft</span></div>
+  </div>
+  <div class="scrim"></div>
+  <div class="dialog">
+    <h3>Waffe in Hardpoint 1</h3>
+    <div class="sub">Double Turret · Platz 2 von 2</div>
+    <div class="opt"><span class="r"></span><span class="t">Sandcaster</span><span class="p">Cr 250.000</span></div>
+    <div class="opt on"><span class="r"></span><span class="t">Pulse Laser</span><span class="p">Cr 500.000</span></div>
+    <div class="opt no"><span class="r"></span><span class="t">Missile Rack<small>Kasse zu klein</small></span><span class="p">Cr 750.000</span></div>
+    <div class="opt no"><span class="r"></span><span class="t">Beam Laser<small>Kasse zu klein</small></span><span class="p">MCr 1,00</span></div>
+    <div class="btns"><span>Abbrechen</span><span class="primary">Einbauen · Cr 500.000</span></div>
+  </div>
+  <div class="nav abs"><span>Log</span><span>Begegnung</span><span>Charaktere</span><span class="on">Schiff</span><span>Missionen</span></div>
+</div>
+<figcaption><b>2 · „+ Waffe“ angetippt.</b> Kurzdialog nach Handbuch: erst wählen, dann rechts unten einbauen; der Knopf nennt den Preis. Nach Preis sortiert; was nicht geht, ist ausgegraut und sagt warum. Ein Fehltipp kostet nichts.</figcaption>
+</figure>
+
+<!-- 3: Schiffe, Kasse klein -->
+<figure>
+<div class="phone">
+  <div class="sheet">
+    <div class="grip"></div>
+    <div class="head"><h2>Werft</h2><span class="aside">Kessra · Raumhafen A</span><span class="x">✕</span></div>
+    <div class="tiles">
+      <div class="tile"><small>Kasse</small><b class="neg">Cr 5.000</b></div>
+      <div class="tile"><small>Kredit</small><b>schuldenfrei</b><i>neu bis Cr 25.000</i></div>
+    </div>
+    <div class="seg"><span>Mein Schiff</span><span class="on">Schiffe</span><span>Small Craft</span></div>
+    <div class="list">
+      <div class="li"><span class="t"><b>Scout/Courier<small>S</small></b><div class="m">100 t · J-2 · 2G · Crew 1</div><div class="why">Anzahlung MCr 5,89 · Kasse zu klein</div></span><span class="price no"><span>MCr 29,43</span></span></div>
+      <div class="li"><span class="t"><b>Free Trader<small>A</small></b><div class="m">200 t · J-1 · 1G · Crew 4</div><div class="why">Anzahlung MCr 7,42 · Kasse zu klein</div></span><span class="price no"><span>MCr 37,08</span></span></div>
+      <div class="li"><span class="t"><b>Yacht<small>Y</small></b><div class="m">200 t · J-1 · 1G · Crew 4 · Ship's Boat</div><div class="why">Anzahlung MCr 10,21 · Kasse zu klein</div></span><span class="price no"><span>MCr 51,06</span><i class="own">✓</i></span></div>
+      <div class="li"><span class="t"><b>Safari Ship<small>K</small></b><div class="m">200 t · J-2 · 1G · Crew 5</div><div class="why">Anzahlung MCr 16,22 · Kasse zu klein</div></span><span class="price no"><span>MCr 81,08</span></span></div>
+    </div>
+    <div class="hint"><span>Bar oder über die Bank: 20 % Anzahlung, 480 Monatsraten, zusammen 220 % (SR 29).</span><span class="x">✕</span></div>
+  </div>
+  <div class="nav"><span>Log</span><span>Begegnung</span><span>Charaktere</span><span class="on">Schiff</span><span>Missionen</span></div>
+</div>
+<figcaption><b>3 · Schiffe.</b> Nach Preis. Grau statt durchgestrichen, der Grund steht in der Zeile. Die Kredit-Kachel sagt hier, bis zu welchem Preis die Kasse die Anzahlung trägt (Kasse × 5). Geht es, steht im Preisknopf „bar“ oder „Anzahlung …“ wie heute.</figcaption>
+</figure>
+
+<!-- 4: Small Craft an Raumhafen B -->
+<figure>
+<div class="phone">
+  <div class="sheet">
+    <div class="grip"></div>
+    <div class="head"><h2>Werft</h2><span class="aside">Tobia · Raumhafen B</span><span class="x">✕</span></div>
+    <div class="tiles">
+      <div class="tile"><small>Kasse</small><b>MCr 24,00</b></div>
+      <div class="tile"><small>Kredit</small><b class="gold">MCr 72,62</b><i>Cr 154.500 im Monat</i></div>
+    </div>
+    <div class="seg"><span>Mein Schiff</span><span>Schiffe</span><span class="on">Small Craft</span></div>
+    <div class="group">Laderaum von Kestrel: 52 t frei</div>
+    <div class="list">
+      <div class="li"><span class="t"><b>Fighter</b><div class="m">10 t · 6G · Pilot</div></span><span class="price"><span>MCr 18,00</span><small>bar</small></span></div>
+      <div class="li"><span class="t"><b>Slow Pinnace</b><div class="m">40 t · 2G · Pilot + Rider</div></span><span class="price"><span>MCr 18,00</span><small>bar</small></span></div>
+      <div class="li"><span class="t"><b>Pinnace</b><div class="m">40 t · 5G · Pilot + Rider</div></span><span class="price"><span>MCr 20,00</span><small>bar</small></span></div>
+      <div class="li"><span class="t"><b>Shuttle</b><div class="m">95 t · 3G · Pilot + Rider</div><div class="why">braucht 95 t im Laderaum, frei sind 52 t</div></span><span class="price no"><span>MCr 33,00</span></span></div>
+    </div>
+  </div>
+  <div class="nav"><span>Log</span><span>Begegnung</span><span>Charaktere</span><span class="on">Schiff</span><span>Missionen</span></div>
+</div>
+<figcaption><b>4 · Small Craft an Raumhafen B.</b> B baut nur ohne Jump Drive: Small Craft gehen, der Reiter Schiffe zeigt den Sperrhinweis wie Bild 5. Der freie Laderaum steht als Zeile über der Liste, nicht als Kachel.</figcaption>
+</figure>
+
+<!-- 5: Keine Werft -->
+<figure>
+<div class="phone">
+  <div class="sheet">
+    <div class="grip"></div>
+    <div class="head"><h2>Werft</h2><span class="aside">Miirasha · Raumhafen C</span><span class="x">✕</span></div>
+    <div class="tiles">
+      <div class="tile"><small>Kasse</small><b>MCr 2,40</b></div>
+      <div class="tile"><small>Kredit</small><b>schuldenfrei</b><i>hier keine Werft</i></div>
+    </div>
+    <div class="seg"><span class="on">Mein Schiff</span><span>Schiffe</span><span>Small Craft</span></div>
+    <div class="lock"><b>Hier gibt es keine Werft.</b> Umrüsten, Reparieren und Kaufen nur an Raumhafen A (Schiffe und Small Craft) oder B (nur Small Craft).</div>
+    <div class="sect">Bewaffnung von Scout/Courier <em>· 1 Hardpoint</em></div>
+    <div class="hp off">
+      <div class="hp-head"><b>Hardpoint 1</b><span class="n">0/2</span><span class="turm">Double Turret ▾</span></div>
+      <div class="slots">
+        <span class="chip add">+ Waffe</span>
+        <span class="chip add">+ Waffe</span>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><span>Log</span><span>Begegnung</span><span>Charaktere</span><span class="on">Schiff</span><span>Missionen</span></div>
+</div>
+<figcaption><b>5 · Ohne Werft</b> (Miirasha). Der Sperrhinweis steht einmal oben im Reiter, in voller Schriftgröße; alles darunter ist auf 35 % gedimmt und nicht antippbar. Dasselbe in den Reitern Schiffe und Small Craft.</figcaption>
+</figure>
+
+</div>
+
+<div class="note">
+  <h2>Was der Entwurf bewusst nicht zeigt</h2>
+  <ul>
+    <li><b>Kein Schiff:</b> Die Werft öffnet im Reiter Schiffe; Mein Schiff sagt „Noch kein Schiff“.</li>
+    <li><b>Small Craft als aktives Schiff:</b> Mein Schiff zeigt die Bewaffnung nur an, mit dem heutigen Grund.</li>
+    <li><b>Turmart-Dialog</b> und <b>Ausbauen-Dialog</b>: wie Bild 2, siehe Konzept.</li>
+    <li><b>Desktop:</b> dieselbe Seite in der Spalte.</li>
+  </ul>
+</div>
+</body>
+</html>

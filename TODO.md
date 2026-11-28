@@ -110,10 +110,11 @@ im Modell.
   nicht geortete Einheiten am zuletzt bekannten Ort. Mit ihr entscheiden: *Wer schubt, leuchtet*
   als Hausregel?
 - [ ] **Dekompression** bei Hull-Treffern (heute ohne Folgen, siehe `modell/schiffe.md`).
-- [ ] **Schiffskauf nur an einer Werft** (SR 29, `regeln-schiffe.md`): Die Werft verkauft heute
-  Standardentwürfe überall, auch an Raumhafen C (gesehen auf Miirasha), umrüsten und reparieren aber
-  nur an A oder B. Regel: A baut jedes Schiff, B nur Schiffe und Small Craft ohne Jump Drive.
-  Erst mit dem Owner klären, dann ins Modell.
+- [ ] **Werft umbauen und Schiffskauf nur an einer Werft** (freigegeben 2026-11-28): Kapazitätskopf
+  *Kasse · Kredit*, Unterreiter *Mein Schiff · Schiffe · Small Craft*, Hardpoint-Karten mit
+  Kurzdialogen statt Auswahlfeldern, Sperrhinweis; Kauf nur an Raumhafen A (Small Craft auch B).
+  Bauanleitung mit Texten, Tests und Reihenfolge: `docs/konzept-werft.md`, Entwurf
+  `docs/mock/werft.html`.
 - [ ] **Danach**, ohne eigene Stufe: Raketen aus Bauteilen nach Supplement 3, Minen, Zoll und
   Patrouille mit dem Handel, Bergung von Wracks.
 
