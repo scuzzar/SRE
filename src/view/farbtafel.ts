@@ -39,6 +39,7 @@ export const FARBTAFEL = {
   weltKleinstadt: '#e8e2d2', // das kleine Haus einer Kleinstadt, nur im Canvas
   weltStadttext: '#fff8e1', // der Namen einer Stadt auf dem Globus, nur im Canvas
   weltFahrzeug: '#aae68c', // das Abzeichen „F“ für ein Fahrzeug, nur im Canvas
+  weltHighport: '#c8d2e6', // das Abzeichen „H“ des Highports über dem Äquator, nur im Canvas
   weltKontur: '#0f0f0f', // der Rand der Abzeichen, nur im Canvas
   weltKonturWeich: '#141414', // der Rand von Haus und Städten, nur im Canvas
   weltKonturGlut: '#1e0a05', // der Rand eines Vulkans, nur im Canvas

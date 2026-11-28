@@ -427,6 +427,9 @@ Kauf in [`modell/schiffe.md`](modell/schiffe.md) unter *Erwerb*.
   im Orbit“ und der Aktionsleiste des Felds: *Hierhin reisen* (Route mit dem Shuttle oder einem
   eigenen Grav-Fahrzeug), *Gruppe setzen*, *Einkaufen*, *Markt*. *NSC platzieren* ist dort gesperrt
   (nur auf der Oberfläche). Steht die Gruppe dort, zeigt die Zeile „G“ statt „○“.
+- **Auf dem Globus** steht der Highport als Abzeichen **„H“** über dem Feld am Äquator, über dem er
+  geostationär steht (auf der Länge des Downports; ohne Stadt am Boden auf einer festen Länge). Ein
+  Tipp darauf öffnet ihn wie die Liste *Orte*; steht die Gruppe dort, daneben „G“.
 - **Dialog Landeplatz**: Der Highport steht wie jede Stadt mit Hafen in der Auswahl, mit
   „Andocken · Hafen A“ statt „Hafen A“.
 - **Systemflug**: Der Highport kreist auf der Raumkarte als kleiner Körper auf seiner Bahn. Im Blatt

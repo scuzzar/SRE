@@ -116,6 +116,12 @@ export interface GlobeView {
   readonly partyOrbit: number | undefined;
   /** Die Orbitalstadt, an der das Schiff der Gruppe angedockt ist; fehlt sonst. */
   readonly shipOrbit: number | undefined;
+  /**
+   * Der Highport auf dem Globus (2026-11-28b): seine Stadt und das Feld am Äquator, über dem er
+   * geostationär steht – auf der Länge des Downports, ohne Stadt am Boden auf einer festen Länge aus
+   * dem Schlüssel der Welt. Fehlt ohne Highport.
+   */
+  readonly highport: { readonly city: number; readonly cell: number } | undefined;
   /** Das Feld, auf dem das Schiff der Gruppe auf dieser Welt steht (2026-11-21); fehlt sonst. */
   readonly shipCell: number | undefined;
   /** Der Name des Schiffs der Gruppe, für die Liste der Orte. */
@@ -166,6 +172,30 @@ function portText(port: City['port']): string {
 
 function cityKind(city: City, index: number, highport = false): string {
   return city.cell === undefined ? (highport ? 'Highport' : 'Orbitalstadt') : city.rank === 'primary' ? (index === 0 ? 'Hauptstadt' : 'Großstadt') : 'Stadt';
+}
+
+/** Das Feld am Äquator unter dem Highport (siehe `GlobeView.highport`). */
+function highportMark(map: SurfaceMap, grid: SurfaceGrid, worldId: string): GlobeView['highport'] {
+  if (map.highport === undefined) return undefined;
+  const down = map.cities?.find((c) => c.cell !== undefined);
+  let lon: number;
+  if (down) lon = grid.lon[down.cell!]!;
+  else {
+    let hash = 0;
+    for (const ch of worldId) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    lon = (hash % 360) - 180;
+  }
+  let best = 0;
+  let score = Infinity;
+  for (let c = 0; c < grid.cells; c++) {
+    const d = Math.abs(((grid.lon[c]! - lon + 540) % 360) - 180);
+    const s = Math.abs(grid.lat[c]!) * 4 + d;
+    if (s < score) {
+      score = s;
+      best = c;
+    }
+  }
+  return { city: map.highport, cell: best };
 }
 
 /** Die Lage eines Felds in Worten, z. B. „12° N, 40° O“. */
@@ -263,6 +293,7 @@ export function globeView(campaign: Campaign, worldId: string, picked: number | 
     picked: pickedCell,
     partyHere,
     partyCell: partyHere ? placeCell(hexes, campaign.location) : undefined,
+    highport: highportMark(map, grid, worldId),
     partyOrbit: partyHere && campaign.location?.city !== undefined && map.cities?.[campaign.location.city]?.cell === undefined ? campaign.location.city : undefined,
     shipOrbit: (() => {
       const ship = shipOf(campaign);
