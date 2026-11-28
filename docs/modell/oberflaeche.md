@@ -181,6 +181,8 @@ statt einer Ausnahme für diesen Fall.
   ([Logistik](logistik.md), *Linienverkehr*, *Fahrt*): Man plant auf dem Globus eine Fahrt vom
   Highport zu einem Ziel (oder umgekehrt), die App nimmt das Shuttle als einen Abschnitt, auch
   gemischt mit Auto, Linienflug usw. Fahrpreis, Zeit, Reisetag und Log laufen wie bei jeder Fahrt.
+  Mit einem **eigenen Grav-Fahrzeug**, das den Orbit erreicht (Air/Raft, GCarrier, Speeder), geht
+  es ebenso, ohne Fahrpreis und mit der echten Flugzeit (Logistik, *Vom und zum Highport*).
 - **Mit eigenem Schiff** legt man ab und wählt einen neuen Landeplatz (wie nach einer Reise im
   System) oder fliegt im Systemflug.
 - **Auf dem Globus** erscheint der Highport wie die übrigen Orbitalstädte als Licht auf einer

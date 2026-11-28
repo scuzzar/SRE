@@ -245,6 +245,7 @@ hide <<browser>> stereotype
   class Gain <<reference>> $erschaffung
   class Place <<value>> $oberflaeche
 ' Fahrzeuge und Wege auf der Oberfläche
+  class Vehicle <<reference>> $logistik
   ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
 
 ' Kampagne
@@ -300,6 +301,7 @@ SystemJourney "*" --> "0..1" Ship : ship
 ' Laufbahnen (Referenzdaten)
 
 ' Subsektor und Welten
+Vehicle "*" -$newArrow("2026-11-28b")-> "0..1" ShipDesign : craft
 
 ' Charakter
 
@@ -323,4 +325,5 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
+class Vehicle #line:d0021b;line.bold
 @enduml

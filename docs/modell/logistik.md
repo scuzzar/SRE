@@ -63,10 +63,10 @@ Hubschrauber mieten muss, und die Gruppe fährt sie Tag für Tag ab.
     Auto). In der Suche zählt der Fahrpreis wie die Miete gegen die Zeit.
   - **Shuttle** (2026-11-28b, wartet auf Freigabe; [Highport](oberflaeche.md#highport)): der
     zweite Linienverkehr. Er fliegt nur zwischen einer Stadt mit Raumhafen A oder B (`landsAt`)
-    und dem Highport derselben Welt, nie über die Oberfläche (keine `flight`, keine `speeds`). Die
-    Flugzeit zum Highport steht am Fahrzeug (`orbitHours`, ⚑ **4 Stunden**), der Fahrpreis wie
-    beim Linienflug je Person und Stunde (⚑ **Cr 25**, also Cr 100 je Person und Flug). Kein TL
-    und keine Atmosphäre nötig: Wo ein Highport ist, fliegt das Shuttle.
+    und dem Highport derselben Welt, nie über die Oberfläche (keine `flight`, keine `speeds`;
+    `orbit` gesetzt). Er fliegt wie der Small-Craft-Entwurf **Shuttle** (`craft`, 3 G). Fahrpreis
+    wie beim Linienflug je Person und Flugstunde (⚑ Cr 100). Kein TL und keine Atmosphäre nötig:
+    Wo ein Highport ist, fliegt das Shuttle.
   Bus, Bahn und Fähre kommen vielleicht später.
 
 ## Fahrt
@@ -74,12 +74,27 @@ Hubschrauber mieten muss, und die Gruppe fährt sie Tag für Tag ab.
 *freigegeben am 15. November 2026, 2026-11-15.* Eine Fahrt (`Trip`) ist gespeicherter Stand, weil sie über
 mehrere Tage läuft und dazwischen anderes passiert (Rasten, Begegnungen, Ausspielen); sie
 übersteht einen Neustart.
-- **Vom und zum Highport** (2026-11-28b, wartet auf Freigabe): Ein Abschnitt kann am Highport
-  beginnen oder enden (`Leg.highport`: `start` bzw. `end`); das geht nur mit einem Fahrzeug mit
-  `orbitHours` (dem Shuttle). Sein einziges Feld (`cells`, darum jetzt 1..*) ist das Feld der Stadt
-  am Boden, seine Dauer `orbitHours`. Steht die Gruppe am Highport, hat die Fahrt kein Feld
-  (`/at` leer), bis der erste Abschnitt fliegt. ⚑ Ein Shuttle-Abschnitt wird nicht auf zwei
-  Reisetage verteilt; passt er nicht mehr in den Tag, fliegt er am nächsten.
+- **Vom und zum Highport** (2026-11-28b, wartet auf Freigabe; Owner: echte Flugzeit). Ein Abschnitt
+  kann am Highport beginnen oder enden (`Leg.highport`: `start` bzw. `end`), nur mit einem
+  Fahrzeug, das den Orbit erreicht (`Vehicle.orbit`). Sein einziges Feld (`cells`, darum jetzt
+  1..*) ist das Feld, an dem er vom Boden abhebt bzw. aufsetzt: beim Shuttle die Stadt mit Hafen,
+  bei einem eigenen Grav-Fahrzeug ein beliebiges Feld, auf dem es landen kann.
+  - *Strecke*: die Höhe des Highports über dem Boden, **zwei Weltradien** (er kreist im dreifachen
+    Weltradius, siehe [Highport](oberflaeche.md#highport), *Im Systemflug*).
+  - *Dauer*: mit Schub (`craft`) beschleunigt das Fahrzeug die halbe Strecke und bremst die andere
+    halbe, `2 × √(Strecke / Beschleunigung)`, ⚑ ohne Schwerkraft gerechnet; sonst Strecke durch
+    `flight`. Beispiele für Echo (Größe 5, 8.000 km): Shuttle etwa 17 Minuten, Speeder 8 Stunden,
+    Air/Raft und GCarrier 80 Stunden.
+  - Ein solcher Abschnitt wird wie jeder andere über Reisetage verteilt. ⚑ Unterwegs zum oder vom
+    Highport gibt es keinen Begegnungstest; der Standort der Fahrt (`/at`) bleibt das Feld des
+    Abschnitts, am Highport selbst ist er leer.
+  - *Welche Fahrzeuge* (`orbit`), nach der Fahrzeugtabelle in
+    [`regeln-kampf.md`](../regeln-kampf.md): **Air/Raft** ja (dort ausdrücklich „bis in den Orbit“);
+    ⚑ **GCarrier** und **Speeder** ja (Grav-Fahrzeuge mit geschlossener bzw. gepanzerter Kabine, die
+    Regel nennt den Orbit bei ihnen nicht); **Grav Belt** nein (ein offenes Geschirr, Tage im Vakuum
+    wären unsinnig); Flugzeuge, Hubschrauber, Boden- und Wasserfahrzeuge nein (sie brauchen
+    Atmosphäre oder Boden); der Linienflug nein; das Shuttle ja. ⚑ Lebenserhaltung (Vakuumanzug im
+    offenen Air/Raft) prüft die App vorerst nicht.
 - **Planen:** Die Gruppe braucht einen Aufenthaltsort mit Feld oder Stadt. Man wählt auf dem Globus
   ein Ziel auf derselben Welt; die App sucht die schnellste Route aus Abschnitten (`legs`), je mit
   einem Fahrzeug: zu Fuß, eigene Fahrzeuge aus dem Gruppengepäck, gemietete (`rented`) oder

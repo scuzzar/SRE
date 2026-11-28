@@ -1332,7 +1332,7 @@ hide <<browser>> stereotype
     atmosphere: number [0..1]
     tl: number [0..1]
     fare: number [0..1]
-    $new("2026-11-28b", "orbitHours: number [0..1]")
+    $new("2026-11-28b", "orbit: boolean")
   }
   class VehicleSpeed <<value>> $logistik {
     kmh: number
@@ -1722,6 +1722,7 @@ City --> CityRank
 City --> Port
 Item "0..1" --> "0..1" Vehicle : vehicle
 Vehicle "1" *-- "*" VehicleSpeed : speeds
+Vehicle "*" -$newArrow("2026-11-28b")-> "0..1" ShipDesign : craft
 VehicleSpeed "*" --> "0..1" Landform : on
 VehicleSpeed "*" --> "0..1" Way : along
 Vehicle "*" --> "*" Landform : landsOn

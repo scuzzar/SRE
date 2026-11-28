@@ -47,7 +47,7 @@
 !return ""
 !endfunction
 !pragma layout smetana
-title Änderung 2026-11-28b: Highport: Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als Highport (SurfaceMap.highport), die den Raumhafen der Welt trägt; andocken auch aus dem Systemflug (SpaceUnit.dockAt); zur Oberfläche mit dem Shuttle als Linienverkehr der Fahrt (Vehicle.orbitHours, Leg.highport). Dort geht alles, was an einer Stadt mit Hafen geht
+title Änderung 2026-11-28b: Highport: Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als Highport (SurfaceMap.highport), die den Raumhafen der Welt trägt; andocken auch aus dem Systemflug (SpaceUnit.dockAt); zur Oberfläche mit dem Shuttle als Linienverkehr der Fahrt (Vehicle.orbit, Vehicle.craft, Leg.highport); eigene Grav-Fahrzeuge kommen auch hoch, mit echter Flugzeit. Dort geht alles, was an einer Stadt mit Hafen geht
 hide empty members
 hide methods
 skinparam classAttributeIconSize 0
@@ -84,6 +84,33 @@ hide <<browser>> stereotype
 ' Kampagne und Charaktere
 
 ' Schiffe
+  class Ship $schiffe
+  class DesignTurret <<reference>> $schiffe
+  class ShipDesign <<reference>> $schiffe {
+    code: string
+    kind: ShipKind
+    /jumpFuel: number
+    name: string
+    hull: number
+    jump: number
+    maneuver: number
+    fuel: number
+    staterooms: number
+    lowBerths: number
+    hardpoints: number
+    cargo: number
+    crew: string
+    basePrice: number
+    months: number [0..1]
+    streamlined: boolean
+    lasers: number [0..1]
+    maneuverDrive: string [0..1]
+    jumpDrive: string [0..1]
+    powerPlant: string [0..1]
+  }
+  enum ShipKind <<value>> $schiffe
+  class ComputerModel <<reference>> $schiffe
+  class DeckPlan <<browser>> $schiffe
 
 ' Handel (Regeln: docs/regeln-handel.md)
 
@@ -147,7 +174,7 @@ hide <<browser>> stereotype
     atmosphere: number [0..1]
     tl: number [0..1]
     fare: number [0..1]
-    $new("2026-11-28b", "orbitHours: number [0..1]")
+    $new("2026-11-28b", "orbit: boolean")
   }
   class VehicleSpeed <<value>> $logistik
   class Trip $logistik {
@@ -171,16 +198,24 @@ hide <<browser>> stereotype
 ' Kampagne
 
 ' Schiffe
+Ship "*" --> "1" ShipDesign : design
+ShipDesign "1" *-- "0..*" DesignTurret : turrets {ordered}
+ShipDesign "*" --> "0..1" ComputerModel : computer
+ShipDesign --> ShipKind
+ShipDesign "*" --> "*" ShipDesign : craft {ordered}
 
 ' Handel
 
 ' Raumkarte und Systemflug
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
+SpaceUnit "*" --> "0..1" Ship : ship
 SpaceUnit "*" -$newArrow("2026-11-28b")-> "0..1" City : dockAt
+SpaceUnit "*" --> "0..1" ShipDesign : design
 SpaceUnit "1" *-- "0..1" ShipDamage : damage
 SpaceUnit --> Intent
 SystemFlight "*" --> "1" SpaceUnit : party
 SpaceUnit "1" *-- "*" TrackPoint : track {ordered}
+DeckPlan "*" --> "1" ShipDesign : design
 
 ' Zeit und Reisen
 
@@ -205,6 +240,7 @@ Place "*" --> "0..1" City : city
 City --> CityRank
 City --> Port
 Vehicle "1" *-- "*" VehicleSpeed : speeds
+Vehicle "*" -$newArrow("2026-11-28b")-> "0..1" ShipDesign : craft
 Vehicle "*" --> "*" Landform : landsOn
 Vehicle "*" --> "*" Port : landsAt
 Trip "1" *-- "1..*" Leg : legs {ordered}
