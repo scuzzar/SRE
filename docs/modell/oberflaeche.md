@@ -187,8 +187,10 @@ statt einer Ausnahme für diesen Fall.
   dauert bis zur geostationären Bahn Tage.
 - **Mit eigenem Schiff** legt man ab und wählt einen neuen Landeplatz (wie nach einer Reise im
   System) oder fliegt im Systemflug.
-- **Auf dem Globus** erscheint der Highport wie die übrigen Orbitalstädte als Licht auf einer
-  Umlaufbahn und in der Liste *Orte*, als Highport gekennzeichnet.
+- **Auf dem Globus** steht der Highport in der Liste *Orte*, als Highport gekennzeichnet, und als
+  Zeichen über dem Feld am Äquator, über dem er geostationär steht (auf der Länge des Downports,
+  ohne Stadt am Boden auf einer festen Länge aus dem Schlüssel der Welt). Nur Darstellung, gespeichert
+  wird es nicht.
 - **Im Systemflug** (Owner: gleich mit der Raumkarte; Bereich [Raum](raum.md)):
   - *Wo* (Owner: geostationär): Der Highport steht auf der Raumkarte als **Station** auf der
     **geostationären Bahn** seiner Welt; er kreist in einem Welttag einmal herum und steht so immer

@@ -213,3 +213,16 @@ describe('Ältere Spielstände', () => {
     expect(await repository.loadShopHintHidden()).toBe(true);
   });
 });
+
+describe('Highport beim Laden aus dem Gerätespeicher (2026-11-28b)', () => {
+  it('eine gespeicherte Welt mit Globus und Raumhafen B ohne Städte bekommt ihren Highport', () => {
+    const demo = createDemoCampaign(fixedClock());
+    const hex = demo.hexes[0]!;
+    const main = hex.worlds.find((w) => w.id === hex.main)!;
+    const echo = { ...main, name: 'Echo', uwp: { ...main.uwp, starport: 11, population: 1 }, populationMultiplier: 4, map: { landforms: 'o' } };
+    const stored: Campaign = { ...demo, hexes: [{ ...hex, worlds: hex.worlds.map((w) => (w.id === main.id ? echo : w)) }, ...demo.hexes.slice(1)] };
+    const map = upgraded(stored).hexes[0]!.worlds.find((w) => w.id === main.id)!.map!;
+    expect(map.highport).toBe(0);
+    expect(map.cities?.[0]).toMatchObject({ name: 'Echo Highport', population: 1, multiplier: 4, port: 'B' });
+  });
+});

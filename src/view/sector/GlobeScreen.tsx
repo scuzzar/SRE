@@ -304,6 +304,13 @@ export function GlobeScreen({
     if (!tap) return;
     setPanel(undefined);
     const point = pointAt(e);
+    // Das Abzeichen des Highports (2026-11-28b) öffnet ihn wie die Liste *Orte*.
+    const station = double ? undefined : highportHit(globe, camera, view, 1, point.x, point.y);
+    if (station !== undefined) {
+      cancelPendingTap();
+      game.pickOrbit(station);
+      return;
+    }
     const cell = cellAt(globe, camera, view, point.x, point.y);
     if (double) {
       // Doppeltippen: auf die Stelle zu drehen und eine Stufe hineinzoomen.
@@ -794,6 +801,19 @@ export function FieldCard({
  * Zeichen auf dem Globus: Kleinstädte außerhalb des besiedelten Gebiets, Städte, Vulkane, Ereignisse, NSC, die Gruppe, das angetippte
  * Feld als Ring (nur ohne WebGL). Flüsse und Straßen zeichnet die Grafikkarte (globe-gl.ts), ohne WebGL stehen sie in der Textur.
  */
+/** Wo das Abzeichen des Highports neben seinem Feld sitzt, in Punkten (über dem Feld). */
+const HIGHPORT_OFFSET = [0, -16] as const;
+
+/** Trifft ein Tipp das Abzeichen des Highports? Dann die Nummer seiner Stadt. */
+function highportHit(globe: GlobeView, camera: Camera, view: Viewport, scale: number, x: number, y: number): number | undefined {
+  if (!globe.highport) return undefined;
+  const p = screenOf(globe, camera, view, globe.highport.cell);
+  if (!p) return undefined;
+  const bx = p.x + HIGHPORT_OFFSET[0] * scale;
+  const by = p.y + HIGHPORT_OFFSET[1] * scale;
+  return Math.hypot(x - bx, y - by) <= 14 * scale ? globe.highport.city : undefined;
+}
+
 function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Camera, view: Viewport, scale: number, ring: boolean, landing = false): void {
   const at = (cell: number) => screenOf(globe, camera, view, cell);
   // Kleinstädte außerhalb des besiedelten Gebiets: ein kleines helles Haus, sobald man etwas
@@ -928,6 +948,13 @@ function drawMarkers(ctx: CanvasRenderingContext2D, globe: GlobeView, camera: Ca
   for (const n of globe.npcs) if (n.cell !== undefined) npcCells.set(n.cell, (npcCells.get(n.cell) ?? 0) + 1);
   for (const [cell, count] of npcCells) badge(cell, -8, -8, mitDeckkraft(FARBTAFEL.weltNsc, 0.95), count > 1 ? String(count) : 'N');
   if (globe.partyCell !== undefined) badge(globe.partyCell, 0, 10, FARBTAFEL.weltGruppe, 'G');
+  // Der Highport (2026-11-28b): ein Abzeichen „H“ über dem Feld am Äquator, über dem er steht; ist
+  // die Gruppe dort, daneben „G“. Ein Tipp darauf öffnet ihn (siehe `highportHit`).
+  if (globe.highport) {
+    const [dx, dy] = HIGHPORT_OFFSET;
+    badge(globe.highport.cell, dx, dy, FARBTAFEL.weltHighport, 'H');
+    if (globe.partyOrbit === globe.highport.city) badge(globe.highport.cell, dx + 15, dy, FARBTAFEL.weltGruppe, 'G');
+  }
   // Das Schiff der Gruppe, wo es steht (2026-11-21).
   // Das Schiff der Gruppe: ein gelbes Abzeichen mit dem Keil des Schiffs, etwas größer als die
   // anderen. Während der Landeanimation steht dort das landende Schiff statt des Zeichens.
