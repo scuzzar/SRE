@@ -111,7 +111,7 @@ hide <<browser>> stereotype
     atmosphere: number [0..1]
     tl: number [0..1]
     fare: number [0..1]
-    $new("2026-11-28b", "orbit: boolean")
+    orbit: boolean
   }
   class VehicleSpeed <<value>> $logistik {
     kmh: number
@@ -126,9 +126,9 @@ hide <<browser>> stereotype
     /hours: number
     /rent: number
     /fare: number
-    $new("2026-11-28b", "highport: LegEnd [0..1]")
+    highport: LegEnd [0..1]
   }
-  enum LegEnd <<value>> $logistik $newClass("2026-11-28b") {
+  enum LegEnd <<value>> $logistik {
     start
     end
   }
@@ -162,7 +162,7 @@ hide <<browser>> stereotype
 ' Subsektor und Welten
 Item "0..1" --> "0..1" Vehicle : vehicle
 Vehicle "1" *-- "*" VehicleSpeed : speeds
-Vehicle "*" -$newArrow("2026-11-28b")-> "0..1" ShipDesign : craft
+Vehicle "*" --> "0..1" ShipDesign : craft
 VehicleSpeed "*" --> "0..1" Landform : on
 VehicleSpeed "*" --> "0..1" Way : along
 Vehicle "*" --> "*" Landform : landsOn
@@ -170,11 +170,9 @@ Vehicle "*" --> "*" Port : landsAt
 Campaign "1" *-- "0..1" Trip : trip
 Trip "1" *-- "1..*" Leg : legs {ordered}
 Leg "*" --> "1" Vehicle : by
-Leg "*" -$goneArrow("2026-11-28b")-> "2..*" SurfaceCell : cells {ordered}
-Leg "*" -$newArrow("2026-11-28b")-> "1..*" SurfaceCell : cells {ordered}
-Leg -$newArrow("2026-11-28b")-> LegEnd
-Trip "*" -$goneArrow("2026-11-28b")-> "1" SurfaceCell : /at
-Trip "*" -$newArrow("2026-11-28b")-> "0..1" SurfaceCell : /at
+Leg "*" --> "1..*" SurfaceCell : cells {ordered}
+Leg --> LegEnd
+Trip "*" --> "0..1" SurfaceCell : /at
 LogEntry <|-- TripDay
 Booking "*" --> "0..1" TripDay : rentFor
 
@@ -200,6 +198,4 @@ legend right
   |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
   |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
 endlegend
-class Vehicle #line:d0021b;line.bold
-class Leg #line:d0021b;line.bold
 @enduml

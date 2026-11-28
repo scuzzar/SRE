@@ -525,6 +525,8 @@ des Bereichs (siehe die Tabelle oben). Hier stehen nur die, die für alle Bereic
 Der Code für Version 1 liegt unter `src/` (siehe [ARCHITECTURE.md](../ARCHITECTURE.md)). Er folgt dem
 Diagramm mit diesen Ausnahmen:
 
+- **Highport** (2026-11-28b, [`modell/oberflaeche.md`](modell/oberflaeche.md#highport),
+  [`modell/logistik.md`](modell/logistik.md)) ist noch nicht gebaut.
 - **Kauf nur an einer Werft** (2026-11-28, [`modell/schiffe.md`](modell/schiffe.md), *Erwerb*,
   *Wo gekauft wird*) ist noch nicht gebaut: `buyShip` verkauft heute an jedem Ort. Die Bauanleitung
   mit der überarbeiteten Werft steht in [`konzept-werft.md`](konzept-werft.md).

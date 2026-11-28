@@ -287,7 +287,7 @@ SystemFlight "*" --> "1" World : world
 SystemFlight "1" *-- "1..*" SpaceUnit : units {ordered}
 SystemFlight --> BattlePhase : phase
 SpaceUnit "*" --> "0..1" Ship : ship
-SpaceUnit "*" -$newArrow("2026-11-28b")-> "0..1" City : dockAt
+SpaceUnit "*" --> "0..1" City : dockAt
 SpaceUnit "*" --> "0..1" ShipDesign : design
 SpaceUnit "1" *-- "0..1" ShipDamage : damage
 Ship "1" *-- "0..1" ShipDamage : damage

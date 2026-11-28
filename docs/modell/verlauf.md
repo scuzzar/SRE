@@ -770,7 +770,7 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > *Erwerb*, *Wo gekauft wird*. Zugleich freigegeben: die überarbeitete Werft als Oberfläche
 > ([`../konzept-werft.md`](../konzept-werft.md), GUI-Handbuch *Werft*).
 
-> Am 28. November 2026 vorgeschlagen, **wartet auf Freigabe** (Kennzeichen **2026-11-28b**):
+> Am 28. November 2026 freigegeben (Kennzeichen **2026-11-28b**; Owner: „Bau es selbst“):
 > **Highport.** Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als
 > Highport (`SurfaceMap.highport`), die den Raumhafen der Welt trägt; dort dockt man an, handelt,
 > kauft ein, tankt und nutzt die Werft. Das Shuttle ist ein Linienverkehr der Fahrt (`Vehicle.orbit`,

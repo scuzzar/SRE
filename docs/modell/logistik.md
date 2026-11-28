@@ -61,7 +61,7 @@ Hubschrauber mieten muss, und die Gruppe fährt sie Tag für Tag ab.
   - hat keinen Fahrplan: Man fliegt sofort, der Flug ist ein Abschnitt der Fahrt wie jeder andere;
   - erscheint bei den Varianten als „Linienflug“, auch gemischt (Auto zum Flughafen, Linienflug,
     Auto). In der Suche zählt der Fahrpreis wie die Miete gegen die Zeit.
-  - **Shuttle** (2026-11-28b, wartet auf Freigabe; [Highport](oberflaeche.md#highport)): der
+  - **Shuttle** (2026-11-28b; [Highport](oberflaeche.md#highport)): der
     zweite Linienverkehr. Er fliegt nur zwischen einer Stadt mit Raumhafen A oder B (`landsAt`)
     und dem Highport derselben Welt, nie über die Oberfläche (keine `flight`, keine `speeds`;
     `orbit` gesetzt). Er fliegt wie der Small-Craft-Entwurf **Shuttle** (`craft`, 3 G). Fahrpreis
@@ -74,7 +74,7 @@ Hubschrauber mieten muss, und die Gruppe fährt sie Tag für Tag ab.
 *freigegeben am 15. November 2026, 2026-11-15.* Eine Fahrt (`Trip`) ist gespeicherter Stand, weil sie über
 mehrere Tage läuft und dazwischen anderes passiert (Rasten, Begegnungen, Ausspielen); sie
 übersteht einen Neustart.
-- **Vom und zum Highport** (2026-11-28b, wartet auf Freigabe; Owner: echte Flugzeit). Ein Abschnitt
+- **Vom und zum Highport** (2026-11-28b; Owner: echte Flugzeit). Ein Abschnitt
   kann am Highport beginnen oder enden (`Leg.highport`: `start` bzw. `end`), nur mit einem
   Fahrzeug, das den Orbit erreicht (`Vehicle.orbit`). Sein einziges Feld (`cells`, darum jetzt
   1..*) ist das Feld, an dem er vom Boden abhebt bzw. aufsetzt: beim Shuttle die Stadt mit Hafen,

@@ -131,7 +131,7 @@ Feld und Stadt gehören zur Oberflächenkarte derselben Welt; eine Orbitalstadt 
 
 ## Highport
 
-*Änderung 2026-11-28b, wartet auf Freigabe* (Antworten des Owners vom 28. November 2026 eingearbeitet). Anlass: Echo (B537100-8) hat Raumhafen B, aber bei
+*freigegeben am 28. November 2026, 2026-11-28b.* Anlass: Echo (B537100-8) hat Raumhafen B, aber bei
 Bevölkerung 1 keine Stadt; der Hafen hing an keiner Stadt, und Werft, Markt und Landeplatz waren
 nicht zu erreichen. Der Owner will den Highport als eigenen Ort, an dem man andockt und handelt,
 statt einer Ausnahme für diesen Fall.
