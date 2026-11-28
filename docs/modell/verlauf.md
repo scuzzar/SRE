@@ -769,3 +769,10 @@ Regeln der Bereiche. Die Bedienung, die hier noch vorkommt, ist die von damals.
 > Gruppe. Der Ship-Vorteil der Abmusterung bleibt überall. Regeln in [`schiffe.md`](schiffe.md) unter
 > *Erwerb*, *Wo gekauft wird*. Zugleich freigegeben: die überarbeitete Werft als Oberfläche
 > ([`../konzept-werft.md`](../konzept-werft.md), GUI-Handbuch *Werft*).
+
+> Am 28. November 2026 vorgeschlagen, **wartet auf Freigabe** (Kennzeichen **2026-11-28b**):
+> **Highport.** Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als
+> Highport (`SurfaceMap.highport`), die den Raumhafen der Welt trägt; dort dockt man an, handelt,
+> kauft ein, tankt und nutzt die Werft. Anlass: Echo (B537100-8) ohne Städte. Regeln in
+> [`oberflaeche.md`](oberflaeche.md#highport). Der Ausschnitt dazu liegt unter
+> [`changes/2026-11-28b-highport.png`](../changes/2026-11-28b-highport.png).

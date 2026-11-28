@@ -1703,6 +1703,7 @@ SurfaceCell "*" --> "0..1" Volcano : volcano
 SurfaceMap "1" *-- "*" River : rivers
 SurfaceMap "1" *-- "*" Road : roads
 SurfaceMap "1" *-- "*" City : cities
+SurfaceMap "1" -$newArrow("2026-11-28b")-> "0..1" City : highport
 River "*" --> "2..*" SurfaceCell : cells {ordered}
 Road "*" --> "2..*" SurfaceCell : cells {ordered}
 City "*" --> "0..1" SurfaceCell : cell

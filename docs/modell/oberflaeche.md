@@ -128,3 +128,52 @@ Feld und Stadt gehören zur Oberflächenkarte derselben Welt; eine Orbitalstadt 
   NSC dort leben; auf einer Welt alle NSC dieser Welt, ob auf der ganzen Welt oder genauer.
 - **Bestehende Kampagnen:** Ein bisheriger Aufenthaltsort bzw. Ort eines NSC wird ein Ort mit
   dieser Welt, ohne Feld und Stadt.
+
+## Highport
+
+*Änderung 2026-11-28b, wartet auf Freigabe.* Anlass: Echo (B537100-8) hat Raumhafen B, aber bei
+Bevölkerung 1 keine Stadt; der Hafen hing an keiner Stadt, und Werft, Markt und Landeplatz waren
+nicht zu erreichen. Der Owner will den Highport als eigenen Ort, an dem man andockt und handelt,
+statt einer Ausnahme für diesen Fall.
+
+- **Wer einen hat.** Jede Welt mit Oberflächenkarte und **Raumhafen A oder B** (Starport des UWP;
+  Nebenwelten haben Spaceports und keinen Highport) hat **genau einen Highport**: eine Orbitalstadt
+  (`City` ohne `cell`), auf die `SurfaceMap.highport` zeigt. Das *World Builder's Handbook* (S. 74,
+  siehe [Konzept Oberflächenkarte](../konzept-oberflaechenkarte.md), 10d) verlangt bei A und B
+  mindestens eine Orbitalstadt; eine davon ist der Highport. Welten ohne Oberflächenkarte
+  (Asteroidengürtel) haben keinen; dort gilt weiter der Raumhafen des UWP für die ganze Welt.
+- **Sein Hafen** ist der Starport der Welt (`port` A bzw. B). Die erste Hauptstadt behält ihren
+  Hafen wie bisher (der **Downport**); an A und B gibt es also oben und unten einen Hafen derselben
+  Klasse. Hat die Welt keine Stadt am Boden, ist der Highport ihr einziger Hafen.
+- **Name**: „<Weltname> Highport“ (ohne Weltname „Highport“), umbenennbar wie jede Stadt.
+- **Beim Erzeugen der Karte**, nach den Orbitalstädten (Konzept 10d):
+  1. Gibt es schon eine Orbitalstadt, wird die größte der Highport; ihr Hafen wird der Starport.
+  2. Sonst wird wie bisher die kleinste Nebenstadt in den Orbit verlegt und Highport.
+  3. Gibt es keine Stadt, die sich verlegen lässt, und gar keine Stadt (dünn besiedelt, wie Echo),
+     entsteht der Highport mit der **ganzen Bevölkerung** der Welt (`population` = Bevölkerung des
+     UWP, `multiplier` = `populationMultiplier`, Rang Hauptstadt). ⚑
+  4. Gibt es Städte, aber keine verlegbare (nur Hauptstädte), entsteht der Highport als **Station
+     ohne eigene Einwohner** (`population` 0, `multiplier` 1, gelesen als Personal der Station). ⚑
+     Bei Bevölkerung 0 der Welt ebenso.
+- **Bestehende Karten** bekommen ihren Highport beim Laden, ohne neu zu würfeln: Ist eine
+  Orbitalstadt da, wird die größte der Highport (Schritt 1). Sonst kommt eine neue Orbitalstadt
+  **ans Ende** der Städteliste (Schritt 3 bzw. 4), damit die Nummern der Städte und alle Orte,
+  die auf sie zeigen, gültig bleiben. Die Einwohner der übrigen Städte ändern sich nicht.
+- **Was dort geht.** Der Highport ist eine Stadt mit Hafen; alles, was an einer Stadt mit Hafen
+  geht, geht dort:
+  - *Landeplatz* ([Reise](reise.md), *Landeplatz*): Er steht in der Auswahl wie jede Stadt mit
+    Hafen, mit der Handlung **„Andocken“** statt „Landen“; die Gruppe ist danach am Highport
+    (`Campaign.location` mit dieser Stadt), mit eigenem Schiff auch das Schiff (`Ship.place`).
+    Ein angedocktes Schiff ist **nicht** `inOrbit` (das bleibt für Schiffe ohne Hafen in der
+    Umlaufbahn) und zahlt Liegegebühren wie in jedem Hafen.
+  - *Tanken*, *Markt* und *Aufträge* ([Handel](handel.md)), *Einkaufen* im Shop (Tech-Level der
+    Welt) und die *Werft* ([Schiffe](schiffe.md): Umrüsten, Reparieren, Kauf nach SR 29 an A,
+    Small Craft auch an B) wie an jeder Stadt mit diesem Hafen.
+  - *Begegnungen* wie in einer Stadt. ⚑
+  - *Nicht*: Fahrten über die Oberfläche beginnen oder enden dort nicht; der Highport hat kein Feld.
+- **Zwischen Highport und Oberfläche** pendelt ein Shuttle (offene Frage: Preis und Dauer). Mit
+  eigenem Schiff legt man ab und wählt einen neuen Landeplatz, wie nach einer Reise im System.
+- **Auf dem Globus und der Raumkarte** erscheint der Highport wie die übrigen Orbitalstädte als
+  Licht auf einer Umlaufbahn und in der Liste *Orte*, als Highport gekennzeichnet. Andocken aus
+  dem Systemflug ist offen (siehe [Konzept Raumkampf](../konzept-raumkampf.md), *Anflug und
+  Andocken*).

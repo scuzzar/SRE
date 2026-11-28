@@ -1,0 +1,173 @@
+' Erzeugt von .claude/skills/domain-model/scripts/views.mjs aus domain-model.puml; nicht von Hand ändern.
+@startuml
+!$change = "2026-11-28b"
+' Markierung offener Änderungen (siehe Skill domain-model, „Ausschnitte und Markierungen“).
+' Ein Kennzeichen wie "2026-11-06" steht an allem, was eine noch nicht freigegebene Änderung
+' bringt oder streicht; nach der Freigabe kommen die Kennzeichen wieder heraus. Rot ist also immer,
+' was noch nicht freigegeben ist. Ein Änderungsausschnitt setzt $change auf sein Kennzeichen und
+' zeigt nur diese Änderung rot; sonst ist alles Offene rot.
+!if %not(%variable_exists("$change"))
+!$change = "*"
+!endif
+!function $marked($c)
+!return $change == "*" || $change == $c
+!endfunction
+' Neues oder geändertes Feld
+!function $new($c, $t)
+!if $marked($c)
+!return "<color:#d0021b><b>" + $t + "</b></color>"
+!endif
+!return $t
+!endfunction
+' Entfallendes Feld: rot durchgestrichen, solange die Änderung offen ist
+!procedure $gone($c, $t)
+!if $marked($c)
+<color:#d0021b><s>$t</s></color>
+!endif
+!endprocedure
+' Neue Klasse: roter Rahmen
+!function $newClass($c)
+!if $marked($c)
+!return "#line:d0021b;line.bold"
+!endif
+!return ""
+!endfunction
+' Neuer Pfeil: rot und dick, z. B. A "1" -$newArrow("2026-11-06")-> "*" B
+!function $newArrow($c)
+!if $marked($c)
+!return "[#d0021b,bold]"
+!endif
+!return ""
+!endfunction
+' Entfallender Pfeil: rot gestrichelt, solange die Änderung offen ist
+!function $goneArrow($c)
+!if $marked($c)
+!return "[#d0021b,dashed]"
+!endif
+!return ""
+!endfunction
+!pragma layout smetana
+title Änderung 2026-11-28b: Highport: Jede Welt mit Oberflächenkarte und Raumhafen A oder B hat genau eine Orbitalstadt als Highport (SurfaceMap.highport), die den Raumhafen der Welt trägt. Dort dockt man an und kann alles, was an einer Stadt mit Hafen geht: Markt, Aufträge, Einkaufen, Tanken, Werft
+hide empty members
+hide methods
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #e8ecfb
+  BorderColor #5b64b8
+  BackgroundColor<<transient>> #f4f4f4
+  BorderColor<<transient>> #8a8a8a
+  BackgroundColor<<reference>> #e6f4e6
+  BorderColor<<reference>> #4f9a4f
+  BackgroundColor<<value>> #ffffff
+  BorderColor<<value>> #8a8a8a
+  BackgroundColor<<browser>> #fdf1dc
+  BorderColor<<browser>> #b8862e
+}
+skinparam legendBackgroundColor #ffffff
+skinparam legendBorderColor #8a8a8a
+<style>
+classDiagram {
+  class {
+    .transient {
+      LineStyle 5-3
+    }
+  }
+}
+</style>
+hide <<transient>> stereotype
+hide <<reference>> stereotype
+hide <<value>> stereotype
+hide <<browser>> stereotype
+
+' Kampagne und Charaktere
+
+' Schiffe
+
+' Handel (Regeln: docs/regeln-handel.md)
+
+' Raumkarte und Systemflug (Konzept: docs/konzept-raumkampf.md, Stufe 1)
+
+' Charaktererschaffung und Lebenslauf
+
+' Subsektor und Welten
+  class World $sektor
+
+' Missionen
+
+' Verlauf
+
+' Zeit und Reisen
+
+' Entwürfe: flüchtig, zwischen zwei Eingaben da, nie gespeichert (im Code: model/draft/)
+
+' Referenzdaten
+  class SurfaceMap $oberflaeche {
+    /cells: number
+  }
+  class SurfaceCell <<value>> $oberflaeche
+  class River <<value>> $oberflaeche
+  class Road <<value>> $oberflaeche
+  class City $oberflaeche {
+    name: string
+    population: number
+    multiplier: number
+    rank: CityRank
+    port: Port [0..1]
+  }
+  enum CityRank <<value>> $oberflaeche
+  enum Port <<value>> $oberflaeche
+  class Place <<value>> $oberflaeche
+' Fahrzeuge und Wege auf der Oberfläche
+  ' Was ein verworfener Lauf eines NSC gab; die Wartenscheibe zählt mit.
+
+' Kampagne
+
+' Schiffe
+
+' Handel
+
+' Raumkarte und Systemflug
+
+' Zeit und Reisen
+
+' Charaktererschaffung und Lebenslauf
+
+' Laufbahnen (Referenzdaten)
+
+' Subsektor und Welten
+World "1" *-- "0..1" SurfaceMap : map
+SurfaceMap "1" *-- "/cells" SurfaceCell : cells {ordered}
+SurfaceMap "1" *-- "*" River : rivers
+SurfaceMap "1" *-- "*" Road : roads
+SurfaceMap "1" *-- "*" City : cities
+SurfaceMap "1" -$newArrow("2026-11-28b")-> "0..1" City : highport
+City "*" --> "0..1" SurfaceCell : cell
+Place "*" --> "0..1" City : city
+City --> CityRank
+City --> Port
+
+' Charakter
+
+' Waffen (Referenzdaten)
+
+' Verlauf
+
+' Probe
+
+' Angriff
+
+' Begegnung
+
+' Karte
+
+
+legend right
+  |<#e8ecfb> <color:#5b64b8>████</color> | Spielstand, wird gespeichert |
+  |<#f4f4f4> <color:#8a8a8a>╌╌╌╌</color> | Flüchtig: zwischen zwei Eingaben da, nie gespeichert |
+  |<#e6f4e6> <color:#4f9a4f>████</color> | Referenzdaten: Tabellen, in jeder Kampagne gleich |
+  |<#ffffff> <color:#8a8a8a>□□□□</color> | Wert oder Werteliste |
+  |<#fdf1dc> <color:#b8862e>████</color> | Über Kampagnen hinweg: nicht im Spielstand, mit OneDrive abgeglichen, nicht exportiert |
+endlegend
+@enduml
