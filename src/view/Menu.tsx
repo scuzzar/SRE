@@ -3,6 +3,7 @@ import type { Snapshot } from '../controller';
 import { useGame } from './game-context';
 import { FullscreenButton } from './FullscreenButton';
 import { CloseIcon } from './icons';
+import { versionLine } from './build-info';
 
 /**
  * Das Menü hinter ☰: unter „Kampagne“ die Kampagnenwahl (wechseln, neu, umbenennen, löschen,
@@ -42,6 +43,7 @@ export function Menu({ view, onClose }: { view: Snapshot; onClose: () => void })
           Über die App
         </button>
         <span className="menu-note">Installieren, Vibration, Quellen</span>
+        <span className="menu-version">{versionLine}</span>
       </nav>
     </div>
   );

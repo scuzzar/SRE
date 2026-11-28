@@ -178,7 +178,8 @@ statt einer Ausnahme für diesen Fall.
   - *Nicht*: Fahrten über die Oberfläche beginnen oder enden dort nicht; der Highport hat kein Feld.
 - **Shuttle** (Owner: mit Fahrpreis und Zeit, über das normale System der Fahrt). Ohne eigenes
   Schiff kommt die Gruppe mit dem **Shuttle** zwischen dem Highport und einer Stadt mit Raumhafen
-  A oder B derselben Welt hin und her. Das Shuttle ist ein **Linienverkehr** der Fahrt
+  A oder B derselben Welt hin und her; ⚑ hat die Welt keine solche Stadt (wie Echo), landet es auf
+  jedem Feld an Land (Owner, 28. November 2026). Das Shuttle ist ein **Linienverkehr** der Fahrt
   ([Logistik](logistik.md), *Linienverkehr*, *Fahrt*): Man plant auf dem Globus eine Fahrt vom
   Highport zu einem Ziel (oder umgekehrt), die App nimmt das Shuttle als einen Abschnitt, auch
   gemischt mit Auto, Linienflug usw. Fahrpreis, Zeit, Reisetag und Log laufen wie bei jeder Fahrt.

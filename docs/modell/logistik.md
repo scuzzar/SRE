@@ -64,6 +64,8 @@ Hubschrauber mieten muss, und die Gruppe fährt sie Tag für Tag ab.
   - **Shuttle** (2026-11-28b; [Highport](oberflaeche.md#highport)): der
     zweite Linienverkehr. Er fliegt nur zwischen einer Stadt mit Raumhafen A oder B (`landsAt`)
     und dem Highport derselben Welt, nie über die Oberfläche (keine `flight`, keine `speeds`;
+    ⚑ hat die Welt keine solche Stadt am Boden, landet es auf jedem Feld an Land, Owner, 28. November
+    2026, wie beim Landeplatz ohne Hafen;
     `orbit` gesetzt). Er fliegt wie der Small-Craft-Entwurf **Shuttle** (`craft`, 3 G). Fahrpreis
     wie beim Linienflug je Person und Flugstunde (⚑ Cr 100). Kein TL und keine Atmosphäre nötig:
     Wo ein Highport ist, fliegt das Shuttle.

@@ -4737,6 +4737,19 @@ button:disabled {
   color: var(--muted);
 }
 
+/* Die Versionsnummer ganz unten im Menü: klein, in Mono, damit man sie beim Melden eines Fehlers abliest. */
+.menu-version {
+  margin-top: auto;
+  padding: 12px 16px 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.about-version {
+  font-family: var(--mono);
+}
+
 
 .generation-target {
   margin: 0;

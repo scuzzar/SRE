@@ -12,7 +12,7 @@ import { itemOf, ref } from './reference';
 import { gridSize, worldOf, type NamedWorld } from './sector';
 import type { Booking } from './shop';
 import { surfaceGrid, type SurfaceGrid } from './surface-grid';
-import type { SurfaceMap } from './surface-map';
+import { isWaterLandform, landformAt, type SurfaceMap } from './surface-map';
 import { dayOf } from './time';
 import { afterTime } from './upkeep';
 import { distanceKm, flies, landsAt, orbitOnly, radiusKm, stepSpeed, vehicleOf, vehicleOfItem, vehicles, WALK, waysOf, worksIn, scheduled, type Vehicle, type Ways } from './vehicle';
@@ -269,6 +269,16 @@ export function scheduledVehicles(surface: TripSurface): readonly Vehicle[] {
   return vehicles.filter((v) => scheduled(v) && !orbitOnly(v) && (v.tl ?? 0) <= surface.tech && worksIn(v, surface.atmosphere));
 }
 
+/**
+ * Ob das Shuttle auf diesem Feld landet (2026-11-28b): in einer Stadt mit passendem Hafen; hat die Welt
+ * keinen solchen Hafen am Boden, auf jedem Feld an Land (Owner, 28. November 2026).
+ */
+export function shuttleLandsOn(shuttle: Vehicle, surface: TripSurface, cell: number): boolean {
+  if (landsAt(shuttle, surface.map, surface.ways, cell)) return true;
+  const harbour = [...surface.ways.cityAt.keys()].some((c) => landsAt(shuttle, surface.map, surface.ways, c));
+  return !harbour && !isWaterLandform(landformAt(surface.map, cell));
+}
+
 /** Der Linienverkehr zum Highport (das Shuttle): nur, wo die Welt einen hat. */
 export function shuttles(surface: TripSurface): readonly Vehicle[] {
   return surface.map.highport === undefined ? [] : vehicles.filter((v) => scheduled(v) && orbitOnly(v));
@@ -326,7 +336,9 @@ function orbitOptions(campaign: Campaign, target: number | 'highport'): readonly
   // Das Shuttle über die nächsten Häfen, an denen es landet.
   const near = up ? start! : target;
   for (const shuttle of shuttles(surface)) {
-    const ports = [...surface.ways.cityAt.keys()].filter((c) => landsAt(shuttle, surface.map, surface.ways, c));
+    const harbours = [...surface.ways.cityAt.keys()].filter((c) => landsAt(shuttle, surface.map, surface.ways, c));
+    // Ohne Hafen am Boden landet das Shuttle auf jedem Feld an Land (Owner, 28. November 2026).
+    const ports = harbours.length > 0 ? harbours : shuttleLandsOn(shuttle, surface, near) ? [near] : [];
     ports.sort((a, b) => distanceKm(surface.grid, surface.size, a, near) - distanceKm(surface.grid, surface.size, b, near));
     for (const port of ports.slice(0, SHUTTLE_PORTS)) {
       const flight: Leg = { by: shuttle.id, rented: false, cells: [port], highport: up ? 'end' : 'start' };
@@ -594,7 +606,7 @@ export function checkTrip(campaign: Campaign, trip: Trip): void {
       if (leg.cells.length !== 1 || !Number.isInteger(leg.cells[0]) || leg.cells[0]! < 0 || leg.cells[0]! >= surface.grid.cells) throw new DomainError('Ein Abschnitt zum Highport hat genau ein Feld.');
       if ((leg.highport === 'start' && i !== 0) || (leg.highport === 'end' && i !== trip.legs.length - 1)) throw new DomainError('Zum Highport geht es nur am Anfang oder Ende einer Fahrt.');
       if (i > 0 && trip.legs[i - 1]!.cells.at(-1) !== leg.cells[0]) throw new DomainError('Die Abschnitte der Fahrt schließen nicht aneinander an.');
-      if (orbitOnly(vehicle) && !landsAt(vehicle, surface.map, surface.ways, leg.cells[0]!)) throw new DomainError(`${vehicle.name} landet nur an seinen Häfen.`);
+      if (orbitOnly(vehicle) && !shuttleLandsOn(vehicle, surface, leg.cells[0]!)) throw new DomainError(`${vehicle.name} landet nur an seinen Häfen.`);
       return;
     }
     if (leg.cells.length < 2 || leg.cells.some((c) => !Number.isInteger(c) || c < 0 || c >= surface.grid.cells)) throw new DomainError('Ein Abschnitt der Fahrt hat ungültige Felder.');

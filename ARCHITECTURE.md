@@ -137,6 +137,16 @@ Rahmen der View: `App.tsx` (Grundkarte, Ziehblatt, Desktop-Modus), `Tray.tsx` (Z
   Schuss das fremde Schiff fallen lässt, steht damit für jeden Lauf fest; ein anderer Anfang der
   Folge (`wuerfelgleich(page, n)`) nimmt andere, aber wieder dieselben Würfe.
 
+## Versionsnummer
+
+Die Versionsnummer steht in `package.json` (`version`, dazu `package-lock.json`) und folgt dem Schema
+**0.Funktion.Fehler**, bis Version 1 fertig ist: Ein Merge nach `main`, der Neues bringt, erhöht die
+mittlere Zahl (0.2.0 → 0.3.0), einer, der nur Fehler behebt, die hintere (0.3.0 → 0.3.1). Erhöht
+wird im Zweig, vor dem Merge. Beim Bauen setzt `vite.config.ts` (`define`) Version, kurzen Commit und
+Tag des Builds; die App zeigt sie unten im Menü und unter „Über die App“
+(`src/view/build-info.ts`), etwa „Version 0.2.0 · 1a5b75e · 28.11.2026“. Am Commit erkennt man jeden
+Stand, auch zwischen zwei Versionen.
+
 ## Befehle
 
 | Befehl | Was |

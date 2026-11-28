@@ -2,6 +2,7 @@ import { useState, useSyncExternalStore } from 'react';
 import { testHaptic, vibrationKind } from './haptics';
 import { ExternalIcon } from './icons';
 import { canPromptInstall, installKind, promptInstall, subscribeInstall } from './install';
+import { appBuilt, appCommit, appVersion } from './build-info';
 
 const repository = 'https://github.com/scuzzar/SRE';
 
@@ -15,6 +16,9 @@ export function AboutScreen({ persistent, durable }: { persistent: boolean; dura
         </h2>
         <div>
           <h2>Solo RPG Engine</h2>
+          <p className="about-version">
+            Version {appVersion} <span className="muted">· gebaut aus {appCommit} am {appBuilt}</span>
+          </p>
           <p>Eine App für Solo-Rollenspiel mit Classic Traveller: ein Ja/Nein-Orakel, eine Inspirationskarte und Proben für den Charakter oben, alles auf einem Bildschirm.</p>
           <p className="muted">
             {persistent
